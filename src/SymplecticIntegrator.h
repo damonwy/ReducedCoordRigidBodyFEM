@@ -31,7 +31,6 @@ public:
 private:
 	std::vector< std::shared_ptr<Rigid> > boxes;
 	std::vector < std::shared_ptr<Rigid> > moving_boxes;
-	std::vector< std::shared_ptr<Spring> > springs;
 	std::vector< std::shared_ptr<Joint> > joints;
 	Eigen::MatrixXd A;
 	Eigen::MatrixXd M;

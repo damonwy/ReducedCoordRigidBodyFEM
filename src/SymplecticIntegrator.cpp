@@ -39,7 +39,6 @@ SymplecticIntegrator::SymplecticIntegrator(vector< shared_ptr<Rigid> > _boxes, v
 		num_samples(_num_samples),
 		boxes(_boxes),
 		joints(_joints),
-		springs(_springs),
 		isReduced(_isReduced),
 		isMuscle(_isMuscle),
 		epsilon(_epsilon),
