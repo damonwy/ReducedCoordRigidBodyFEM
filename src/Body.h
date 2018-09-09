@@ -10,8 +10,11 @@
 #include <Eigen/Dense>
 #include "MLCommon.h"
 
+class Shape;
 class Wrench;
 class Joint;
+class Program;
+class MatrixStack;
 
 class Body 
 {
@@ -26,7 +29,11 @@ public:
 	VectorXd computeForce(Eigen::Vector3d grav, MatrixXd f);
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy energies);
+
+	void load(const std::string &RESOURCE_DIR);
+	void init();
 	void update();
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 
 	double density;			// Mass/volume
 	Eigen::Vector3d sides;
@@ -55,6 +62,8 @@ public:
 	Body *next;				// Next body in traversal order
 
 private:
+	const std::shared_ptr<Shape> box;
+
 	void computeInertiaBody();
 	void computeInertiaJoint();
 

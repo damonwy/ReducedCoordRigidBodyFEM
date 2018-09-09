@@ -22,12 +22,12 @@ public:
 	World();
 	virtual ~World();
 
+	
+
+	void addBody(std::shared_ptr<Body> body);
+	void addJoint(std::shared_ptr<Joint> joint);
+
 	void load(const std::string &RESOURCE_DIR);
-
-	void addBody(Rigid *body);
-	void addJoint(Joint *joint);
-
-
 	void init();
 	void update();
 	void draw();
@@ -39,8 +39,8 @@ public:
 	void setGrav(Eigen::Vector3d grav) { m_grav = grav; }
 	Eigen::Vector3d getGrav() const { return m_grav; }
 
-	Rigid * getBody(int uid);
-	Joint * getJoint(int uid);
+	std::shared_ptr<Body> getBody(int uid);
+	std::shared_ptr<Joint> getJoint(int uid);
 
 
 
@@ -50,8 +50,8 @@ private:
 	int m_nlinks;
 
 	// 
-	std::vector<Rigid *> m_bodies;
-	std::vector<Joint *> m_joints;
+	std::vector<std::shared_ptr<Body>> m_bodies;
+	std::vector<std::shared_ptr<Joint>> m_joints;
 
 
 
