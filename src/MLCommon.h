@@ -25,6 +25,12 @@ typedef Eigen::Matrix<double, 12, 12> Matrix12d;
 
 enum Integrator { RKF45, SYMPLECTIC };
 
+struct Energy {
+	double K;
+	double V;
+};
+
+
 // Eigen types to/from GLM types
 glm::mat3 eigen_to_glm(const Eigen::Matrix3d &m);
 glm::mat4 eigen_to_glm(const Eigen::Matrix4d &m);

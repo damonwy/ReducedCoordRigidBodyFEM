@@ -5,7 +5,9 @@
 #include <json.hpp>
 
 #include "Body.h"
-
+using namespace std;
+using namespace Eigen;
+using json = nlohmann::json;
 
 Wrench::Wrench(Body *body) {
 

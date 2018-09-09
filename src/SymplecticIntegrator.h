@@ -7,7 +7,7 @@
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
 
-class Rigid;
+class SE3;
 class Spring;
 class Particle;
 class Joint;
@@ -16,7 +16,7 @@ class MatrixStack;
 
 class SymplecticIntegrator {
 public:
-	SymplecticIntegrator(std::vector< std::shared_ptr<Rigid> > _boxes, std::vector< std::shared_ptr<Joint>> _joints, std::vector< std::shared_ptr<Spring> > _springs, bool _isReduced, bool _isMuscle, int _num_samples, Eigen::Vector3d _grav, double _epsilon);
+	SymplecticIntegrator(std::vector< std::shared_ptr<SE3> > _boxes, std::vector< std::shared_ptr<Joint>> _joints, std::vector< std::shared_ptr<Spring> > _springs, bool _isReduced, bool _isMuscle, int _num_samples, Eigen::Vector3d _grav, double _epsilon);
 	void step(double h);
 	void step_matlab(double h);
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
@@ -29,8 +29,8 @@ public:
 	const int num_joints;
 
 private:
-	std::vector< std::shared_ptr<Rigid> > boxes;
-	std::vector < std::shared_ptr<Rigid> > moving_boxes;
+	std::vector< std::shared_ptr<SE3> > boxes;
+	std::vector < std::shared_ptr<SE3> > moving_boxes;
 	std::vector< std::shared_ptr<Joint> > joints;
 	Eigen::MatrixXd A;
 	Eigen::MatrixXd M;

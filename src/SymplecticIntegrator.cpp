@@ -11,7 +11,7 @@
 
 #include "SymplecticIntegrator.h"
 
-#include "Rigid.h"
+#include "SE3.h"
 #include "Joint.h"
 #include "MatlabDebug.h"
 #include "Particle.h"
@@ -34,7 +34,7 @@ using namespace Eigen;
 #include <unsupported/Eigen/MatrixFunctions> // TODO: avoid using this later, write a func instead
 double inf = numeric_limits<double>::infinity();
 
-SymplecticIntegrator::SymplecticIntegrator(vector< shared_ptr<Rigid> > _boxes, vector< shared_ptr<Joint>> _joints, vector< shared_ptr<Spring> > _springs, bool _isReduced, bool _isMuscle, int _num_samples, Vector3d _grav, double _epsilon):
+SymplecticIntegrator::SymplecticIntegrator(vector< shared_ptr<SE3> > _boxes, vector< shared_ptr<Joint>> _joints, vector< shared_ptr<Spring> > _springs, bool _isReduced, bool _isMuscle, int _num_samples, Vector3d _grav, double _epsilon):
 		num_joints(_boxes.size() - 1),
 		num_samples(_num_samples),
 		boxes(_boxes),
@@ -99,8 +99,8 @@ MatrixXd SymplecticIntegrator::getJ() {
 		}
 		else if (i == 1) {
 			auto joint = box->getJoint();
-			Matrix6d Ad_C_J = Rigid::adjoint(joint->getE_C_J());
-			Matrix6d Ad_J_P = Rigid::adjoint(joint->getE_P_J().inverse());
+			Matrix6d Ad_C_J = SE3::adjoint(joint->getE_C_J());
+			Matrix6d Ad_J_P = SE3::adjoint(joint->getE_P_J().inverse());
 			Matrix6d Ad_C_P = Ad_C_J * Ad_J_P;
 			Vector6d Adz_C_J = Ad_C_J * z;
 			
@@ -110,8 +110,8 @@ MatrixXd SymplecticIntegrator::getJ() {
 		}
 		else {
 			auto joint = box->getJoint();
-			Matrix6d Ad_C_J = Rigid::adjoint(joint->getE_C_J());
-			Matrix6d Ad_J_P = Rigid::adjoint(joint->getE_P_J().inverse());
+			Matrix6d Ad_C_J = SE3::adjoint(joint->getE_C_J());
+			Matrix6d Ad_J_P = SE3::adjoint(joint->getE_P_J().inverse());
 			Vector6d Adz_C_J = Ad_C_J * z;
 			Matrix6d Ad_C_P = Ad_C_J * Ad_J_P;
 
@@ -142,14 +142,14 @@ Eigen::MatrixXd SymplecticIntegrator::getJdot(VectorXd thetadotlist) {
 		Matrix4d E_J_P = joint->getE_P_J().inverse();
 		Matrix4d E_C_P = E_C_J * E_J_P;
 
-		Matrix6d Ad_C_P = Rigid::adjoint(E_C_P);
+		Matrix6d Ad_C_P = SE3::adjoint(E_C_P);
 
-		Matrix6d Ad_C_0 = Rigid::adjoint(box->getE().inverse());
-		Matrix6d Ad_0_P = Rigid::adjoint(box->getParent()->getE());
+		Matrix6d Ad_C_0 = SE3::adjoint(box->getE().inverse());
+		Matrix6d Ad_0_P = SE3::adjoint(box->getParent()->getE());
 
-		Matrix6d Addot_0_C = Rigid::dAddt(box->getE(), Phi.segment<6>(i*6));
+		Matrix6d Addot_0_C = SE3::dAddt(box->getE(), Phi.segment<6>(i*6));
 
-		Matrix6d Addot_0_P = Rigid::dAddt(box->getParent()->getE(), Phi.segment<6>(p*6));
+		Matrix6d Addot_0_P = SE3::dAddt(box->getParent()->getE(), Phi.segment<6>(p*6));
 		Matrix6d Addot_C_P = -Ad_C_0 * (Addot_0_C * Ad_C_0 * Ad_0_P - Addot_0_P);
 
 		for (int j = 0; j < i ; j++) {
@@ -454,8 +454,8 @@ void SymplecticIntegrator::step(double h) {
 			}
 			else {
 				auto joint = box->getJoint();
-				Matrix6d Ad_J_P = Rigid::adjoint(joint->getE_P_J().inverse());
-				Matrix6d Ad_J_C = -Rigid::adjoint(joint->getE_C_J().inverse());
+				Matrix6d Ad_J_P = SE3::adjoint(joint->getE_P_J().inverse());
+				Matrix6d Ad_J_C = -SE3::adjoint(joint->getE_C_J().inverse());
 				int id_P = box->getParent()->getIndex();
 				int id_C = box->getIndex();
 

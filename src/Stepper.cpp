@@ -8,6 +8,9 @@
 #include <json.hpp>
 
 
+using namespace std;
+using namespace Eigen;
+
 Stepper::Stepper() {
 
 

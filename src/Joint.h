@@ -8,7 +8,7 @@
 #include <Eigen/Dense>
 #include <iostream>
 
-class Rigid;
+class SE3;
 
 class Joint {
 private:
@@ -25,8 +25,8 @@ private:
 	Eigen::Matrix4d E_C_J_0;
 	double theta_0;
 
-	std::shared_ptr<Rigid> parent;
-	std::shared_ptr<Rigid> child;
+	std::shared_ptr<SE3> parent;
+	std::shared_ptr<SE3> child;
 	
 public:
 	Eigen::Matrix4d getE_P_J() const { return this->E_P_J; }
@@ -38,8 +38,8 @@ public:
 	double getThetadot() const { return this->thetadot; }
 	double getMaxTheta() const { return this->max_theta; }
 	double getMinTheta() const { return this->min_theta; }
-	std::shared_ptr<Rigid> getChild() const { return this->child; }
-	std::shared_ptr<Rigid> getParent() const { return this->parent; }
+	std::shared_ptr<SE3> getChild() const { return this->child; }
+	std::shared_ptr<SE3> getParent() const { return this->parent; }
 	static Eigen::VectorXd getThetaVector(std::vector<std::shared_ptr<Joint>> joints);
 	static Eigen::VectorXd getThetadotVector(std::vector<std::shared_ptr<Joint>> joints);
 
@@ -53,8 +53,8 @@ public:
 	void setThetaddot(double _thetaddot) { this->thetaddot = _thetaddot; }
 	static void setThetadotVector(std::vector <std::shared_ptr<Joint>> joints, Eigen::VectorXd thetadotlist);
 
-	void setChild(std::shared_ptr<Rigid> _child) { this->child = _child; }
-	void setParent(std::shared_ptr<Rigid> _parent) { this->parent = _parent; }
+	void setChild(std::shared_ptr<SE3> _child) { this->child = _child; }
+	void setParent(std::shared_ptr<SE3> _parent) { this->parent = _parent; }
 	void reset();
 	Joint();
 	Joint(Eigen::Matrix4d _E_P_J, Eigen::Matrix4d _E_C_J, double _min_theta, double _max_theta);

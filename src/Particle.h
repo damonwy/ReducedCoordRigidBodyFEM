@@ -10,7 +10,7 @@
 class Shape;
 class Program;
 class MatrixStack;
-class Rigid;
+class SE3;
 
 class Particle
 {
@@ -26,7 +26,7 @@ public:
 	void update(Eigen::Matrix4d E);
 	void updateTemp(Eigen::Matrix4d E);
 
-	std::shared_ptr<Rigid> getParent() const { return this->parent; }
+	std::shared_ptr<SE3> getParent() const { return this->parent; }
 	Eigen::Vector3d getTempPos() const { return this->x_temp; }
 	Eigen::MatrixXd getJacobianMatrix() const { return this->J; }
 	double getPotentialEnergy() const { return this->V; }
@@ -36,7 +36,7 @@ public:
 	void setKineticEnergy(double _K) { this->K = _K; }
 	void setJacobianMatrix(Eigen::MatrixXd _J) { this->J = _J; }
 	void setJacobianMatrixCol(Eigen::Vector3d p, int icol) { this->J.col(icol) = p; }
-	void setParent(std::shared_ptr<Rigid> _parent) { this->parent = _parent; }
+	void setParent(std::shared_ptr<SE3> _parent) { this->parent = _parent; }
 
 	void clearJacobianMatrix() { this->J.setZero(); }
 	
@@ -61,7 +61,7 @@ private:
 	double V;					// potential energy
 	double K;					// kinetic energy
 	Eigen::MatrixXd J;			// Jacobian Matrix
-	std::shared_ptr<Rigid> parent;
+	std::shared_ptr<SE3> parent;
 };
 
 #endif // MUSCLEMASS_SRC_PARTICLE_H_

@@ -10,21 +10,29 @@
 #include <Eigen/Dense>
 #include "MLCommon.h"
 
-
 class Wrench;
 class Joint;
 
 class Body 
 {
 public:
-	Body();
+	Body(double _density, Eigen::Vector3d _sides);
 	virtual ~Body();
 
 
 	void setTransform(Eigen::Matrix4d E);
 	void computeInertia();
+	MatrixXd computeMass(Eigen::Vector3d grav, MatrixXd M);
+	VectorXd computeForce(Eigen::Vector3d grav, MatrixXd f);
+
+	Energy computeEnergies(Eigen::Vector3d grav, Energy energies);
 	void update();
 
+	double density;			// Mass/volume
+	Eigen::Vector3d sides;
+
+	Matrix6d I_j;			// Inertia at the parent joint
+	Vector6d I_i;			// Inertia at body center
 
 	Eigen::Matrix4d E_ji;	// Where the body is wrt joint
 	Eigen::Matrix4d E_ij;	// Where the joint is wrt body
@@ -38,6 +46,7 @@ public:
 	Matrix6d Ad_wi;			// Adjoint of E_wi
 	Matrix6d Ad_ip;			// Adjoint of E_ip
 	Matrix6d Addot_wi;		// Adjoint dot of E_wi
+
 	Vector6d V;				// Twist at parent joint
 	Vector6d Vdot;			// Acceleration at parent joint
 	Vector6d phi;			// Twist at body center
@@ -46,7 +55,8 @@ public:
 	Body *next;				// Next body in traversal order
 
 private:
-
+	void computeInertiaBody();
+	void computeInertiaJoint();
 
 
 

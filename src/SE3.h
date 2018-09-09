@@ -1,0 +1,31 @@
+#pragma once
+
+#ifndef MUSCLEMASS_SRC_SE3_H_
+#define MUSCLEMASS_SRC_SE3_H_
+
+#include <vector>
+#include <memory>
+
+#define EIGEN_DONT_ALIGN_STATICALLY
+#include <Eigen/Dense>
+#include "MLCommon.h"
+
+class SE3 {
+
+public:
+	static Eigen::Matrix4d inverse(const Eigen::Matrix4d &E);
+	static Matrix3x6d gamma(const Eigen::Vector3d &r);
+	static Matrix6d adjoint(const Eigen::Matrix4d &E);
+	static Eigen::Matrix3d bracket3(const Eigen::Vector3d &a);
+	static Eigen::Matrix4d bracket6(const Vector6d &a);
+	static Eigen::Vector3d unbracket3(const Eigen::Matrix3d &A);
+	static Vector6d unbracket6(const Eigen::Matrix4d &A);
+	static Eigen::Matrix4d integrate(const Eigen::Matrix4d &E0, const Eigen::VectorXd &phi, double h);
+	static Matrix6d dAddt(const Eigen::Matrix4d &E, const Eigen::VectorXd &phi);
+	static Vector6d inertiaCuboid(Eigen::Vector3d whd, double density);
+
+};
+
+
+
+#endif // MUSCLEMASS_SRC_SE3_H_

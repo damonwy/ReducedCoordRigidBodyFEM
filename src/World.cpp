@@ -8,6 +8,10 @@
 #include "Joint.h"
 #include "Body.h"
 
+using namespace std;
+using namespace Eigen;
+using json = nlohmann::json;
+
 World::World() {
 
 }
