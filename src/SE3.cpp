@@ -150,3 +150,72 @@ Vector6d SE3::inertiaCuboid(Eigen::Vector3d whd, double density) {
 	m(5) = mass;
 	return m;
 }
+
+
+Matrix3d SE3::aaToMat(Vector3d axis, double angle) {
+	// Creates a rotation matrix from an (axis, angle) pair
+	Matrix3d R;
+	R.setIdentity();
+
+	double mag = axis.norm();
+	if (mag > THRESH) {
+		mag = 1.0 / mag;
+		axis = axis * mag;
+		if (abs(axis(0)) < THRESH && abs(axis(1)) < THRESH) {
+			// Rotation about Z
+			if (axis(2) < 0.0) {
+				angle = -angle;
+			}
+			double sinTheta = sin(angle);
+			double cosTheta = cos(angle);
+			R(0, 0) = cosTheta;
+			R(0, 1) = -sinTheta;
+			R(1, 0) = sinTheta;
+			R(1, 1) = cosTheta;
+
+		}
+		else if (abs(axis(1)) < THRESH && abs(axis(2)) < THRESH) {
+			// Rotation about X
+			if (axis(0) < 0.0) {
+				angle = -angle;
+			}
+			double sinTheta = sin(angle);
+			double cosTheta = cos(angle);
+			R(1, 1) = cosTheta;
+			R(1, 2) = -sinTheta;
+			R(2, 1) = sinTheta;
+			R(2, 2) = cosTheta;
+		}
+		else if (abs(axis(2)) < THRESH && abs(axis(0)) < THRESH) {
+			// Rotation about Y
+			if (axis(1) < 0.0) {
+				angle = -angle;
+			}
+			double sinTheta = sin(angle);
+			double cosTheta = cos(angle);
+			R(0, 0) = cosTheta;
+			R(0, 2) = sinTheta;
+			R(2, 0) = -sinTheta;
+			R(2, 2) = cosTheta;
+		}
+		else {
+			// General rotation
+			double sinTheta = sin(angle);
+			double cosTheta = cos(angle);
+			double t = 1.0 - cosTheta;
+			double xz = axis(0) * axis(2);
+			double xy = axis(0) * axis(1);
+			double yz = axis(1) * axis(2);
+			R(0, 0) = t * axis(0) * axis(0) + cosTheta;
+			R(0, 1) = t * xy - sinTheta * axis(2);
+			R(0, 2) = t * xz + sinTheta * axis(1);
+			R(1, 0) = t * xy + sinTheta * axis(2);
+			R(1, 1) = t * axis(1) * axis(1) + cosTheta;
+			R(1, 2) = t * yz - sinTheta * axis(0);
+			R(2, 0) = t * xz - sinTheta * axis(1);
+			R(2, 1) = t * yz + sinTheta * axis(0);
+			R(2, 2) = t * axis(2) * axis(2) + cosTheta;
+		}
+	}
+
+}

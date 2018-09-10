@@ -26,26 +26,29 @@ public:
 	virtual void draw();
 	virtual void update();
 
-	double m_ndof;		// Number of DOF
-	Eigen::VectorXd m_q;		// Position
-	Eigen::VectorXd m_qdot;	// Velocity
-	Eigen::VectorXd m_qddot;	// Acceleration
-	Eigen::VectorXd m_tau;		// Joint torque
-	Eigen::VectorXd m_tauCon;  // Constraint torque
-	double m_K;			// Joint stiffness
-	Eigen::MatrixXd m_S;		// Jacobian
-	Eigen::MatrixXd m_Sdot;	// dS/dt
+	double m_ndof;					// Number of DOF
+	Eigen::VectorXd m_q;			// Position
+	Eigen::VectorXd m_qdot;			// Velocity
+	Eigen::VectorXd m_qddot;		// Acceleration
+	Eigen::VectorXd m_tau;			// Joint torque
+	Eigen::VectorXd m_tauCon;		// Constraint torque
+	double m_K;						// Joint stiffness
+	Eigen::MatrixXd m_S;			// Jacobian
+	Eigen::MatrixXd m_Sdot;			// dS/dt
 
 
 
-	Eigen::Matrix4d E_pj;	// Transform of this joint wrt parent joint
-	Eigen::Matrix4d E_pj0;	// Transform when q is zero
-	Eigen::Matrix4d E_jp;	// Transform of parent joint wrt this joint
-	Matrix6d Ad_jp; // Adjoint of E_jp
-	Eigen::Matrix4d E_wj;	// Transform of this joint wrt world
+	Eigen::Matrix4d E_pj;			// Transform of this joint wrt parent joint
+	Eigen::Matrix4d E_pj0;			// Transform when q is zero
+	Eigen::Matrix4d E_jp;			// Transform of parent joint wrt this joint
+	Matrix6d Ad_jp;					// Adjoint of E_jp
+	Eigen::Matrix4d E_wj;			// Transform of this joint wrt world
+
+	std::shared_ptr<Joint> next;	// Forward recursive ordering
+	std::shared_ptr<Joint> prev;	// Reverse recursive ordering
+	int idxR;						// Reduced indices
 
 
-	int idxR;	// Reduced indices
 
 	void setJointTransform(Eigen::Matrix4d E);
 
@@ -55,11 +58,13 @@ public:
 	std::shared_ptr<Joint> getParent() const { return m_parent; }
 	void addChild(std::shared_ptr<Joint> joint) { m_children.push_back(joint); }
 
+
+
 private:
 	std::string m_name;
 	int m_uid;
-	std::shared_ptr<Body> m_body;		// Attached body
-	std::shared_ptr<Joint> m_parent;	// Parent joint
+	std::shared_ptr<Body> m_body;						// Attached body
+	std::shared_ptr<Joint> m_parent;					// Parent joint
 	std::vector<std::shared_ptr<Joint> > m_children;	// Children joints
 
 };

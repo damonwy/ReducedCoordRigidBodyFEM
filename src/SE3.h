@@ -10,6 +10,8 @@
 #include <Eigen/Dense>
 #include "MLCommon.h"
 
+#define THRESH 1.0e-9
+
 class SE3 {
 
 public:
@@ -23,6 +25,7 @@ public:
 	static Eigen::Matrix4d integrate(const Eigen::Matrix4d &E0, const Eigen::VectorXd &phi, double h);
 	static Matrix6d dAddt(const Eigen::Matrix4d &E, const Eigen::VectorXd &phi);
 	static Vector6d inertiaCuboid(Eigen::Vector3d whd, double density);
+	static Eigen::Matrix3d aaToMat(Eigen::Vector3d axis, double angle);
 
 };
 
