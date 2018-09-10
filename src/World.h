@@ -15,6 +15,8 @@
 class Rigid;
 class Joint;
 class Body;
+class MatrixStack;
+class Program;
 
 class World
 {
@@ -30,7 +32,7 @@ public:
 	void load(const std::string &RESOURCE_DIR);
 	void init();
 	void update();
-	void draw();
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P);
 
 	void setTime(double t) { m_t = t; }
 	double getTime() const { return m_t; }
@@ -40,8 +42,11 @@ public:
 	Eigen::Vector3d getGrav() const { return m_grav; }
 
 	std::shared_ptr<Body> getBody(int uid);
+	std::shared_ptr<Body> getBody(const std::string &name);
 	std::shared_ptr<Joint> getJoint(int uid);
 
+	void updateQ();
+	void updateQDot();
 
 
 private:
@@ -53,6 +58,11 @@ private:
 	std::vector<std::shared_ptr<Body>> m_bodies;
 	std::vector<std::shared_ptr<Joint>> m_joints;
 
+	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;
+	typedef std::map<int, std::shared_ptr<Body>> MapBodyUID;
+
+	MapBodyName m_bodyName;
+	MapBodyUID m_bodyUID;
 
 
 };

@@ -47,18 +47,18 @@ void Body::setTransform(Eigen::Matrix4d E) {
 
 void Body::update() {
 	// Updates transforms and maximal velocities
-	E_wi = joint->E_wj * E_ji;
+	E_wi = m_joint->E_wj * E_ji;
 	E_iw = SE3::inverse(E_wi);
 	Ad_wi = SE3::adjoint(E_wi);
 	Ad_iw = SE3::adjoint(E_iw);
 
 	// Joint velocity
-	V = joint->S * joint->qdot;
+	V = m_joint->m_S * m_joint->m_qdot;
 
 	// Add parent velocity
 	E_ip.setIdentity();
-	if (joint->parent != nullptr) {
-		parent = joint->getParent->body;
+	if (m_joint->getParent() != nullptr) {
+		parent = m_joint->getParent->body;
 		V = V + joint->Ad_jp * parent->V;
 		E_ip = E_iw * parent->E_wi;
 	}

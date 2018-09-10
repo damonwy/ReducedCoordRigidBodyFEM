@@ -35,6 +35,11 @@ public:
 	void update();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 
+	std::string getName() const { return m_name; };
+	void setJoint(std::shared_ptr<Joint> joint) { m_joint = joint; };
+	std::shared_ptr<Joint> getJoint() const { return m_joint; };
+
+
 	double density;			// Mass/volume
 	Eigen::Vector3d sides;
 
@@ -57,7 +62,7 @@ public:
 	Vector6d V;				// Twist at parent joint
 	Vector6d Vdot;			// Acceleration at parent joint
 	Vector6d phi;			// Twist at body center
-	Joint *joint;			// Joint to parent
+	
 	int idxM;				// Maximal indices
 	Body *next;				// Next body in traversal order
 
@@ -66,8 +71,9 @@ private:
 
 	void computeInertiaBody();
 	void computeInertiaJoint();
-
-
+	std::string m_name;
+	int m_uid;
+	std::shared_ptr<Joint> m_joint;			// Joint to parent
 
 };
 

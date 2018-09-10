@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 # Name of the project
-PROJECT(ReducedCoordRigidBodyFEM)
+PROJECT(ReducedCoordSE3BodyFEM)
 
 # Is this the solution?
 # Override with `cmake -DSOL=ON ..`
