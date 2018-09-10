@@ -28,8 +28,8 @@ public:
 	void countDofs(int &nm);
 	int countM(int &nm, int data);
 
-	MatrixXd computeMass(Eigen::Vector3d grav, MatrixXd M);
-	VectorXd computeForce(Eigen::Vector3d grav, MatrixXd f);
+	Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
+	Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::MatrixXd f);
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy energies);
 
@@ -68,9 +68,10 @@ public:
 	
 	int idxM;				// Maximal indices
 	std::shared_ptr<Body> next;				// Next body in traversal order
+	std::shared_ptr<Body> m_parent;
 
 private:
-	const std::shared_ptr<Shape> box;
+	std::shared_ptr<Shape> boxShape;
 
 	void computeInertiaBody();
 	void computeInertiaJoint();

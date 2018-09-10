@@ -12,6 +12,7 @@
 #include "Vector.h"
 #include "JsonEigen.h"
 #include "Stepper.h"
+#include "World.h"
 
 using namespace std;
 using namespace Eigen;
@@ -43,20 +44,16 @@ void Scene::load(const string &RESOURCE_DIR)
 	h = js["h"];
 	Eigen::from_json(js["grav"], grav);
 
-	time_integrator = SYMPLECTIC;
+	world = make_shared<World>(SERIAL_CHAIN);
+	world->load(RESOURCE_DIR);
 
 }
 
 
 void Scene::init()
 {
+	world->init();
 
-
-}
-
-void Scene::tare()
-{
-	
 }
 
 void Scene::reset()
@@ -66,13 +63,13 @@ void Scene::reset()
 
 void Scene::step()
 {	
-
+	world->update();
 	t += h;
 }
 
 
 void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> prog2, shared_ptr<MatrixStack> P) const
 {
-
+	world->draw(MV, prog, P);
 	
 }

@@ -11,7 +11,7 @@ Joint::Joint() {
 
 }
 
-Joint::Joint(shared_ptr<Body> body, double ndof, shared_ptr<Joint> parent = nullptr) :
+Joint::Joint(shared_ptr<Body> body, double ndof, shared_ptr<Joint> parent) :
 m_body(body),
 m_parent(parent),
 m_ndof(ndof)
@@ -44,11 +44,7 @@ m_ndof(ndof)
 	m_Sdot.resize(6, ndof);
 	m_Sdot.setZero();
 	
-	m_body->setJoint(shared_from_this());
-
-	if (parent == nullptr) {
-		parent->addChild(shared_from_this());
-	}
+	
 
 }
 
@@ -57,6 +53,11 @@ Joint::~Joint() {
 }
 
 void Joint::init(int &nr) {
+	m_body->setJoint(getJoint());
+
+	if (m_parent != nullptr) {
+		m_parent->addChild(getJoint());
+	}
 	countDofs(nr);
 
 }
@@ -74,9 +75,10 @@ void Joint::update() {
 
 }
 
-int Joint::countDofs(int &nr) {
+void Joint::countDofs(int &nr) {
 	// Counts reduced DOFs
 	idxR = countR(nr, m_ndof);
+
 }
 
 int Joint::countR(int &nr, int data) {

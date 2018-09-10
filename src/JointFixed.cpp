@@ -13,7 +13,7 @@ JointFixed::JointFixed() {
 }
 
 
-JointFixed::JointFixed(std::shared_ptr<Body> body, std::shared_ptr<Joint> parent = nullptr) :
+JointFixed::JointFixed(std::shared_ptr<Body> body, std::shared_ptr<Joint> parent) :
 	Joint(body, 0, parent)
 {
 

@@ -16,14 +16,14 @@
 class SE3;
 class Body;
 
-class Joint :public std::enable_shared_from_this<Joint> {
+class Joint : public std::enable_shared_from_this<Joint> {
 public:
 	Joint();
 	Joint(std::shared_ptr<Body> body, double ndof, std::shared_ptr<Joint> parent = nullptr);
 	virtual ~Joint();
 
 	virtual void init(int &nr);
-	virtual void draw();
+	//virtual void draw();
 	virtual void update();
 
 	double m_ndof;					// Number of DOF
@@ -49,7 +49,7 @@ public:
 	int idxR;						// Reduced indices
 
 
-	int countDofs(int &nr);
+	void countDofs(int &nr);
 	int countR(int &nr, int data);
 	void setJointTransform(Eigen::Matrix4d E);
 
@@ -58,7 +58,7 @@ public:
 	std::shared_ptr<Body> getBody() const { return m_body; }
 	std::shared_ptr<Joint> getParent() const { return m_parent; }
 	void addChild(std::shared_ptr<Joint> joint) { m_children.push_back(joint); }
-
+	std::shared_ptr<Joint> getJoint() { return shared_from_this(); }
 
 
 private:

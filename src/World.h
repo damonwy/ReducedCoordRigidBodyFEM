@@ -48,7 +48,8 @@ public:
 	void updateQ();
 	void updateQDot();
 
-
+	int nm;
+	int nr;
 private:
 	WorldType m_type;
 	Eigen::Vector3d m_grav;
@@ -57,8 +58,7 @@ private:
 	int m_njoints;
 	double m_Hexpected;
 
-	int nm;
-	int nr;
+
 
 	// 
 	std::vector<std::shared_ptr<Body>> m_bodies;

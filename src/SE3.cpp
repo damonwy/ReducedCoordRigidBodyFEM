@@ -217,7 +217,7 @@ Matrix3d SE3::aaToMat(Vector3d axis, double angle) {
 			R(2, 2) = t * axis(2) * axis(2) + cosTheta;
 		}
 	}
-
+	return R;
 }
 
 Matrix4d SE3::RpToE(Matrix3d R, Vector3d p) {

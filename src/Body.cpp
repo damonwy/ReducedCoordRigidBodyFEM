@@ -28,16 +28,16 @@ Body::~Body() {
 
 void Body::load(const string &RESOURCE_DIR) {
 	// Inits shape
-	box->loadMesh(RESOURCE_DIR + "box5.obj");
+	boxShape = make_shared<Shape>();
+	boxShape->loadMesh(RESOURCE_DIR + "box5.obj");
 
 }
 
 void Body::init(int &nm) {
-	box->init();
+	boxShape->init();
 	computeInertia();
 	countDofs(nm);
 
-	
 }
 
 void Body::setTransform(Eigen::Matrix4d E) {
@@ -61,9 +61,9 @@ void Body::update() {
 	// Add parent velocity
 	E_ip.setIdentity();
 	if (m_joint->getParent() != nullptr) {
-		parent = m_joint->getParent->body;
-		V = V + joint->Ad_jp * parent->V;
-		E_ip = E_iw * parent->E_wi;
+		m_parent = m_joint->getParent()->getBody();
+		V = V + m_joint->Ad_jp * m_parent->V;
+		E_ip = E_iw * m_parent->E_wi;
 	}
 
 	Ad_ip = SE3::adjoint(E_ip);
@@ -123,7 +123,7 @@ int Body::countM(int &nm, int data) {
 void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const
 {
 	prog->bind();
-	if (box) {
+	if (boxShape) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 		MV->pushMatrix();
 		glUniform3f(prog->getUniform("lightPos1"), 1.0, 1.0, 1.0);
@@ -136,10 +136,11 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 		glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
 
 		MV->pushMatrix();
+		cout << E_wi << endl;
 		MV->multMatrix(eigen_to_glm(E_wi));
 
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-		box->draw(prog);
+		boxShape->draw(prog);
 		MV->popMatrix();
 	}
 	prog->unbind();
@@ -147,11 +148,15 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 }
 
 MatrixXd Body::computeMass(Vector3d grav, MatrixXd M) {
-
+	Matrix3d I;
+	I.setZero();
+	return I;
 
 }
 
 VectorXd Body::computeForce(Vector3d grav, MatrixXd f) {
 
-
+	Vector3d I;
+	I.setZero();
+	return I;
 }

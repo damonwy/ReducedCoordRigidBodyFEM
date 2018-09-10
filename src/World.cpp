@@ -74,13 +74,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 					E = SE3::RpToE(I3, p);
 
 					joint->setJointTransform(E);
-
+					m_joints.push_back(joint);
 				}
 
 				p << 5.0, 0.0, 0.0;
 				E = SE3::RpToE(I3, p);
 
 				body->setTransform(E);
+				body->load(RESOURCE_DIR);
 
 				m_joints[i]->m_q(0) = 0.0;
 
@@ -121,7 +122,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 void World::init() {
 	for (int i = 0; i < m_nbodies; i++) {
 		m_bodies[i]->init(nm);
-		if (i < m_nbodies) {
+		if (i < m_nbodies-1) {
 			m_bodies[i]->next = m_bodies[i + 1];
 		}
 	}

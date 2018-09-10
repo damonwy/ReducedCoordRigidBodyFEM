@@ -20,6 +20,7 @@ class Spring;
 class Joint;
 class Vector;
 class Stepper;
+class World;
 
 class Scene
 {
@@ -30,7 +31,6 @@ public:
 	
 	void load(const std::string &RESOURCE_DIR);
 	void init();
-	void tare();
 	void reset();
 	void step();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
@@ -43,7 +43,8 @@ private:
 	Eigen::Vector3d grav;
 
 	nlohmann::json js;
-	Integrator time_integrator;
+	std::shared_ptr<World> world;
+
 };
 
 #endif // MUSCLEMASS_SRC_SCENE_H_

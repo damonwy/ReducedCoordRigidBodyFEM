@@ -130,7 +130,7 @@ static void init()
 
 	scene = make_shared<Scene>();
 	scene->load(RESOURCE_DIR);
-	scene->tare();
+	//scene->tare();
 	scene->init();
 	
 	// If there were any OpenGL errors, this will print something.
@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	// Create a windowed mode window and its OpenGL context.
-	window = glfwCreateWindow(640, 480, "Muscle Mass Simulation", NULL, NULL);
+	window = glfwCreateWindow(640, 480, "Reduced Coordinate Rigid Body FEM Simulation", NULL, NULL);
 	if(!window) {
 		glfwTerminate();
 		return -1;
