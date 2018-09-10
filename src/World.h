@@ -12,7 +12,6 @@
 #include <json.hpp>
 #include "MLCommon.h"
 
-class Rigid;
 class Joint;
 class Body;
 class MatrixStack;
@@ -22,9 +21,9 @@ class World
 {
 public:
 	World();
+	World(WorldType type);
 	virtual ~World();
 
-	
 
 	void addBody(std::shared_ptr<Body> body);
 	void addJoint(std::shared_ptr<Joint> joint);
@@ -44,15 +43,22 @@ public:
 	std::shared_ptr<Body> getBody(int uid);
 	std::shared_ptr<Body> getBody(const std::string &name);
 	std::shared_ptr<Joint> getJoint(int uid);
+	std::shared_ptr<Joint> getJoint(const std::string &name);
 
 	void updateQ();
 	void updateQDot();
 
 
 private:
+	WorldType m_type;
 	Eigen::Vector3d m_grav;
 	double m_t;
-	int m_nlinks;
+	int m_nbodies;
+	int m_njoints;
+	double m_Hexpected;
+
+	int nm;
+	int nr;
 
 	// 
 	std::vector<std::shared_ptr<Body>> m_bodies;
@@ -61,8 +67,13 @@ private:
 	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;
 	typedef std::map<int, std::shared_ptr<Body>> MapBodyUID;
 
+	typedef std::map<std::string, std::shared_ptr<Joint>> MapJointName;
+	typedef std::map<int, std::shared_ptr<Joint>> MapJointUID;
+
 	MapBodyName m_bodyName;
 	MapBodyUID m_bodyUID;
+	MapJointName m_jointName;
+	MapJointUID m_jointUID;
 
 
 };

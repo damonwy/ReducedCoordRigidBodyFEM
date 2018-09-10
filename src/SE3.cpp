@@ -219,3 +219,11 @@ Matrix3d SE3::aaToMat(Vector3d axis, double angle) {
 	}
 
 }
+
+Matrix4d SE3::RpToE(Matrix3d R, Vector3d p) {
+	Matrix4d E;
+	E.setIdentity();
+	E.block<3, 3>(0, 0) = R;
+	E.block<3, 1>(0, 3) = p;
+	return E;
+}

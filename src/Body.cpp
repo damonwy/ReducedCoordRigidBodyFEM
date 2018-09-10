@@ -11,7 +11,6 @@
 #include "MatrixStack.h"
 #include "Program.h"
 
-
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
@@ -33,8 +32,12 @@ void Body::load(const string &RESOURCE_DIR) {
 
 }
 
-void Body::init() {
+void Body::init(int &nm) {
 	box->init();
+	computeInertia();
+	countDofs(nm);
+
+	
 }
 
 void Body::setTransform(Eigen::Matrix4d E) {
@@ -105,6 +108,16 @@ void Body::computeInertia() {
 	// Computes inertia at body and joint
 	computeInertiaBody();
 	computeInertiaJoint();
+}
+
+void Body::countDofs(int &nm) {
+	// Counts maximal DOFs
+	idxM = countM(nm, 6);
+}
+
+int Body::countM(int &nm, int data) {
+	nm = nm + data;
+	return (nm - data);
 }
 
 void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const

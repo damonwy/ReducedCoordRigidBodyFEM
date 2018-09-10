@@ -4,42 +4,130 @@
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
-#include "Rigid.h"
 #include "Joint.h"
+#include "JointRevolute.h"
 #include "Body.h"
 #include "MatrixStack.h"
 #include "Program.h"
+#include "SE3.h"
 
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
-World::World() {
+World::World():
+nr(0),
+nm(0)
+{
 
+}
+
+World::World(WorldType type):
+m_type(type),
+nr(0),
+nm(0)
+{
 }
 
 World::~World() {
 }
 
 void World::load(const std::string &RESOURCE_DIR) {
-	m_nlinks = 2;
-	m_grav << 0.0, -9.81, 0.0;
-	double density = 1.0;
+
+	double density;
 	Eigen::Vector3d sides;
-	sides << 1.0, 4.0, 1.0;
+	Vector3d z_axis;
+	z_axis << 0.0, 0.0, 1.0;
+	Matrix4d I4;
+	I4.setIdentity();
+	Matrix3d I3;
+	I3.setIdentity();
+	Matrix4d E;
+	Vector3d p;
 
-	for (int i = 0; i < m_nlinks; i++) {
 
-		auto body = make_shared<Body>(density, sides);
+	switch (m_type)
+	{
+	case SERIAL_CHAIN: 
+		{	
+			density = 1.0;
+			m_grav << 0.0, -9.81, 0.0;
+			sides << 1.0, 4.0, 1.0;
+			m_nbodies = 2;
+			m_njoints = 2;
+			m_Hexpected = 10000; // todo
+			
+			// Inits rigid bodies
+			for (int i = 0; i < m_nbodies; i++) {
 
+				auto body = make_shared<Body>(density, sides);
 
-		m_bodies.push_back(body);
+				// Inits joints
+				if (i == 0) {
+					auto joint = make_shared<JointRevolute>(body, z_axis);
+					joint->setJointTransform(I4);
+					m_joints.push_back(joint);
+				}
+				else {
+					auto joint = make_shared<JointRevolute>(body, z_axis, m_joints[i-1]);
+					p << 10.0, 0.0, 0.0; // todo
+					E = SE3::RpToE(I3, p);
+
+					joint->setJointTransform(E);
+
+				}
+
+				p << 5.0, 0.0, 0.0;
+				E = SE3::RpToE(I3, p);
+
+				body->setTransform(E);
+
+				m_joints[i]->m_q(0) = 0.0;
+
+				m_bodies.push_back(body);
+			}
+			break;
+		}
+	case DIFF_REVOLUTE_AXES:
+		break;
+	case BRANCHING:
+		break;
+	case SHPERICAL_JOINT:
+		break;
+	case LOOP:
+		break;
+	case JOINT_TORQUE:
+		break;
+	case JOINT_LIMITS:
+		break;
+	case EQUALITY_CONSTRAINED_ANGLES:
+		break;
+	case EQUALITY_AND_LOOP:
+		break;
+	case HYBRID_DYNAMICS:
+		break;
+	case EXTERNAL_WORLD_FORCE:
+		break;
+	case JOINT_STIFFNESS:
+		break;
+	case SPRINGS:
+		break;
+	default:
+		break;
 	}
+	
 }
 
 void World::init() {
-	for (int i = 0; i < (int)m_bodies.size(); i++) {
-		m_bodies[i]->init();
+	for (int i = 0; i < m_nbodies; i++) {
+		m_bodies[i]->init(nm);
+		if (i < m_nbodies) {
+			m_bodies[i]->next = m_bodies[i + 1];
+		}
+	}
+
+	for (int i = 0; i < m_njoints; i++) {
+		m_joints[i]->init(nr);
 	}
 
 	// init constraints
@@ -49,15 +137,15 @@ void World::init() {
 }
 
 void World::update() {
-	for (int i = 0; i < (int)m_bodies.size(); i++) {
+	for (int i = 0; i < m_nbodies; i++) {
 		m_bodies[i]->update();
 	}
 }
 
 void World::updateQ() {
-	for (int i = 0; i < (int)m_bodies.size(); i++) {
+	for (int i = 0; i < m_nbodies; i++) {
 		auto body = m_bodies[i];
-		body->updateQ();
+		//body->updateQ();
 
 	}
 }
@@ -84,15 +172,19 @@ std::shared_ptr<Body> World::getBody(const std::string &name) {
 	return (it == m_bodyName.end() ? NULL : it->second);
 }
 
-
 std::shared_ptr<Joint> World::getJoint(int uid) {
+	MapJointUID::const_iterator it = m_jointUID.find(uid);
+	return (it == m_jointUID.end() ? NULL : it->second);
+}
 
-
+std::shared_ptr<Joint> World::getJoint(const std::string &name) {
+	MapJointName::const_iterator it = m_jointName.find(name);
+	return (it == m_jointName.end() ? NULL : it->second);
 }
 
 void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) {
 	// Draw rigid bodies
-	for (int i = 0; i < (int)m_bodies.size(); i++) {
+	for (int i = 0; i < m_nbodies; i++) {
 		m_bodies[i]->draw(MV, prog, P);
 	}
 

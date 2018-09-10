@@ -22,7 +22,7 @@ public:
 	Joint(std::shared_ptr<Body> body, double ndof, std::shared_ptr<Joint> parent = nullptr);
 	virtual ~Joint();
 
-	virtual void init();
+	virtual void init(int &nr);
 	virtual void draw();
 	virtual void update();
 
@@ -49,7 +49,8 @@ public:
 	int idxR;						// Reduced indices
 
 
-
+	int countDofs(int &nr);
+	int countR(int &nr, int data);
 	void setJointTransform(Eigen::Matrix4d E);
 
 	std::string getName() const { return m_name; }

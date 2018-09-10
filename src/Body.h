@@ -25,13 +25,16 @@ public:
 
 	void setTransform(Eigen::Matrix4d E);
 	void computeInertia();
+	void countDofs(int &nm);
+	int countM(int &nm, int data);
+
 	MatrixXd computeMass(Eigen::Vector3d grav, MatrixXd M);
 	VectorXd computeForce(Eigen::Vector3d grav, MatrixXd f);
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy energies);
 
 	void load(const std::string &RESOURCE_DIR);
-	void init();
+	void init(int &nm);
 	void update();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 
@@ -64,7 +67,7 @@ public:
 	Vector6d phi;			// Twist at body center
 	
 	int idxM;				// Maximal indices
-	Body *next;				// Next body in traversal order
+	std::shared_ptr<Body> next;				// Next body in traversal order
 
 private:
 	const std::shared_ptr<Shape> box;

@@ -15,15 +15,10 @@ class Particle;
 class MatrixStack;
 class Program;
 class Shape;
-class Rigid;
 class Solver;
 class Spring;
 class Joint;
 class Vector;
-class WrapSphere;
-class WrapCylinder;
-class WrapDoubleCylinder;
-class SymplecticIntegrator;
 class Stepper;
 
 class Scene
@@ -46,13 +41,6 @@ private:
 	double t;
 	double h;
 	Eigen::Vector3d grav;
-
-	std::shared_ptr<Shape> boxShape;
-
-	std::vector< std::shared_ptr<Rigid> > boxes;
-	std::vector< std::shared_ptr<Joint> > joints;
-
-	std::shared_ptr<SymplecticIntegrator> symplectic_solver;
 
 	nlohmann::json js;
 	Integrator time_integrator;

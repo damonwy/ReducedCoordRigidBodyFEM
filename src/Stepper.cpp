@@ -1,7 +1,7 @@
 #include "Stepper.h"
 
 #include "World.h"
-#include "Rigid.h"
+#include "Body.h"
 
 #include <iostream>
 #include <fstream>

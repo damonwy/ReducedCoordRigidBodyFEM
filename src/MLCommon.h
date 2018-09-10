@@ -23,7 +23,10 @@ typedef Eigen::Matrix<double, 5, 6> Matrix5x6d;
 typedef Eigen::Matrix<double, 3, 12> Matrix3x12d;
 typedef Eigen::Matrix<double, 12, 12> Matrix12d;
 
+
+enum WorldType { SERIAL_CHAIN, DIFF_REVOLUTE_AXES, BRANCHING, SHPERICAL_JOINT, LOOP, JOINT_TORQUE, JOINT_LIMITS, EQUALITY_CONSTRAINED_ANGLES, EQUALITY_AND_LOOP, HYBRID_DYNAMICS, EXTERNAL_WORLD_FORCE, JOINT_STIFFNESS, SPRINGS};
 enum Integrator { RKF45, SYMPLECTIC };
+
 
 struct Energy {
 	double K;

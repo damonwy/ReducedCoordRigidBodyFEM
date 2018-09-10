@@ -56,6 +56,11 @@ Joint::~Joint() {
 
 }
 
+void Joint::init(int &nr) {
+	countDofs(nr);
+
+}
+
 void Joint::setJointTransform(Matrix4d E) {
 	// Sets the transform of this joint wrt parent joint
 	E_pj0 = E;
@@ -67,4 +72,14 @@ void Joint::update() {
 
 
 
+}
+
+int Joint::countDofs(int &nr) {
+	// Counts reduced DOFs
+	idxR = countR(nr, m_ndof);
+}
+
+int Joint::countR(int &nr, int data) {
+	nr = nr + data;
+	return (nr - data);
 }
