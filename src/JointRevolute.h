@@ -22,7 +22,7 @@ public:
 	JointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, std::shared_ptr<Joint> parent = nullptr);
 	virtual ~JointRevolute();
 
-	virtual void update();
+	virtual void updateSelf();
 	virtual void draw();
 
 	Eigen::Vector3d m_axis;

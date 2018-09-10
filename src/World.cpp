@@ -10,6 +10,7 @@
 #include "MatrixStack.h"
 #include "Program.h"
 #include "SE3.h"
+#include "JsonEigen.h"
 
 using namespace std;
 using namespace Eigen;
@@ -34,6 +35,12 @@ World::~World() {
 
 void World::load(const std::string &RESOURCE_DIR) {
 
+	//read a JSON file
+	ifstream i(RESOURCE_DIR + "input.json");
+	json js;
+	i >> js;
+	i.close();
+
 	double density;
 	Eigen::Vector3d sides;
 	Vector3d z_axis;
@@ -52,6 +59,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		{	
 			density = 1.0;
 			m_grav << 0.0, -9.81, 0.0;
+			Eigen::from_json(js["sides"], sides);
 			sides << 1.0, 4.0, 1.0;
 			m_nbodies = 2;
 			m_njoints = 2;
@@ -130,6 +138,21 @@ void World::init() {
 	for (int i = 0; i < m_njoints; i++) {
 		m_joints[i]->init(nr);
 	}
+
+	//joint ordering
+	// todo
+
+	for (int i = 0; i < m_njoints; i++) {
+		if (i < m_njoints - 1) {
+			m_joints[i]->next = m_joints[i + 1];
+		}
+		if (i > 0) {
+			m_joints[i]->prev = m_joints[i - 1];
+		}
+	}
+
+	m_joints[0]->update();
+
 
 	// init constraints
 

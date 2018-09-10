@@ -22,7 +22,7 @@ public:
 	JointFixed(std::shared_ptr<Body> body, std::shared_ptr<Joint> parent = nullptr);
 	virtual ~JointFixed();
 
-	virtual void update();
+	virtual void updateSelf();
 	virtual void draw();
 
 	Eigen::Vector3d m_axis;

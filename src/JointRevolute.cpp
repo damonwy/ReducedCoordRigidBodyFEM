@@ -28,7 +28,7 @@ void JointRevolute::draw() {
 
 }
 
-void JointRevolute::update() {
+void JointRevolute::updateSelf() {
 	Matrix3d R = SE3::aaToMat(m_axis, m_q(0));
 	Matrix4d Q;
 	Q.setIdentity();

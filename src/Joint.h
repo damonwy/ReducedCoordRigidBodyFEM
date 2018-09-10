@@ -25,6 +25,7 @@ public:
 	virtual void init(int &nr);
 	//virtual void draw();
 	virtual void update();
+	virtual void updateSelf();
 
 	double m_ndof;					// Number of DOF
 	Eigen::VectorXd m_q;			// Position

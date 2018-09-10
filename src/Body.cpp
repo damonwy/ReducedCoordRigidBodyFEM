@@ -27,9 +27,16 @@ Body::~Body() {
 }
 
 void Body::load(const string &RESOURCE_DIR) {
+	//read a JSON file
+	ifstream i(RESOURCE_DIR + "input.json");
+	json js;
+	i >> js;
+	i.close();
+	string box_shape = js["boxShape"];
+
 	// Inits shape
 	boxShape = make_shared<Shape>();
-	boxShape->loadMesh(RESOURCE_DIR + "box5.obj");
+	boxShape->loadMesh(RESOURCE_DIR + box_shape);
 
 }
 
@@ -136,7 +143,6 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 		glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
 
 		MV->pushMatrix();
-		cout << E_wi << endl;
 		MV->multMatrix(eigen_to_glm(E_wi));
 
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));

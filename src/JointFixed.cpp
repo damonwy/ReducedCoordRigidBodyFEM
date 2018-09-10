@@ -27,6 +27,6 @@ void JointFixed::draw() {
 
 }
 
-void JointFixed::update() {
+void JointFixed::updateSelf() {
 	E_pj = E_pj0;
 }
