@@ -15,6 +15,9 @@
 
 class SE3;
 class Body;
+class MatrixStack;
+class Program;
+
 
 class Joint : public std::enable_shared_from_this<Joint> {
 public:
@@ -23,7 +26,7 @@ public:
 	virtual ~Joint();
 
 	virtual void init(int &nr);
-	//virtual void draw();
+	virtual void draw(std::shared_ptr<MatrixStack> MV, std::shared_ptr<MatrixStack> P, const std::shared_ptr<Program> prog) const;
 	virtual void update();
 	virtual void updateSelf();
 
@@ -36,8 +39,6 @@ public:
 	double m_K;						// Joint stiffness
 	Eigen::MatrixXd m_S;			// Jacobian
 	Eigen::MatrixXd m_Sdot;			// dS/dt
-
-
 
 	Eigen::Matrix4d E_pj;			// Transform of this joint wrt parent joint
 	Eigen::Matrix4d E_pj0;			// Transform when q is zero

@@ -3,6 +3,8 @@
 
 #include "Body.h"
 #include "SE3.h"
+#include "MatrixStack.h"
+#include "Program.h"
 
 using namespace std;
 using namespace Eigen;
@@ -191,4 +193,35 @@ void Joint::scatterDofsNoUpdate(Eigen::VectorXd y, int nr) {
 	if (next != nullptr) {
 		next->scatterDofsNoUpdate(y, nr);
 	}
+}
+
+void Joint::draw(shared_ptr<MatrixStack> MV, shared_ptr<MatrixStack> P, const shared_ptr<Program> prog) const {
+
+	prog->bind();
+	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+	MV->pushMatrix();
+	MV->multMatrix(eigen_to_glm(E_wj));
+	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+
+	glColor3f(0.8, 0.7, 0.0);
+	glLineWidth(3);
+	glBegin(GL_LINES);
+	
+	// X axis
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(1.0, 0.0, 0.0);
+
+	// Y axis
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.0, 1.0, 0.0);
+
+	// Z axis
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.0, 0.0, 1.0);
+
+	glEnd();
+
+	MV->popMatrix();
+	prog->unbind();
 }

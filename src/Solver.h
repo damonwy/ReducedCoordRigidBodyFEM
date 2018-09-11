@@ -37,7 +37,11 @@ private:
 	Eigen::MatrixXd J;
 	Eigen::MatrixXd Jdot;
 	Eigen::VectorXd q0;
+	Eigen::VectorXd q1;
 	Eigen::VectorXd qdot0;
+	Eigen::VectorXd qdot1;
+	Eigen::VectorXd qddot;
+
 	Eigen::MatrixXd Mtilde;
 	Eigen::VectorXd ftilde;
 
