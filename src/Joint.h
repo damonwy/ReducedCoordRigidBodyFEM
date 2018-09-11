@@ -61,6 +61,10 @@ public:
 	void addChild(std::shared_ptr<Joint> joint) { m_children.push_back(joint); }
 	std::shared_ptr<Joint> getJoint() { return shared_from_this(); }
 
+	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J, int nm, int nr);
+	Eigen::MatrixXd computeJacobianDerivative(Eigen::MatrixXd Jdot, int nm, int nr);
+	Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
+	Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
 
 private:
 	std::string m_name;

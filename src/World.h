@@ -35,6 +35,7 @@ public:
 
 	void setTime(double t) { m_t = t; }
 	double getTime() const { return m_t; }
+	double getH() const { return m_h; }
 	void incrementTime(double dt) { m_t += dt; }
 
 	void setGrav(Eigen::Vector3d grav) { m_grav = grav; }
@@ -45,6 +46,12 @@ public:
 	std::shared_ptr<Joint> getJoint(int uid);
 	std::shared_ptr<Joint> getJoint(const std::string &name);
 
+	std::shared_ptr<Body> getBody0() const { return m_bodies[0]; }
+	std::shared_ptr<Joint> getJoint0() const { return m_joints[0]; }
+
+	Eigen::Vector2d getTspan() const { return m_tspan; }
+	int getNsteps();
+
 	void updateQ();
 	void updateQDot();
 
@@ -54,6 +61,8 @@ private:
 	WorldType m_type;
 	Eigen::Vector3d m_grav;
 	double m_t;
+	double m_h;
+	Eigen::Vector2d m_tspan;
 	int m_nbodies;
 	int m_njoints;
 	double m_Hexpected;

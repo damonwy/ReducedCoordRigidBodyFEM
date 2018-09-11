@@ -19,6 +19,7 @@ class MatrixStack;
 class Body 
 {
 public:
+	Body();
 	Body(double _density, Eigen::Vector3d _sides);
 	virtual ~Body();
 

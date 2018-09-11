@@ -60,10 +60,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 			density = 1.0;
 			m_grav << 0.0, -9.81, 0.0;
 			Eigen::from_json(js["sides"], sides);
-			sides << 1.0, 4.0, 1.0;
-			m_nbodies = 2;
-			m_njoints = 2;
+			m_nbodies = 5;
+			m_njoints = 5;
 			m_Hexpected = 10000; // todo
+			m_tspan << 0.0, 10.0;
 			
 			// Inits rigid bodies
 			for (int i = 0; i < m_nbodies; i++) {
@@ -176,6 +176,12 @@ void World::updateQ() {
 
 void World::updateQDot() {
 
+}
+
+int World::getNsteps() {
+	// Computes the number of results
+	int nsteps = (m_tspan(1) - m_tspan(0)) / m_h;
+	return nsteps;
 }
 
 void World::addBody(shared_ptr<Body> body) {

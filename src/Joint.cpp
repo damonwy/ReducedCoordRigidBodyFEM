@@ -106,3 +106,32 @@ int Joint::countR(int &nr, int data) {
 	nr = nr + data;
 	return (nr - data);
 }
+
+MatrixXd Joint::computeJacobian(MatrixXd J, int nm, int nr) {
+	// Computes the redmax Jacobian
+	MatrixXd J;
+	//todo
+	return J;
+
+
+}
+
+MatrixXd Joint::computeJacobianDerivative(MatrixXd Jdot, int nm, int nr) {
+
+	MatrixXd Jdot;
+
+	// todo
+	return Jdot;
+}
+
+Eigen::VectorXd Joint::gatherDofs(Eigen::VectorXd y, int nr) {
+	// Gathers q and qdot into y
+
+
+}
+
+Eigen::VectorXd Joint::gatherDDofs(Eigen::VectorXd ydot, int nr) {
+
+
+
+}

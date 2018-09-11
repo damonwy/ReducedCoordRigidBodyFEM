@@ -15,6 +15,10 @@ using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
+Body::Body() {
+
+}
+
 Body::Body(double _density, Vector3d _sides):
 density(_density),
 sides(_sides)
