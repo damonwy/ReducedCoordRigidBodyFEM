@@ -124,14 +124,71 @@ MatrixXd Joint::computeJacobianDerivative(MatrixXd Jdot, int nm, int nr) {
 	return Jdot;
 }
 
+VectorXd Joint::computerJacTransProd(VectorXd y, VectorXd x, int nr) {
+	// Computes x = J'*y
+	// x (nr, 1)
+	VectorXd yi = y.segment(m_body->idxM, 6);
+	for (int k = 0; k < (int)m_children.size(); k++) {
+		yi = yi + m_children[k]->getAlpha();
+	}
+	m_alpha = m_body->Ad_ip.transpose() * yi;
+	if (prev != nullptr) {
+		x = prev->computerJacTransProd(y, x, nr);
+	}
+	return x;
+}
+
+
+Energy Joint::computeEnergies(Vector3d grav, Energy ener) {
+	// Computes kinetic and potential energies
+	ener = m_body->computeEnergies(grav, ener);
+	ener.V += 0.5 * m_K * m_q.dot(m_q);
+	if (next != nullptr) {
+		ener = next->computeEnergies(grav, ener);
+	}
+	return ener;
+}
+
 Eigen::VectorXd Joint::gatherDofs(Eigen::VectorXd y, int nr) {
 	// Gathers q and qdot into y
-
-
+	y.segment(idxR, m_ndof) = m_q;
+	y.segment(nr + idxR, m_ndof) = m_qdot;
+	if (next != nullptr) {
+		y = next->gatherDofs(y, nr);
+	}
+	return y;
 }
 
 Eigen::VectorXd Joint::gatherDDofs(Eigen::VectorXd ydot, int nr) {
+	// Gathers qdot and qddot into ydot
+	ydot.segment(idxR, m_ndof) = m_qdot;
+	ydot.segment(nr + idxR, m_ndof) = m_qddot;
+	if (next != nullptr) {
+		ydot = next->gatherDDofs(ydot, nr);
+	}
+	return ydot;
+}
 
+void Joint::scatterDofs(Eigen::VectorXd y, int nr) {
+	// Scatters q and qdot from y
+	scatterDofsNoUpdate(y, nr);
+	update();
+}
 
+void Joint::scatterDDofs(Eigen::VectorXd ydot, int nr) {
+	// Scatters qdot and qddot from ydot
+	m_qdot.segment(0, m_ndof) = ydot.segment(idxR, m_ndof);
+	m_qddot.segment(0, m_ndof) = ydot.segment(nr + idxR, m_ndof);
+	if (next != nullptr) {
+		next->scatterDDofs(ydot, nr);
+	}
+}
 
+void Joint::scatterDofsNoUpdate(Eigen::VectorXd y, int nr) {
+	// Helper function to scatter without updating
+	m_q.segment(0, m_ndof) = y.segment(idxR, m_ndof);
+	m_qdot.segment(0, m_ndof) = y.segment(nr + idxR, m_ndof);
+	if (next != nullptr) {
+		next->scatterDofsNoUpdate(y, nr);
+	}
 }

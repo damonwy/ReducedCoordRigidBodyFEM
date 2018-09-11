@@ -43,8 +43,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	double density;
 	Eigen::Vector3d sides;
-	Vector3d z_axis;
-	z_axis << 0.0, 0.0, 1.0;
+
 	Matrix4d I4;
 	I4.setIdentity();
 	Matrix3d I3;
@@ -72,12 +71,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 				// Inits joints
 				if (i == 0) {
-					auto joint = make_shared<JointRevolute>(body, z_axis);
+					auto joint = make_shared<JointRevolute>(body, Vector3d::UnitZ());
 					joint->setJointTransform(I4);
 					m_joints.push_back(joint);
 				}
 				else {
-					auto joint = make_shared<JointRevolute>(body, z_axis, m_joints[i-1]);
+					auto joint = make_shared<JointRevolute>(body, Vector3d::UnitZ(), m_joints[i-1]);
 					p << 10.0, 0.0, 0.0; // todo
 					E = SE3::RpToE(I3, p);
 

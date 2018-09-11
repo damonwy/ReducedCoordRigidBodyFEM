@@ -53,6 +53,7 @@ public:
 	void countDofs(int &nr);
 	int countR(int &nr, int data);
 	void setJointTransform(Eigen::Matrix4d E);
+	void setStiffness(double K) { m_K = K; } // Sets this joint's linear stiffness
 
 	std::string getName() const { return m_name; }
 	int getUID() const { return m_uid; }
@@ -63,15 +64,25 @@ public:
 
 	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J, int nm, int nr);
 	Eigen::MatrixXd computeJacobianDerivative(Eigen::MatrixXd Jdot, int nm, int nr);
+	Eigen::VectorXd computerJacTransProd(Eigen::VectorXd y, Eigen::VectorXd x, int nr);
+
+	Energy computeEnergies(Eigen::Vector3d grav, Energy ener);
 	Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
 	Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
+	void scatterDofs(Eigen::VectorXd y, int nr);
+	void scatterDDofs(Eigen::VectorXd ydot, int nr);
+	Vector6d getAlpha() const { return m_alpha; }
 
 private:
+	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);
+
 	std::string m_name;
 	int m_uid;
 	std::shared_ptr<Body> m_body;						// Attached body
 	std::shared_ptr<Joint> m_parent;					// Parent joint
 	std::vector<std::shared_ptr<Joint> > m_children;	// Children joints
+
+	Vector6d m_alpha;
 
 };
 
