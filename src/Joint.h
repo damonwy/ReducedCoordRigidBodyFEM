@@ -64,7 +64,7 @@ public:
 	std::shared_ptr<Joint> getJoint() { return shared_from_this(); }
 
 	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J, int nm, int nr);
-	Eigen::MatrixXd computeJacobianDerivative(Eigen::MatrixXd Jdot, int nm, int nr);
+	Eigen::MatrixXd computeJacobianDerivative(Eigen::MatrixXd Jdot, Eigen::MatrixXd J, int nm, int nr);
 	Eigen::VectorXd computerJacTransProd(Eigen::VectorXd y, Eigen::VectorXd x, int nr);
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy ener);

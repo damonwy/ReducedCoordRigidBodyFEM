@@ -73,6 +73,7 @@ shared_ptr<Solution> Solver::solve() {
 			// initial state
 
 			m_solutions->y.row(0) = joint0->gatherDofs(m_solutions->y.row(0), nr);
+			//cout << m_solutions->y.row(0) << endl; correct
 			// m_solutions->y.row(0) = spring0->gatherDofs(m_solutions->y.row(0));
 
 			double t = m_world->getTspan()(0);
@@ -82,25 +83,39 @@ shared_ptr<Solution> Solver::solve() {
 			for (int k = 1; k < nsteps; k++) {
 				// sceneFcn()
 				M = body0->computeMass(grav, M);
+
+				//cout << M << endl; checked!
+
 				f = body0->computeForce(grav, f);
+				//cout << f << endl; checked!
+
 				// spring..
 				J = joint0->computeJacobian(J, nm, nr);
-				Jdot = joint0->computeJacobianDerivative(Jdot, nm, nr);
+				//cout << J << endl;
+
+				Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
+				//cout << Jdot << endl;
 				// spring jacobian todo
 				
 				q0 = m_solutions->y.row(k - 1).segment(0, nr);
 				qdot0 = m_solutions->y.row(k - 1).segment(nr, nr);
 
+				//cout << q0 << endl; 
+				//cout << qdot0 << endl;
 
 				Mtilde = J.transpose() * M * J;
+
+				
 				Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
-
+				//cout << Mtilde << endl;
 				ftilde = Mtilde * qdot0 + h * J.transpose() * (f - M * Jdot * qdot0);
-
+				//cout << ftilde << endl;
 				// Solve 
 				if (ne == 0 && ni == 0) {
 					// No constraints
 					qdot1 = Mtilde.ldlt().solve(ftilde);
+					cout << qdot1 << endl;
+
 				}
 				else if (ne > 0 && ni == 0) {
 					// Just equality
@@ -135,8 +150,9 @@ shared_ptr<Solution> Solver::solve() {
 				m_solutions->y.row(k) = yk;
 				m_solutions->t(k) = t;
 
-				return m_solutions;
+				
 			}
+			return m_solutions;
 			break;
 		}
 		

@@ -51,12 +51,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 	{
 	case SERIAL_CHAIN: 
 		{	
-			m_h = 1.0e-3;
+			m_h = 1.0e-2;
 			density = 1.0;
-			m_grav << 0.0, -9.81, 0.0;
+			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
-			m_nbodies = 5;
-			m_njoints = 5;
+			m_nbodies = 2;
+			m_njoints = 2;
 			m_Hexpected = 10000; // todo
 			m_tspan << 0.0, 5.0;
 			
