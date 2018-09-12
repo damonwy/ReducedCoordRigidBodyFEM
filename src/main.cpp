@@ -126,7 +126,7 @@ static void init()
 	//prog->setVerbose(false);
 
 	camera = make_shared<Camera>();
-	camera->setInitDistance(60.5f);
+	camera->setInitDistance(140.5f);
 
 	scene = make_shared<Scene>();
 	scene->load(RESOURCE_DIR);
@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	// Create a windowed mode window and its OpenGL context.
-	window = glfwCreateWindow(640, 480, "Reduced Coordinate Rigid Body FEM Simulation", NULL, NULL);
+	window = glfwCreateWindow(640*2, 480*2, "Reduced Coordinate Rigid Body FEM Simulation", NULL, NULL);
 	if(!window) {
 		glfwTerminate();
 		return -1;

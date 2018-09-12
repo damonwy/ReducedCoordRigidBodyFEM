@@ -20,6 +20,16 @@ Solver::Solver(shared_ptr<World> world, Integrator integrator) :
 m_world(world),
 m_integrator(integrator)
 {
+	m_solutions = make_shared<Solution>();
+}
+
+void Solver::init() {
+
+}
+
+void Solver::load(const string &RESOURCE_DIR) {
+
+
 
 }
 
@@ -30,6 +40,17 @@ shared_ptr<Solution> Solver::solve() {
 		{
 			int nr = m_world->nr;
 			int nm = m_world->nm;
+
+			M.resize(nm, nm);
+			M.setZero();
+			f.resize(nm);
+			f.setZero();
+			J.resize(nm, nr);
+			Jdot.resize(nm, nr);
+			J.setZero();
+			Jdot.setZero();
+
+
 			// constraints
 			// int nem = m_world->nem;
 			// int ner = m_world->ner;

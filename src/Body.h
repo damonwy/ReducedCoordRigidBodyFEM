@@ -30,7 +30,7 @@ public:
 	int countM(int &nm, int data);
 
 	Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
-	Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::MatrixXd f);
+	Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy energies);
 
@@ -66,6 +66,7 @@ public:
 	Vector6d V;				// Twist at parent joint
 	Vector6d Vdot;			// Acceleration at parent joint
 	Vector6d phi;			// Twist at body center
+	Vector6d wext_i;		// External wrench in body space
 	
 	int idxM;				// Maximal indices
 	std::shared_ptr<Body> next;				// Next body in traversal order

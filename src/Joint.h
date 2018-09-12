@@ -26,7 +26,7 @@ public:
 	virtual ~Joint();
 
 	virtual void init(int &nr);
-	virtual void draw(std::shared_ptr<MatrixStack> MV, std::shared_ptr<MatrixStack> P, const std::shared_ptr<Program> prog) const;
+	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
 	virtual void update();
 	virtual void updateSelf();
 
@@ -49,7 +49,7 @@ public:
 	std::shared_ptr<Joint> next;	// Forward recursive ordering
 	std::shared_ptr<Joint> prev;	// Reverse recursive ordering
 	int idxR;						// Reduced indices
-
+	bool presc;						// Use presribed motion
 
 	void countDofs(int &nr);
 	int countR(int &nr, int data);

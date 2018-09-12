@@ -43,11 +43,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	double density;
 	Eigen::Vector3d sides;
-
-	Matrix4d I4;
-	I4.setIdentity();
-	Matrix3d I3;
-	I3.setIdentity();
 	Matrix4d E;
 	Vector3d p;
 
@@ -56,13 +51,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 	{
 	case SERIAL_CHAIN: 
 		{	
+			m_h = 1.0e-3;
 			density = 1.0;
 			m_grav << 0.0, -9.81, 0.0;
 			Eigen::from_json(js["sides"], sides);
 			m_nbodies = 5;
 			m_njoints = 5;
 			m_Hexpected = 10000; // todo
-			m_tspan << 0.0, 10.0;
+			m_tspan << 0.0, 5.0;
 			
 			// Inits rigid bodies
 			for (int i = 0; i < m_nbodies; i++) {
@@ -72,20 +68,20 @@ void World::load(const std::string &RESOURCE_DIR) {
 				// Inits joints
 				if (i == 0) {
 					auto joint = make_shared<JointRevolute>(body, Vector3d::UnitZ());
-					joint->setJointTransform(I4);
+					joint->setJointTransform(Matrix4d::Identity());
 					m_joints.push_back(joint);
 				}
 				else {
 					auto joint = make_shared<JointRevolute>(body, Vector3d::UnitZ(), m_joints[i-1]);
 					p << 10.0, 0.0, 0.0; // todo
-					E = SE3::RpToE(I3, p);
+					E = SE3::RpToE(Matrix3d::Identity(), p);
 
 					joint->setJointTransform(E);
 					m_joints.push_back(joint);
 				}
 
 				p << 5.0, 0.0, 0.0;
-				E = SE3::RpToE(I3, p);
+				E = SE3::RpToE(Matrix3d::Identity(), p);
 
 				body->setTransform(E);
 				body->load(RESOURCE_DIR);
@@ -211,14 +207,19 @@ std::shared_ptr<Joint> World::getJoint(const std::string &name) {
 	return (it == m_jointName.end() ? NULL : it->second);
 }
 
-void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) {
+void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) {
 	// Draw rigid bodies
 	for (int i = 0; i < m_nbodies; i++) {
 		m_bodies[i]->draw(MV, prog, P);
 	}
 
+	// Draw joints
+	for (int i = 0; i < m_njoints; i++) {
+		m_joints[i]->draw(MV, progSimple, P);
+	}
+
 	// Draw constraints
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 1; i++) {
 
 	}
 

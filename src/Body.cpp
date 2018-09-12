@@ -23,6 +23,7 @@ Body::Body(double _density, Vector3d _sides):
 density(_density),
 sides(_sides)
 {
+	wext_i.setZero();
 
 }
 
@@ -110,9 +111,7 @@ void Body::computeInertiaJoint() {
 	I_j.block<3, 3>(0, 0) = R * Ic *R.transpose() + mass *(pBrac.transpose()*pBrac);
 	I_j.block<3, 3>(0, 3) = mass * pBrac;
 	I_j.block<3, 3>(3, 0) = mass * pBrac.transpose();
-	Matrix3d I3;
-	I3.setIdentity();
-	I_j.block<3, 3>(3, 3) = mass * I3;
+	I_j.block<3, 3>(3, 3) = mass * Matrix3d::Identity();
 }
 
 void Body::computeInertia() {
@@ -137,11 +136,11 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 	if (boxShape) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 		MV->pushMatrix();
-		glUniform3f(prog->getUniform("lightPos1"), 1.0, 1.0, 1.0);
-		glUniform1f(prog->getUniform("intensity_1"), 0.8);
-		glUniform3f(prog->getUniform("lightPos2"), -1.0, 1.0, 1.0);
+		glUniform3f(prog->getUniform("lightPos1"), 66.0, 25.0, 25.0);
+		glUniform1f(prog->getUniform("intensity_1"), 0.6);
+		glUniform3f(prog->getUniform("lightPos2"), -66.0, 25.0, 25.0);
 		glUniform1f(prog->getUniform("intensity_2"), 0.2);
-		glUniform1f(prog->getUniform("s"), 200);
+		glUniform1f(prog->getUniform("s"), 300);
 		glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
 		glUniform3f(prog->getUniform("kd"), 0.8, 0.7, 0.7);
 		glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
@@ -158,15 +157,47 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 }
 
 MatrixXd Body::computeMass(Vector3d grav, MatrixXd M) {
-	Matrix3d I;
-	I.setZero();
-	return I;
+	// Computes maximal mass matrix 
+	Matrix6d M_i = Matrix6d(I_i.asDiagonal());
+	
+	M.block<6, 6>(idxM, idxM) = M_i;
+	if (next != nullptr) {
+		M = next->computeMass(grav, M);
+	}
 
+	return M;
 }
 
-VectorXd Body::computeForce(Vector3d grav, MatrixXd f) {
+VectorXd Body::computeForce(Vector3d grav, VectorXd f) {
+	// Computes maximal force vector
+	Matrix6d M_i = Matrix6d(I_i.asDiagonal());
+	Vector6d fcor = SE3::ad(phi).transpose() * M_i * phi;
+	Matrix3d R_wi = E_wi.block<3, 3>(0, 0);
+	Matrix3d R_iw = R_wi.transpose();
 
-	Vector3d I;
-	I.setZero();
-	return I;
+	Vector6d fgrav;
+	fgrav.setZero();
+
+	fgrav.segment<3>(3) = M_i(3, 3) * R_iw * grav; // wrench in body space
+	f.segment<6>(idxM) = fcor + fgrav + wext_i;
+	
+	// Joint torque
+	if (!m_joint->presc) {
+		
+		Vector6d tau = m_joint->m_S * (m_joint->m_tau - m_joint->m_K * m_joint->m_q);
+		f.segment<6>(idxM) += Ad_ji.transpose() * tau;
+		// Also apply to parent
+		if (m_joint->getParent() != nullptr) {
+			m_parent = m_joint->getParent()->getBody();
+			int idxM_P = m_parent->idxM;
+			Matrix4d E_jp = E_ji * E_iw * m_parent->E_wi; // this joint -> parent body
+			f.segment<6>(idxM_P) -= SE3::adjoint(E_jp).transpose() * tau;
+		}
+	}
+
+	if (next != nullptr) {
+		f = next->computeForce(grav, f);
+	}
+
+	return f;
 }

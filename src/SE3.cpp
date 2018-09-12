@@ -227,3 +227,17 @@ Matrix4d SE3::RpToE(Matrix3d R, Vector3d p) {
 	E.block<3, 1>(0, 3) = p;
 	return E;
 }
+
+Matrix6d SE3::ad(Vector6d phi) {
+	Matrix6d a;
+	a.setZero();
+
+	Vector3d w = phi.segment<3>(0);
+	Vector3d v = phi.segment<3>(3);
+
+	Matrix3d W = bracket3(w);
+	a.block<3, 3>(0, 0) = W;
+	a.block<3, 3>(3, 3) = W;
+	a.block<3, 3>(3, 0) = bracket3(v);
+	return a;
+}

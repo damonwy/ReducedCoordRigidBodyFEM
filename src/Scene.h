@@ -21,6 +21,7 @@ class Joint;
 class Vector;
 class Stepper;
 class World;
+struct Solution;
 
 class Scene
 {
@@ -33,6 +34,7 @@ public:
 	void init();
 	void reset();
 	void step();
+	void solve();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
 
 	double getTime() const { return t; }
@@ -40,10 +42,14 @@ public:
 private:
 	double t;
 	double h;
+	int time_step;
+
 	Eigen::Vector3d grav;
 
 	nlohmann::json js;
-	std::shared_ptr<World> world;
+	std::shared_ptr<World> m_world;
+	std::shared_ptr<Solver> m_solver;
+	std::shared_ptr<Solution> m_solution;
 
 };
 

@@ -27,7 +27,7 @@ public:
 	static Vector6d inertiaCuboid(Eigen::Vector3d whd, double density);
 	static Eigen::Matrix3d aaToMat(Eigen::Vector3d axis, double angle);
 	static Eigen::Matrix4d RpToE(Eigen::Matrix3d R, Eigen::Vector3d p);
-
+	static Matrix6d ad(Vector6d phi);
 };
 
 

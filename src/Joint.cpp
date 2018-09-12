@@ -111,18 +111,21 @@ int Joint::countR(int &nr, int data) {
 
 MatrixXd Joint::computeJacobian(MatrixXd J, int nm, int nr) {
 	// Computes the redmax Jacobian
-	MatrixXd J;
-	//todo
+	
+
+
+
+
 	return J;
-
-
 }
 
 MatrixXd Joint::computeJacobianDerivative(MatrixXd Jdot, int nm, int nr) {
 
-	MatrixXd Jdot;
+	
 
-	// todo
+
+
+
 	return Jdot;
 }
 
@@ -195,7 +198,7 @@ void Joint::scatterDofsNoUpdate(Eigen::VectorXd y, int nr) {
 	}
 }
 
-void Joint::draw(shared_ptr<MatrixStack> MV, shared_ptr<MatrixStack> P, const shared_ptr<Program> prog) const {
+void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const {
 
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
@@ -204,19 +207,22 @@ void Joint::draw(shared_ptr<MatrixStack> MV, shared_ptr<MatrixStack> P, const sh
 	MV->multMatrix(eigen_to_glm(E_wj));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 
-	glColor3f(0.8, 0.7, 0.0);
-	glLineWidth(3);
+	
+	glLineWidth(2);
 	glBegin(GL_LINES);
 	
 	// X axis
+	glColor3f(1.0, 0.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
 	glVertex3f(1.0, 0.0, 0.0);
 
 	// Y axis
+	glColor3f(0.0, 1.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
 	glVertex3f(0.0, 1.0, 0.0);
 
 	// Z axis
+	glColor3f(0.0, 0.0, 1.0);
 	glVertex3f(0.0, 0.0, 0.0);
 	glVertex3f(0.0, 0.0, 1.0);
 

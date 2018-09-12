@@ -14,8 +14,19 @@
 class World;
 
 struct Solution {
-	VectorXd t;
+	Eigen::VectorXd t;
 	Eigen::MatrixXd y;
+
+	Solution(){}
+
+	Eigen::VectorXd step(int time_step) {
+		return y.row(time_step);
+	}
+
+	int getNsteps() {
+		return y.rows();
+	}
+
 };
 
 class Solver 
@@ -25,8 +36,9 @@ public:
 	Solver(std::shared_ptr<World> world, Integrator integrator);
 	virtual ~Solver();
 	std::shared_ptr<Solution> solve();
-
-
+	void init();
+	void load(const std::string &RESOURCE_DIR);
+	
 private:
 	std::shared_ptr<World> m_world;
 	Integrator m_integrator;

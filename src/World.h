@@ -24,14 +24,14 @@ public:
 	World(WorldType type);
 	virtual ~World();
 
-
 	void addBody(std::shared_ptr<Body> body);
 	void addJoint(std::shared_ptr<Joint> joint);
 
 	void load(const std::string &RESOURCE_DIR);
 	void init();
 	void update();
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P);
+	
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P);
 
 	void setTime(double t) { m_t = t; }
 	double getTime() const { return m_t; }
@@ -57,6 +57,7 @@ public:
 
 	int nm;
 	int nr;
+
 private:
 	WorldType m_type;
 	Eigen::Vector3d m_grav;
@@ -66,8 +67,6 @@ private:
 	int m_nbodies;
 	int m_njoints;
 	double m_Hexpected;
-
-
 
 	// 
 	std::vector<std::shared_ptr<Body>> m_bodies;
@@ -83,8 +82,6 @@ private:
 	MapBodyUID m_bodyUID;
 	MapJointName m_jointName;
 	MapJointUID m_jointUID;
-
-
 };
 
 #endif // MUSCLEMASS_SRC_WORLD_H_
