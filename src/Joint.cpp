@@ -118,7 +118,7 @@ MatrixXd Joint::computeJacobian(MatrixXd J, int nm, int nr) {
 	while (jointA != nullptr) {
 		int idxM_P = m_parent->getBody()->idxM;
 		Matrix6d Ad_ip = m_body->Ad_ip;
-		J.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_jp * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
+		J.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
 		jointA = jointA->getParent();
 	}
 	if (next != nullptr) {

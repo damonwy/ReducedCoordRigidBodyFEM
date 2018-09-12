@@ -27,6 +27,34 @@ struct Solution {
 		return y.rows();
 	}
 
+	void searchTime(double ti, int search_index, int &output_index, double &s) {
+		// Finds the index of the time interval around ti
+		
+		while (ti > t(search_index))
+		{
+			search_index++;
+		}
+		output_index = search_index - 1;
+		if (output_index < 0) {
+			// Beginning of time
+			output_index = 0;
+			s = 0.0;
+		}
+		else {
+			if (output_index == y.rows() - 1) {
+				// End of time
+				output_index -= 1;
+				s = 1.0;
+			}
+			else {
+				// Somewhere between
+				double t0 = t(output_index);
+				double t1 = t(output_index + 1);
+				s = (ti - t0) / (t1 - t0);
+			}
+		}
+	}
+
 };
 
 class Solver 
@@ -40,6 +68,9 @@ public:
 	void load(const std::string &RESOURCE_DIR);
 	
 private:
+	int nr;
+	int nm;
+
 	std::shared_ptr<World> m_world;
 	Integrator m_integrator;
 	std::shared_ptr<Solution> m_solutions;
@@ -56,8 +87,6 @@ private:
 
 	Eigen::MatrixXd Mtilde;
 	Eigen::VectorXd ftilde;
-
-
 };
 
 #endif // MUSCLEMASS_SRC_SOLVER_H_

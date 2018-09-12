@@ -43,6 +43,10 @@ private:
 	double t;
 	double h;
 	int time_step;
+	int search_idx;
+	int drawHz;
+	double drawH;
+	double tk;
 
 	Eigen::Vector3d grav;
 

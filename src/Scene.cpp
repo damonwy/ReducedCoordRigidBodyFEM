@@ -25,7 +25,8 @@ Scene::Scene() :
 	t(0.0),
 	h(1e-2),
 	grav(0.0, 0.0, 0.0),
-	time_step(0)
+	time_step(0),
+	drawHz(10)
 {
 
 }
@@ -45,6 +46,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	// Units: meters, kilograms, seconds
 	h = js["h"];
 	Eigen::from_json(js["grav"], grav);
+	//drawHz = js["drawHz"];
 
 	m_world = make_shared<World>(SERIAL_CHAIN);
 	m_world->load(RESOURCE_DIR);
@@ -60,6 +62,10 @@ void Scene::init()
 	m_world->init();
 	m_solver->init();
 	m_solution = m_solver->solve();
+
+	tk = m_solution->t(0);
+	drawH = 1.0 / drawHz;
+	search_idx = 0;
 }
 
 void Scene::reset()
@@ -74,14 +80,22 @@ void Scene::solve() {
 
 void Scene::step()
 {	
-	//world->update();
-	if (time_step < m_solution->getNsteps()) {
-		m_solution->step(time_step);
-		time_step++;
-		t += h;
-	}	
-}
+	int n_steps = m_solution->getNsteps();
+	
+	int output_idx;
+	double s;
+	VectorXd ys;
 
+	if(tk < m_solution->t(n_steps-1)) {
+		m_solution->searchTime(tk, search_idx, output_idx, s);
+		search_idx = output_idx;
+		ys = (1 - s)* m_solution->y.row(output_idx) + s * m_solution->y.row(output_idx + 1);
+
+		m_world->getJoint0()->scatterDofs(ys, m_world->nr);
+		tk = tk + drawH;
+	}
+	
+}
 
 void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const
 {
