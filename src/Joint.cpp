@@ -230,23 +230,23 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 
 	
-	glLineWidth(2);
+	glLineWidth(5);
 	glBegin(GL_LINES);
 	
 	// X axis
 	glColor3f(1.0, 0.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(1.0, 0.0, 0.0);
+	glVertex3f(3.0, 0.0, 0.0);
 
 	// Y axis
 	glColor3f(0.0, 1.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 1.0, 0.0);
+	glVertex3f(0.0, 3.0, 0.0);
 
 	// Z axis
 	glColor3f(0.0, 0.0, 1.0);
 	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 0.0, 1.0);
+	glVertex3f(0.0, 0.0, 3.0);
 
 	glEnd();
 
