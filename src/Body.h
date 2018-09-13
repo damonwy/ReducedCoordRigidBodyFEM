@@ -34,7 +34,7 @@ public:
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy energies);
 
-	void load(const std::string &RESOURCE_DIR);
+	void load(const std::string &RESOURCE_DIR, std::string box_shape);
 	void init(int &nm);
 	void update();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;

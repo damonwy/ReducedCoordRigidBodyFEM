@@ -2,18 +2,11 @@
 
 #ifndef MUSCLEMASS_SRC_JOINTREVOLUTE_H_
 #define MUSCLEMASS_SRC_JOINTREVOLUTE_H_
-#include <vector>
-#include <memory>
-#define EIGEN_DONT_ALIGN_STATICALLY
 
-#include <Eigen/Dense>
-#include <iostream>
 #include "Joint.h"
-#include "MLCommon.h"
 
 class SE3;
 class Body;
-
 
 class JointRevolute : public Joint {
 

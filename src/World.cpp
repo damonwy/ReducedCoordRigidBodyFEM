@@ -1,9 +1,9 @@
 #include "World.h"
 
-
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
+
 #include "Joint.h"
 #include "JointRevolute.h"
 #include "Body.h"
@@ -84,7 +84,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				E = SE3::RpToE(Matrix3d::Identity(), p);
 
 				body->setTransform(E);
-				body->load(RESOURCE_DIR);
+				body->load(RESOURCE_DIR, "box10_1_1.obj");
 
 				m_joints[i]->m_q(0) = 0.0;
 
@@ -95,6 +95,74 @@ void World::load(const std::string &RESOURCE_DIR) {
 	case DIFF_REVOLUTE_AXES:
 		break;
 	case BRANCHING:
+		{
+			m_nbodies = 4;
+			m_njoints = 4;
+			m_h = 1.0e-2;
+			m_tspan << 0.0, 15.0;
+			density = 1.0;
+			m_grav << 0.0, -98, 0.0;
+			Eigen::from_json(js["sides"], sides);
+			Vector3d sides_0;
+			sides_0 << 1.0, 10.0, 1.0;
+			Vector3d sides_1;
+			sides_1 << 1.0, 1.0, 20.0;
+
+			auto body0 = make_shared<Body>(density, sides_0);
+			auto body1 = make_shared<Body>(density, sides_1);
+			auto body2 = make_shared<Body>(density, sides_0);
+			auto body3 = make_shared<Body>(density, sides_0);
+
+			auto joint0 = make_shared<JointRevolute>(body0, Vector3d::UnitX());
+			auto joint1 = make_shared<JointRevolute>(body1, Vector3d::UnitY(), joint0);
+			auto joint2 = make_shared<JointRevolute>(body2, Vector3d::UnitX(), joint1);
+			auto joint3 = make_shared<JointRevolute>(body3, Vector3d::UnitZ(), joint1);
+
+			p << 0.0, -5.0, 0.0;
+			E = SE3::RpToE(Matrix3d::Identity(), p);
+
+			body0->setTransform(E);
+			body2->setTransform(E);
+			body3->setTransform(E);
+			body1->setTransform(Matrix4d::Identity());
+
+			m_bodies.push_back(body0);
+			m_bodies.push_back(body1);
+			m_bodies.push_back(body2);
+			m_bodies.push_back(body3);
+			
+			body0->load(RESOURCE_DIR, "box1_10_1.obj");
+			body1->load(RESOURCE_DIR, "box20_1_1.obj");
+			body2->load(RESOURCE_DIR, "box1_10_1.obj");
+			body3->load(RESOURCE_DIR, "box1_10_1.obj");
+			
+			p << 0.0, 15.0, 0.0;
+			E = SE3::RpToE(Matrix3d::Identity(), p);
+
+			joint0->setJointTransform(E);
+
+			p << 0.0, -10.0, 0.0;
+			E = SE3::RpToE(Matrix3d::Identity(), p);
+			joint1->setJointTransform(E);
+
+			p << -10.0, 0.0, 0.0;
+			E = SE3::RpToE(Matrix3d::Identity(), p);
+			joint2->setJointTransform(E);
+
+			p << 10.0, 0.0, 0.0;
+			E = SE3::RpToE(Matrix3d::Identity(), p);
+			joint3->setJointTransform(E);
+
+			joint0->m_q(0) = 0.0;
+			joint1->m_q(0) = 0.0;
+			joint2->m_q(0) = M_PI / 4.0;
+			joint3->m_q(0) = M_PI / 4.0;
+
+			m_joints.push_back(joint0);
+			m_joints.push_back(joint1);
+			m_joints.push_back(joint2);
+			m_joints.push_back(joint3);
+		}
 		break;
 	case SHPERICAL_JOINT:
 		break;
@@ -124,6 +192,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 void World::init() {
 	for (int i = 0; i < m_nbodies; i++) {
+		
 		m_bodies[i]->init(nm);
 		if (i < m_nbodies-1) {
 			m_bodies[i]->next = m_bodies[i + 1];

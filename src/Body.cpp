@@ -31,13 +31,13 @@ sides(_sides)
 Body::~Body() {
 }
 
-void Body::load(const string &RESOURCE_DIR) {
+void Body::load(const string &RESOURCE_DIR, string box_shape) {
 	//read a JSON file
-	ifstream i(RESOURCE_DIR + "input.json");
-	json js;
-	i >> js;
-	i.close();
-	string box_shape = js["boxShape"];
+	//ifstream i(RESOURCE_DIR + "input.json");
+	//json js;
+	//i >> js;
+	//i.close();
+	//string box_shape = js[box_shape];
 
 	// Inits shape
 	boxShape = make_shared<Shape>();

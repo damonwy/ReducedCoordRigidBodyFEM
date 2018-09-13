@@ -46,9 +46,9 @@ void Scene::load(const string &RESOURCE_DIR)
 	// Units: meters, kilograms, seconds
 	h = js["h"];
 	Eigen::from_json(js["grav"], grav);
-	//drawHz = js["drawHz"];
+	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(SERIAL_CHAIN);
+	m_world = make_shared<World>(BRANCHING);
 	m_world->load(RESOURCE_DIR);
 
 	m_solver = make_shared<Solver>(m_world, REDMAX_EULER);
