@@ -72,9 +72,9 @@ void Constraint::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm) {
 
 void Constraint::computeJacEqR(MatrixXd &Gr, MatrixXd &Grdot, VectorXd &gr) {
 
-	computeJacEqM_(Gr, Grdot, gr);
+	computeJacEqR_(Gr, Grdot, gr);
 	if (next != nullptr) {
-		next->computeJacEqM(Gr, Grdot, gr);
+		next->computeJacEqR(Gr, Grdot, gr);
 	}
 }
 
@@ -110,10 +110,18 @@ void Constraint::computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, E
 
 void Constraint::scatterForceEqM(Eigen::MatrixXd Gmt, Eigen::VectorXd lm) {
 	if (nconEM > 0) {
-		fcon = -Gmt.block(idxQ, idxEM, nQ, nconEM) * lm.segment(idxEM, nconEM);
+		int rows = idxQ.cols() * idxQ.rows();
+		MatrixXd temp(rows, nconEM);
+		temp.setZero();
+		for (int i = 0; i < idxQ.cols(); i++) {
+			temp.block(6 * i, 0, 6, nconEM) = Gmt.block(idxQ(0, i), idxEM, 6, nconEM);
+		}
+		fcon.resize(idxQ.cols() * idxQ.rows());
+		fcon = -temp * lm.segment(idxEM, nconEM);
+		//fcon = -Gmt.block(idxQ, idxEM, nQ, nconEM) * lm.segment(idxEM, nconEM);
 	}
 	else {
-		fcon.resize(nQ);
+		fcon.resize(idxQ.cols() * idxQ.rows());
 		fcon.setZero();
 	}
 	scatterForceEqM_();
@@ -124,10 +132,19 @@ void Constraint::scatterForceEqM(Eigen::MatrixXd Gmt, Eigen::VectorXd lm) {
 
 void Constraint::scatterForceEqR(Eigen::MatrixXd Grt, Eigen::VectorXd lr) {
 	if (nconER > 0) {
-		fcon = -Grt.block(idxQ, idxER, nQ, nconER) * lr.segment(idxER, nconER);
+		int rows = idxQ.cols() * idxQ.rows();
+		MatrixXd temp(rows, nconER);
+		temp.setZero();
+		for (int i = 0; i < idxQ.cols(); i++) {
+			temp.block(6 * i, 0, 6, nconER) = Grt.block(idxQ(0, i), idxER, 6, nconER);
+		}
+		fcon = -temp * lr.segment(idxER, nconER);
+
+
+		//fcon = -Grt.block(idxQ, idxER, nQ, nconER) * lr.segment(idxER, nconER);
 	}
 	else {
-		fcon.resize(nQ);
+		fcon.resize(idxQ.cols() * idxQ.rows());
 		fcon.setZero();
 	}
 	scatterForceEqR_();
@@ -138,10 +155,10 @@ void Constraint::scatterForceEqR(Eigen::MatrixXd Grt, Eigen::VectorXd lr) {
 
 void Constraint::scatterForceIneqR(Eigen::MatrixXd Crt, Eigen::VectorXd lr) {
 	if (nconIR > 0) {
-		fcon = -Crt.block(idxQ, idxIR, nQ, nconIR) * lr.segment(idxIR, nconIR);
+		fcon = -Crt.block(idxQ(0), idxIR, idxQ.rows(), nconIR) * lr.segment(idxIR, nconIR);
 	}
 	else {
-		fcon.resize(nQ);
+		fcon.resize(idxQ.rows());
 		fcon.setZero();
 	}
 	scatterForceIneqR_();
@@ -152,10 +169,10 @@ void Constraint::scatterForceIneqR(Eigen::MatrixXd Crt, Eigen::VectorXd lr) {
 
 void Constraint::scatterForceIneqM(Eigen::MatrixXd Cmt, Eigen::VectorXd lm) {
 	if (nconIM > 0) {
-		fcon = -Cmt.block(idxQ, idxIM, nQ, nconIM) * lm.segment(idxEM, nconIM);
+		fcon = -Cmt.block(idxQ(0), idxIM, idxQ.rows(), nconIM) * lm.segment(idxEM, nconIM);
 	}
 	else {
-		fcon.resize(nQ);
+		fcon.resize(idxQ.rows());
 		fcon.setZero();
 	}
 	scatterForceIneqM_();

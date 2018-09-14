@@ -14,10 +14,9 @@ JointRevolute::JointRevolute() {
 
 
 JointRevolute::JointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, std::shared_ptr<Joint> parent):
-Joint(body, 1, parent),
-m_axis(axis)
+Joint(body, 1, parent)
 {
-
+	m_axis = axis;
 }
 
 JointRevolute::~JointRevolute() {

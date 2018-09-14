@@ -82,6 +82,10 @@ shared_ptr<Solution> Solver::solve() {
 			auto body0 = m_world->getBody0();
 			auto joint0 = m_world->getJoint0();
 			// auto spring0 = m_world->getSpring0();
+			if (m_world->m_nconstraints == 0) {
+				m_world->addConstraintNull();
+			}
+
 			auto constraint0 = m_world->getConstraint0();
 
 			int nsteps = m_world->getNsteps();
@@ -142,7 +146,6 @@ shared_ptr<Solution> Solver::solve() {
 					constraint0->computeJacEqR(Gr, Grdot, gr);
 					G.block(0, 0, nem, nr) = Gm * J;
 					G.block(nem, 0, ner, nr) = Gr;
-
 					g.segment(0, nem) = gm;
 					g.segment(nem, ner) = gr;
 				}
@@ -171,7 +174,6 @@ shared_ptr<Solution> Solver::solve() {
 						C.resize(CmJ.rows() + m_Cr.rows(), m_Cr.cols());
 						
 						C << CmJ, m_Cr;
-						//cout << C << endl;
 					}
 				}
 
@@ -194,7 +196,9 @@ shared_ptr<Solution> Solver::solve() {
 
 					VectorXd sol = LHS.ldlt().solve(rhs);
 					qdot1 = sol.segment(0, nr);
+					
 					VectorXd l = sol.segment(nr, sol.rows() - nr);
+
 					constraint0->scatterForceEqM(Gm.transpose(), l.segment(0, nem) / h);
 					constraint0->scatterForceEqR(Gr.transpose(), l.segment(nem, l.rows() - nem) / h);
 

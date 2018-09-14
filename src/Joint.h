@@ -45,7 +45,7 @@ public:
 	Eigen::Matrix4d E_jp;			// Transform of parent joint wrt this joint
 	Matrix6d Ad_jp;					// Adjoint of E_jp
 	Eigen::Matrix4d E_wj;			// Transform of this joint wrt world
-
+	Eigen::Vector3d m_axis;
 	std::shared_ptr<Joint> next;	// Forward recursive ordering
 	std::shared_ptr<Joint> prev;	// Reverse recursive ordering
 	int idxR;						// Reduced indices

@@ -19,6 +19,7 @@ class MatrixStack;
 class Program;
 class Constraint;
 class ConstraintJointLimit;
+class ConstraintNull;
 
 class World
 {
@@ -30,6 +31,7 @@ public:
 	std::shared_ptr<Body> addBody(double density, Eigen::Vector3d sides, Eigen::Vector3d p, Eigen::Matrix3d R, const std::string &RESOURCE_DIR, std::string file_name);
 	std::shared_ptr<JointRevolute> addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
 	std::shared_ptr<ConstraintJointLimit> addConstraintJointLimit(std::shared_ptr<Joint> joint, double ql, double qu);
+	std::shared_ptr<ConstraintNull> addConstraintNull();
 
 	void load(const std::string &RESOURCE_DIR);
 	void init();
@@ -65,7 +67,9 @@ public:
 	int ne;
 	int nim;
 	int nir;
-
+	int m_nbodies;
+	int m_njoints;
+	int m_nconstraints;
 private:
 	WorldType m_type;
 	Eigen::Vector3d m_grav;
@@ -73,9 +77,7 @@ private:
 	double m_h;
 	Eigen::Vector2d m_tspan;
 
-	int m_nbodies;
-	int m_njoints;
-	int m_nconstraints;
+
 
 	double m_Hexpected;
 

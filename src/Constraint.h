@@ -43,6 +43,8 @@ public:
 	void scatterForceIneqR(Eigen::MatrixXd Crt, Eigen::VectorXd lr);
 	void scatterForceIneqM(Eigen::MatrixXd Cmt, Eigen::VectorXd lm);
 	virtual void computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
+	virtual void computeJacEqM_(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm);
+	virtual void computeJacEqR_(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr);
 
 	int nconEM;								// Number of maximal equality constraints
 	int nconER;								// Number of reduced equality constraints
@@ -53,17 +55,16 @@ public:
 	int idxER;								// Reduced equality constraint indices
 	int idxIM;								// Maximal inequality constraint indices
 	int idxIR;								// Reduced inequality constraint indices
-	int idxQ;								// Associated DOF indices
+	Eigen::MatrixXd idxQ;								// Associated DOF indices
 	bool activeM;							// Whether the maximal inequality constraint is active
 	bool activeR;							// Whether the reduced inequality constraint is active
-	Vector6d fcon;							// Computed constraint force
+	Eigen::VectorXd fcon;							// Computed constraint force
 	std::shared_ptr<Constraint> next;		// Next constraint in traversal order
 	std::string m_name;
 	int m_uid;
 
 protected:
-	void computeJacEqM_(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm);
-	void computeJacEqR_(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr);
+	
 	void computeJacIneqM_(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm);
 	
 

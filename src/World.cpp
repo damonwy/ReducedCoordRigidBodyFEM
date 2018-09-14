@@ -12,6 +12,8 @@
 #include "SE3.h"
 #include "JsonEigen.h"
 #include "ConstraintJointLimit.h"
+#include "ConstraintNull.h"
+#include "ConstraintLoop.h"
 
 using namespace std;
 using namespace Eigen;
@@ -94,6 +96,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 			auto b4 = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 			auto b5 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
 			auto b6 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+			auto b7 = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+			auto b8 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+			auto b9 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
 
 			auto j0 = addJointRevolute(b0, Vector3d::UnitX(), Vector3d(0.0, 15.0, 0.0), Matrix3d::Identity(), 0.0);
 			auto j1 = addJointRevolute(b1, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j0);
@@ -102,11 +107,45 @@ void World::load(const std::string &RESOURCE_DIR) {
 			auto j4 = addJointRevolute(b4, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j2);
 			auto j5 = addJointRevolute(b5, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
 			auto j6 = addJointRevolute(b6, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
+			auto j7 = addJointRevolute(b7, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j3);
+			auto j8 = addJointRevolute(b8, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j7);
+			auto j9 = addJointRevolute(b9, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j7);
 		}
 		break;
 	case SHPERICAL_JOINT:
 		break;
 	case LOOP:
+		{
+			m_h = 1.0e-2;
+			m_tspan << 0.0, 50.0;
+			density = 1.0;
+			m_grav << 0.0, -98, 0.0;
+			Eigen::from_json(js["sides"], sides);
+			Vector3d sides_0;
+			sides_0 << 1.0, 10.0, 1.0;
+			Vector3d sides_1;
+			sides_1 << 20.0, 1.0, 1.0;
+
+			auto b0 = addBody(density, sides_1, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
+			auto b1 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+			auto b2 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+			auto b3 = addBody(density, sides_1, Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
+			auto b4 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+
+			auto j0 = addJointRevolute(b0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+			auto j1 = addJointRevolute(b1, Vector3d::UnitZ(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j0);
+			auto j2 = addJointRevolute(b2, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j0);
+			auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j1);
+			auto j4 = addJointRevolute(b4, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j3);
+			j4->m_qdot(0) = 5.0;
+
+			auto constraint = make_shared<ConstraintLoop>(b2, b3);
+			m_constraints.push_back(constraint);
+			constraint->setPositions(Vector3d(0.0, -5.0, 0.0), Vector3d(10.0, 0.0, 0.0));
+			m_nconstraints++;
+			m_constraints[0]->countDofs(nem, ner, nim, nir);
+
+		}
 		break;
 	case JOINT_TORQUE:
 		break;
@@ -191,6 +230,15 @@ std::shared_ptr<ConstraintJointLimit> World::addConstraintJointLimit(shared_ptr<
 	return constraint;
 }
 
+
+std::shared_ptr<ConstraintNull> World::addConstraintNull() {
+
+	auto constraint = make_shared<ConstraintNull>();
+	m_nconstraints++;
+	m_constraints.push_back(constraint);
+	return constraint;
+
+}
 
 void World::init() {
 	for (int i = 0; i < m_nbodies; i++) {

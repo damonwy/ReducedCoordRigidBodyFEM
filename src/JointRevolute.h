@@ -18,7 +18,7 @@ public:
 	virtual void updateSelf();
 	virtual void draw();
 
-	Eigen::Vector3d m_axis;
+	//Eigen::Vector3d m_axis;
 
 };
 

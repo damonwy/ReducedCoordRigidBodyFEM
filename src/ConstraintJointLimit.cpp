@@ -23,8 +23,16 @@ m_joint(joint)
 void ConstraintJointLimit::computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr) {
 	int row = idxIR;
 	int col = m_joint->idxR;
-	idxQ = col;
+	//idxQ = col;
 	nQ = m_joint->m_ndof;
+	idxQ.resize(nQ, 1);
+	int temp = col;
+	for (int i = 0; i < nQ; i++) {
+		
+		idxQ(i) = temp;
+		temp++;
+	}
+
 
 	if (m_joint->m_q(0) <= m_ql) {
 		Cr.block(row, col, nconIR, m_joint->m_ndof).setOnes();
