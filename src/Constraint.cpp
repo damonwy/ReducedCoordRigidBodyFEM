@@ -44,6 +44,19 @@ void Constraint::countDofs(int &nem, int &ner, int &nim, int &nir) {
 	nir += nconIR;
 }
 
+void Constraint::getActiveList(std::vector<int> &listM, std::vector<int> &listR) {
+	// Gets list of active inequality indices
+	if (activeM) {
+		listM.push_back(idxIM);
+	}
+	if (activeR) {
+		listR.push_back(idxIR);
+	}
+	if (next != nullptr) {
+		next->getActiveList(listM, listR);
+	}
+}
+
 void Constraint::computeJacEqM(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm) {
 
 	computeJacEqM_(Gm, Gmdot, gm);
@@ -92,6 +105,82 @@ void Constraint::computeJacIneqR(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Ei
 }
 
 void Constraint::computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr) {
+
+	cout << endl;
+}
+
+void Constraint::scatterForceEqM(Eigen::MatrixXd Gmt, Eigen::VectorXd lm) {
+	if (nconEM > 0) {
+		fcon = -Gmt.block(idxQ, idxEM, nQ, nconEM) * lm.segment(idxEM, nconEM);
+	}
+	else {
+		fcon.resize(nQ);
+		fcon.setZero();
+	}
+	scatterForceEqM_();
+	if (next != nullptr) {
+		next->scatterForceEqM(Gmt, lm);
+	}
+}
+
+void Constraint::scatterForceEqR(Eigen::MatrixXd Grt, Eigen::VectorXd lr) {
+	if (nconER > 0) {
+		fcon = -Grt.block(idxQ, idxER, nQ, nconER) * lr.segment(idxER, nconER);
+	}
+	else {
+		fcon.resize(nQ);
+		fcon.setZero();
+	}
+	scatterForceEqR_();
+	if (next != nullptr) {
+		next->scatterForceEqR(Grt, lr);
+	}
+}
+
+void Constraint::scatterForceIneqR(Eigen::MatrixXd Crt, Eigen::VectorXd lr) {
+	if (nconIR > 0) {
+		fcon = -Crt.block(idxQ, idxIR, nQ, nconIR) * lr.segment(idxIR, nconIR);
+	}
+	else {
+		fcon.resize(nQ);
+		fcon.setZero();
+	}
+	scatterForceIneqR_();
+	if (next != nullptr) {
+		next->scatterForceIneqR(Crt, lr);
+	}
+}
+
+void Constraint::scatterForceIneqM(Eigen::MatrixXd Cmt, Eigen::VectorXd lm) {
+	if (nconIM > 0) {
+		fcon = -Cmt.block(idxQ, idxIM, nQ, nconIM) * lm.segment(idxEM, nconIM);
+	}
+	else {
+		fcon.resize(nQ);
+		fcon.setZero();
+	}
+	scatterForceIneqM_();
+	if (next != nullptr) {
+		next->scatterForceIneqM(Cmt, lm);
+	}
+}
+
+void Constraint::scatterForceEqM_() {
+
+
+}
+
+void Constraint::scatterForceEqR_() {
+
+
+}
+
+void Constraint::scatterForceIneqR_() {
+
+
+}
+
+void Constraint::scatterForceIneqM_() {
 
 
 }

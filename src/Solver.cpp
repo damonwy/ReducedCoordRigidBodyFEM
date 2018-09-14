@@ -4,7 +4,7 @@
 #include "Body.h"
 #include "Joint.h"
 #include "ConstraintJointLimit.h"
-
+#include "QuadProgMosek.h"
 
 #include <iostream>
 #include <fstream>
@@ -43,6 +43,7 @@ shared_ptr<Solution> Solver::solve() {
 		{
 			int nr = m_world->nr;
 			int nm = m_world->nm;
+
 			M.resize(nm, nm);
 			M.setZero();
 			f.resize(nm);
@@ -77,8 +78,6 @@ shared_ptr<Solution> Solver::solve() {
 			g.resize(ne);
 			G.setZero();
 			g.setZero();
-
-			int ni = 0;
 
 			auto body0 = m_world->getBody0();
 			auto joint0 = m_world->getJoint0();
@@ -122,35 +121,21 @@ shared_ptr<Solution> Solver::solve() {
 				cr.setZero();
 
 				// sceneFcn()
-				//cout << "k" << k << endl << endl;
 				M = body0->computeMass(grav, M);
-
-				//cout << "M" << M << endl << endl; 
-
 				f = body0->computeForce(grav, f);
-				//cout << "f" << f << endl << endl;
 
 				// spring..
-				J = joint0->computeJacobian(J, nm, nr);
-				//cout << "J" << J << endl << endl;
-				
+				J = joint0->computeJacobian(J, nm, nr);	
 				Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
-				//cout << "JD" << Jdot << endl << endl;
 				
 				// spring jacobian todo
 				
 				q0 = m_solutions->y.row(k - 1).segment(0, nr);
 				qdot0 = m_solutions->y.row(k - 1).segment(nr, nr);
-				//cout << "q" << q0 << endl << endl;
-				//cout << "qdot0" << qdot0 << endl << endl;
-
-				Mtilde = J.transpose() * M * J;
 				
+				Mtilde = J.transpose() * M * J;
 				Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
-				//cout << "Mtilde" << Mtilde << endl << endl;
-
 				ftilde = Mtilde * qdot0 + h * J.transpose() * (f - M * Jdot * qdot0);
-				//cout << "ftilde" << ftilde << endl << endl;
 				
 				if (ne > 0) {
 					constraint0->computeJacEqM(Gm, Gmdot, gm);
@@ -166,42 +151,121 @@ shared_ptr<Solution> Solver::solve() {
 					// Check for active inequality constraint
 					constraint0->computeJacIneqM(Cm, Cmdot, cm);
 					constraint0->computeJacIneqR(Cr, Crdot, cr);
+					rowsR.clear();
+					rowsM.clear();
 
+					constraint0->getActiveList(rowsM, rowsR);
+					nim = rowsM.size();
+					nir = rowsR.size();
+					ni = nim + nir;
 
+					if (ni > 0) {
+						Eigen::VectorXi m_rowsM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsM.data(), rowsM.size());
+						Eigen::VectorXi m_rowsR = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsR.data(), rowsR.size());
+						Cm = Cm(m_rowsM, Eigen::placeholders::all);
+						Cr = Cr(m_rowsR, Eigen::placeholders::all);
+						MatrixXd CmJ = Cm * J;
+
+						C.resize(CmJ.rows() + Cr.rows(), Cr.cols());
+						C << CmJ, Cr;
+					}
 				}
-				// Solve 
+
 				if (ne == 0 && ni == 0) {	// No constraints	
 					qdot1 = Mtilde.ldlt().solve(ftilde);
-					//cout << "qdot1" << qdot1 << endl << endl;  
 
 				}
 				else if (ne > 0 && ni == 0) {  // Just equality
-					// todo
-					// kkt
+					int rows = Mtilde.rows() + G.rows();
+					int cols = Mtilde.cols() + G.rows();
+					MatrixXd LHS(rows, cols);
+					VectorXd rhs(rows);
+					LHS.setZero();
+					rhs.setZero();
+					LHS.block(0, 0, Mtilde.rows(), Mtilde.cols()) = Mtilde;
+					LHS.block(0, Mtilde.cols(), Mtilde.rows(), G.rows()) = G.transpose();
+					LHS.block(Mtilde.rows(), 0, G.rows(), G.cols()) = G;
+					rhs.segment(0, ftilde.rows()) = ftilde;
+					rhs.segment(ftilde.rows(), g.rows()) = g;
+
+					VectorXd sol = LHS.ldlt().solve(rhs);
+					qdot1 = sol.segment(0, nr);
+					VectorXd l = sol.segment(nr, sol.rows() - nr);
+					constraint0->scatterForceEqM(Gm.transpose(), l.segment(0, nem) / h);
+					constraint0->scatterForceEqR(Gr.transpose(), l.segment(nem, l.rows() - nem) / h);
+
 				}
 				else if (ne == 0 && ni > 0) {  // Just inequality
-					// todo
-					// qp
+					shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
+					program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
+					program_->setParamInt(MSK_IPAR_LOG, 10);
+					program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
+
+					program_->setNumberOfVariables(nr);
+					program_->setObjectiveMatrix(Mtilde.sparseView());
+					program_->setObjectiveVector(-ftilde);
+					program_->setNumberOfInequalities(ni);
+					program_->setInequalityMatrix(C.sparseView());
+
+					VectorXd cvec(ni);
+					cvec.setZero();
+
+					program_->setInequalityVector(cvec);
+
+					bool success = program_->solve();
+					VectorXd sol = program_->getPrimalSolution();
+					qdot1 = sol.segment(0, nr);
+					//cout << qdot1 << endl;
+
 				}
 				else {  // Both equality and inequality
-					// todo
-					// qp
+					shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
+					program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
+					program_->setParamInt(MSK_IPAR_LOG, 10);
+					program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
+
+					program_->setNumberOfVariables(nr);
+
+					program_->setObjectiveMatrix(Mtilde.sparseView());
+					program_->setObjectiveVector(-ftilde);
+					program_->setNumberOfInequalities(ni);
+					program_->setInequalityMatrix(C.sparseView());
+
+					VectorXd cvec(ni);
+					cvec.setZero();
+
+					program_->setInequalityVector(cvec);
+					program_->setEqualityMatrix(G.sparseView());
+
+					VectorXd gvec(ne);
+					gvec.setZero();
+					program_->setEqualityVector(gvec);
+
+					bool success = program_->solve();
+					VectorXd sol = program_->getPrimalSolution();
+					qdot1 = sol.segment(0, nr);
+
 				}
-
 				qddot = (qdot1 - qdot0) / h;
-				//cout << "qddot" << qddot << endl << endl;
-
 				q1 = q0 + h * qdot1;
-				//cout << "q1" << q1 << endl << endl;
 
 				yk.segment(0, nr) = q1;
 				yk.segment(nr, nr) = qdot1;
 
-				//cout << "yk" << yk << endl << endl;
-
 				ydotk.segment(0, nr) = qdot1;
 				ydotk.segment(nr, nr) = qddot;
-				//cout << "ydotk" << ydotk << endl << endl;
 
 				joint0->scatterDofs(yk, nr);
 				joint0->scatterDDofs(ydotk, nr);

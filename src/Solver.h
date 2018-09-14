@@ -8,6 +8,8 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
+#include <Eigen\src\Core\util\IndexedViewHelper.h>
+
 #include <json.hpp>
 #include "MLCommon.h"
 
@@ -109,6 +111,9 @@ private:
 
 	Eigen::MatrixXd C;
 	Eigen::VectorXd c;
+
+	std::vector<int> rowsM;
+	std::vector<int> rowsR;
 
 };
 

@@ -112,7 +112,40 @@ void World::load(const std::string &RESOURCE_DIR) {
 		break;
 	case JOINT_LIMITS:
 		{
-				
+			m_h = 1.0e-2;
+			m_tspan << 0.0, 50.0;
+			density = 1.0;
+			m_grav << 0.0, -98, 0.0;
+			Eigen::from_json(js["sides"], sides);
+			Vector3d sides_0;
+			sides_0 << 1.0, 10.0, 1.0;
+			Vector3d sides_1;
+			sides_1 << 20.0, 1.0, 1.0;
+
+			for (int i = 0; i < 2; i++) {
+				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+				// Inits joints
+				if (i == 0) {
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				}
+				else {
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				}
+
+				if (i > 0) {
+					auto constraint = make_shared<ConstraintJointLimit>(m_joints[i]);
+					m_constraints.push_back(constraint);
+					constraint->setLimits(-M_PI / 4, M_PI / 4);
+					m_nconstraints++;
+				}
+			}
+
+			for (int i = 0; i < m_nconstraints; i++) {
+				m_constraints[i]->countDofs(nem, ner, nim, nir);
+				if (i < m_nconstraints - 1) {
+					m_constraints[i]->next = m_constraints[i + 1];
+				}
+			}
 
 		}
 

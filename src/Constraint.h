@@ -37,11 +37,17 @@ public:
 	void computeJacIneqM(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm);
 	void computeJacIneqR(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
 	void countDofs(int &nem, int &ner, int &nim, int &nir);
-
+	void getActiveList(std::vector<int> &listM, std::vector<int> &listR);
+	void scatterForceEqM(Eigen::MatrixXd Gmt, Eigen::VectorXd lm);
+	void scatterForceEqR(Eigen::MatrixXd Grt, Eigen::VectorXd lr);
+	void scatterForceIneqR(Eigen::MatrixXd Crt, Eigen::VectorXd lr);
+	void scatterForceIneqM(Eigen::MatrixXd Cmt, Eigen::VectorXd lm);
+	virtual void computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
 	int nconEM;								// Number of maximal equality constraints
 	int nconER;								// Number of reduced equality constraints
 	int nconIM;								// Number of maximal inequality constraints
 	int nconIR;								// Number of reduced inequality constraints
+	int nQ;								
 	int idxEM;								// Maximal equality constraint indices
 	int idxER;								// Reduced equality constraint indices
 	int idxIM;								// Maximal inequality constraint indices
@@ -58,7 +64,12 @@ protected:
 	void computeJacEqM_(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm);
 	void computeJacEqR_(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr);
 	void computeJacIneqM_(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm);
-	void computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
+	
+
+	void scatterForceEqM_();
+	void scatterForceEqR_();
+	void scatterForceIneqR_();
+	void scatterForceIneqM_();
 };
 
 
