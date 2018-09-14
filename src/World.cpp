@@ -11,6 +11,7 @@
 #include "Program.h"
 #include "SE3.h"
 #include "JsonEigen.h"
+#include "ConstraintJointLimit.h"
 
 using namespace std;
 using namespace Eigen;
@@ -18,7 +19,10 @@ using json = nlohmann::json;
 
 World::World():
 nr(0),
-nm(0)
+nm(0),
+m_nbodies(0),
+m_njoints(0),
+m_constraints(0)
 {
 
 }
@@ -26,7 +30,10 @@ nm(0)
 World::World(WorldType type):
 m_type(type),
 nr(0),
-nm(0)
+nm(0),
+m_nbodies(0),
+m_njoints(0),
+m_nconstraints(0)
 {
 }
 
@@ -46,7 +53,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 	Matrix4d E;
 	Vector3d p;
 
-
 	switch (m_type)
 	{
 	case SERIAL_CHAIN: 
@@ -55,40 +61,23 @@ void World::load(const std::string &RESOURCE_DIR) {
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
-			m_nbodies = 5;
-			m_njoints = 5;
+			//m_nbodies = 5;
+			//m_njoints = 5;
 			m_Hexpected = 10000; // todo
 			m_tspan << 0.0, 5.0;
 			
 			// Inits rigid bodies
-			for (int i = 0; i < m_nbodies; i++) {
+			for (int i = 0; i < 5; i++) {
 
-				auto body = make_shared<Body>(density, sides);
+				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
 				// Inits joints
 				if (i == 0) {
-					auto joint = make_shared<JointRevolute>(body, Vector3d::UnitZ());
-					joint->setJointTransform(Matrix4d::Identity());
-					m_joints.push_back(joint);
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 				}
 				else {
-					auto joint = make_shared<JointRevolute>(body, Vector3d::UnitZ(), m_joints[i-1]);
-					p << 10.0, 0.0, 0.0; // todo
-					E = SE3::RpToE(Matrix3d::Identity(), p);
-
-					joint->setJointTransform(E);
-					m_joints.push_back(joint);
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i-1]);
 				}
-
-				p << 5.0, 0.0, 0.0;
-				E = SE3::RpToE(Matrix3d::Identity(), p);
-
-				body->setTransform(E);
-				body->load(RESOURCE_DIR, "box10_1_1.obj");
-
-				m_joints[i]->m_q(0) = 0.0;
-
-				m_bodies.push_back(body);
 			}
 			break;
 		}
@@ -96,8 +85,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 		break;
 	case BRANCHING:
 		{
-			m_nbodies = 7;
-			m_njoints = 7;
 			m_h = 1.0e-2;
 			m_tspan << 0.0, 50.0;
 			density = 1.0;
@@ -108,95 +95,21 @@ void World::load(const std::string &RESOURCE_DIR) {
 			Vector3d sides_1;
 			sides_1 << 20.0, 1.0, 1.0;
 
-			auto body0 = make_shared<Body>(density, sides_0);
-			auto body1 = make_shared<Body>(density, sides_1);
-			auto body2 = make_shared<Body>(density, sides_0);
-			auto body3 = make_shared<Body>(density, sides_0);
-			auto body4 = make_shared<Body>(density, sides);
-			auto body5 = make_shared<Body>(density, sides_0);
-			auto body6 = make_shared<Body>(density, sides_0);
+			auto b0 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+			auto b1 = addBody(density, sides_1, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
+			auto b2 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+			auto b3 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+			auto b4 = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+			auto b5 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+			auto b6 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
 
-			auto joint0 = make_shared<JointRevolute>(body0, Vector3d::UnitX());
-			auto joint1 = make_shared<JointRevolute>(body1, Vector3d::UnitY(), joint0);
-			auto joint2 = make_shared<JointRevolute>(body2, Vector3d::UnitX(), joint1);
-			auto joint3 = make_shared<JointRevolute>(body3, Vector3d::UnitZ(), joint1);
-			auto joint4 = make_shared<JointRevolute>(body4, Vector3d::UnitY(), joint2);
-			auto joint5 = make_shared<JointRevolute>(body5, Vector3d::UnitX(), joint4);
-			auto joint6 = make_shared<JointRevolute>(body6, Vector3d::UnitY(), joint4);
-
-			p << 0.0, -5.0, 0.0;
-			E = SE3::RpToE(Matrix3d::Identity(), p);
-
-			body0->setTransform(E);
-			body2->setTransform(E);
-			body3->setTransform(E);
-			body5->setTransform(E);
-			body6->setTransform(E);
-
-			body1->setTransform(Matrix4d::Identity());
-			body4->setTransform(Matrix4d::Identity());
-			
-
-			m_bodies.push_back(body0);
-			m_bodies.push_back(body1);
-			m_bodies.push_back(body2);
-			m_bodies.push_back(body3);
-			m_bodies.push_back(body4);
-			m_bodies.push_back(body5);
-			m_bodies.push_back(body6);
-			
-			body0->load(RESOURCE_DIR, "box1_10_1.obj");
-			body1->load(RESOURCE_DIR, "box20_1_1.obj");
-			body2->load(RESOURCE_DIR, "box1_10_1.obj");
-			body3->load(RESOURCE_DIR, "box1_10_1.obj");
-			body4->load(RESOURCE_DIR, "box10_1_1.obj");
-			body5->load(RESOURCE_DIR, "box1_10_1.obj");
-			body6->load(RESOURCE_DIR, "box1_10_1.obj");
-			
-			p << 0.0, 15.0, 0.0;
-			E = SE3::RpToE(Matrix3d::Identity(), p);
-			joint0->setJointTransform(E);
-
-			p << 0.0, -10.0, 0.0;
-			E = SE3::RpToE(Matrix3d::Identity(), p);
-			joint1->setJointTransform(E);
-
-			p << -10.0, 0.0, 0.0;
-			E = SE3::RpToE(Matrix3d::Identity(), p);
-			joint2->setJointTransform(E);
-
-			p << 10.0, 0.0, 0.0;
-			E = SE3::RpToE(Matrix3d::Identity(), p);
-			joint3->setJointTransform(E);
-
-			p << 0.0, -10.0, 0.0;
-			E = SE3::RpToE(Matrix3d::Identity(), p);
-			joint4->setJointTransform(E);
-
-			p << -5.0, 0.0, 0.0;
-			E = SE3::RpToE(Matrix3d::Identity(), p);
-			joint5->setJointTransform(E);
-
-			p << 5.0, 0.0, 0.0;
-			E = SE3::RpToE(Matrix3d::Identity(), p);
-			joint6->setJointTransform(E);
-
-
-			joint0->m_q(0) = 0.0;
-			joint1->m_q(0) = 0.0;
-			joint2->m_q(0) = M_PI / 4.0;
-			joint3->m_q(0) = M_PI / 4.0;
-			joint4->m_q(0) = M_PI / 4.0;
-			joint5->m_q(0) = M_PI / 4.0;
-			joint6->m_q(0) = M_PI / 4.0;
-
-			m_joints.push_back(joint0);
-			m_joints.push_back(joint1);
-			m_joints.push_back(joint2);
-			m_joints.push_back(joint3);
-			m_joints.push_back(joint4);
-			m_joints.push_back(joint5);
-			m_joints.push_back(joint6);
+			auto j0 = addJointRevolute(b0, Vector3d::UnitX(), Vector3d(0.0, 15.0, 0.0), Matrix3d::Identity(), 0.0);
+			auto j1 = addJointRevolute(b1, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j0);
+			auto j2 = addJointRevolute(b2, Vector3d::UnitX(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j1);
+			auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j1);
+			auto j4 = addJointRevolute(b4, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j2);
+			auto j5 = addJointRevolute(b5, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
+			auto j6 = addJointRevolute(b6, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
 		}
 		break;
 	case SHPERICAL_JOINT:
@@ -206,6 +119,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 	case JOINT_TORQUE:
 		break;
 	case JOINT_LIMITS:
+		{
+				
+
+		}
+
 		break;
 	case EQUALITY_CONSTRAINED_ANGLES:
 		break;
@@ -224,6 +142,27 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 	
 }
+
+std::shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p, Matrix3d R, const string &RESOURCE_DIR, string file_name) {
+	auto body = make_shared<Body>(density, sides);
+	Matrix4d E = SE3::RpToE(R, p);
+	body->setTransform(E);
+	body->load(RESOURCE_DIR, file_name);
+	m_bodies.push_back(body);
+	m_nbodies++;
+	return body;
+}
+
+std::shared_ptr<Joint> World::addJointRevolute(shared_ptr<Body> body, Vector3d axis, Vector3d p, Matrix3d R, double q, shared_ptr<Joint> parent) {
+	auto joint = make_shared<JointRevolute>(body, axis, parent);
+	Matrix4d E = SE3::RpToE(R, p);
+	joint->setJointTransform(E);
+	joint->m_q(0) = q;
+	m_joints.push_back(joint);
+	m_njoints++;
+	return joint;
+}
+
 
 void World::init() {
 	for (int i = 0; i < m_nbodies; i++) {
@@ -265,48 +204,28 @@ void World::update() {
 	}
 }
 
-void World::updateQ() {
-	for (int i = 0; i < m_nbodies; i++) {
-		auto body = m_bodies[i];
-		//body->updateQ();
-
-	}
-}
-
-void World::updateQDot() {
-
-}
-
 int World::getNsteps() {
 	// Computes the number of results
 	int nsteps = (m_tspan(1) - m_tspan(0)) / m_h;
 	return nsteps;
 }
 
-void World::addBody(shared_ptr<Body> body) {
-
-}
-
-void World::addJoint(shared_ptr<Joint> joint) {
-
-}
-
-std::shared_ptr<Body> World::getBody(int uid) {
+shared_ptr<Body> World::getBody(int uid) {
 	MapBodyUID::const_iterator it = m_bodyUID.find(uid);
 	return (it == m_bodyUID.end() ? NULL : it->second);
 }
 
-std::shared_ptr<Body> World::getBody(const std::string &name) {
+shared_ptr<Body> World::getBody(const string &name) {
 	MapBodyName::const_iterator it = m_bodyName.find(name);
 	return (it == m_bodyName.end() ? NULL : it->second);
 }
 
-std::shared_ptr<Joint> World::getJoint(int uid) {
+shared_ptr<Joint> World::getJoint(int uid) {
 	MapJointUID::const_iterator it = m_jointUID.find(uid);
 	return (it == m_jointUID.end() ? NULL : it->second);
 }
 
-std::shared_ptr<Joint> World::getJoint(const std::string &name) {
+shared_ptr<Joint> World::getJoint(const string &name) {
 	MapJointName::const_iterator it = m_jointName.find(name);
 	return (it == m_jointName.end() ? NULL : it->second);
 }

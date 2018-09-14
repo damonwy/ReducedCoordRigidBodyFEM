@@ -16,6 +16,7 @@ class Joint;
 class Body;
 class MatrixStack;
 class Program;
+class Constraint;
 
 class World
 {
@@ -24,8 +25,8 @@ public:
 	World(WorldType type);
 	virtual ~World();
 
-	void addBody(std::shared_ptr<Body> body);
-	void addJoint(std::shared_ptr<Joint> joint);
+	std::shared_ptr<Body> addBody(double density, Eigen::Vector3d sides, Eigen::Vector3d p, Eigen::Matrix3d R, const std::string &RESOURCE_DIR, std::string file_name);
+	std::shared_ptr<Joint> World::addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
 
 	void load(const std::string &RESOURCE_DIR);
 	void init();
@@ -46,17 +47,19 @@ public:
 	std::shared_ptr<Joint> getJoint(int uid);
 	std::shared_ptr<Joint> getJoint(const std::string &name);
 
+
 	std::shared_ptr<Body> getBody0() const { return m_bodies[0]; }
 	std::shared_ptr<Joint> getJoint0() const { return m_joints[0]; }
+	std::shared_ptr<Constraint> getConstraint0() const { return m_constraints[0]; }
 
 	Eigen::Vector2d getTspan() const { return m_tspan; }
 	int getNsteps();
 
-	void updateQ();
-	void updateQDot();
-
 	int nm;
 	int nr;
+	int nem;
+	int ner;
+	int ne;
 
 private:
 	WorldType m_type;
@@ -64,13 +67,16 @@ private:
 	double m_t;
 	double m_h;
 	Eigen::Vector2d m_tspan;
+
 	int m_nbodies;
 	int m_njoints;
+	int m_nconstraints;
+
 	double m_Hexpected;
 
-	// 
 	std::vector<std::shared_ptr<Body>> m_bodies;
 	std::vector<std::shared_ptr<Joint>> m_joints;
+	std::vector<std::shared_ptr<Constraint>> m_constraints;
 
 	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;
 	typedef std::map<int, std::shared_ptr<Body>> MapBodyUID;
