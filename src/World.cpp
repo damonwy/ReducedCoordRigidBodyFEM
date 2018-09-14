@@ -18,22 +18,14 @@ using namespace Eigen;
 using json = nlohmann::json;
 
 World::World():
-nr(0),
-nm(0),
-m_nbodies(0),
-m_njoints(0),
-m_constraints(0)
+nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_constraints(0)
 {
 
 }
 
 World::World(WorldType type):
 m_type(type),
-nr(0),
-nm(0),
-m_nbodies(0),
-m_njoints(0),
-m_nconstraints(0)
+nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nconstraints(0)
 {
 }
 

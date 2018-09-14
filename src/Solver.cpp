@@ -3,6 +3,8 @@
 #include "World.h"
 #include "Body.h"
 #include "Joint.h"
+#include "ConstraintJointLimit.h"
+
 
 #include <iostream>
 #include <fstream>
@@ -51,18 +53,37 @@ shared_ptr<Solution> Solver::solve() {
 			Jdot.setZero();
 
 			// constraints
-			// int nem = m_world->nem;
-			// int ner = m_world->ner;
-			// int ne = nem + ner;
-			int nem = 0;
-			int ner = 0;
+			int nem = m_world->nem;
+			int ner = m_world->ner;
 			int ne = nem + ner;
+
+			Gm.resize(nem, nm);
+			Gm.setZero();
+			Gmdot.resize(nem, nm);
+			Gmdot.setZero();
+
+			gm.resize(nem);
+			gm.setZero();
+
+			Gr.resize(ner, nr);
+			Gr.setZero();
+			Grdot.resize(ner, nr);
+			Grdot.setZero();
+
+			gr.resize(ner);
+			gr.setZero();
+
+			G.resize(ne, nr);
+			g.resize(ne);
+			G.setZero();
+			g.setZero();
+
 			int ni = 0;
 
 			auto body0 = m_world->getBody0();
 			auto joint0 = m_world->getJoint0();
 			// auto spring0 = m_world->getSpring0();
-			// auto constraint0 = m_world->getConstraint0();
+			auto constraint0 = m_world->getConstraint0();
 
 			int nsteps = m_world->getNsteps();
 			m_solutions->t.resize(nsteps);
@@ -82,6 +103,24 @@ shared_ptr<Solution> Solver::solve() {
 			VectorXd ydotk(2 * nr);
 
 			for (int k = 1; k < nsteps; k++) {
+				int nim = m_world->nim;
+				int nir = m_world->nir;
+				int ni = nim + nir;
+
+				Cm.resize(nim, nm);
+				Cm.setZero();
+				Cmdot.resize(nim, nm);
+				Cmdot.setZero();
+				cm.resize(nim);
+				cm.setZero();
+
+				Cr.resize(nir, nr);
+				Cr.setZero();
+				Crdot.resize(nir, nr);
+				Crdot.setZero();
+				cr.resize(nir);
+				cr.setZero();
+
 				// sceneFcn()
 				//cout << "k" << k << endl << endl;
 				M = body0->computeMass(grav, M);
@@ -112,7 +151,24 @@ shared_ptr<Solution> Solver::solve() {
 
 				ftilde = Mtilde * qdot0 + h * J.transpose() * (f - M * Jdot * qdot0);
 				//cout << "ftilde" << ftilde << endl << endl;
-		
+				
+				if (ne > 0) {
+					constraint0->computeJacEqM(Gm, Gmdot, gm);
+					constraint0->computeJacEqR(Gr, Grdot, gr);
+					G.block(0, 0, nem, nr) = Gm * J;
+					G.block(nem, 0, ner, nr) = Gr;
+
+					g.segment(0, nem) = gm;
+					g.segment(nem, ner) = gr;
+				}
+
+				if (ni > 0) {
+					// Check for active inequality constraint
+					constraint0->computeJacIneqM(Cm, Cmdot, cm);
+					constraint0->computeJacIneqR(Cr, Crdot, cr);
+
+
+				}
 				// Solve 
 				if (ne == 0 && ni == 0) {	// No constraints	
 					qdot1 = Mtilde.ldlt().solve(ftilde);

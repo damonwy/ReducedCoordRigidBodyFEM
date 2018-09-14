@@ -32,6 +32,11 @@ public:
 	virtual void update();
 	virtual void draw();
 
+	void computeJacEqM(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm);	
+	void computeJacEqR(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr);
+	void computeJacIneqM(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm);
+	void computeJacIneqR(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
+	void countDofs(int &nem, int &ner, int &nim, int &nir);
 
 	int nconEM;								// Number of maximal equality constraints
 	int nconER;								// Number of reduced equality constraints
@@ -48,6 +53,12 @@ public:
 	std::shared_ptr<Constraint> next;		// Next constraint in traversal order
 	std::string m_name;
 	int m_uid;
+
+protected:
+	void computeJacEqM_(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm);
+	void computeJacEqR_(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr);
+	void computeJacIneqM_(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm);
+	void computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
 };
 
 

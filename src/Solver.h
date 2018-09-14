@@ -87,6 +87,29 @@ private:
 
 	Eigen::MatrixXd Mtilde;
 	Eigen::VectorXd ftilde;
+
+	Eigen::MatrixXd Gm;
+	Eigen::MatrixXd Gmdot;
+	Eigen::VectorXd gm;
+
+	Eigen::MatrixXd Gr;
+	Eigen::MatrixXd Grdot;
+	Eigen::VectorXd gr;
+
+	Eigen::MatrixXd G;
+	Eigen::VectorXd g;
+
+	Eigen::MatrixXd Cm;
+	Eigen::MatrixXd Cmdot;
+	Eigen::VectorXd cm;
+
+	Eigen::MatrixXd Cr;
+	Eigen::MatrixXd Crdot;
+	Eigen::VectorXd cr;
+
+	Eigen::MatrixXd C;
+	Eigen::VectorXd c;
+
 };
 
 #endif // MUSCLEMASS_SRC_SOLVER_H_

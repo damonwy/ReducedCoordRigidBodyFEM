@@ -26,7 +26,8 @@ public:
 	virtual ~World();
 
 	std::shared_ptr<Body> addBody(double density, Eigen::Vector3d sides, Eigen::Vector3d p, Eigen::Matrix3d R, const std::string &RESOURCE_DIR, std::string file_name);
-	std::shared_ptr<Joint> World::addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
+	std::shared_ptr<Joint> addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
+	std::shared_ptr<Constraint> addConstraint();
 
 	void load(const std::string &RESOURCE_DIR);
 	void init();
@@ -60,6 +61,9 @@ public:
 	int nem;
 	int ner;
 	int ne;
+	int nim;
+	int nir;
+
 
 private:
 	WorldType m_type;
