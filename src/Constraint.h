@@ -43,6 +43,7 @@ public:
 	void scatterForceIneqR(Eigen::MatrixXd Crt, Eigen::VectorXd lr);
 	void scatterForceIneqM(Eigen::MatrixXd Cmt, Eigen::VectorXd lm);
 	virtual void computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
+
 	int nconEM;								// Number of maximal equality constraints
 	int nconER;								// Number of reduced equality constraints
 	int nconIM;								// Number of maximal inequality constraints

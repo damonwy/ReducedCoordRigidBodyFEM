@@ -117,13 +117,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
-			Vector3d sides_0;
-			sides_0 << 1.0, 10.0, 1.0;
-			Vector3d sides_1;
-			sides_1 << 20.0, 1.0, 1.0;
 
-			for (int i = 0; i < 2; i++) {
+			for (int i = 0; i < 6; i++) {
 				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+
 				// Inits joints
 				if (i == 0) {
 					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
@@ -132,11 +129,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
 				}
 
+				// Init constraints
 				if (i > 0) {
-					auto constraint = make_shared<ConstraintJointLimit>(m_joints[i]);
-					m_constraints.push_back(constraint);
-					constraint->setLimits(-M_PI / 4, M_PI / 4);
-					m_nconstraints++;
+					addConstraintJointLimit(m_joints[i], -M_PI / 4, M_PI / 4);
 				}
 			}
 
@@ -178,7 +173,7 @@ std::shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p,
 	return body;
 }
 
-std::shared_ptr<Joint> World::addJointRevolute(shared_ptr<Body> body, Vector3d axis, Vector3d p, Matrix3d R, double q, shared_ptr<Joint> parent) {
+std::shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body, Vector3d axis, Vector3d p, Matrix3d R, double q, shared_ptr<Joint> parent) {
 	auto joint = make_shared<JointRevolute>(body, axis, parent);
 	Matrix4d E = SE3::RpToE(R, p);
 	joint->setJointTransform(E);
@@ -186,6 +181,14 @@ std::shared_ptr<Joint> World::addJointRevolute(shared_ptr<Body> body, Vector3d a
 	m_joints.push_back(joint);
 	m_njoints++;
 	return joint;
+}
+
+std::shared_ptr<ConstraintJointLimit> World::addConstraintJointLimit(shared_ptr<Joint> joint, double ql, double qu) {
+	auto constraint = make_shared<ConstraintJointLimit>(joint);
+	m_constraints.push_back(constraint);
+	constraint->setLimits(ql, qu);
+	m_nconstraints++;
+	return constraint;
 }
 
 

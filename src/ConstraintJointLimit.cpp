@@ -25,7 +25,6 @@ void ConstraintJointLimit::computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd
 	int col = m_joint->idxR;
 	idxQ = col;
 	nQ = m_joint->m_ndof;
-	cout << m_joint->m_q(0) << endl;
 
 	if (m_joint->m_q(0) <= m_ql) {
 		Cr.block(row, col, nconIR, m_joint->m_ndof).setOnes();

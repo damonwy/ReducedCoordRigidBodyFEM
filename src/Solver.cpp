@@ -162,12 +162,16 @@ shared_ptr<Solution> Solver::solve() {
 					if (ni > 0) {
 						Eigen::VectorXi m_rowsM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsM.data(), rowsM.size());
 						Eigen::VectorXi m_rowsR = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsR.data(), rowsR.size());
-						Cm = Cm(m_rowsM, Eigen::placeholders::all);
-						Cr = Cr(m_rowsR, Eigen::placeholders::all);
-						MatrixXd CmJ = Cm * J;
-
-						C.resize(CmJ.rows() + Cr.rows(), Cr.cols());
-						C << CmJ, Cr;
+						
+						MatrixXd m_Cm = Cm(m_rowsM, Eigen::placeholders::all);
+						
+						MatrixXd m_Cr = Cr(m_rowsR, Eigen::placeholders::all);
+						MatrixXd CmJ = m_Cm * J;
+						
+						C.resize(CmJ.rows() + m_Cr.rows(), m_Cr.cols());
+						
+						C << CmJ, m_Cr;
+						//cout << C << endl;
 					}
 				}
 

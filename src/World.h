@@ -13,10 +13,12 @@
 #include "MLCommon.h"
 
 class Joint;
+class JointRevolute;
 class Body;
 class MatrixStack;
 class Program;
 class Constraint;
+class ConstraintJointLimit;
 
 class World
 {
@@ -26,8 +28,8 @@ public:
 	virtual ~World();
 
 	std::shared_ptr<Body> addBody(double density, Eigen::Vector3d sides, Eigen::Vector3d p, Eigen::Matrix3d R, const std::string &RESOURCE_DIR, std::string file_name);
-	std::shared_ptr<Joint> addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
-	std::shared_ptr<Constraint> addConstraint();
+	std::shared_ptr<JointRevolute> addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
+	std::shared_ptr<ConstraintJointLimit> addConstraintJointLimit(std::shared_ptr<Joint> joint, double ql, double qu);
 
 	void load(const std::string &RESOURCE_DIR);
 	void init();
@@ -63,7 +65,6 @@ public:
 	int ne;
 	int nim;
 	int nir;
-
 
 private:
 	WorldType m_type;
