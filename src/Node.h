@@ -1,6 +1,6 @@
 #pragma once
-#ifndef MUSCLEMASS_SRC_PARTICLE_H_
-#define MUSCLEMASS_SRC_PARTICLE_H_
+#ifndef MUSCLEMASS_SRC_NODE_H_
+#define MUSCLEMASS_SRC_NODE_H_
 #include <vector>
 #include <memory>
 
@@ -12,14 +12,14 @@ class Program;
 class MatrixStack;
 class SE3;
 
-class Particle
+class Node
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	
-	Particle();
-	Particle(const std::shared_ptr<Shape> shape);
-	virtual ~Particle();
+		Node();
+	Node(const std::shared_ptr<Shape> shape);
+	virtual ~Node();
 	void tare();
 	void reset();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> p) const;
@@ -40,9 +40,11 @@ public:
 
 	void clearJacobianMatrix() { this->J.setZero(); }
 	
+	int idxR;
+	int idxM;
 	double computePotentialEnergy(Eigen::Vector3d grav);
 	double computeKineticEnergy(Eigen::VectorXd phi);
-
+	double L;
 	bool fixed;
 	double r;					// radius
 	double m;					// mass
@@ -51,6 +53,7 @@ public:
 	Eigen::Vector3d v0;			// initial velocity
 	Eigen::Vector3d x;			// position
 	Eigen::Vector3d v;			// velocity
+	Eigen::Vector3d a;			// acceleration
 	Eigen::Vector3d x_temp;		// temporary position, for computation 
 	Eigen::Vector3d normal;	
 	double s;					// non-dimensional material coordinate [0,1]
@@ -64,4 +67,4 @@ private:
 	std::shared_ptr<SE3> parent;
 };
 
-#endif // MUSCLEMASS_SRC_PARTICLE_H_
+#endif // MUSCLEMASS_SRC_NODE_H_

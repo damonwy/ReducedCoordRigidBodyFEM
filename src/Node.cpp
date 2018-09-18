@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Particle.h"
+#include "Node.h"
 #include "Shape.h"
 #include "Program.h"
 #include "MatrixStack.h"
@@ -16,7 +16,7 @@
 using namespace std;
 using namespace Eigen;
 
-Particle::Particle() :
+Node::Node() :
 	r(1.0),
 	m(1.0),
 	i(-1),
@@ -27,7 +27,7 @@ Particle::Particle() :
 	
 }
 
-Particle::Particle(const shared_ptr<Shape> s) :
+Node::Node(const shared_ptr<Shape> s) :
 	r(1.0),
 	m(1.0),
 	i(-1),
@@ -41,23 +41,23 @@ Particle::Particle(const shared_ptr<Shape> s) :
 	
 }
 
-Particle::~Particle()
+Node::~Node()
 {
 }
 
-void Particle::tare()
+void Node::tare()
 {
 	x0 = x;
 	v0 = v;
 }
 
-void Particle::reset()
+void Node::reset()
 {
 	x = x0;
 	v = v0;
 }
 
-void Particle::update(Matrix4d E) {
+void Node::update(Matrix4d E) {
 	Vector4d pos;
 	pos.segment<3>(0) = this->x0;
 	pos(3) = 1.0;
@@ -66,7 +66,7 @@ void Particle::update(Matrix4d E) {
 	this->x = pos.segment<3>(0);
 }
 
-void Particle::updateTemp(Matrix4d E) {
+void Node::updateTemp(Matrix4d E) {
 	Vector4d pos;
 	pos.segment<3>(0) = this->x0;
 	pos(3) = 1.0;
@@ -75,19 +75,19 @@ void Particle::updateTemp(Matrix4d E) {
 	this->x_temp = pos.segment<3>(0);
 }
 
-double Particle::computePotentialEnergy(Vector3d grav) {
+double Node::computePotentialEnergy(Vector3d grav) {
 	this->V = this->m * grav.transpose() * this->x;
 	return this->V;
 }
 
-double Particle::computeKineticEnergy(VectorXd phi) {
+double Node::computeKineticEnergy(VectorXd phi) {
 	//assert(this->J.cols == phi.size());
 	this->v = this->J * phi;
 	this->K =0.5 * this->m * this->v.transpose() * this->v;
 	return this->K;
 }
 
-void Particle::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog) const
+void Node::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog) const
 {
 	if(sphere) {
 		MV->pushMatrix();
