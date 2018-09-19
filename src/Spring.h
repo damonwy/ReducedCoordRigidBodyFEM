@@ -29,8 +29,9 @@ public:
 
 	void computeEnergies(Eigen::Vector3d grav, double &T, double &V);
 
-
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
+	virtual void load(const std::string &RESOURCE_DIR);
+	virtual void init();
 
 	virtual void countDofs_();
 	virtual void gatherDofs_(Eigen::VectorXd &y, int nr);
@@ -39,8 +40,8 @@ public:
 	virtual void scatterDDofs_(Eigen::VectorXd &ydot, int nr);
 	virtual void computeMassForce_(Eigen::Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
 	virtual void computeEnergies_(Eigen::Vector3d grav, double &T, double &V);
-
-
+	virtual void computeJacobian_(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
+	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	std::shared_ptr<Spring> next;
 	std::string m_name;
 	int m_uid;

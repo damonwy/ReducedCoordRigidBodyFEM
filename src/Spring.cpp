@@ -23,6 +23,14 @@ Spring::Spring(int &countS, int &countCM) {
 Spring::~Spring() {
 }
 
+void Spring::load(const string &RESOURCE_DIR) {
+
+}
+
+void Spring::init() {
+
+}
+
 void Spring::countDofs() {
 	countDofs_();
 	if (next != nullptr) {
@@ -45,22 +53,25 @@ void Spring::gatherDDofs(VectorXd &ydot, int nr) {
 	}
 }
 
-void Spring::computeJacobian(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot) {
+void Spring::computeJacobian(MatrixXd &J, MatrixXd &Jdot) {
+	computeJacobian_(J, Jdot);
+	if (next != nullptr) {
+		next->computeJacobian(J, Jdot);
+	}
+}
 
-
+void Spring::computeJacobian_(MatrixXd &J, MatrixXd &Jdot) {
 
 }
 
-
-void Spring::computeMassForce(Eigen::Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f) {
+void Spring::computeMassForce(Vector3d grav, MatrixXd &M, VectorXd &f) {
 	computeMassForce_(grav, M, f);
 	if (next != nullptr) {
 		next->computeMassForce(grav, M, f);
 	}
-
 }
 
-void Spring::computeEnergies(Eigen::Vector3d grav, double &T, double &V) {
+void Spring::computeEnergies(Vector3d grav, double &T, double &V) {
 	computeEnergies_(grav, T, V);
 	if (next != nullptr) {
 		next->computeEnergies(grav, T, V);
@@ -71,41 +82,39 @@ void Spring::countDofs_() {
 
 }
 
-void Spring::gatherDofs_(Eigen::VectorXd &y, int nr) {
-
-
-}
-
-void Spring::gatherDDofs_(Eigen::VectorXd &ydot, int nr) {
-
+void Spring::gatherDofs_(VectorXd &y, int nr) {
 
 }
 
-void Spring::scatterDofs_(Eigen::VectorXd &y, int nr) {
-
-
-}
-
-void Spring::scatterDDofs_(Eigen::VectorXd &ydot, int nr) {
-
+void Spring::gatherDDofs_(VectorXd &ydot, int nr) {
 
 }
 
-void Spring::computeMassForce_(Eigen::Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f) {
-
-
+void Spring::scatterDofs_(VectorXd &y, int nr) {
 
 }
 
-void Spring::computeEnergies_(Eigen::Vector3d grav, double &T, double &V) {
+void Spring::scatterDDofs_(VectorXd &ydot, int nr) {
 
+}
 
+void Spring::computeMassForce_(Vector3d grav, MatrixXd &M, VectorXd &f) {
+
+}
+
+void Spring::computeEnergies_(Vector3d grav, double &T, double &V) {
 
 }
 
 
-void Spring::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const {
+void Spring::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+	draw_(MV, prog, progSimple, P);
+	if (next != nullptr)
+	{
+		next->draw(MV, prog, progSimple, P);
+	}
+}
 
-
+void Spring::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 
 }
