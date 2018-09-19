@@ -31,13 +31,16 @@ void Spring::init() {
 
 }
 
-void Spring::countDofs() {
-	countDofs_();
+void Spring::countDofs(int &nm, int &nr) {
+	countDofs_(nm, nr);
 	if (next != nullptr) {
-		next->countDofs();
+		next->countDofs(nm, nr);
 	}
 }
 
+void Spring::countDofs_(int &nm, int &nr) {
+
+}
 
 void Spring::gatherDofs(VectorXd &y, int nr) {
 	gatherDofs_(y, nr);

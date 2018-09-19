@@ -11,7 +11,7 @@
 #include <json.hpp>
 #include "MLCommon.h"
 
-class Particle;
+class Node;
 class MatrixStack;
 class Program;
 class Shape;

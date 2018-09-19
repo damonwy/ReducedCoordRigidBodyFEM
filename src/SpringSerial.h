@@ -16,7 +16,7 @@ class SpringSerial : public Spring
 public:
 	SpringSerial();
 	SpringSerial(int n_nodes, int &countS, int &countCM);
-
+	virtual ~SpringSerial();
 	void setStiffness(double K) { m_K = K; }
 	void setMass(double mass) { m_mass = mass; }
 	void setAttachments(std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);

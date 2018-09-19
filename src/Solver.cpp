@@ -3,7 +3,11 @@
 #include "World.h"
 #include "Body.h"
 #include "Joint.h"
+#include "Spring.h"
+#include "SpringSerial.h"
 #include "ConstraintJointLimit.h"
+#include "ConstraintLoop.h"
+#include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
 
 #include <iostream>
@@ -81,11 +85,7 @@ shared_ptr<Solution> Solver::solve() {
 
 			auto body0 = m_world->getBody0();
 			auto joint0 = m_world->getJoint0();
-			// auto spring0 = m_world->getSpring0();
-			if (m_world->m_nconstraints == 0) {
-				m_world->addConstraintNull();
-			}
-
+			auto spring0 = m_world->getSpring0();
 			auto constraint0 = m_world->getConstraint0();
 
 			int nsteps = m_world->getNsteps();
@@ -96,7 +96,7 @@ shared_ptr<Solution> Solver::solve() {
 			// initial state
 			m_solutions->t(0) = m_world->getTspan()(0);
 			m_solutions->y.row(0) = joint0->gatherDofs(m_solutions->y.row(0), nr);
-			// m_solutions->y.row(0) = spring0->gatherDofs(m_solutions->y.row(0));
+			spring0->gatherDofs(m_solutions->y.row(0), nr);
 
 			double t = m_world->getTspan()(0);
 			double h = m_world->getH();

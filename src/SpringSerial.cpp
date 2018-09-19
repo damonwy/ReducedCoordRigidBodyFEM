@@ -222,3 +222,7 @@ void SpringSerial::computeJacobian_(MatrixXd &J, MatrixXd &Jdot) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
 	}
 }
+
+SpringSerial:: ~SpringSerial() {
+
+}

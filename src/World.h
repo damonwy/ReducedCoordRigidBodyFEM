@@ -20,6 +20,9 @@ class Program;
 class Constraint;
 class ConstraintJointLimit;
 class ConstraintNull;
+class Spring;
+class SpringSerial;
+class SpringNull;
 
 class World
 {
@@ -31,7 +34,9 @@ public:
 	std::shared_ptr<Body> addBody(double density, Eigen::Vector3d sides, Eigen::Vector3d p, Eigen::Matrix3d R, const std::string &RESOURCE_DIR, std::string file_name);
 	std::shared_ptr<JointRevolute> addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
 	std::shared_ptr<ConstraintJointLimit> addConstraintJointLimit(std::shared_ptr<Joint> joint, double ql, double qu);
+	std::shared_ptr<SpringSerial> addSpringSerial(std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);
 	std::shared_ptr<ConstraintNull> addConstraintNull();
+	std::shared_ptr<SpringNull> addSpringNull();
 
 	void load(const std::string &RESOURCE_DIR);
 	void init();
@@ -55,6 +60,7 @@ public:
 
 	std::shared_ptr<Body> getBody0() const { return m_bodies[0]; }
 	std::shared_ptr<Joint> getJoint0() const { return m_joints[0]; }
+	std::shared_ptr<Spring> getSpring0() const { return m_springs[0]; }
 	std::shared_ptr<Constraint> getConstraint0() const { return m_constraints[0]; }
 
 	Eigen::Vector2d getTspan() const { return m_tspan; }
@@ -67,22 +73,27 @@ public:
 	int ne;
 	int nim;
 	int nir;
+	int m_countS;
+	int m_countCM;
+
 	int m_nbodies;
 	int m_njoints;
+	int m_nsprings;
 	int m_nconstraints;
+
 private:
 	WorldType m_type;
 	Eigen::Vector3d m_grav;
+	double m_stiffness;
 	double m_t;
 	double m_h;
 	Eigen::Vector2d m_tspan;
-
-
 
 	double m_Hexpected;
 
 	std::vector<std::shared_ptr<Body>> m_bodies;
 	std::vector<std::shared_ptr<Joint>> m_joints;
+	std::vector<std::shared_ptr<Spring>> m_springs;
 	std::vector<std::shared_ptr<Constraint>> m_constraints;
 
 	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;

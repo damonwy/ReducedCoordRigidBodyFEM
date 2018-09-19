@@ -20,7 +20,7 @@ public:
 	Spring(int &countS, int &countCM);
 	virtual ~Spring();
 
-	void countDofs();
+	void countDofs(int &nm, int &nr);
 	void gatherDofs(Eigen::VectorXd &y, int nr);
 	void gatherDDofs(Eigen::VectorXd &ydot, int nr);
 
@@ -33,7 +33,7 @@ public:
 	virtual void load(const std::string &RESOURCE_DIR);
 	virtual void init();
 
-	virtual void countDofs_();
+	virtual void countDofs_(int &nm, int &nr);
 	virtual void gatherDofs_(Eigen::VectorXd &y, int nr);
 	virtual void gatherDDofs_(Eigen::VectorXd &ydot, int nr);
 	virtual void scatterDofs_(Eigen::VectorXd &y, int nr);

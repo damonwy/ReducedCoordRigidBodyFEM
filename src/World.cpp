@@ -14,20 +14,24 @@
 #include "ConstraintJointLimit.h"
 #include "ConstraintNull.h"
 #include "ConstraintLoop.h"
+#include "ConstraintAttachSpring.h"
+#include "Spring.h"
+#include "SpringSerial.h"
+#include "SpringNull.h"
 
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
 World::World():
-nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_constraints(0)
+nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_constraints(0)
 {
 
 }
 
 World::World(WorldType type):
 m_type(type),
-nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nconstraints(0)
+nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_nconstraints(0)
 {
 }
 
@@ -143,8 +147,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			m_constraints.push_back(constraint);
 			constraint->setPositions(Vector3d(0.0, -5.0, 0.0), Vector3d(10.0, 0.0, 0.0));
 			m_nconstraints++;
-			m_constraints[0]->countDofs(nem, ner, nim, nir);
-
+	
 		}
 		break;
 	case JOINT_TORQUE:
@@ -173,13 +176,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 					addConstraintJointLimit(m_joints[i], -M_PI / 4, M_PI / 4);
 				}
 			}
-
-			for (int i = 0; i < m_nconstraints; i++) {
-				m_constraints[i]->countDofs(nem, ner, nim, nir);
-				if (i < m_nconstraints - 1) {
-					m_constraints[i]->next = m_constraints[i + 1];
-				}
-			}
+		
 
 		}
 
@@ -194,7 +191,45 @@ void World::load(const std::string &RESOURCE_DIR) {
 		break;
 	case JOINT_STIFFNESS:
 		break;
-	case SPRINGS:
+	case SPRINGS: 
+		{	
+			m_h = 1.0e-2;
+			m_tspan << 0.0, 50.0;
+			density = 1.0;
+			m_grav << 0.0, -98, 0.0;
+			m_stiffness = 5.0e3;
+			Eigen::from_json(js["sides"], sides);
+			
+			for (int i = 0; i < 2; i++) {
+				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+
+				// Inits joints
+				if (i == 0) {
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				}
+				else {
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				}
+			}
+
+			// Init springs
+			auto spring0 = make_shared<SpringSerial>(3, m_countS, m_countCM);
+			m_springs.push_back(spring0);
+			spring0->setStiffness(m_stiffness);
+			spring0->setMass(sides(0)*sides(1)*sides(2)*density); // same as body
+			spring0->setAttachments(nullptr, Vector3d(10.0 * m_nbodies + 10.0, 0.0, 10.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
+			m_nsprings++;
+			auto spring1 = make_shared<SpringSerial>(2, m_countS, m_countCM);
+			m_springs.push_back(spring1);
+			spring1->setStiffness(m_stiffness);
+			spring1->setMass(sides(0)*sides(1)*sides(2)*density); // same as body
+			spring1->setAttachments(m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
+			m_nsprings++;
+			
+			
+
+
+		}
 		break;
 	default:
 		break;
@@ -202,7 +237,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	
 }
 
-std::shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p, Matrix3d R, const string &RESOURCE_DIR, string file_name) {
+shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p, Matrix3d R, const string &RESOURCE_DIR, string file_name) {
 	auto body = make_shared<Body>(density, sides);
 	Matrix4d E = SE3::RpToE(R, p);
 	body->setTransform(E);
@@ -212,7 +247,7 @@ std::shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p,
 	return body;
 }
 
-std::shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body, Vector3d axis, Vector3d p, Matrix3d R, double q, shared_ptr<Joint> parent) {
+shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body, Vector3d axis, Vector3d p, Matrix3d R, double q, shared_ptr<Joint> parent) {
 	auto joint = make_shared<JointRevolute>(body, axis, parent);
 	Matrix4d E = SE3::RpToE(R, p);
 	joint->setJointTransform(E);
@@ -222,7 +257,7 @@ std::shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body, Ve
 	return joint;
 }
 
-std::shared_ptr<ConstraintJointLimit> World::addConstraintJointLimit(shared_ptr<Joint> joint, double ql, double qu) {
+shared_ptr<ConstraintJointLimit> World::addConstraintJointLimit(shared_ptr<Joint> joint, double ql, double qu) {
 	auto constraint = make_shared<ConstraintJointLimit>(joint);
 	m_constraints.push_back(constraint);
 	constraint->setLimits(ql, qu);
@@ -230,14 +265,28 @@ std::shared_ptr<ConstraintJointLimit> World::addConstraintJointLimit(shared_ptr<
 	return constraint;
 }
 
+shared_ptr<SpringSerial> World::addSpringSerial(shared_ptr<Body> body0, Vector3d r0, shared_ptr<Body> body1, Vector3d r1) {
 
-std::shared_ptr<ConstraintNull> World::addConstraintNull() {
+
+
+}
+
+
+shared_ptr<ConstraintNull> World::addConstraintNull() {
 
 	auto constraint = make_shared<ConstraintNull>();
 	m_nconstraints++;
 	m_constraints.push_back(constraint);
 	return constraint;
 
+}
+
+shared_ptr<SpringNull> World::addSpringNull() {
+
+	auto spring = make_shared<SpringNull>();
+	m_nsprings++;
+	m_springs.push_back(spring);
+	return spring;
 }
 
 void World::init() {
@@ -268,10 +317,34 @@ void World::init() {
 	m_joints[0]->update();
 
 
+	
+
+	for (int i = 0; i < m_nsprings; i++) {
+		m_springs[i]->countDofs(nm, nr);
+		m_springs[i]->init();
+		// Create attachment constraints
+		auto constraint = make_shared<ConstraintAttachSpring>(m_springs[i]);
+		if (i < m_nsprings - 1) {
+			m_springs[i]->next = m_springs[i + 1];
+		}
+	}
+
 	// init constraints
 
-	// init collisions
+	for (int i = 0; i < m_nconstraints; i++) {
+		m_constraints[i]->countDofs(nem, ner, nim, nir);
+		if (i < m_nconstraints - 1) {
+			m_constraints[i]->next = m_constraints[i + 1];
+		}
+	}
 
+	if (m_nsprings == 0) {
+		addSpringNull();
+	}
+
+	if (m_nconstraints == 0) {
+		addConstraintNull();
+	}
 }
 
 void World::update() {
@@ -322,7 +395,9 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 
 	}
 
-	// Draw collisions
-
+	// Draw springs
+	for (int i = 0; i < 1; i++) {
+		m_springs[i]->draw(MV, prog, progSimple, P);
+	}
 
 }
