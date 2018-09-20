@@ -11,7 +11,7 @@
 #include "Vector.h"
 #include "Program.h"
 #include "MatrixStack.h"
-#include "Particle.h"
+#include "Node.h"
 
 using namespace std;
 using namespace Eigen;

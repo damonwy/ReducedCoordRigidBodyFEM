@@ -14,8 +14,7 @@ SpringSerial::SpringSerial() {
 
 
 SpringSerial::SpringSerial(int n_nodes, int &countS, int &countCM):
-Spring(countS, countCM),
-m_K(0.0), m_mass(1.0)
+Spring(countS, countCM)
 {
 	for (int i = 0; i < n_nodes; i++) {
 		auto node = make_shared<Node>();
@@ -56,7 +55,7 @@ void SpringSerial::init() {
 
 	for (int i = 0; i < n_nodes; i++) {
 		double s = i / (n_nodes - 1);
-		m_nodes[i]->x = (1 - s) * x0 + s * x1;
+		m_nodes[i]->x = (1 - s) * x0.segment<3>(0) + s * x1.segment<3>(0);
 	}
 
 	// Compute the rest lengths
@@ -92,11 +91,11 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 	progSimple->bind();
 	glLineWidth(5);
 	glBegin(GL_LINES);
-	glColor3f(1.0, 1.0, 1.0);
+	glColor3f(1.0f, 1.0f, 1.0f);
 	
 	for (int i = 0; i < n_nodes - 1; i++) {
-		Vector3d x0 = m_nodes[i]->x;
-		Vector3d x1 = m_nodes[i + 1]->x;
+		Vector3f x0 = m_nodes[i]->x.cast<float>();
+		Vector3f x1 = m_nodes[i + 1]->x.cast<float>();
 		glVertex3f(x0(0), x0(1), x0(2));
 		glVertex3f(x1(0), x1(1), x1(2));
 	}
@@ -129,22 +128,24 @@ void SpringSerial::countDofs_(int &nm, int &nr) {
 }
 
 
-void SpringSerial::gatherDofs_(VectorXd &y, int nr) {
+VectorXd SpringSerial::gatherDofs_(VectorXd y, int nr) {
 	// Gathers q and qdot into y
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		y.segment<3>(idxR) = m_nodes[i]->x;
 		y.segment<3>(nr + idxR) = m_nodes[i]->v;
 	}
+	return y;
 }
 
-void SpringSerial::gatherDDofs_(VectorXd &ydot, int nr) {
+VectorXd SpringSerial::gatherDDofs_(VectorXd ydot, int nr) {
 	// Gathers qdot and qddot into ydot
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		ydot.segment<3>(idxR) = m_nodes[i]->v;
 		ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
 	}
+	return ydot;
 }
 
 void SpringSerial::scatterDofs_(VectorXd &y, int nr) {
@@ -165,8 +166,8 @@ void SpringSerial::scatterDDofs_(VectorXd &ydot, int nr) {
 	}
 }
 
-void SpringSerial::computeMassForce_(Vector3d grav, MatrixXd &M, VectorXd &f) {
-	// Computes maximal mass matrix and force vector
+MatrixXd SpringSerial::computeMass_(Vector3d grav, MatrixXd M) {
+	// Computes maximal mass matrix
 	int n_nodes = m_nodes.size();
 	double m = m_mass / n_nodes;
 
@@ -174,6 +175,18 @@ void SpringSerial::computeMassForce_(Vector3d grav, MatrixXd &M, VectorXd &f) {
 	for (int i = 0; i < n_nodes; i++) {
 		int idxM = m_nodes[i]->idxM;
 		M.block<3, 3>(idxM, idxM) = m * I3;
+	}
+	return M;
+}
+
+VectorXd SpringSerial::computeForce_(Vector3d grav, VectorXd f) {
+	// Computes force vector
+	int n_nodes = m_nodes.size();
+	double m = m_mass / n_nodes;
+
+	Matrix3d I3 = Matrix3d::Identity();
+	for (int i = 0; i < n_nodes; i++) {
+		int idxM = m_nodes[i]->idxM;
 		f.segment<3>(idxM) += m * grav;
 	}
 
@@ -186,10 +199,11 @@ void SpringSerial::computeMassForce_(Vector3d grav, MatrixXd &M, VectorXd &f) {
 		double l = dx.norm();
 		double L = m_nodes[i]->L;
 		double e = (l - L) / L;
-		Vector3d fs = m_K * e * (1.0 / L)* dx / l;
+		Vector3d fs = m_K * e * (1.0 / L) / l* dx;
 		f.segment<3>(row0) += fs;
 		f.segment<3>(row1) -= fs;
 	}
+	return f;
 }
 
 void SpringSerial::computeEnergies_(Vector3d grav, double &T, double &V) {
@@ -217,10 +231,12 @@ void SpringSerial::computeEnergies_(Vector3d grav, double &T, double &V) {
 
 }
 
-void SpringSerial::computeJacobian_(MatrixXd &J, MatrixXd &Jdot) {
+MatrixXd SpringSerial::computeJacobian_(MatrixXd J) {
+
 	for (int i = 0; i < m_nodes.size(); i++) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
 	}
+	return J;
 }
 
 SpringSerial:: ~SpringSerial() {

@@ -213,21 +213,20 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 
 			// Init springs
-			auto spring0 = make_shared<SpringSerial>(3, m_countS, m_countCM);
-			m_springs.push_back(spring0);
-			spring0->setStiffness(m_stiffness);
-			spring0->setMass(sides(0)*sides(1)*sides(2)*density); // same as body
-			spring0->setAttachments(nullptr, Vector3d(10.0 * m_nbodies + 10.0, 0.0, 10.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
-			m_nsprings++;
-			auto spring1 = make_shared<SpringSerial>(2, m_countS, m_countCM);
-			m_springs.push_back(spring1);
-			spring1->setStiffness(m_stiffness);
-			spring1->setMass(sides(0)*sides(1)*sides(2)*density); // same as body
-			spring1->setAttachments(m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
-			m_nsprings++;
-			
-			
-
+			auto spring0 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 0.0, 10.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
+			auto spring1 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
+			//auto spring0 = make_shared<SpringSerial>(3, m_countS, m_countCM);
+			//m_springs.push_back(spring0);
+			//spring0->setStiffness(m_stiffness);
+			//spring0->setMass(sides(0)*sides(1)*sides(2)*density); // same as body
+			//spring0->setAttachments(nullptr, Vector3d(10.0 * m_nbodies + 10.0, 0.0, 10.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
+			//m_nsprings++;
+			//auto spring1 = make_shared<SpringSerial>(2, m_countS, m_countCM);
+			//m_springs.push_back(spring1);
+			//spring1->setStiffness(m_stiffness);
+			//spring1->setMass(sides(0)*sides(1)*sides(2)*density); // same as body
+			//spring1->setAttachments(m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
+			//m_nsprings++;
 
 		}
 		break;
@@ -265,9 +264,15 @@ shared_ptr<ConstraintJointLimit> World::addConstraintJointLimit(shared_ptr<Joint
 	return constraint;
 }
 
-shared_ptr<SpringSerial> World::addSpringSerial(shared_ptr<Body> body0, Vector3d r0, shared_ptr<Body> body1, Vector3d r1) {
+shared_ptr<SpringSerial> World::addSpringSerial(double mass, shared_ptr<Body> body0, Vector3d r0, shared_ptr<Body> body1, Vector3d r1) {
 
-
+	auto spring = make_shared<SpringSerial>(3, m_countS, m_countCM);
+	m_springs.push_back(spring);
+	spring->setStiffness(m_stiffness);
+	spring->setMass(mass); 
+	spring->setAttachments(body0, r0, body1, r1);
+	m_nsprings++;
+	return spring;
 
 }
 

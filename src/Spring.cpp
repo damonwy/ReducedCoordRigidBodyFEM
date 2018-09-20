@@ -6,16 +6,20 @@
 
 #include "MatrixStack.h"
 #include "Program.h"
+#include "Node.h"
+#include "Body.h"
 
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
-Spring::Spring() {
+Spring::Spring():
+	m_K(0.0), m_mass(1.0) {
 
 }
 
-Spring::Spring(int &countS, int &countCM) {
+Spring::Spring(int &countS, int &countCM):
+	m_K(0.0), m_mass(1.0) {
 	countS++;
 	countCM++;
 }
@@ -42,36 +46,67 @@ void Spring::countDofs_(int &nm, int &nr) {
 
 }
 
-void Spring::gatherDofs(VectorXd &y, int nr) {
-	gatherDofs_(y, nr);
+VectorXd Spring::gatherDofs(VectorXd y, int nr) {
+	VectorXd y_ = gatherDofs_(y, nr);
 	if (next != nullptr) {
-		next->gatherDofs(y, nr);
+		y_ = next->gatherDofs(y_, nr);
 	}
+	return y_;
 }
 
-void Spring::gatherDDofs(VectorXd &ydot, int nr) {
-	gatherDDofs_(ydot, nr);
+VectorXd Spring::gatherDDofs(VectorXd ydot, int nr) {
+	VectorXd ydot_ = gatherDDofs_(ydot, nr);
 	if (next != nullptr) {
-		next->gatherDofs(ydot, nr);
+		ydot_ = next->gatherDofs(ydot_, nr);
 	}
+	return ydot_;
 }
 
-void Spring::computeJacobian(MatrixXd &J, MatrixXd &Jdot) {
-	computeJacobian_(J, Jdot);
+void Spring::scatterDofs(VectorXd &y, int nr) {
+	scatterDofs_(y, nr);
 	if (next != nullptr) {
-		next->computeJacobian(J, Jdot);
+		scatterDofs(y, nr);
 	}
+	next->scatterDofs(y, nr);
+
 }
 
-void Spring::computeJacobian_(MatrixXd &J, MatrixXd &Jdot) {
+void Spring::scatterDDofs(VectorXd &ydot, int nr) {
+
+	scatterDDofs_(ydot, nr);
+	if (next != nullptr) {
+		scatterDDofs(ydot, nr);
+	}
+	next->scatterDDofs(ydot, nr);
 
 }
 
-void Spring::computeMassForce(Vector3d grav, MatrixXd &M, VectorXd &f) {
-	computeMassForce_(grav, M, f);
+MatrixXd Spring::computeJacobian(MatrixXd J) {
+	MatrixXd J_ = computeJacobian_(J);
 	if (next != nullptr) {
-		next->computeMassForce(grav, M, f);
+		J_ = next->computeJacobian(J_);
 	}
+	return J_;
+}
+
+MatrixXd Spring::computeJacobian_(MatrixXd J) {
+	return J;
+}
+
+MatrixXd Spring::computeMass(Vector3d grav, MatrixXd M) {
+	MatrixXd M_ = computeMass_(grav, M);
+	if (next != nullptr) {
+		M_ = next->computeMass(grav, M_);
+	}
+	return M_;
+}
+
+VectorXd Spring::computeForce(Vector3d grav, VectorXd f) {
+	VectorXd f_ = computeForce_(grav, f);
+	if (next != nullptr) {
+		f_ = next->computeForce(grav, f_);
+	}
+	return f_;
 }
 
 void Spring::computeEnergies(Vector3d grav, double &T, double &V) {
@@ -81,16 +116,12 @@ void Spring::computeEnergies(Vector3d grav, double &T, double &V) {
 	}
 }
 
-void Spring::countDofs_() {
-
+VectorXd Spring::gatherDofs_(VectorXd y, int nr) {
+	return y;
 }
 
-void Spring::gatherDofs_(VectorXd &y, int nr) {
-
-}
-
-void Spring::gatherDDofs_(VectorXd &ydot, int nr) {
-
+VectorXd Spring::gatherDDofs_(VectorXd ydot, int nr) {
+	return ydot;
 }
 
 void Spring::scatterDofs_(VectorXd &y, int nr) {
@@ -101,8 +132,12 @@ void Spring::scatterDDofs_(VectorXd &ydot, int nr) {
 
 }
 
-void Spring::computeMassForce_(Vector3d grav, MatrixXd &M, VectorXd &f) {
+MatrixXd Spring::computeMass_(Vector3d grav, MatrixXd M) {
+	return M;
+}
 
+VectorXd Spring::computeForce_(Vector3d grav, VectorXd f) {
+	return f;
 }
 
 void Spring::computeEnergies_(Vector3d grav, double &T, double &V) {

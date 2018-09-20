@@ -26,22 +26,18 @@ public:
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 
 	virtual void countDofs_(int &nm, int &nr);
-	virtual void gatherDofs_(Eigen::VectorXd &y, int nr);
-	virtual void gatherDDofs_(Eigen::VectorXd &ydot, int nr);
+	virtual Eigen::VectorXd gatherDofs_(Eigen::VectorXd y, int nr);
+	virtual Eigen::VectorXd gatherDDofs_(Eigen::VectorXd ydot, int nr);
 	virtual void scatterDofs_(Eigen::VectorXd &y, int nr);
 	virtual void scatterDDofs_(Eigen::VectorXd &ydot, int nr);
-	virtual void computeMassForce_(Eigen::Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
+
+	virtual Eigen::MatrixXd computeMass_(Eigen::Vector3d grav, Eigen::MatrixXd M);
+	virtual Eigen::VectorXd computeForce_(Eigen::Vector3d grav, Eigen::VectorXd f);
 	virtual void computeEnergies_(Eigen::Vector3d grav, double &T, double &V);
-	virtual void computeJacobian_(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
+	virtual Eigen::MatrixXd computeJacobian_(Eigen::MatrixXd J);
 
-	double m_K;
-	std::shared_ptr<Body> m_body0;
-	std::shared_ptr<Body> m_body1;
-	Eigen::Vector3d m_r0;
-	Eigen::Vector3d m_r1;
 
-	double m_mass;
-	std::vector<std::shared_ptr<Node>> m_nodes;
+	
 
 };
 

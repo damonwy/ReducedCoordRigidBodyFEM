@@ -5,12 +5,12 @@
 
 #include <vector>
 #include <memory>
-#include "Particle.h"
+#include "Node.h"
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
 
-class Particle;
+class Node;
 class Program;
 class MatrixStack;
 
@@ -22,7 +22,7 @@ public:
 	Vector();
 	~Vector();
 	void reset();
-	void setP(std::shared_ptr<Particle> _p) { this->p = _p; }
+	void setP(std::shared_ptr<Node> _p) { this->p = _p; }
 	void draw(std::shared_ptr<MatrixStack> MV, std::shared_ptr<MatrixStack> P, const std::shared_ptr<Program> p) const;
 	void update(Eigen::Matrix4d E);
 
@@ -32,7 +32,7 @@ public:
 	bool fixed;
 
 private:
-	std::shared_ptr<Particle> p;	// starting point
+	std::shared_ptr<Node> p;	// starting point
 };
 
 #endif // MUSCLEMASS_SRC_VECTOR_H_

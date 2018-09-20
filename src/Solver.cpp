@@ -96,7 +96,7 @@ shared_ptr<Solution> Solver::solve() {
 			// initial state
 			m_solutions->t(0) = m_world->getTspan()(0);
 			m_solutions->y.row(0) = joint0->gatherDofs(m_solutions->y.row(0), nr);
-			spring0->gatherDofs(m_solutions->y.row(0), nr);
+			m_solutions->y.row(0) = spring0->gatherDofs(m_solutions->y.row(0), nr);
 
 			double t = m_world->getTspan()(0);
 			double h = m_world->getH();
@@ -128,12 +128,16 @@ shared_ptr<Solution> Solver::solve() {
 				M = body0->computeMass(grav, M);
 				f = body0->computeForce(grav, f);
 
+				M = spring0->computeMass(grav, M);
+				f = spring0->computeForce(grav, f);
+
 				// spring..
 				J = joint0->computeJacobian(J, nm, nr);	
 				Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 				
 				// spring jacobian todo
-				
+				J = spring0->computeJacobian(J);
+
 				q0 = m_solutions->y.row(k - 1).segment(0, nr);
 				qdot0 = m_solutions->y.row(k - 1).segment(nr, nr);
 				
@@ -277,6 +281,10 @@ shared_ptr<Solution> Solver::solve() {
 
 				joint0->scatterDofs(yk, nr);
 				joint0->scatterDDofs(ydotk, nr);
+
+				cout << yk.size() << endl;
+				spring0->scatterDofs(yk, nr);
+				spring0->scatterDDofs(ydotk, nr);
 
 				t += h;
 				m_solutions->y.row(k) = yk;
