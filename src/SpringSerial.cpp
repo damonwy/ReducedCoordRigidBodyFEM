@@ -1,5 +1,6 @@
 #include "SpringSerial.h"
 
+#include <iostream>
 #include "Body.h"
 #include "Node.h"
 #include "MatrixStack.h"
@@ -54,8 +55,9 @@ void SpringSerial::init() {
 	int n_nodes = m_nodes.size();
 
 	for (int i = 0; i < n_nodes; i++) {
-		double s = i / (n_nodes - 1);
+		double s = double(i) / (n_nodes - 1);
 		m_nodes[i]->x = (1 - s) * x0.segment<3>(0) + s * x1.segment<3>(0);
+		
 	}
 
 	// Compute the rest lengths
@@ -64,6 +66,7 @@ void SpringSerial::init() {
 		Vector3d x1 = m_nodes[i + 1]->x;
 		Vector3d dx = x1 - x0;
 		m_nodes[i]->L = dx.norm(); // rest length
+
 	}
 }
 
@@ -94,11 +97,15 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 	glColor3f(1.0f, 1.0f, 1.0f);
 	
 	for (int i = 0; i < n_nodes - 1; i++) {
+
 		Vector3f x0 = m_nodes[i]->x.cast<float>();
 		Vector3f x1 = m_nodes[i + 1]->x.cast<float>();
+
+
 		glVertex3f(x0(0), x0(1), x0(2));
 		glVertex3f(x1(0), x1(1), x1(2));
 	}
+
 	glEnd();
 	progSimple->unbind();
 	
@@ -124,7 +131,6 @@ void SpringSerial::countDofs_(int &nm, int &nr) {
 		nm += 3;
 		nr += 3;
 	}
-
 }
 
 
@@ -150,6 +156,7 @@ VectorXd SpringSerial::gatherDDofs_(VectorXd ydot, int nr) {
 
 void SpringSerial::scatterDofs_(VectorXd &y, int nr) {
 	// Scatters q and qdot from y
+	cout << "y" << y << endl;
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		m_nodes[i]->x = y.segment<3>(idxR);
@@ -196,10 +203,16 @@ VectorXd SpringSerial::computeForce_(Vector3d grav, VectorXd f) {
 		Vector3d x0 = m_nodes[i]->x;
 		Vector3d x1 = m_nodes[i + 1]->x;
 		Vector3d dx = x1 - x0;
+		
 		double l = dx.norm();
 		double L = m_nodes[i]->L;
 		double e = (l - L) / L;
+
+		cout << "L " << L << endl;
+		cout << "e " << e << endl;
 		Vector3d fs = m_K * e * (1.0 / L) / l* dx;
+		cout << "fs " << fs << endl;
+
 		f.segment<3>(row0) += fs;
 		f.segment<3>(row1) -= fs;
 	}
@@ -232,7 +245,6 @@ void SpringSerial::computeEnergies_(Vector3d grav, double &T, double &V) {
 }
 
 MatrixXd SpringSerial::computeJacobian_(MatrixXd J) {
-
 	for (int i = 0; i < m_nodes.size(); i++) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
 	}

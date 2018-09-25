@@ -130,13 +130,14 @@ shared_ptr<Solution> Solver::solve() {
 
 				M = spring0->computeMass(grav, M);
 				f = spring0->computeForce(grav, f);
-
+				
 				// spring..
 				J = joint0->computeJacobian(J, nm, nr);	
 				Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 				
 				// spring jacobian todo
 				J = spring0->computeJacobian(J);
+				//cout << "J" << J << endl;
 
 				q0 = m_solutions->y.row(k - 1).segment(0, nr);
 				qdot0 = m_solutions->y.row(k - 1).segment(nr, nr);
@@ -271,6 +272,8 @@ shared_ptr<Solution> Solver::solve() {
 
 				}
 				qddot = (qdot1 - qdot0) / h;
+				cout << "ddot" << qddot << endl;
+
 				q1 = q0 + h * qdot1;
 
 				yk.segment(0, nr) = q1;
@@ -281,8 +284,7 @@ shared_ptr<Solution> Solver::solve() {
 
 				joint0->scatterDofs(yk, nr);
 				joint0->scatterDDofs(ydotk, nr);
-
-				cout << yk.size() << endl;
+			
 				spring0->scatterDofs(yk, nr);
 				spring0->scatterDDofs(ydotk, nr);
 

@@ -36,9 +36,6 @@ public:
 	virtual void computeEnergies_(Eigen::Vector3d grav, double &T, double &V);
 	virtual Eigen::MatrixXd computeJacobian_(Eigen::MatrixXd J);
 
-
-	
-
 };
 
 

@@ -65,9 +65,8 @@ VectorXd Spring::gatherDDofs(VectorXd ydot, int nr) {
 void Spring::scatterDofs(VectorXd &y, int nr) {
 	scatterDofs_(y, nr);
 	if (next != nullptr) {
-		scatterDofs(y, nr);
+		next->scatterDofs(y, nr);
 	}
-	next->scatterDofs(y, nr);
 
 }
 
@@ -75,10 +74,10 @@ void Spring::scatterDDofs(VectorXd &ydot, int nr) {
 
 	scatterDDofs_(ydot, nr);
 	if (next != nullptr) {
-		scatterDDofs(ydot, nr);
-	}
-	next->scatterDDofs(ydot, nr);
+		next->scatterDDofs(ydot, nr);
 
+	}
+	
 }
 
 MatrixXd Spring::computeJacobian(MatrixXd J) {
