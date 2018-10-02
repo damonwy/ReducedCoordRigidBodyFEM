@@ -57,16 +57,16 @@ void Constraint::getActiveList(std::vector<int> &listM, std::vector<int> &listR)
 	}
 }
 
-void Constraint::computeJacEqM(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm) {
+void Constraint::computeJacEqM(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
 
-	computeJacEqM_(Gm, Gmdot, gm);
+	computeJacEqM_(Gm, Gmdot, gm, gmdot, gmddot);
 	if (next != nullptr) {
-		next->computeJacEqM(Gm, Gmdot, gm);
+		next->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
 	}
 }
 
 
-void Constraint::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm) {
+void Constraint::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
 
 }
 

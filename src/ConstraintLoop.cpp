@@ -22,7 +22,7 @@ ConstraintLoop::ConstraintLoop(shared_ptr<Body> bodyA, shared_ptr<Body> bodyB) :
 
 }
 
-void ConstraintLoop::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm) {
+void ConstraintLoop::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
 	int row = idxEM;
 	Matrix4d E_wa = m_bodyA->E_wi;
 	Matrix4d E_wb = m_bodyB->E_wi;

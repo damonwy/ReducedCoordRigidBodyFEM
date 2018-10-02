@@ -32,18 +32,21 @@ public:
 	virtual void update();
 	virtual void draw();
 
-	void computeJacEqM(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm);	
+	void computeJacEqM(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm, Eigen::VectorXd &gmdot, Eigen::VectorXd &gmddot);	
 	void computeJacEqR(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr);
 	void computeJacIneqM(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm);
 	void computeJacIneqR(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
+
 	void countDofs(int &nem, int &ner, int &nim, int &nir);
 	void getActiveList(std::vector<int> &listM, std::vector<int> &listR);
+
 	void scatterForceEqM(Eigen::MatrixXd Gmt, Eigen::VectorXd lm);
 	void scatterForceEqR(Eigen::MatrixXd Grt, Eigen::VectorXd lr);
 	void scatterForceIneqR(Eigen::MatrixXd Crt, Eigen::VectorXd lr);
 	void scatterForceIneqM(Eigen::MatrixXd Cmt, Eigen::VectorXd lm);
+
 	virtual void computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr);
-	virtual void computeJacEqM_(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm);
+	virtual void computeJacEqM_(Eigen::MatrixXd &Gm, Eigen::MatrixXd &Gmdot, Eigen::VectorXd &gm, Eigen::VectorXd &gmdot, Eigen::VectorXd &gmddot);
 	virtual void computeJacEqR_(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr);
 
 	int nconEM;								// Number of maximal equality constraints

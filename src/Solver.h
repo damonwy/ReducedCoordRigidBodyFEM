@@ -93,6 +93,8 @@ private:
 	Eigen::MatrixXd Gm;
 	Eigen::MatrixXd Gmdot;
 	Eigen::VectorXd gm;
+	Eigen::VectorXd gmdot;
+	Eigen::VectorXd gmddot;
 
 	Eigen::MatrixXd Gr;
 	Eigen::MatrixXd Grdot;
@@ -100,6 +102,8 @@ private:
 
 	Eigen::MatrixXd G;
 	Eigen::VectorXd g;
+	Eigen::VectorXd gdot;
+	Eigen::VectorXd rhsG;
 
 	Eigen::MatrixXd Cm;
 	Eigen::MatrixXd Cmdot;

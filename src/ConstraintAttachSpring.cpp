@@ -24,7 +24,7 @@ Constraint(6, 0, 0, 0), m_spring(spring)
 }
 
 
-void ConstraintAttachSpring::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm) {
+void ConstraintAttachSpring::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
 	int row0 = idxEM;
 	int row1 = idxEM + 3;
 	int col0S = m_spring->m_nodes[0]->idxM;
@@ -76,4 +76,25 @@ void ConstraintAttachSpring::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, Vecto
 
 	Gm.block<3, 3>(row0, col0S) = -Matrix3d::Identity();
 	Gm.block<3, 3>(row1, col1S) = -Matrix3d::Identity();
+
+	Vector4d tem00;
+	tem00.segment<3>(0) = m_spring->m_r0;
+	tem00(3) = 1.0;
+	Vector4d tem01;
+	tem01.segment<3>(0) = m_spring->m_nodes[0]->x;
+	tem01(3) = 1.0;
+
+
+	Vector4d tem10;
+	tem10.segment<3>(0) = m_spring->m_r1;
+	tem10(3) = 1.0;
+	Vector4d tem11;
+	tem11.segment<3>(0) = m_spring->m_nodes[m_spring->m_nodes.size()-1]->x;
+	tem11(3) = 1.0;
+
+	Vector4d gm0 = E0 * tem00 - tem01;
+	Vector4d gm1 = E1 * tem10 - tem11;
+
+	gm.segment<3>(row0) = gm0.segment<3>(0);
+	gm.segment<3>(row1) = gm1.segment<3>(0);
 }
