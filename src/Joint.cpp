@@ -54,13 +54,13 @@ Joint::~Joint() {
 
 }
 
-void Joint::init(int &nr) {
+void Joint::init(int &nm, int &nr) {
 	m_body->setJoint(getJoint());
 
 	if (m_parent != nullptr) {
 		m_parent->addChild(getJoint());
 	}
-	countDofs(nr);
+	countDofs(nm, nr);
 
 }
 
@@ -98,10 +98,10 @@ void Joint::updateSelf() {
 
 }
 
-void Joint::countDofs(int &nr) {
+void Joint::countDofs(int &nm, int &nr) {
 	// Counts reduced DOFs
 	idxR = countR(nr, m_ndof);
-
+	m_body->countDofs(nm);
 }
 
 int Joint::countR(int &nr, int data) {

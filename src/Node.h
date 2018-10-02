@@ -20,6 +20,9 @@ public:
 		Node();
 	Node(const std::shared_ptr<Shape> shape);
 	virtual ~Node();
+
+	void load(const std::string &RESOURCE_DIR);
+	void init();
 	void tare();
 	void reset();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> p) const;
@@ -60,7 +63,7 @@ public:
 								// 0 at muscle origin and 1 at insertion; remain fixed.
 	
 private:
-	const std::shared_ptr<Shape> sphere;
+	std::shared_ptr<Shape> sphere;
 	double V;					// potential energy
 	double K;					// kinetic energy
 	Eigen::MatrixXd J;			// Jacobian Matrix

@@ -25,7 +25,7 @@ public:
 	Joint(std::shared_ptr<Body> body, double ndof, std::shared_ptr<Joint> parent = nullptr);
 	virtual ~Joint();
 
-	virtual void init(int &nr);
+	virtual void init(int &nm, int &nr);
 	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
 	virtual void update();
 	virtual void updateSelf();
@@ -51,7 +51,7 @@ public:
 	int idxR;						// Reduced indices
 	bool presc;						// Use presribed motion
 
-	void countDofs(int &nr);
+	void countDofs(int &nm, int &nr);
 	int countR(int &nr, int data);
 	void setJointTransform(Eigen::Matrix4d E);
 	void setStiffness(double K) { m_K = K; } // Sets this joint's linear stiffness

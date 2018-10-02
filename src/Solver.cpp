@@ -124,22 +124,35 @@ shared_ptr<Solution> Solver::solve() {
 				cr.resize(nir);
 				cr.setZero();
 
+				M.setZero();
+				f.setZero();
+				J.setZero();
+				Jdot.setZero();
+				g.setZero();
+				gr.setZero();
+				Gr.setZero();
+				Grdot.setZero();
+				Gm.setZero();
+				Gmdot.setZero();
+				G.setZero();
+
 				// sceneFcn()
 				M = body0->computeMass(grav, M);
 				f = body0->computeForce(grav, f);
 
 				M = spring0->computeMass(grav, M);
 				f = spring0->computeForce(grav, f);
-				
+
 				// spring..
 				J = joint0->computeJacobian(J, nm, nr);	
 				Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
-				
+				//cout << Jdot << endl;
 				// spring jacobian todo
 				J = spring0->computeJacobian(J);
 				//cout << "J" << J << endl;
 
 				q0 = m_solutions->y.row(k - 1).segment(0, nr);
+				//cout << "q0"<<q0 << endl;
 				qdot0 = m_solutions->y.row(k - 1).segment(nr, nr);
 				
 				Mtilde = J.transpose() * M * J;
@@ -200,6 +213,8 @@ shared_ptr<Solution> Solver::solve() {
 					rhs.segment(ftilde.rows(), g.rows()) = g;
 
 					VectorXd sol = LHS.ldlt().solve(rhs);
+					//cout << LHS << endl;
+					//cout << rhs << endl;
 					qdot1 = sol.segment(0, nr);
 					
 					VectorXd l = sol.segment(nr, sol.rows() - nr);
@@ -273,9 +288,9 @@ shared_ptr<Solution> Solver::solve() {
 				}
 				qddot = (qdot1 - qdot0) / h;
 				cout << "ddot" << qddot << endl;
-
+				cout <<"qdot1"<< qdot1 << endl;
 				q1 = q0 + h * qdot1;
-
+				//cout << "q1" << q1 << endl;
 				yk.segment(0, nr) = q1;
 				yk.segment(nr, nr) = qdot1;
 
@@ -284,7 +299,10 @@ shared_ptr<Solution> Solver::solve() {
 
 				joint0->scatterDofs(yk, nr);
 				joint0->scatterDDofs(ydotk, nr);
-			
+
+				//cout << "y" << yk << endl;
+				//cout << "ydot" << ydotk << endl;
+
 				spring0->scatterDofs(yk, nr);
 				spring0->scatterDDofs(ydotk, nr);
 

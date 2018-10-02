@@ -14,6 +14,8 @@
 #include "Stepper.h"
 #include "World.h"
 #include "Solver.h"
+#include "Spring.h"
+#include "SpringSerial.h"
 
 using namespace std;
 using namespace Eigen;
@@ -92,6 +94,8 @@ void Scene::step()
 		ys = (1 - s)* m_solution->y.row(output_idx) + s * m_solution->y.row(output_idx + 1);
 
 		m_world->getJoint0()->scatterDofs(ys, m_world->nr);
+		m_world->getSpring0()->scatterDofs(ys, m_world->nr);
+
 		tk = tk + drawH;
 	}
 	

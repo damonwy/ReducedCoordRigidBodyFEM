@@ -1,3 +1,7 @@
+#include <cassert>
+#include <cstring>
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +20,10 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 
 #include "GLSL.h"
 #include "Program.h"
@@ -36,6 +44,10 @@ shared_ptr<Camera> camera;
 shared_ptr<Program> prog;
 shared_ptr<Program> progSimple;
 shared_ptr<Scene> scene;
+
+char pixels[4 * 1920 * 1080];
+int steps = 0;
+
 
 static void error_callback(int error, const char *description)
 {
@@ -231,13 +243,37 @@ void render()
 
 void stepperFunc()
 {
+	
+
 	while(true) {
+		
 		if(keyToggles[(unsigned)' ']) {
-			scene->step();
+			
+			
+			steps += 1;
+
 		}
 		this_thread::sleep_for(chrono::microseconds(1));
 	}
 }
+
+void stepWorld() {
+	char str1[5] = ".jpg";
+	char str0[10];
+	if (keyToggles[(unsigned)' ']) {
+		// This can be parallelized!
+		
+		scene->step();
+		sprintf(str0, "%d", steps);
+		strcat(str0, str1);
+
+		glReadPixels(0, 0, (GLsizei)1920, (GLsizei)1080, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		stbi_write_jpg(str0, 1920, 1080, 4, pixels, 100);
+		steps += 1;
+	}
+
+}
+
 
 int main(int argc, char **argv)
 {
@@ -254,7 +290,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	// Create a windowed mode window and its OpenGL context.
-	window = glfwCreateWindow(640*2, 480*2, "Reduced Coordinate Rigid Body FEM Simulation", NULL, NULL);
+	window = glfwCreateWindow(1920, 1080, "Reduced Coordinate Rigid Body FEM Simulation", NULL, NULL);
 	if(!window) {
 		glfwTerminate();
 		return -1;
@@ -283,18 +319,20 @@ int main(int argc, char **argv)
 	// Initialize scene.
 	init();
 	// Start simulation thread.
-	thread stepperThread(stepperFunc);
+	//thread stepperThread(stepperFunc);
 	// Loop until the user closes the window.
 	while(!glfwWindowShouldClose(window)) {
+		stepWorld();
 		// Render scene.
 		render();
+
 		// Swap front and back buffers.
 		glfwSwapBuffers(window);
 		// Poll for and process events.
 		glfwPollEvents();
 	}
 	// Quit program.
-	stepperThread.detach();
+	//stepperThread.detach();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

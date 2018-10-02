@@ -213,9 +213,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 
 			// Init springs
-			auto spring0 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 0.0, 10.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
+			auto spring0 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
+			spring0->setStiffness(m_stiffness);
 			auto spring1 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
-
+			spring1->setStiffness(m_stiffness);
+			for (int i = 0; i < m_springs.size(); i++) {
+				m_springs[i]->load(RESOURCE_DIR);
+			}
+			
 		}
 		break;
 	default:
@@ -290,13 +295,18 @@ void World::init() {
 			m_bodies[i]->next = m_bodies[i + 1];
 		}
 	}
-
-	for (int i = 0; i < m_njoints; i++) {
-		m_joints[i]->init(nr);
-	}
+	
+	nm = 0;
+	/*for (int i = 0; i < m_njoints; i++) {
+		m_joints[i]->init(nm, nr);
+	}*/
 
 	//joint ordering
 	// todo
+
+	for (int i = m_njoints - 1; i > -1; i--) {
+		m_joints[i]->init(nm, nr);
+	}
 
 	for (int i = 0; i < m_njoints; i++) {
 		if (i < m_njoints - 1) {

@@ -41,6 +41,17 @@ Node::Node(const shared_ptr<Shape> s) :
 	
 }
 
+void Node::load(const std::string &RESOURCE_DIR) {
+
+	sphere = make_shared<Shape>();
+	sphere->loadMesh(RESOURCE_DIR + "sphere2.obj");
+
+}
+
+void Node::init() {
+	sphere->init();
+}
+
 Node::~Node()
 {
 }

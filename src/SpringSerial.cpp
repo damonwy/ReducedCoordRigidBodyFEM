@@ -19,6 +19,7 @@ Spring(countS, countCM)
 {
 	for (int i = 0; i < n_nodes; i++) {
 		auto node = make_shared<Node>();
+		node->r = 0.2;
 		node->x = Vector3d::Zero();
 		node->v = Vector3d::Zero();
 		node->a = Vector3d::Zero();
@@ -29,6 +30,12 @@ Spring(countS, countCM)
 void SpringSerial::init() {
 	// Sets the world positions of the nodes using the attachment
 	// points. r0 and r1 are in local coords.
+
+	for (int i = 0; i < m_nodes.size(); i++) {		
+		m_nodes[i]->init();
+	}
+
+
 	Matrix4d E0, E1;
 	if (m_body0 == nullptr) {
 		E0 = Matrix4d::Identity();
@@ -57,7 +64,6 @@ void SpringSerial::init() {
 	for (int i = 0; i < n_nodes; i++) {
 		double s = double(i) / (n_nodes - 1);
 		m_nodes[i]->x = (1 - s) * x0.segment<3>(0) + s * x1.segment<3>(0);
-		
 	}
 
 	// Compute the rest lengths
@@ -66,12 +72,13 @@ void SpringSerial::init() {
 		Vector3d x1 = m_nodes[i + 1]->x;
 		Vector3d dx = x1 - x0;
 		m_nodes[i]->L = dx.norm(); // rest length
-
 	}
 }
 
 void SpringSerial::load(const string &RESOURCE_DIR) {
-
+	for (int i = 0; i < m_nodes.size(); i++) {
+		m_nodes[i]->load(RESOURCE_DIR);
+	}
 
 }
 
@@ -92,9 +99,15 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 
 	// Draw line segments
 	progSimple->bind();
+	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+	MV->pushMatrix();
+	
+	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+
 	glLineWidth(5);
 	glBegin(GL_LINES);
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glColor3f(0.0f, 0.0f, 0.0f);
 	
 	for (int i = 0; i < n_nodes - 1; i++) {
 
@@ -105,8 +118,9 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 		glVertex3f(x0(0), x0(1), x0(2));
 		glVertex3f(x1(0), x1(1), x1(2));
 	}
-
+	
 	glEnd();
+	MV->popMatrix();
 	progSimple->unbind();
 	
 }
@@ -156,11 +170,13 @@ VectorXd SpringSerial::gatherDDofs_(VectorXd ydot, int nr) {
 
 void SpringSerial::scatterDofs_(VectorXd &y, int nr) {
 	// Scatters q and qdot from y
-	cout << "y" << y << endl;
+	
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		m_nodes[i]->x = y.segment<3>(idxR);
 		m_nodes[i]->v = y.segment<3>(nr + idxR);
+		//cout << "x"<< m_nodes[i]->x << endl;
+		//cout << "v" << m_nodes[i]->v << endl;
 	}
 }
 
@@ -170,6 +186,8 @@ void SpringSerial::scatterDDofs_(VectorXd &ydot, int nr) {
 		int idxR = m_nodes[i]->idxR;
 		m_nodes[i]->v = ydot.segment<3>(idxR);
 		m_nodes[i]->a = ydot.segment<3>(nr + idxR);
+		//cout << "v" << m_nodes[i]->v << endl;
+		//cout << "a" << m_nodes[i]->a << endl;
 	}
 }
 
@@ -208,10 +226,7 @@ VectorXd SpringSerial::computeForce_(Vector3d grav, VectorXd f) {
 		double L = m_nodes[i]->L;
 		double e = (l - L) / L;
 
-		cout << "L " << L << endl;
-		cout << "e " << e << endl;
 		Vector3d fs = m_K * e * (1.0 / L) / l* dx;
-		cout << "fs " << fs << endl;
 
 		f.segment<3>(row0) += fs;
 		f.segment<3>(row1) -= fs;
