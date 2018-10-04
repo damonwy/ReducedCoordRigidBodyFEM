@@ -16,6 +16,7 @@
 #include "Solver.h"
 #include "Spring.h"
 #include "SpringSerial.h"
+#include "SoftBody.h"
 
 using namespace std;
 using namespace Eigen;
@@ -95,7 +96,7 @@ void Scene::step()
 
 		m_world->getJoint0()->scatterDofs(ys, m_world->nr);
 		m_world->getSpring0()->scatterDofs(ys, m_world->nr);
-
+		m_world->getSoftBody0()->scatterDofs(ys, m_world->nr);
 		tk = tk + drawH;
 	}
 	

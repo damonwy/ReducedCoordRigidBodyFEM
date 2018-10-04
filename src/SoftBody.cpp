@@ -208,6 +208,10 @@ void SoftBody::updatePosNor() {
 			norBuf[9 * i + 6 + ii] = normal(ii);
 		}
 	}
+
+	if (next != nullptr) {
+		next->updatePosNor();
+	}
 }
 
 VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
@@ -249,6 +253,7 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 		m_nodes[i]->v = y.segment<3>(nr + idxR);
 	
 	}
+	updatePosNor();
 
 	if (next != nullptr) {
 		next->scatterDofs(y, nr);

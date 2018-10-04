@@ -230,13 +230,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 	case SOFT_BODIES:
 		{
 			m_h = 1.0e-2;
-			m_tspan << 0.0, 50.0;
+			m_tspan << 0.0, 1.0;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
-
+			Eigen::from_json(js["sides"], sides);
 			double young = 1e2;
 			double possion = 0.45;
-
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+			addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 			auto softbody = make_shared<SoftBody>(density, young, possion);
 			softbody->load(RESOURCE_DIR, "cube");
 			m_softbodies.push_back(softbody);

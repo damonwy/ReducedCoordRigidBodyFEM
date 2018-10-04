@@ -218,6 +218,9 @@ shared_ptr<Solution> Solver::solve() {
 				if (ne == 0 && ni == 0) {	// No constraints	
 					qdot1 = Mtilde.ldlt().solve(ftilde);
 
+					//cout << Mtilde << endl;
+					//cout << ftilde << endl;
+
 				}
 				else if (ne > 0 && ni == 0) {  // Just equality
 					int rows = Mtilde.rows() + G.rows();
@@ -235,8 +238,8 @@ shared_ptr<Solution> Solver::solve() {
 					rhs.segment(ftilde.rows(), g.rows()) = rhsG;
 
 					VectorXd sol = LHS.ldlt().solve(rhs);
-					//cout << LHS << endl;
-					//cout << rhs << endl;
+					cout << LHS << endl;
+					cout << rhs << endl;
 					qdot1 = sol.segment(0, nr);
 					
 					VectorXd l = sol.segment(nr, sol.rows() - nr);
@@ -326,7 +329,8 @@ shared_ptr<Solution> Solver::solve() {
 				spring0->scatterDDofs(ydotk, nr);
 
 				softbody0->scatterDofs(yk, nr);
-				softbody0->scatterDofs(ydotk, nr);
+				softbody0->scatterDDofs(ydotk, nr);
+				softbody0->updatePosNor();
 
 				t += h;
 				m_solutions->y.row(k) = yk;
