@@ -224,7 +224,7 @@ shared_ptr<Solution> Solver::solve() {
 					LHS.block(Mtilde.rows(), 0, G.rows(), G.cols()) = G;
 					rhs.segment(0, ftilde.rows()) = ftilde;
 					//rhs.segment(ftilde.rows(), g.rows()) = g;
-					cout << "g" << endl << g << endl;
+					//cout << "g" << endl << g << endl;
 					rhs.segment(ftilde.rows(), g.rows()) = rhsG;
 
 					VectorXd sol = LHS.ldlt().solve(rhs);

@@ -7,6 +7,7 @@
 #include "Joint.h"
 #include "JointRevolute.h"
 #include "Body.h"
+#include "SoftBody.h"
 #include "MatrixStack.h"
 #include "Program.h"
 #include "SE3.h"
@@ -18,20 +19,23 @@
 #include "Spring.h"
 #include "SpringSerial.h"
 #include "SpringNull.h"
+#include "JointNull.h"
 
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
 World::World():
-nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_constraints(0), m_countS(0), m_countCM(0)
+nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_constraints(0), m_countS(0), m_countCM(0),
+m_nsoftbodies(0)
 {
 
 }
 
 World::World(WorldType type):
 m_type(type),
-nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_nconstraints(0), m_countS(0), m_countCM(0)
+nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_nconstraints(0), m_countS(0), m_countCM(0),
+m_nsoftbodies(0)
 {
 }
 
@@ -223,6 +227,23 @@ void World::load(const std::string &RESOURCE_DIR) {
 			
 		}
 		break;
+	case SOFT_BODIES:
+		{
+			m_h = 1.0e-2;
+			m_tspan << 0.0, 50.0;
+			density = 1.0;
+			m_grav << 0.0, -98, 0.0;
+
+			double young = 1e2;
+			double possion = 0.45;
+
+			auto softbody = make_shared<SoftBody>(density, young, possion);
+			softbody->load(RESOURCE_DIR, "cube");
+			m_softbodies.push_back(softbody);
+			m_nsoftbodies++;
+
+		}
+		break;
 	default:
 		break;
 	}
@@ -279,6 +300,13 @@ shared_ptr<ConstraintNull> World::addConstraintNull() {
 
 }
 
+shared_ptr<JointNull> World::addJointNull() {
+	auto joint = make_shared<JointNull>();
+	m_njoints++;
+	m_joints.push_back(joint);
+	return joint;
+}
+
 shared_ptr<SpringNull> World::addSpringNull() {
 
 	auto spring = make_shared<SpringNull>();
@@ -317,6 +345,10 @@ void World::init() {
 		}
 	}
 
+	if (m_njoints == 0) {
+		addJointNull();
+	}
+
 	m_joints[0]->update();
 	
 	for (int i = 0; i < m_nsprings; i++) {
@@ -330,6 +362,11 @@ void World::init() {
 		if (i < m_nsprings - 1) {
 			m_springs[i]->next = m_springs[i + 1];
 		}
+	}
+
+	for (int i = 0; i < m_nsoftbodies; i++) {
+		m_softbodies[i]->init();
+
 	}
 
 	// init constraints
@@ -399,8 +436,12 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	}
 
 	// Draw springs
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < m_nsprings; i++) {
 		m_springs[i]->draw(MV, prog, progSimple, P);
 	}
 
+	// Draw soft bodies
+	for (int i = 0; i < m_nsoftbodies; i++) {
+		m_softbodies[i]->draw(MV, prog, progSimple, P);
+	}
 }

@@ -50,11 +50,11 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(JOINT_LIMITS);
+	m_world = make_shared<World>(SOFT_BODIES);
 	m_world->load(RESOURCE_DIR);
 
-	m_solver = make_shared<Solver>(m_world, REDMAX_EULER);
-	m_solver->load(RESOURCE_DIR);
+	//m_solver = make_shared<Solver>(m_world, REDMAX_EULER);
+	//m_solver->load(RESOURCE_DIR);
 
 }
 
@@ -62,10 +62,10 @@ void Scene::load(const string &RESOURCE_DIR)
 void Scene::init()
 {
 	m_world->init();
-	m_solver->init();
-	m_solution = m_solver->solve();
+	//m_solver->init();
+	//m_solution = m_solver->solve();
 
-	tk = m_solution->t(0);
+	//tk = m_solution->t(0);
 	drawH = 1.0 / drawHz;
 	search_idx = 0;
 }
@@ -82,7 +82,7 @@ void Scene::solve() {
 
 void Scene::step()
 {	
-	int n_steps = m_solution->getNsteps();
+	/*int n_steps = m_solution->getNsteps();
 	
 	int output_idx;
 	double s;
@@ -97,7 +97,7 @@ void Scene::step()
 		m_world->getSpring0()->scatterDofs(ys, m_world->nr);
 
 		tk = tk + drawH;
-	}
+	}*/
 	
 }
 

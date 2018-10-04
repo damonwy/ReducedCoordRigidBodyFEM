@@ -15,6 +15,7 @@
 class Joint;
 class JointRevolute;
 class Body;
+class SoftBody;
 class MatrixStack;
 class Program;
 class Constraint;
@@ -23,6 +24,7 @@ class ConstraintNull;
 class Spring;
 class SpringSerial;
 class SpringNull;
+class JointNull;
 
 class World
 {
@@ -37,6 +39,7 @@ public:
 	std::shared_ptr<SpringSerial> addSpringSerial(double mass, int n_points, std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);
 	std::shared_ptr<ConstraintNull> addConstraintNull();
 	std::shared_ptr<SpringNull> addSpringNull();
+	std::shared_ptr<JointNull> addJointNull();
 
 	void load(const std::string &RESOURCE_DIR);
 	void init();
@@ -77,6 +80,7 @@ public:
 	int m_countCM;
 
 	int m_nbodies;
+	int m_nsoftbodies;
 	int m_njoints;
 	int m_nsprings;
 	int m_nconstraints;
@@ -92,6 +96,7 @@ private:
 	double m_Hexpected;
 
 	std::vector<std::shared_ptr<Body>> m_bodies;
+	std::vector <std::shared_ptr<SoftBody>> m_softbodies;
 	std::vector<std::shared_ptr<Joint>> m_joints;
 	std::vector<std::shared_ptr<Spring>> m_springs;
 	std::vector<std::shared_ptr<Constraint>> m_constraints;
