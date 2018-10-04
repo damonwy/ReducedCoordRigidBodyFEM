@@ -174,6 +174,20 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 
 }
 
+void SoftBody::countDofs(int &nm, int &nr) {
+	// Counts maximal and reduced DOFs
+	// For non-rigid DOFs, we need both maximal and reduced DOFs,
+	// and the Jacobian must pass them through with the identity 
+	// matrices
+
+	for (int i = 0; i < m_nodes.size(); i++) {
+		m_nodes[i]->idxM = nm;
+		m_nodes[i]->idxR = nr;
+		nm += 3;
+		nr += 3;
+	}
+}
+
 void SoftBody::updatePosNor() {
 	for (int i = 0; i < m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
@@ -196,12 +210,126 @@ void SoftBody::updatePosNor() {
 	}
 }
 
+VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
+	// Gathers qdot and qddot into y
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		int idxR = m_nodes[i]->idxR;
+		y.segment<3>(idxR) = m_nodes[i]->x;
+		y.segment<3>(nr + idxR) = m_nodes[i]->v;
+	}
+
+	if (next != nullptr) {
+		y = next->gatherDofs(y, nr);
+	}
+
+	return y;
+}
+
+VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
+	// Gathers qdot and qddot into ydot
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		int idxR = m_nodes[i]->idxR;
+		ydot.segment<3>(idxR) = m_nodes[i]->v;
+		ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
+	}
+
+	if (next != nullptr) {
+		ydot = next->gatherDDofs(ydot, nr);
+	}
+
+	return ydot;
+}
+
+void SoftBody::scatterDofs(VectorXd &y, int nr) {
+	// Scatters q and qdot from y
+
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		int idxR = m_nodes[i]->idxR;
+		m_nodes[i]->x = y.segment<3>(idxR);
+		m_nodes[i]->v = y.segment<3>(nr + idxR);
+	
+	}
+
+	if (next != nullptr) {
+		next->scatterDofs(y, nr);
+	}
+}
+
+void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
+	// Scatters qdot and qddot from ydot
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		int idxR = m_nodes[i]->idxR;
+		m_nodes[i]->v = ydot.segment<3>(idxR);
+		m_nodes[i]->a = ydot.segment<3>(nr + idxR);
+		
+	}
+
+	if (next != nullptr) {
+		next->scatterDDofs(ydot, nr);
+
+	}
+
+}
+
 void SoftBody::computeEnergies(Vector3d grav, double &T, double &V) {
 
 
 
+}
+
+MatrixXd SoftBody::computeMass(Vector3d grav, MatrixXd M) {
+	// Computes maximal mass matrix
+	
+	Matrix3d I3 = Matrix3d::Identity();
+	for (int i = 0; i < m_nodes.size(); i++) {
+		int idxM = m_nodes[i]->idxM;
+		double m = m_nodes[i]->m;
+		M.block<3, 3>(idxM, idxM) = m * I3;
+	}
+
+	if (next != nullptr) {
+		M = next->computeMass(grav, M);
+	}
+
+	return M;
+}
+
+VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
+	// Computes force vector
+	
+	// Gravity
+	Matrix3d I3 = Matrix3d::Identity();
+	for (int i = 0; i < m_nodes.size(); i++) {
+		int idxM = m_nodes[i]->idxM;
+		double m = m_nodes[i]->m;
+		f.segment<3>(idxM) += m * grav;
+	}
+
+	// Elastic Forces
+	for (int i = 0; i < m_tets.size(); i++) {
+		auto tet = m_tets[i];
+		f = tet->computeElasticForces(f);
 
 
+	}
+
+	if (next != nullptr) {
+		f = next->computeForce(grav, f);
+	}
+
+	return f;
+}
+
+MatrixXd SoftBody::computeJacobian(MatrixXd J) {
+	for (int i = 0; i < m_nodes.size(); i++) {
+		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
+	}
+
+	if (next != nullptr) {
+		J = next->computeJacobian(J);
+	}
+
+	return J;
 }
 
 SoftBody:: ~SoftBody() {

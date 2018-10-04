@@ -64,6 +64,7 @@ public:
 	std::shared_ptr<Body> getBody0() const { return m_bodies[0]; }
 	std::shared_ptr<Joint> getJoint0() const { return m_joints[0]; }
 	std::shared_ptr<Spring> getSpring0() const { return m_springs[0]; }
+	std::shared_ptr<SoftBody> getSoftBody0() const { return m_softbodies[0]; }
 	std::shared_ptr<Constraint> getConstraint0() const { return m_constraints[0]; }
 
 	Eigen::Vector2d getTspan() const { return m_tspan; }

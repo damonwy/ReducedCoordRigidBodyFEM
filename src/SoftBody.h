@@ -27,8 +27,18 @@ public:
 	virtual void init();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 
+	void countDofs(int &nm, int &nr);
 	void updatePosNor();
 	void computeEnergies(Eigen::Vector3d grav, double &T, double &V);
+	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J);
+	Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
+	Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
+	Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
+	Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
+	void scatterDofs(Eigen::VectorXd &y, int nr);
+	void scatterDDofs(Eigen::VectorXd &ydot, int nr);
+
+	std::shared_ptr<SoftBody> next;
 
 private:
 	std::vector<std::shared_ptr<Node> > m_nodes;
@@ -48,6 +58,7 @@ private:
 	double m_young;
 	double m_poisson;
 	double m_density;
+	double m_mass;
 
 };
 

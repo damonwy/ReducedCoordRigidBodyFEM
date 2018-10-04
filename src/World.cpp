@@ -363,10 +363,21 @@ void World::init() {
 			m_springs[i]->next = m_springs[i + 1];
 		}
 	}
+	
+	if (m_nsprings == 0) {
+		addSpringNull();
+	}
 
 	for (int i = 0; i < m_nsoftbodies; i++) {
+		m_softbodies[i]->countDofs(nm, nr);
 		m_softbodies[i]->init();
+		// Create attachment constraints
 
+
+
+		if (i < m_nsoftbodies - 1) {
+			m_softbodies[i]->next = m_softbodies[i + 1];
+		}
 	}
 
 	// init constraints
@@ -377,11 +388,7 @@ void World::init() {
 			m_constraints[i]->next = m_constraints[i + 1];
 		}
 	}
-
-	if (m_nsprings == 0) {
-		addSpringNull();
-	}
-
+	
 	if (m_nconstraints == 0) {
 		addConstraintNull();
 	}

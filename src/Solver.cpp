@@ -2,6 +2,7 @@
 
 #include "World.h"
 #include "Body.h"
+#include "SoftBody.h"
 #include "Joint.h"
 #include "Spring.h"
 #include "SpringSerial.h"
@@ -94,6 +95,7 @@ shared_ptr<Solution> Solver::solve() {
 			auto body0 = m_world->getBody0();
 			auto joint0 = m_world->getJoint0();
 			auto spring0 = m_world->getSpring0();
+			auto softbody0 = m_world->getSoftBody0();
 			auto constraint0 = m_world->getConstraint0();
 
 			int nsteps = m_world->getNsteps();
@@ -105,6 +107,7 @@ shared_ptr<Solution> Solver::solve() {
 			m_solutions->t(0) = m_world->getTspan()(0);
 			m_solutions->y.row(0) = joint0->gatherDofs(m_solutions->y.row(0), nr);
 			m_solutions->y.row(0) = spring0->gatherDofs(m_solutions->y.row(0), nr);
+			m_solutions->y.row(0) = softbody0->gatherDofs(m_solutions->y.row(0), nr);
 
 			double t = m_world->getTspan()(0);
 			double h = m_world->getH();
@@ -155,12 +158,16 @@ shared_ptr<Solution> Solver::solve() {
 				M = spring0->computeMass(grav, M);
 				f = spring0->computeForce(grav, f);
 
-				// spring..
+				M = softbody0->computeMass(grav, M);
+				f = softbody0->computeForce(grav, f);
+
 				J = joint0->computeJacobian(J, nm, nr);	
 				Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 				
 				// spring jacobian todo
 				J = spring0->computeJacobian(J);
+
+				J = softbody0->computeJacobian(J);
 
 				q0 = m_solutions->y.row(k - 1).segment(0, nr);
 				//cout << "q0"<<q0 << endl;
@@ -228,8 +235,8 @@ shared_ptr<Solution> Solver::solve() {
 					rhs.segment(ftilde.rows(), g.rows()) = rhsG;
 
 					VectorXd sol = LHS.ldlt().solve(rhs);
-					cout << LHS << endl;
-					cout << rhs << endl;
+					//cout << LHS << endl;
+					//cout << rhs << endl;
 					qdot1 = sol.segment(0, nr);
 					
 					VectorXd l = sol.segment(nr, sol.rows() - nr);
@@ -317,6 +324,9 @@ shared_ptr<Solution> Solver::solve() {
 
 				spring0->scatterDofs(yk, nr);
 				spring0->scatterDDofs(ydotk, nr);
+
+				softbody0->scatterDofs(yk, nr);
+				softbody0->scatterDofs(ydotk, nr);
 
 				t += h;
 				m_solutions->y.row(k) = yk;
