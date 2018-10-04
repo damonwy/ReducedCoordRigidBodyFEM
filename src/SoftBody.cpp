@@ -59,12 +59,12 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		node->m = 0.0;
 		node->i = i;
 
-		/*if (node->x(1) > 1.3) {
+		if (node->x(1) > 0.5) {
 			node->fixed = true;
 		}
 		else {
 			node->fixed = false;
-		}*/
+		}
 
 		m_nodes.push_back(node);
 	}
@@ -209,9 +209,6 @@ void SoftBody::updatePosNor() {
 		}
 	}
 
-	if (next != nullptr) {
-		next->updatePosNor();
-	}
 }
 
 VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
@@ -249,9 +246,11 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-		m_nodes[i]->x = y.segment<3>(idxR);
-		m_nodes[i]->v = y.segment<3>(nr + idxR);
-	
+		if (!m_nodes[i]->fixed) {
+			m_nodes[i]->x = y.segment<3>(idxR);
+			m_nodes[i]->v = y.segment<3>(nr + idxR);
+		}
+
 	}
 	updatePosNor();
 
@@ -264,9 +263,10 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 	// Scatters qdot and qddot from ydot
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-		m_nodes[i]->v = ydot.segment<3>(idxR);
-		m_nodes[i]->a = ydot.segment<3>(nr + idxR);
-		
+		if (!m_nodes[i]->fixed) {
+			m_nodes[i]->v = ydot.segment<3>(idxR);
+			m_nodes[i]->a = ydot.segment<3>(nr + idxR);
+		}
 	}
 
 	if (next != nullptr) {
@@ -323,6 +323,35 @@ VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 	}
 
 	return f;
+}
+
+MatrixXd SoftBody::computeStiffness(MatrixXd K) {
+	VectorXd df(3*m_nodes.size());
+	VectorXd Dx = df;
+
+	for (int i = 0; i < m_tets.size(); i++) {
+		auto tet = m_tets[i];
+		for (int ii = 0; ii < 4; ii++) {
+			auto node = tet->m_nodes[ii];
+			int id = node->i;
+			int col = node->idxM;
+			
+			for (int iii = 0; iii < 3; iii++) {
+				df.setZero();
+				Dx.setZero();
+				Dx(3 * id + iii) = 1.0;
+				tet->computeForceDifferentials(Dx, df);
+				//K.col(col + iii) += df;
+				K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
+			}
+		}
+	}
+
+
+	if (next != nullptr) {
+		K = next->computeStiffness(K);
+	}
+	return K;
 }
 
 MatrixXd SoftBody::computeJacobian(MatrixXd J) {

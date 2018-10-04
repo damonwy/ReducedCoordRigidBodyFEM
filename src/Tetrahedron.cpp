@@ -1,6 +1,6 @@
 #include "Tetrahedron.h"
 #include "Node.h"
-
+#include <iostream>
 using namespace Eigen;
 using namespace std;
 
@@ -61,7 +61,7 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 
 	double psi;
 
-	int temp = 4;
+	int temp = 3;
 	switch (temp)
 	{
 	case 1:
@@ -123,7 +123,7 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 	Matrix3d dP = Matrix3d::Zero();
 	Matrix3d I3 = Matrix3d::Identity();
 
-	int temp = 1;
+	int temp = 2;
 	switch (temp) {
 	case 1:
 	{
@@ -193,7 +193,6 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	this->dF = dDs * Bm;
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
 	this->dH = -W * dP * (Bm.transpose());
-
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);

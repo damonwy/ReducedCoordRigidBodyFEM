@@ -78,6 +78,7 @@ private:
 	std::shared_ptr<Solution> m_solutions;
 
 	Eigen::MatrixXd M;
+	Eigen::MatrixXd K;
 	Eigen::VectorXd f;
 	Eigen::MatrixXd J;
 	Eigen::MatrixXd Jdot;

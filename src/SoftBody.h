@@ -33,6 +33,7 @@ public:
 	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J);
 	Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
 	Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
+	Eigen::MatrixXd computeStiffness(Eigen::MatrixXd K);
 	Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
 	Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
 	void scatterDofs(Eigen::VectorXd &y, int nr);

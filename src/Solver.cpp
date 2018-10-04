@@ -51,6 +51,9 @@ shared_ptr<Solution> Solver::solve() {
 
 			M.resize(nm, nm);
 			M.setZero();
+
+			K.resize(nm, nm);
+			K.setZero();
 			f.resize(nm);
 			f.setZero();
 			J.resize(nm, nr);
@@ -136,6 +139,7 @@ shared_ptr<Solution> Solver::solve() {
 				cr.setZero();
 
 				M.setZero();
+				K.setZero();
 				f.setZero();
 				J.setZero();
 				Jdot.setZero();
@@ -161,6 +165,9 @@ shared_ptr<Solution> Solver::solve() {
 				M = softbody0->computeMass(grav, M);
 				f = softbody0->computeForce(grav, f);
 
+				K = softbody0->computeStiffness(K);
+				//cout << K << endl;
+
 				J = joint0->computeJacobian(J, nm, nr);	
 				Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 				
@@ -173,7 +180,7 @@ shared_ptr<Solution> Solver::solve() {
 				//cout << "q0"<<q0 << endl;
 				qdot0 = m_solutions->y.row(k - 1).segment(nr, nr);
 				//cout << "q0" << qdot0 << endl;
-				Mtilde = J.transpose() * M * J;
+				Mtilde = J.transpose() * (M-h*h*K) * J;
 				Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
 				ftilde = Mtilde * qdot0 + h * J.transpose() * (f - M * Jdot * qdot0);
 				
@@ -238,8 +245,8 @@ shared_ptr<Solution> Solver::solve() {
 					rhs.segment(ftilde.rows(), g.rows()) = rhsG;
 
 					VectorXd sol = LHS.ldlt().solve(rhs);
-					cout << LHS << endl;
-					cout << rhs << endl;
+					//cout << LHS << endl;
+					//cout << rhs << endl;
 					qdot1 = sol.segment(0, nr);
 					
 					VectorXd l = sol.segment(nr, sol.rows() - nr);
@@ -330,7 +337,7 @@ shared_ptr<Solution> Solver::solve() {
 
 				softbody0->scatterDofs(yk, nr);
 				softbody0->scatterDDofs(ydotk, nr);
-				softbody0->updatePosNor();
+			
 
 				t += h;
 				m_solutions->y.row(k) = yk;
