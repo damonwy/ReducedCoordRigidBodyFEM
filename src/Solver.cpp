@@ -180,7 +180,7 @@ shared_ptr<Solution> Solver::solve() {
 				//cout << "q0"<<q0 << endl;
 				qdot0 = m_solutions->y.row(k - 1).segment(nr, nr);
 				//cout << "q0" << qdot0 << endl;
-				Mtilde = J.transpose() * (M-h*h*K) * J;
+				Mtilde = J.transpose() * (M  - h * h * K) * J;
 				Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
 				ftilde = Mtilde * qdot0 + h * J.transpose() * (f - M * Jdot * qdot0);
 				

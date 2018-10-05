@@ -17,7 +17,7 @@ class Node
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	
-		Node();
+	Node();
 	Node(const std::shared_ptr<Shape> shape);
 	virtual ~Node();
 
@@ -42,13 +42,14 @@ public:
 	void setParent(std::shared_ptr<Body> _parent) { this->parent = _parent; }
 
 	void clearJacobianMatrix() { this->J.setZero(); }
-	
-	int idxR;
-	int idxM;
 	double computePotentialEnergy(Eigen::Vector3d grav);
 	double computeKineticEnergy(Eigen::VectorXd phi);
+
+	int idxR;
+	int idxM;
+	
 	double L;
-	bool fixed;
+	bool fixed;					// is fixed?
 	double r;					// radius
 	double m;					// mass
 	int i;						// starting index
@@ -67,7 +68,7 @@ private:
 	double V;					// potential energy
 	double K;					// kinetic energy
 	Eigen::MatrixXd J;			// Jacobian Matrix
-	std::shared_ptr<Body> parent;
+	std::shared_ptr<Body> parent;	// body attached to
 };
 
 #endif // MUSCLEMASS_SRC_NODE_H_

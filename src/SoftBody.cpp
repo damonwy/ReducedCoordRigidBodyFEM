@@ -59,12 +59,12 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		node->m = 0.0;
 		node->i = i;
 
-		if (node->x(1) > 0.5) {
+		/*if (node->x(1) > 0.5) {
 			node->fixed = true;
 		}
 		else {
 			node->fixed = false;
-		}
+		}*/
 
 		m_nodes.push_back(node);
 	}
@@ -208,6 +208,21 @@ void SoftBody::updatePosNor() {
 			norBuf[9 * i + 6 + ii] = normal(ii);
 		}
 	}
+
+}
+
+void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
+	auto node = m_nodes[id];
+	node->setParent(body);
+	m_attach_bodies.push_back(body);
+	m_attach_nodes.push_back(node);
+
+	Matrix4d E_ws = Matrix4d::Identity();
+	E_ws.block<3, 1>(0, 3) = node->x;
+
+	Matrix4d E_is = body->E_iw * E_ws;
+	Vector3d r = E_is.block<3, 1>(0, 3);
+	m_r.push_back(r);
 
 }
 

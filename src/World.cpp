@@ -16,6 +16,7 @@
 #include "ConstraintNull.h"
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
+#include "ConstraintAttachSoftBody.h"
 #include "Spring.h"
 #include "SpringSerial.h"
 #include "SpringNull.h"
@@ -240,6 +241,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 			auto softbody = make_shared<SoftBody>(density, young, possion);
 			softbody->load(RESOURCE_DIR, "cube");
+			softbody->setAttachments(0, body);
 			m_softbodies.push_back(softbody);
 			m_nsoftbodies++;
 
@@ -373,7 +375,9 @@ void World::init() {
 		m_softbodies[i]->countDofs(nm, nr);
 		m_softbodies[i]->init();
 		// Create attachment constraints
-
+		auto constraint = make_shared<ConstraintAttachSoftBody>(m_softbodies[i]);
+		m_constraints.push_back(constraint);
+		m_nconstraints++;
 
 
 		if (i < m_nsoftbodies - 1) {

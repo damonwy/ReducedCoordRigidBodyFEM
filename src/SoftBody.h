@@ -39,6 +39,12 @@ public:
 	void scatterDofs(Eigen::VectorXd &y, int nr);
 	void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
+	void setAttachments(int id, std::shared_ptr<Body> body);
+
+	std::vector<std::shared_ptr<Node> > m_attach_nodes;
+	std::vector<std::shared_ptr<Body> > m_attach_bodies;
+	std::vector<Eigen::Vector3d> m_r;
+
 	std::shared_ptr<SoftBody> next;
 
 private:
