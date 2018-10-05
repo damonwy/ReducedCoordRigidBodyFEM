@@ -25,22 +25,22 @@ public:
 
 	virtual void load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME);
 	virtual void init();
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
+	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 
-	void countDofs(int &nm, int &nr);
+	virtual void countDofs(int &nm, int &nr);
 	void updatePosNor();
 	void computeEnergies(Eigen::Vector3d grav, double &T, double &V);
-	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J);
-	Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
-	Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
-	Eigen::MatrixXd computeStiffness(Eigen::MatrixXd K);
-	Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
-	Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
-	void scatterDofs(Eigen::VectorXd &y, int nr);
-	void scatterDDofs(Eigen::VectorXd &ydot, int nr);
+	virtual Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J);
+	virtual Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
+	virtual Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
+	virtual Eigen::MatrixXd computeStiffness(Eigen::MatrixXd K);
+	virtual Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
+	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
+	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
+	virtual void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
 	void setAttachments(int id, std::shared_ptr<Body> body);
-
+	void transform(Eigen::Vector3d dx);
 	std::vector<std::shared_ptr<Node> > m_attach_nodes;
 	std::vector<std::shared_ptr<Body> > m_attach_bodies;
 	std::vector<Eigen::Vector3d> m_r;

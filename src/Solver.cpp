@@ -183,6 +183,7 @@ shared_ptr<Solution> Solver::solve() {
 				Mtilde = J.transpose() * (M  - h * h * K) * J;
 				Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
 				ftilde = Mtilde * qdot0 + h * J.transpose() * (f - M * Jdot * qdot0);
+
 				
 				if (ne > 0) {
 					constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
@@ -336,8 +337,7 @@ shared_ptr<Solution> Solver::solve() {
 				spring0->scatterDDofs(ydotk, nr);
 
 				softbody0->scatterDofs(yk, nr);
-				softbody0->scatterDDofs(ydotk, nr);
-			
+				softbody0->scatterDDofs(ydotk, nr);		
 
 				t += h;
 				m_solutions->y.row(k) = yk;

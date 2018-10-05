@@ -21,6 +21,7 @@
 #include "SpringSerial.h"
 #include "SpringNull.h"
 #include "JointNull.h"
+#include "SoftBodyNull.h"
 
 using namespace std;
 using namespace Eigen;
@@ -70,7 +71,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			m_tspan << 0.0, 5.0;
 			
 			// Inits rigid bodies
-			for (int i = 0; i < 5; i++) {
+			for (int i = 0; i < 1; i++) {
 
 				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
@@ -235,14 +236,33 @@ void World::load(const std::string &RESOURCE_DIR) {
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
-			double young = 1e4;
+			double young = 1e3;
 			double possion = 0.45;
-			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
-			addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-			auto softbody = make_shared<SoftBody>(density, young, possion);
-			softbody->load(RESOURCE_DIR, "cube");
-			softbody->setAttachments(0, body);
+
+			for (int i = 0; i < 5; i++) {
+				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+
+				// Inits joints
+				if (i == 0) {
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				}
+				else {
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				}
+			}
+
+			auto softbody = make_shared<SoftBody>(0.01 * density, young, possion);
+			softbody->load(RESOURCE_DIR, "cylinder");
+			softbody->transform(Vector3d(10.0, 0.0, 0.0));
+			
 			m_softbodies.push_back(softbody);
+			m_nsoftbodies++;
+
+			auto softbody1 = make_shared<SoftBody>(0.01 * density, young, possion);
+			softbody1->load(RESOURCE_DIR, "cylinder");
+			softbody1->transform(Vector3d(20.0, 0.0, 0.0));
+
+			m_softbodies.push_back(softbody1);
 			m_nsoftbodies++;
 
 		}
@@ -371,6 +391,43 @@ void World::init() {
 		addSpringNull();
 	}
 
+	if (m_type == SOFT_BODIES) {
+		m_softbodies[0]->setAttachments(0, m_bodies[0]);
+		m_softbodies[0]->setAttachments(3, m_bodies[0]);
+		m_softbodies[0]->setAttachments(6, m_bodies[0]);
+		m_softbodies[0]->setAttachments(9, m_bodies[0]);
+		m_softbodies[0]->setAttachments(12, m_bodies[0]);
+		m_softbodies[0]->setAttachments(19, m_bodies[0]);
+		m_softbodies[0]->setAttachments(25, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(30, m_bodies[0]);
+
+		m_softbodies[0]->setAttachments(60, m_bodies[1]);
+		m_softbodies[0]->setAttachments(63, m_bodies[1]);
+		m_softbodies[0]->setAttachments(67, m_bodies[1]);
+		m_softbodies[0]->setAttachments(69, m_bodies[1]);
+		m_softbodies[0]->setAttachments(72, m_bodies[1]);
+
+	
+
+		m_softbodies[1]->setAttachments(0, m_bodies[1]);
+		m_softbodies[1]->setAttachments(3, m_bodies[1]);
+		m_softbodies[1]->setAttachments(6, m_bodies[1]);
+		m_softbodies[1]->setAttachments(9, m_bodies[1]);
+		m_softbodies[1]->setAttachments(12, m_bodies[1]);
+		m_softbodies[1]->setAttachments(19, m_bodies[1]);
+
+		m_softbodies[1]->setAttachments(60, m_bodies[2]);
+		m_softbodies[1]->setAttachments(63, m_bodies[2]);
+		m_softbodies[1]->setAttachments(67, m_bodies[2]);
+		m_softbodies[1]->setAttachments(69, m_bodies[2]);
+		m_softbodies[1]->setAttachments(72, m_bodies[2]);
+
+		//m_softbodies[1]->setAttachments(0, m_bodies[1]);
+	//	m_softbodies[1]->setAttachments(3, m_bodies[1]);
+		//m_softbodies[1]->setAttachments(6, m_bodies[2]);
+
+	}
+
 	for (int i = 0; i < m_nsoftbodies; i++) {
 		m_softbodies[i]->countDofs(nm, nr);
 		m_softbodies[i]->init();
@@ -383,6 +440,13 @@ void World::init() {
 		if (i < m_nsoftbodies - 1) {
 			m_softbodies[i]->next = m_softbodies[i + 1];
 		}
+	}
+
+	if (m_nsoftbodies == 0) {
+		//todo
+		auto softbody = make_shared<SoftBodyNull>();
+		m_softbodies.push_back(softbody);
+		m_nsoftbodies++;
 	}
 
 	// init constraints

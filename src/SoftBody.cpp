@@ -42,12 +42,13 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
 	tetrahedralize("pqz", &input_mesh, &output_mesh);
 
-	double r = 0.01;
+	double r = 0.1;
 
 	// Create Nodes
 	for (int i = 0; i < output_mesh.numberofpoints; i++) {
 		auto node = make_shared<Node>();	
 		node->r = r;
+
 
 		node->x0 << output_mesh.pointlist[3 * i + 0],
 					output_mesh.pointlist[3 * i + 1],
@@ -58,7 +59,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		node->v = node->v0;
 		node->m = 0.0;
 		node->i = i;
-
+		node->load(RESOURCE_DIR);
 		/*if (node->x(1) > 0.5) {
 			node->fixed = true;
 		}
@@ -94,6 +95,10 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 }
 
 void SoftBody::init() {
+
+	for (int i = 0; i < m_nodes.size(); i++) {
+		m_nodes[i]->init();
+	}
 	// Init Buffers
 	posBuf.clear();
 	norBuf.clear();
@@ -169,6 +174,11 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	glDisableVertexAttribArray(h_pos);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	for (int i = 0; i < m_attach_nodes.size(); i++) {
+		m_attach_nodes[i]->draw(MV, prog);
+	}
+
 	MV->popMatrix();
 	prog->unbind();
 
@@ -187,6 +197,19 @@ void SoftBody::countDofs(int &nm, int &nr) {
 		nr += 3;
 	}
 }
+
+void SoftBody::transform(Eigen::Vector3d dx) {
+
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		
+		node->x = node->x + dx;
+		
+	}
+
+	//updatePosNor();
+}
+
 
 void SoftBody::updatePosNor() {
 	for (int i = 0; i < m_trifaces.size(); i++) {

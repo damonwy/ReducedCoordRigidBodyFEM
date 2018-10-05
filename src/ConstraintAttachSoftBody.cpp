@@ -17,10 +17,12 @@ ConstraintAttachSoftBody::ConstraintAttachSoftBody() {
 }
 
 ConstraintAttachSoftBody::ConstraintAttachSoftBody(shared_ptr<SoftBody> softbody) :
-	m_softbody(softbody)
+	m_softbody(softbody), 
+	n_attachments (softbody->m_attach_bodies.size()), 
+	Constraint(3 * softbody->m_attach_bodies.size(), 0, 0, 0)
 {
-	n_attachments = m_softbody->m_attach_bodies.size();
-	Constraint(3 * n_attachments, 0, 0, 0);
+	
+	
 }
 
 
