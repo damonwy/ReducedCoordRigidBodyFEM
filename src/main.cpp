@@ -241,7 +241,7 @@ void render()
 	progSimple->unbind();
 
 	// Draw scene
-	prog->bind();
+	//prog->bind();
 	scene->draw(MV, prog, progSimple,progSoft, P);
 	
 	//////////////////////////////////////////////////////

@@ -42,7 +42,7 @@ public:
 	std::string getName() const { return m_name; };
 	void setJoint(std::shared_ptr<Joint> joint) { m_joint = joint; };
 	std::shared_ptr<Joint> getJoint() const { return m_joint; };
-
+	void setAttachedColor(Eigen::Vector3f color) { m_attached_color = color; }
 
 	double density;			// Mass/volume
 	Eigen::Vector3d sides;
@@ -71,6 +71,7 @@ public:
 	int idxM;				// Maximal indices
 	std::shared_ptr<Body> next;				// Next body in traversal order
 	std::shared_ptr<Body> m_parent;
+	Eigen::Vector3f m_attached_color;
 
 private:
 	std::shared_ptr<Shape> boxShape;

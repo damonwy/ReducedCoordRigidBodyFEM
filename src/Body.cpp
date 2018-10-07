@@ -24,6 +24,7 @@ density(_density),
 sides(_sides)
 {
 	wext_i.setZero();
+	m_attached_color << (float)(rand() % 255)/255.0,(float)(rand() % 255)/255.0,(float)(rand() % 255)/255.0;
 
 }
 

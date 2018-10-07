@@ -26,13 +26,13 @@ using namespace Eigen;
 using json = nlohmann::json;
 
 SoftBody::SoftBody() {
-
+	m_color << 1.0f, 1.0f, 0.0f;
 }
 
 SoftBody::SoftBody(double density, double young, double poisson):
 m_density(density), m_young(young), m_poisson(poisson)
 {
-
+	m_color << 1.0f, 1.0f, 0.0f;
 }
 
 void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
@@ -139,18 +139,8 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	/*glUniform3fv(prog->getUniform("kdFront"), 1, Vector3f(1.0, 0.0, 1.0).data());
+	glUniform3fv(prog->getUniform("kdFront"), 1, m_color.data());
 	glUniform3fv(prog->getUniform("kdBack"), 1, Vector3f(1.0, 1.0, 0.0).data());
-	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));*/
-	MV->pushMatrix();
-	glUniform3f(prog->getUniform("lightPos1"), 66.0, 25.0, 25.0);
-	glUniform1f(prog->getUniform("intensity_1"), 0.6);
-	glUniform3f(prog->getUniform("lightPos2"), -66.0, 25.0, 25.0);
-	glUniform1f(prog->getUniform("intensity_2"), 0.2);
-	glUniform1f(prog->getUniform("s"), 300);
-	glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
-	glUniform3f(prog->getUniform("kd"), 0.8, 0.7, 0.7);
-	glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
 
 	MV->pushMatrix();
 
@@ -178,7 +168,9 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	for (int i = 0; i < m_attach_nodes.size(); i++) {
-		m_attach_nodes[i]->draw(MV, prog);
+		auto node = m_attach_nodes[i];
+		glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
+		node->draw(MV, prog);
 	}
 
 	MV->popMatrix();
@@ -209,7 +201,6 @@ void SoftBody::transform(Eigen::Vector3d dx) {
 		
 	}
 
-	//updatePosNor();
 }
 
 
@@ -239,6 +230,8 @@ void SoftBody::updatePosNor() {
 void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 	auto node = m_nodes[id];
 	node->setParent(body);
+	node->setColor(body->m_attached_color);
+
 	m_attach_bodies.push_back(body);
 	m_attach_nodes.push_back(node);
 

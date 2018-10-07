@@ -232,7 +232,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	case SOFT_BODIES:
 		{
 			m_h = 1.0e-2;
-			m_tspan << 0.0, 1.0;
+			m_tspan << 0.0, 1.0e-2;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
@@ -251,21 +251,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 				}
 			}
 
-			/*auto softbody = make_shared<SoftBody>(0.01 * density, young, possion);
-			softbody->load(RESOURCE_DIR, "cylinder");
-			softbody->transform(Vector3d(10.0, 0.0, 0.0));*/
-			
-			//m_softbodies.push_back(softbody);
-			//m_nsoftbodies++;
-
 			auto softbody = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
 			softbody->transform(Vector3d(10.0, 0.0, 0.0));
-			/*auto softbody1 = make_shared<SoftBody>(0.01 * density, young, possion);
-			softbody1->load(RESOURCE_DIR, "cylinder");
-			softbody1->transform(Vector3d(20.0, 0.0, 0.0));
 
-			m_softbodies.push_back(softbody1);
-			m_nsoftbodies++;*/
+			// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
+			// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
 
 		}
 		break;
@@ -278,7 +268,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, const string &RESOURCE_DIR, string file_name) {
 	auto softbody = make_shared<SoftBody>(density, young, possion);
 	softbody->load(RESOURCE_DIR, file_name);
-	//softbody->transform(Vector3d(10.0, 0.0, 0.0));
 	m_softbodies.push_back(softbody);
 	m_nsoftbodies++;
 	return softbody;
@@ -322,7 +311,6 @@ shared_ptr<SpringSerial> World::addSpringSerial(double mass, int n_points, share
 	spring->setAttachments(body0, r0, body1, r1);
 	m_nsprings++;
 	return spring;
-
 }
 
 
@@ -518,11 +506,6 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 		m_joints[i]->draw(MV, progSimple, P);
 	}
 
-	// Draw constraints
-	for (int i = 0; i < 1; i++) {
-
-	}
-
 	// Draw springs
 	for (int i = 0; i < m_nsprings; i++) {
 		m_springs[i]->draw(MV, prog, progSimple, P);
@@ -530,6 +513,6 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 
 	// Draw soft bodies
 	for (int i = 0; i < m_nsoftbodies; i++) {
-		m_softbodies[i]->draw(MV, prog, progSimple, P);
+		m_softbodies[i]->draw(MV, progSoft, progSimple, P);
 	}
 }

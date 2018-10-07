@@ -41,6 +41,7 @@ public:
 
 	void setAttachments(int id, std::shared_ptr<Body> body);
 	void transform(Eigen::Vector3d dx);
+	void setColor(Eigen::Vector3f color) { m_color = color; }
 	std::vector<std::shared_ptr<Node> > m_attach_nodes;
 	std::vector<std::shared_ptr<Body> > m_attach_bodies;
 	std::vector<Eigen::Vector3d> m_r;
@@ -48,6 +49,8 @@ public:
 	std::shared_ptr<SoftBody> next;
 
 private:
+	Eigen::Vector3f m_color;
+
 	std::vector<std::shared_ptr<Node> > m_nodes;
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
 	std::vector<std::shared_ptr<Tetrahedron> > m_tets;
