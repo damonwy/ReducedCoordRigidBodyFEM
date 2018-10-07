@@ -84,26 +84,28 @@ void Scene::solve() {
 void Scene::step()
 {	
 	int n_steps = m_solution->getNsteps();
+
+		int output_idx;
+		double s;
+		VectorXd ys;
+
+		if(tk < m_solution->t(n_steps-1)) {
+			m_solution->searchTime(tk, search_idx, output_idx, s);
+			search_idx = output_idx;
+			ys = (1 - s)* m_solution->y.row(output_idx) + s * m_solution->y.row(output_idx + 1);
+
+			m_world->getJoint0()->scatterDofs(ys, m_world->nr);
+			m_world->getSpring0()->scatterDofs(ys, m_world->nr);
+			m_world->getSoftBody0()->scatterDofs(ys, m_world->nr);
+			tk = tk + drawH;
+		}
+
 	
-	int output_idx;
-	double s;
-	VectorXd ys;
-
-	if(tk < m_solution->t(n_steps-1)) {
-		m_solution->searchTime(tk, search_idx, output_idx, s);
-		search_idx = output_idx;
-		ys = (1 - s)* m_solution->y.row(output_idx) + s * m_solution->y.row(output_idx + 1);
-
-		m_world->getJoint0()->scatterDofs(ys, m_world->nr);
-		m_world->getSpring0()->scatterDofs(ys, m_world->nr);
-		m_world->getSoftBody0()->scatterDofs(ys, m_world->nr);
-		tk = tk + drawH;
-	}
 	
 }
 
-void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const
+void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, const shared_ptr<Program> progSoft, shared_ptr<MatrixStack> P) const
 {
-	m_world->draw(MV, prog, progSimple, P);
+	m_world->draw(MV, prog, progSimple, progSoft, P);
 	
 }

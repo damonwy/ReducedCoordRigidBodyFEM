@@ -251,19 +251,21 @@ void World::load(const std::string &RESOURCE_DIR) {
 				}
 			}
 
-			auto softbody = make_shared<SoftBody>(0.01 * density, young, possion);
+			/*auto softbody = make_shared<SoftBody>(0.01 * density, young, possion);
 			softbody->load(RESOURCE_DIR, "cylinder");
-			softbody->transform(Vector3d(10.0, 0.0, 0.0));
+			softbody->transform(Vector3d(10.0, 0.0, 0.0));*/
 			
-			m_softbodies.push_back(softbody);
-			m_nsoftbodies++;
+			//m_softbodies.push_back(softbody);
+			//m_nsoftbodies++;
 
-			auto softbody1 = make_shared<SoftBody>(0.01 * density, young, possion);
+			auto softbody = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
+			softbody->transform(Vector3d(10.0, 0.0, 0.0));
+			/*auto softbody1 = make_shared<SoftBody>(0.01 * density, young, possion);
 			softbody1->load(RESOURCE_DIR, "cylinder");
 			softbody1->transform(Vector3d(20.0, 0.0, 0.0));
 
 			m_softbodies.push_back(softbody1);
-			m_nsoftbodies++;
+			m_nsoftbodies++;*/
 
 		}
 		break;
@@ -272,6 +274,16 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 	
 }
+
+shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, const string &RESOURCE_DIR, string file_name) {
+	auto softbody = make_shared<SoftBody>(density, young, possion);
+	softbody->load(RESOURCE_DIR, file_name);
+	//softbody->transform(Vector3d(10.0, 0.0, 0.0));
+	m_softbodies.push_back(softbody);
+	m_nsoftbodies++;
+	return softbody;
+}
+
 
 shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p, Matrix3d R, const string &RESOURCE_DIR, string file_name) {
 	auto body = make_shared<Body>(density, sides);
@@ -409,7 +421,7 @@ void World::init() {
 
 	
 
-		m_softbodies[1]->setAttachments(0, m_bodies[1]);
+		/*m_softbodies[1]->setAttachments(0, m_bodies[1]);
 		m_softbodies[1]->setAttachments(3, m_bodies[1]);
 		m_softbodies[1]->setAttachments(6, m_bodies[1]);
 		m_softbodies[1]->setAttachments(9, m_bodies[1]);
@@ -420,7 +432,7 @@ void World::init() {
 		m_softbodies[1]->setAttachments(63, m_bodies[2]);
 		m_softbodies[1]->setAttachments(67, m_bodies[2]);
 		m_softbodies[1]->setAttachments(69, m_bodies[2]);
-		m_softbodies[1]->setAttachments(72, m_bodies[2]);
+		m_softbodies[1]->setAttachments(72, m_bodies[2]);*/
 
 		//m_softbodies[1]->setAttachments(0, m_bodies[1]);
 	//	m_softbodies[1]->setAttachments(3, m_bodies[1]);
@@ -495,7 +507,7 @@ shared_ptr<Joint> World::getJoint(const string &name) {
 	return (it == m_jointName.end() ? NULL : it->second);
 }
 
-void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) {
+void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, const shared_ptr<Program> progSoft, shared_ptr<MatrixStack> P) {
 	// Draw rigid bodies
 	for (int i = 0; i < m_nbodies; i++) {
 		m_bodies[i]->draw(MV, prog, P);

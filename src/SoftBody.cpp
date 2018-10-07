@@ -136,10 +136,12 @@ void SoftBody::init() {
 
 void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	// Draw mesh
-	//glUniform3fv(prog->getUniform("kdFront"), 1, Vector3f(1.0, 0.0, 0.0).data());
-	//glUniform3fv(prog->getUniform("kdBack"), 1, Vector3f(1.0, 1.0, 0.0).data());
+	
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	/*glUniform3fv(prog->getUniform("kdFront"), 1, Vector3f(1.0, 0.0, 1.0).data());
+	glUniform3fv(prog->getUniform("kdBack"), 1, Vector3f(1.0, 1.0, 0.0).data());
+	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));*/
 	MV->pushMatrix();
 	glUniform3f(prog->getUniform("lightPos1"), 66.0, 25.0, 25.0);
 	glUniform1f(prog->getUniform("intensity_1"), 0.6);

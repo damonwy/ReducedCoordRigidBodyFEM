@@ -43,6 +43,7 @@ string RESOURCE_DIR = ""; // Where the resources are loaded from
 shared_ptr<Camera> camera;
 shared_ptr<Program> prog;
 shared_ptr<Program> progSimple;
+shared_ptr<Program> progSoft;
 shared_ptr<Scene> scene;
 
 char pixels[4 * 1920 * 1080];
@@ -137,6 +138,19 @@ static void init()
 	prog->addUniform("s");
 	//prog->setVerbose(false);
 
+	progSoft = make_shared<Program>();
+	progSoft->setVerbose(true); // Set this to true when debugging.
+	progSoft->setShaderNames(RESOURCE_DIR + "phong_vert.glsl", RESOURCE_DIR + "phong_frag.glsl");
+	progSoft->init();
+	progSoft->addUniform("P");
+	progSoft->addUniform("MV");
+	progSoft->addUniform("kdFront");
+	progSoft->addUniform("kdBack");
+	progSoft->addAttribute("aPos");
+	progSoft->addAttribute("aNor");
+	//progSoft->setVerbose(false);
+
+
 	camera = make_shared<Camera>();
 	camera->setInitDistance(140.5f);
 
@@ -228,7 +242,7 @@ void render()
 
 	// Draw scene
 	prog->bind();
-	scene->draw(MV, prog, progSimple, P);
+	scene->draw(MV, prog, progSimple,progSoft, P);
 	
 	//////////////////////////////////////////////////////
 	// Cleanup
@@ -244,12 +258,11 @@ void render()
 void stepperFunc()
 {
 	
-
 	while(true) {
 		
 		if(keyToggles[(unsigned)' ']) {
 			
-			
+			//scene->step();
 			steps += 1;
 
 		}
