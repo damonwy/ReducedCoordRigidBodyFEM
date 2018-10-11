@@ -253,7 +253,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			auto softbody = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
 			softbody->transform(Vector3d(10.0, 0.0, 0.0));
-
+			softbody->setColor(Vector3f(255.0, 204.0, 153.0)/255.0);
 			// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
 			// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
 
@@ -513,6 +513,6 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 
 	// Draw soft bodies
 	for (int i = 0; i < m_nsoftbodies; i++) {
-		m_softbodies[i]->draw(MV, progSoft, progSimple, P);
+		m_softbodies[i]->draw(MV, prog, progSimple, P);
 	}
 }

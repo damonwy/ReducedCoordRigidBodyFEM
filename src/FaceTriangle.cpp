@@ -11,14 +11,14 @@
 using namespace std;
 using namespace Eigen;
 
-FaceTriangle::FaceTriangle():Face() {
+FaceTriangle::FaceTriangle():Face(),isFlat(false) {
 
 
 
 }
 
 
-FaceTriangle::FaceTriangle(vector<shared_ptr<Node>> nodes):Face(nodes) {
+FaceTriangle::FaceTriangle(vector<shared_ptr<Node>> nodes):Face(nodes),isFlat(false) {
 
 
 
@@ -44,7 +44,7 @@ Eigen::Vector3d FaceTriangle::computeNormal() {
 	Vector3d e1 = p2 - p0;
 	Vector3d normal = e0.cross(e1);
 	normal.normalize();
-	this->m_normal = normal;
+	this->m_normal = -normal;
 
 	return m_normal;
 }

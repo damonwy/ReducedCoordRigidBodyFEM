@@ -22,6 +22,7 @@ Node::Node() :
 	i(-1),
 	x(0.0, 0.0, 0.0),
 	v(0.0, 0.0, 0.0),
+	m_nfaces(0),
 	fixed(false)
 {
 	
@@ -35,6 +36,7 @@ Node::Node(const shared_ptr<Shape> s) :
 	v(0.0, 0.0, 0.0),
 	fixed(false),
 	normal(0.0,0.0,0.0),
+	m_nfaces(0),
 	sphere(s)
 {
 	
@@ -81,6 +83,23 @@ double Node::computePotentialEnergy(Vector3d grav) {
 	return this->V;
 }
 
+void Node::clearNormals() {
+	m_normals.clear();
+	normal.setZero();
+}
+
+Vector3d Node::computeNormal() {
+	normal.setZero();
+	for (int i = 0; i < m_normals.size(); i++) {
+		normal += m_normals[i];
+	}
+
+	normal /= m_normals.size();
+	normal.normalized();
+	return normal;
+}
+
+
 void Node::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog) const
 {
 	if(sphere) {
@@ -91,4 +110,23 @@ void Node::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog) cons
 		sphere->draw(prog);
 		MV->popMatrix();
 	}
+}
+
+void Node::drawNormal(shared_ptr<MatrixStack> MV, shared_ptr<MatrixStack> P, const shared_ptr<Program> prog) const
+{
+	prog->bind();
+	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+	MV->pushMatrix();
+	glColor3f(0.8, 0.7, 0.0);
+	glLineWidth(2);
+	glBegin(GL_LINES);
+	Vector3f p0 = x.cast<float>();
+	glVertex3f(p0(0), p0(1), p0(2));
+	Vector3f p1 = (p0 + this->normal.cast<float>());
+	glVertex3f(p1(0), p1(1), p1(2));
+	glEnd();
+	MV->popMatrix();
+
+	prog->unbind();
 }

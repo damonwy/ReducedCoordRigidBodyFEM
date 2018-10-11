@@ -14,4 +14,6 @@ public:
 
 	Eigen::Vector3d computeNormal();
 	double computeArea();
+
+	bool isFlat;
 };

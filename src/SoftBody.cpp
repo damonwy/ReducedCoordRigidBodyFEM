@@ -75,7 +75,9 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		auto triface = make_shared<FaceTriangle>();
 		
 		for (int ii = 0; ii < 3; ii++) {
-			triface->m_nodes.push_back(m_nodes[output_mesh.trifacelist[3 * i + ii]]);
+			auto node = m_nodes[output_mesh.trifacelist[3 * i + ii]];
+			node->m_nfaces ++;
+			triface->m_nodes.push_back(node);
 		}
 		triface->update();
 		m_trifaces.push_back(triface);
@@ -92,6 +94,23 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		m_tets.push_back(tet);
 	}
 
+	// Fix the normal of top and bottom surface
+	for (int i = 0; i < m_trifaces.size(); i++) {
+		auto triface = m_trifaces[i];
+
+		Vector3d p0 = triface->m_nodes[0]->x;
+		Vector3d p1 = triface->m_nodes[1]->x;
+		Vector3d p2 = triface->m_nodes[2]->x;
+
+		Vector3d normal = triface->computeNormal();
+
+		if ((normal - m_trifaces[0]->m_normal).norm() < 0.1) {
+			triface->isFlat = true;
+		}
+		if ((normal + m_trifaces[0]->m_normal).norm() < 0.1) {
+			triface->isFlat = true;
+		}
+	}
 }
 
 void SoftBody::init() {
@@ -120,6 +139,10 @@ void SoftBody::init() {
 	glBindBuffer(GL_ARRAY_BUFFER, posBufID);
 	glBufferData(GL_ARRAY_BUFFER, posBuf.size() * sizeof(float), &posBuf[0], GL_DYNAMIC_DRAW);
 
+	glGenBuffers(1, &norBufID);
+	glBindBuffer(GL_ARRAY_BUFFER, norBufID);
+	glBufferData(GL_ARRAY_BUFFER, norBuf.size() * sizeof(float), &norBuf[0], GL_DYNAMIC_DRAW);
+
 	/*glGenBuffers(1, &texBufID);
 	glBindBuffer(GL_ARRAY_BUFFER, texBufID);
 	glBufferData(GL_ARRAY_BUFFER, texBuf.size() * sizeof(float), &texBuf[0], GL_STATIC_DRAW);*/
@@ -138,10 +161,21 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	// Draw mesh
 	
 	prog->bind();
-	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	glUniform3fv(prog->getUniform("kdFront"), 1, m_color.data());
-	glUniform3fv(prog->getUniform("kdBack"), 1, Vector3f(1.0, 1.0, 0.0).data());
+	//glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	//glUniform3fv(prog->getUniform("kdFront"), 1, m_color.data());
+	//glUniform3fv(prog->getUniform("kdBack"), 1, Vector3f(1.0, 1.0, 0.0).data());
 
+	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	MV->pushMatrix();
+	glUniform3f(prog->getUniform("lightPos1"), 66.0, 50.0, 50.0);
+	glUniform1f(prog->getUniform("intensity_1"), 0.6);
+	glUniform3f(prog->getUniform("lightPos2"), -66.0, 50.0, 50.0);
+	glUniform1f(prog->getUniform("intensity_2"), 0.2);
+	glUniform1f(prog->getUniform("s"), 200);
+	glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
+	//glUniform3f(prog->getUniform("kd"), 0.8, 0.7, 0.7);
+	glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
+	glUniform3fv(prog->getUniform("kd"), 1, this->m_color.data());
 	MV->pushMatrix();
 
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
@@ -169,12 +203,22 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 
 	for (int i = 0; i < m_attach_nodes.size(); i++) {
 		auto node = m_attach_nodes[i];
-		glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
+		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
+
+		//glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
 		node->draw(MV, prog);
 	}
 
 	MV->popMatrix();
 	prog->unbind();
+
+	progSimple->bind();
+	for (int i = 0; i < 65; i++) {
+		auto node = m_nodes[i];
+		node->drawNormal(MV, P, progSimple);
+
+	}
+	progSimple->unbind();
 
 }
 
@@ -195,16 +239,19 @@ void SoftBody::countDofs(int &nm, int &nr) {
 void SoftBody::transform(Eigen::Vector3d dx) {
 
 	for (int i = 0; i < m_nodes.size(); i++) {
-		auto node = m_nodes[i];
-		
-		node->x = node->x + dx;
-		
+		auto node = m_nodes[i];		
+		node->x = node->x + dx;	
 	}
 
 }
 
 
 void SoftBody::updatePosNor() {
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		node->clearNormals();	
+	}
+
 	for (int i = 0; i < m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 
@@ -213,16 +260,38 @@ void SoftBody::updatePosNor() {
 		Vector3d p2 = triface->m_nodes[2]->x;
 
 		Vector3d normal = triface->computeNormal();
-
+		
 		for (int ii = 0; ii < 3; ii++) {
 			posBuf[9 * i + 0 + ii] = p0(ii);
 			posBuf[9 * i + 3 + ii] = p1(ii);
 			posBuf[9 * i + 6 + ii] = p2(ii);
-
-			norBuf[9 * i + 0 + ii] = normal(ii);
-			norBuf[9 * i + 3 + ii] = normal(ii);
-			norBuf[9 * i + 6 + ii] = normal(ii);
+		
+			if (!triface->isFlat) {
+				// If the node is on the curved surface, average the normals after this loop
+				auto node = triface->m_nodes[ii];
+				node->addNormal(normal);
+			}
+			else {
+				// Don't average normals if it's a flat surface
+				norBuf[9 * i + 0 + ii] = normal(ii);
+				norBuf[9 * i + 3 + ii] = normal(ii);
+				norBuf[9 * i + 6 + ii] = normal(ii);
+			}
 		}
+	}
+
+	for (int i = 0; i < m_trifaces.size(); i++) {
+		auto triface = m_trifaces[i];
+		if (!triface->isFlat) {
+			// Use the average normals if it's a curved surface
+			for (int ii = 0; ii < 3; ii++) {
+				// Average normals here
+				Vector3d normal = triface->m_nodes[ii]->computeNormal();
+				for (int iii = 0; iii < 3; iii++) {
+				norBuf[9 * i + 3 * ii + iii] = normal(iii);
+				}
+			}
+		}	
 	}
 
 }
