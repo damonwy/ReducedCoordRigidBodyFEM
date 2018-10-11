@@ -42,6 +42,7 @@ Eigen::Vector3d glm_to_eigen(const glm::vec3 &v);
 Eigen::Matrix3d glm_to_eigen(const glm::mat3 &m);
 Eigen::Matrix4d glm_to_eigen(const glm::mat4 &m);
 
+bool rayTriangleIntersects(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d v3, Eigen::Vector3d dir, Eigen::Vector3d pos, double &t, double &u, double &v);
 
 
 

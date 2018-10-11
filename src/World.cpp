@@ -22,6 +22,7 @@
 #include "SpringNull.h"
 #include "JointNull.h"
 #include "SoftBodyNull.h"
+#include "FaceTriangle.h"
 
 using namespace std;
 using namespace Eigen;
@@ -181,8 +182,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				if (i > 0) {
 					addConstraintJointLimit(m_joints[i], -M_PI / 4, M_PI / 4);
 				}
-			}
-		
+			}		
 
 		}
 
@@ -232,7 +232,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	case SOFT_BODIES:
 		{
 			m_h = 1.0e-2;
-			m_tspan << 0.0, 1.0e-2;
+			m_tspan << 0.0, 20.0e-1;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
@@ -254,6 +254,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 			auto softbody = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
 			softbody->transform(Vector3d(10.0, 0.0, 0.0));
 			softbody->setColor(Vector3f(255.0, 204.0, 153.0)/255.0);
+
+		
 			// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
 			// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
 
@@ -392,23 +394,30 @@ void World::init() {
 	}
 
 	if (m_type == SOFT_BODIES) {
-		m_softbodies[0]->setAttachments(0, m_bodies[0]);
-		m_softbodies[0]->setAttachments(3, m_bodies[0]);
-		m_softbodies[0]->setAttachments(6, m_bodies[0]);
-		m_softbodies[0]->setAttachments(9, m_bodies[0]);
-		m_softbodies[0]->setAttachments(12, m_bodies[0]);
-		m_softbodies[0]->setAttachments(19, m_bodies[0]);
-		m_softbodies[0]->setAttachments(25, m_bodies[0]);
-		//m_softbodies[0]->setAttachments(30, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(0, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(3, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(6, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(9, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(12, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(19, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(25, m_bodies[0]);
+		////m_softbodies[0]->setAttachments(30, m_bodies[0]);
 
-		m_softbodies[0]->setAttachments(60, m_bodies[1]);
-		m_softbodies[0]->setAttachments(63, m_bodies[1]);
-		m_softbodies[0]->setAttachments(67, m_bodies[1]);
-		m_softbodies[0]->setAttachments(69, m_bodies[1]);
-		m_softbodies[0]->setAttachments(72, m_bodies[1]);
+		//m_softbodies[0]->setAttachments(60, m_bodies[1]);
+		//m_softbodies[0]->setAttachments(63, m_bodies[1]);
+		//m_softbodies[0]->setAttachments(67, m_bodies[1]);
+		//m_softbodies[0]->setAttachments(69, m_bodies[1]);
+		//m_softbodies[0]->setAttachments(72, m_bodies[1]);
 
 	
+		Vector3d direction, origin;
+		direction = m_softbodies[0]->m_trifaces[0]->m_normal;
+		origin << 9.0, 0.0, 0.0;
 
+		m_softbodies[0]->setAttachmentsByLine(direction, origin, m_bodies[0]);
+		origin << 10.0, 0.0, 0.0;
+
+		m_softbodies[0]->setAttachmentsByLine(-direction, origin, m_bodies[1]);
 		/*m_softbodies[1]->setAttachments(0, m_bodies[1]);
 		m_softbodies[1]->setAttachments(3, m_bodies[1]);
 		m_softbodies[1]->setAttachments(6, m_bodies[1]);

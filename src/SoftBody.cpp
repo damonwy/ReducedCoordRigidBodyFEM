@@ -40,7 +40,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pqz", &input_mesh, &output_mesh);
+	tetrahedralize("pq1.5z", &input_mesh, &output_mesh);
 
 	double r = 0.1;
 
@@ -204,7 +204,6 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	for (int i = 0; i < m_attach_nodes.size(); i++) {
 		auto node = m_attach_nodes[i];
 		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
-
 		//glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
 		node->draw(MV, prog);
 	}
@@ -216,7 +215,6 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	for (int i = 0; i < 65; i++) {
 		auto node = m_nodes[i];
 		node->drawNormal(MV, P, progSimple);
-
 	}
 	progSimple->unbind();
 
@@ -312,6 +310,54 @@ void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 	m_r.push_back(r);
 
 }
+
+
+void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_ptr<Body> body) {	
+	double t, u, v;
+	Vector3d xa, xb, xc, xd;
+	int numIntersects = 0;
+
+	for (int i = 0; i < m_tets.size(); i++) {
+		auto tet = m_tets[i];
+		xa = tet->m_nodes[0]->x;
+		xb = tet->m_nodes[1]->x;
+		xc = tet->m_nodes[2]->x;
+		xd = tet->m_nodes[3]->x;
+
+		if (rayTriangleIntersects(xa, xc, xb, direction, orig, t, u, v)) {
+			numIntersects += 1;
+			setAttachments(tet->m_nodes[0]->i, body);
+			setAttachments(tet->m_nodes[2]->i, body);
+			setAttachments(tet->m_nodes[1]->i, body);
+		}
+
+		if (rayTriangleIntersects(xa, xb, xd, direction, orig, t, u, v)) {
+			numIntersects += 1;
+			setAttachments(tet->m_nodes[0]->i, body);
+			setAttachments(tet->m_nodes[3]->i, body);
+			setAttachments(tet->m_nodes[1]->i, body);
+		}
+
+		if (rayTriangleIntersects(xb, xd, xc, direction, orig, t, u, v)) {
+			numIntersects += 1;
+			setAttachments(tet->m_nodes[3]->i, body);
+			setAttachments(tet->m_nodes[2]->i, body);
+			setAttachments(tet->m_nodes[1]->i, body);
+		}
+
+		if (rayTriangleIntersects(xa, xc, xd, direction, orig, t, u, v)) {
+			numIntersects += 1;
+			setAttachments(tet->m_nodes[0]->i, body);
+			setAttachments(tet->m_nodes[2]->i, body);
+			setAttachments(tet->m_nodes[3]->i, body);
+		}
+
+	}
+
+
+
+}
+
 
 VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
 	// Gathers qdot and qddot into y

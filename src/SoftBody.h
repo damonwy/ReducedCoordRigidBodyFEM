@@ -40,6 +40,8 @@ public:
 	virtual void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
 	void setAttachments(int id, std::shared_ptr<Body> body);
+	void setAttachmentsByLine(Eigen::Vector3d dir, Eigen::Vector3d orig, std::shared_ptr<Body> body);
+
 	void transform(Eigen::Vector3d dx);
 	void setColor(Eigen::Vector3f color) { m_color = color; }
 	std::vector<std::shared_ptr<Node> > m_attach_nodes;
@@ -47,12 +49,12 @@ public:
 	std::vector<Eigen::Vector3d> m_r;
 
 	std::shared_ptr<SoftBody> next;
-
+	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
 private:
 	Eigen::Vector3f m_color;
 
 	std::vector<std::shared_ptr<Node> > m_nodes;
-	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
+	
 	std::vector<std::shared_ptr<Tetrahedron> > m_tets;
 
 	std::vector<unsigned int> eleBuf;
