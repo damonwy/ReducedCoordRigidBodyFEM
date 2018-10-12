@@ -31,7 +31,6 @@ Scene::Scene() :
 	time_step(0),
 	drawHz(10)
 {
-
 }
 
 Scene::~Scene()
@@ -64,9 +63,26 @@ void Scene::init()
 {
 	m_world->init();
 	m_solver->init();
-	m_solution = m_solver->solve();
+	VectorXd y0, y1;
+	y0.resize(2 * m_world->nr);
+	y0.setZero();
+	
 
-	tk = m_solution->t(0);
+
+	//y1 = m_solver->dynamics(y0);
+	y.resize(2 * m_world->nr);
+	y.setZero();
+	y = m_world->getJoint0()->gatherDofs(y, m_world->nr);
+	y = m_world->getSpring0()->gatherDofs(y, m_world->nr);
+	y = m_world->getSoftBody0()->gatherDofs(y, m_world->nr);
+	//m_solution = m_solver->solve();
+
+
+	//vec_to_file(m_solution->t, "t");
+	//mat_to_file(m_solution->y, "y");
+
+
+	//tk = m_solution->t(0);
 	drawH = 1.0 / drawHz;
 	search_idx = 0;
 }
@@ -83,22 +99,30 @@ void Scene::solve() {
 
 void Scene::step()
 {	
-	int n_steps = m_solution->getNsteps();
+	//int n_steps = m_solution->getNsteps();
 
-		int output_idx;
-		double s;
-		VectorXd ys;
+	int output_idx;
+	double s;
+	VectorXd ys;
 
-		if(tk < m_solution->t(n_steps-1)) {
-			m_solution->searchTime(tk, search_idx, output_idx, s);
-			search_idx = output_idx;
-			ys = (1 - s)* m_solution->y.row(output_idx) + s * m_solution->y.row(output_idx + 1);
 
-			m_world->getJoint0()->scatterDofs(ys, m_world->nr);
-			m_world->getSpring0()->scatterDofs(ys, m_world->nr);
-			m_world->getSoftBody0()->scatterDofs(ys, m_world->nr);
-			tk = tk + drawH;
-		}
+
+	y = m_solver->dynamics(y);
+
+	//if(tk < m_solution->t(n_steps-1)) {
+	//	m_solution->searchTime(tk, search_idx, output_idx, s);
+	//	search_idx = output_idx;
+	//	ys = (1 - s)* m_solution->y.row(output_idx) + s * m_solution->y.row(output_idx + 1);
+
+	//	m_world->getJoint0()->scatterDofs(ys, m_world->nr);
+	//	m_world->getSpring0()->scatterDofs(ys, m_world->nr);
+	//	m_world->getSoftBody0()->scatterDofs(ys, m_world->nr);
+	//	tk = tk + drawH;
+	//}
+	//else {
+	//	// reset
+	//	tk = m_solution->t(0);
+	//}
 
 	
 	

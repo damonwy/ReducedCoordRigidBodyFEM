@@ -40,9 +40,9 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pq1.5z", &input_mesh, &output_mesh);
+	tetrahedralize("pqz", &input_mesh, &output_mesh);
 
-	double r = 0.1;
+	double r = 0.04;
 
 	// Create Nodes
 	for (int i = 0; i < output_mesh.numberofpoints; i++) {
@@ -91,6 +91,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 			tet_nodes.push_back(m_nodes[output_mesh.tetrahedronlist[4 * i + ii]]);
 		}
 		auto tet = make_shared<Tetrahedron>(m_young, m_poisson, m_density, tet_nodes);
+		tet->i = i;
 		m_tets.push_back(tet);
 	}
 
@@ -161,24 +162,16 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	// Draw mesh
 	
 	prog->bind();
-	//glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	//glUniform3fv(prog->getUniform("kdFront"), 1, m_color.data());
-	//glUniform3fv(prog->getUniform("kdBack"), 1, Vector3f(1.0, 1.0, 0.0).data());
-
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	MV->pushMatrix();
+	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 	glUniform3f(prog->getUniform("lightPos1"), 66.0, 50.0, 50.0);
 	glUniform1f(prog->getUniform("intensity_1"), 0.6);
 	glUniform3f(prog->getUniform("lightPos2"), -66.0, 50.0, 50.0);
 	glUniform1f(prog->getUniform("intensity_2"), 0.2);
 	glUniform1f(prog->getUniform("s"), 200);
 	glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
-	//glUniform3f(prog->getUniform("kd"), 0.8, 0.7, 0.7);
 	glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
 	glUniform3fv(prog->getUniform("kd"), 1, this->m_color.data());
-	MV->pushMatrix();
-
-	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 
 	int h_pos = prog->getAttribute("aPos");
 	glEnableVertexAttribArray(h_pos);
@@ -200,6 +193,7 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	glDisableVertexAttribArray(h_pos);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	
 
 	for (int i = 0; i < m_attach_nodes.size(); i++) {
 		auto node = m_attach_nodes[i];
@@ -207,8 +201,6 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 		//glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
 		node->draw(MV, prog);
 	}
-
-	MV->popMatrix();
 	prog->unbind();
 
 	progSimple->bind();
@@ -240,7 +232,6 @@ void SoftBody::transform(Eigen::Vector3d dx) {
 		auto node = m_nodes[i];		
 		node->x = node->x + dx;	
 	}
-
 }
 
 

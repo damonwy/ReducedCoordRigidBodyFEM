@@ -101,7 +101,7 @@ Vector3d Node::computeNormal() {
 
 
 void Node::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog) const
-{
+{	
 	if(sphere) {
 		MV->pushMatrix();
 		MV->translate(x(0), x(1), x(2));
@@ -117,7 +117,6 @@ void Node::drawNormal(shared_ptr<MatrixStack> MV, shared_ptr<MatrixStack> P, con
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-	MV->pushMatrix();
 	glColor3f(0.8, 0.7, 0.0);
 	glLineWidth(2);
 	glBegin(GL_LINES);
@@ -126,7 +125,5 @@ void Node::drawNormal(shared_ptr<MatrixStack> MV, shared_ptr<MatrixStack> P, con
 	Vector3f p1 = (p0 + this->normal.cast<float>());
 	glVertex3f(p1(0), p1(1), p1(2));
 	glEnd();
-	MV->popMatrix();
-
 	prog->unbind();
 }

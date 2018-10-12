@@ -66,6 +66,9 @@ public:
 	Solver(std::shared_ptr<World> world, Integrator integrator);
 	virtual ~Solver();
 	std::shared_ptr<Solution> solve();
+	Eigen::VectorXd dynamics(Eigen::VectorXd y);
+
+
 	void init();
 	void load(const std::string &RESOURCE_DIR);
 	

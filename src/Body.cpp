@@ -136,7 +136,6 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 	prog->bind();
 	if (boxShape) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-		MV->pushMatrix();
 		glUniform3f(prog->getUniform("lightPos1"), 66.0, 25.0, 25.0);
 		glUniform1f(prog->getUniform("intensity_1"), 0.6);
 		glUniform3f(prog->getUniform("lightPos2"), -66.0, 25.0, 25.0);
@@ -152,6 +151,7 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		boxShape->draw(prog);
 		MV->popMatrix();
+
 	}
 	prog->unbind();
 

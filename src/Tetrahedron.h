@@ -22,7 +22,10 @@ public:
 	void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
 	Eigen::VectorXd computeElasticForces(Eigen::VectorXd);
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
+	bool isInverted();
+	void diagDeformationGradient(Eigen::Matrix3d F);
 
+	int i;
 private:
 
 	double m_young;
@@ -44,6 +47,11 @@ private:
 	Eigen::Matrix3d P;		// Piola stress
 	Eigen::Matrix3d H;		// forces matrix
 
+	// SVD 
+	Eigen::Matrix3d U;
+	Eigen::Matrix3d V;
+	Eigen::Matrix3d S;		// FTF
+	Eigen::Matrix3d Fhat;	// diagonalized deformation gradient
 
 							// for force differentials
 	Eigen::Matrix3d dDs;

@@ -127,7 +127,6 @@ static void init()
 	prog->addUniform("MV");
 	prog->addAttribute("aPos");
 	prog->addAttribute("aNor");
-
 	prog->addUniform("intensity_1");
 	prog->addUniform("lightPos1");
 	prog->addUniform("lightPos2");

@@ -224,15 +224,12 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 	MV->pushMatrix();
 	MV->multMatrix(eigen_to_glm(E_wj));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-
 	
 	glLineWidth(5);
 	glBegin(GL_LINES);
-	
 	// X axis
 	glColor3f(1.0, 0.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
@@ -249,7 +246,7 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 	glVertex3f(0.0, 0.0, 3.0);
 
 	glEnd();
-
 	MV->popMatrix();
 	prog->unbind();
+
 }

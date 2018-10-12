@@ -1,6 +1,8 @@
 #include "Tetrahedron.h"
 #include "Node.h"
 #include <iostream>
+#include "svd3.h"
+
 using namespace Eigen;
 using namespace std;
 
@@ -31,12 +33,18 @@ m_young(young), m_poisson(poisson), m_density(density), m_nodes(nodes)
 }
 
 VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
+	isInverted();
+
 	assert(m_nodes.size() == 4);
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
 	}
 
 	this->F = Ds * Bm;
+	if (isInverted()) {
+		//this->F = this->S; todo  flip the sign using [Irving 04]
+	}
+
 	this->P = computePKStress(F, m_mu, m_lambda);
 	this->H = -W * P * (Bm.transpose());
 
@@ -176,6 +184,59 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 	return dP;
 }
 
+bool Tetrahedron::isInverted() {
+	for (int i = 0; i < m_nodes.size() - 1; i++) {
+		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
+	}
+
+	this->F = Ds * Bm;
+	if (this->F.determinant() < -0.000001) { // some threshold todo
+		//cout << "tet_" << this->i << " is inverted! " << endl;
+		diagDeformationGradient(this->F);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void Tetrahedron::diagDeformationGradient(Eigen::Matrix3d F_) {
+	Eigen::Matrix3f F = F_.cast<float>();
+	float a11, a12, a13, a21, a22, a23, a31, a32, a33;
+
+	a11 = F(0, 0); a12 = F(0, 1); a13 = F(0, 2);
+	a21 = F(1, 0); a22 = F(1, 1); a23 = F(1, 2);
+	a31 = F(2, 0); a32 = F(2, 1); a33 = F(2, 2);
+
+	float u11, u12, u13,
+		u21, u22, u23,
+		u31, u32, u33;
+
+	float 	s11, s12, s13,
+		s21, s22, s23,
+		s31, s32, s33;
+
+	float 	v11, v12, v13,
+		v21, v22, v23,
+		v31, v32, v33;
+
+	svd(a11, a12, a13, a21, a22, a23, a31, a32, a33,
+		u11, u12, u13, u21, u22, u23, u31, u32, u33,
+		s11, s12, s13, s21, s22, s23, s31, s32, s33,
+		v11, v12, v13, v21, v22, v23, v31, v32, v33);
+
+	Eigen::Matrix3f U_, V_, S_;
+	U_ << u11, u12, u13,
+		u21, u22, u23,
+		u31, u32, u33;
+	V_ << v11, v12, v13, v21, v22, v23, v31, v32, v33;
+	S_ << s11, s12, s13, s21, s22, s23, s31, s32, s33;
+	this->U = U_.cast<double>();
+	this->V = V_.cast<double>();
+	this->S = S_.cast<double>();
+
+}
+
 
 void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	assert(m_nodes.size() == 4);
@@ -185,6 +246,10 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	}
 
 	this->F = Ds * Bm;
+	if (isInverted()) {
+		this->F = this->S;
+	}
+
 
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);

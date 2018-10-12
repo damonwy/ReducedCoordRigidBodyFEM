@@ -232,14 +232,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 	case SOFT_BODIES:
 		{
 			m_h = 1.0e-2;
-			m_tspan << 0.0, 20.0e-1;
+			m_tspan << 0.0, 50.0;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
-			double young = 1e3;
+			double young = 5e2;
 			double possion = 0.45;
 
-			for (int i = 0; i < 5; i++) {
+			for (int i = 0; i < 3; i++) {
 				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
 				// Inits joints

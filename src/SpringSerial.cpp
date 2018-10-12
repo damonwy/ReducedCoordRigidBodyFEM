@@ -85,8 +85,8 @@ void SpringSerial::load(const string &RESOURCE_DIR) {
 void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	// Draw nodes
 	prog->bind();
+
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 	MV->pushMatrix();
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 
@@ -94,6 +94,7 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 	for (int i = 0; i < n_nodes; i++) {	
 		m_nodes[i]->draw(MV, prog);
 	}
+
 	MV->popMatrix();
 	prog->unbind();
 
@@ -101,10 +102,7 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 	progSimple->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-	MV->pushMatrix();
 	
-	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-
 	glLineWidth(5);
 	glBegin(GL_LINES);
 	glColor3f(0.0f, 0.0f, 0.0f);
@@ -120,7 +118,6 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 	}
 	
 	glEnd();
-	MV->popMatrix();
 	progSimple->unbind();
 	
 }
@@ -175,8 +172,7 @@ void SpringSerial::scatterDofs_(VectorXd &y, int nr) {
 		int idxR = m_nodes[i]->idxR;
 		m_nodes[i]->x = y.segment<3>(idxR);
 		m_nodes[i]->v = y.segment<3>(nr + idxR);
-		//cout << "x"<< m_nodes[i]->x << endl;
-		//cout << "v" << m_nodes[i]->v << endl;
+
 	}
 }
 
@@ -186,8 +182,7 @@ void SpringSerial::scatterDDofs_(VectorXd &ydot, int nr) {
 		int idxR = m_nodes[i]->idxR;
 		m_nodes[i]->v = ydot.segment<3>(idxR);
 		m_nodes[i]->a = ydot.segment<3>(nr + idxR);
-		//cout << "v" << m_nodes[i]->v << endl;
-		//cout << "a" << m_nodes[i]->a << endl;
+
 	}
 }
 
