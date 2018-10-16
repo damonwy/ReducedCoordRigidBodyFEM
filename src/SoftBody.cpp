@@ -29,8 +29,8 @@ SoftBody::SoftBody() {
 	m_color << 1.0f, 1.0f, 0.0f;
 }
 
-SoftBody::SoftBody(double density, double young, double poisson):
-m_density(density), m_young(young), m_poisson(poisson)
+SoftBody::SoftBody(double density, double young, double poisson, Material material):
+m_density(density), m_young(young), m_poisson(poisson), m_material(material)
 {
 	m_color << 1.0f, 1.0f, 0.0f;
 }
@@ -90,7 +90,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		for (int ii = 0; ii < 4; ii++) {
 			tet_nodes.push_back(m_nodes[output_mesh.tetrahedronlist[4 * i + ii]]);
 		}
-		auto tet = make_shared<Tetrahedron>(m_young, m_poisson, m_density, tet_nodes);
+		auto tet = make_shared<Tetrahedron>(m_young, m_poisson, m_density, m_material, tet_nodes);
 		tet->i = i;
 		m_tets.push_back(tet);
 	}
@@ -446,7 +446,7 @@ VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		int idxM = m_nodes[i]->idxM;
 		double m = m_nodes[i]->m;
-		f.segment<3>(idxM) += m * grav;
+		//f.segment<3>(idxM) += m * grav;
 	}
 
 	// Elastic Forces

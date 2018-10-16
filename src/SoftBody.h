@@ -20,7 +20,7 @@ class SoftBody {
 
 public:
 	SoftBody();
-	SoftBody(double density, double young, double poisson);
+	SoftBody(double density, double young, double poisson, Material material);
 	virtual ~SoftBody();
 
 	virtual void load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME);
@@ -51,6 +51,7 @@ public:
 	std::shared_ptr<SoftBody> next;
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
 private:
+	Material m_material;
 	Eigen::Vector3f m_color;
 
 	std::vector<std::shared_ptr<Node> > m_nodes;

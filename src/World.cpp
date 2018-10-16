@@ -236,7 +236,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
-			double young = 5e2;
+			double young = 1e3;
 			double possion = 0.45;
 
 			for (int i = 0; i < 3; i++) {
@@ -251,7 +251,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				}
 			}
 
-			auto softbody = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
+			auto softbody = addSoftBody(density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "cylinder");
 			softbody->transform(Vector3d(10.0, 0.0, 0.0));
 			softbody->setColor(Vector3f(255.0, 204.0, 153.0)/255.0);
 
@@ -267,8 +267,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 	
 }
 
-shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, const string &RESOURCE_DIR, string file_name) {
-	auto softbody = make_shared<SoftBody>(density, young, possion);
+shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, Material material, const string &RESOURCE_DIR, string file_name) {
+	auto softbody = make_shared<SoftBody>(density, young, possion, material);
 	softbody->load(RESOURCE_DIR, file_name);
 	m_softbodies.push_back(softbody);
 	m_nsoftbodies++;

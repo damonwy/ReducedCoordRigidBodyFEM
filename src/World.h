@@ -37,7 +37,7 @@ public:
 	std::shared_ptr<JointRevolute> addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
 	std::shared_ptr<ConstraintJointLimit> addConstraintJointLimit(std::shared_ptr<Joint> joint, double ql, double qu);
 	std::shared_ptr<SpringSerial> addSpringSerial(double mass, int n_points, std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);
-	std::shared_ptr<SoftBody> addSoftBody(double density, double young, double possion, const std::string &RESOURCE_DIR, std::string file_name);
+	std::shared_ptr<SoftBody> addSoftBody(double density, double young, double possion, Material material, const std::string &RESOURCE_DIR, std::string file_name);
 	std::shared_ptr<ConstraintNull> addConstraintNull();
 	std::shared_ptr<SpringNull> addSpringNull();
 	std::shared_ptr<JointNull> addJointNull();

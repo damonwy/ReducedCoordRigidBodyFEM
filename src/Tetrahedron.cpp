@@ -12,8 +12,8 @@ Tetrahedron::Tetrahedron()
 
 }
 
-Tetrahedron::Tetrahedron(double young, double poisson, double density, const vector<shared_ptr<Node>> &nodes):
-m_young(young), m_poisson(poisson), m_density(density), m_nodes(nodes)
+Tetrahedron::Tetrahedron(double young, double poisson, double density, Material material, const vector<shared_ptr<Node>> &nodes):
+m_young(young), m_poisson(poisson), m_density(density), m_material(material), m_nodes(nodes)
 {
 	m_mu = m_young / (2.0 * (1.0 + m_poisson));
 	m_lambda = m_young * m_poisson / ((1.0 + m_poisson) * (1.0 - 2.0 * m_poisson));
@@ -41,12 +41,17 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 	}
 
 	this->F = Ds * Bm;
-	if (isInverted()) {
-		//this->F = this->S; todo  flip the sign using [Irving 04]
+	if (isInvert) {
+		this->F = this->Fhat;
 	}
 
 	this->P = computePKStress(F, m_mu, m_lambda);
+
 	this->H = -W * P * (Bm.transpose());
+
+	if (isInvert) {
+		this->H = -W * U * P * V.transpose() * (Bm.transpose());
+	}
 
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		int rowi = m_nodes[i]->idxM;
@@ -69,10 +74,9 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 
 	double psi;
 
-	int temp = 3;
-	switch (temp)
+	switch (m_material)
 	{
-	case 1:
+	case LINEAR:
 	{
 		E = 0.5 * (F + F.transpose()) - I;
 		//psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
@@ -80,7 +84,7 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 		break;
 	}
 
-	case 2:
+	case NEO_HOOKEAN:
 	{
 		double I1 = (F.transpose() * F).trace();
 		double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
@@ -91,7 +95,7 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 		break;
 	}
 
-	case 3:
+	case STVK:
 	{
 		E = 0.5 * (F.transpose() * F - I);
 		//psi = mu * E.norm()*E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
@@ -99,7 +103,7 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 		break;
 	}
 
-	case 4:
+	case CO_ROTATED:
 	{
 		// Polar decomposition
 		Matrix3d A = F.adjoint() * F;
@@ -131,9 +135,8 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 	Matrix3d dP = Matrix3d::Zero();
 	Matrix3d I3 = Matrix3d::Identity();
 
-	int temp = 2;
-	switch (temp) {
-	case 1:
+	switch (m_material) {
+	case CO_ROTATED:
 	{
 		Matrix3d A = F.adjoint() * F;
 		SelfAdjointEigenSolver<Matrix3d> es(A);
@@ -144,7 +147,7 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 		break;
 	}
 
-	case 2:
+	case STVK:
 	{
 		E = 1.0 / 2.0 * (F.transpose() * F - I3);
 		dE = 1.0 / 2.0 * (dF.transpose() * F + F.transpose() * dF);
@@ -153,7 +156,7 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 		break;
 	}
 
-	case 3:
+	case NEO_HOOKEAN:
 	{
 		//double I1 = (F.norm()) * (F.norm());
 		//double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
@@ -169,7 +172,7 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 		//dP = mu * dF + (mu - lambda * log(J)) * (F.inverse().transpose()) * (dF.transpose()) * (F.inverse().transpose()) + lambda * ((F.inverse() * dF)).trace() * (F.inverse().transpose());
 		break;
 	}
-	case 4:
+	case LINEAR:
 	{
 		E = 1.0 / 2.0 * (F + F.transpose()) - I3;
 		dE = 1.0 / 2.0 * (dF + dF.transpose());
@@ -193,11 +196,13 @@ bool Tetrahedron::isInverted() {
 	if (this->F.determinant() < -0.000001) { // some threshold todo
 		//cout << "tet_" << this->i << " is inverted! " << endl;
 		diagDeformationGradient(this->F);
-		return true;
+		isInvert = true;
 	}
 	else {
-		return false;
+		isInvert = false;
 	}
+
+	return isInvert;
 }
 
 void Tetrahedron::diagDeformationGradient(Eigen::Matrix3d F_) {
@@ -233,7 +238,7 @@ void Tetrahedron::diagDeformationGradient(Eigen::Matrix3d F_) {
 	S_ << s11, s12, s13, s21, s22, s23, s31, s32, s33;
 	this->U = U_.cast<double>();
 	this->V = V_.cast<double>();
-	this->S = S_.cast<double>();
+	this->Fhat = S_.cast<double>();
 
 }
 
@@ -247,7 +252,7 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 
 	this->F = Ds * Bm;
 	if (isInverted()) {
-		this->F = this->S;
+		this->F = this->Fhat;
 	}
 
 

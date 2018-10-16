@@ -12,7 +12,7 @@ class Tetrahedron
 {
 public:
 	Tetrahedron();
-	Tetrahedron(double young, double poisson, double density, const std::vector<std::shared_ptr<Node>> &nodes);
+	Tetrahedron(double young, double poisson, double density, Material material, const std::vector<std::shared_ptr<Node>> &nodes);
 
 	virtual ~Tetrahedron();
 
@@ -27,7 +27,7 @@ public:
 
 	int i;
 private:
-
+	Material m_material;
 	double m_young;
 	double m_poisson;
 	// Lame coefficients
@@ -50,14 +50,13 @@ private:
 	// SVD 
 	Eigen::Matrix3d U;
 	Eigen::Matrix3d V;
-	Eigen::Matrix3d S;		// FTF
 	Eigen::Matrix3d Fhat;	// diagonalized deformation gradient
-
+	Eigen::Matrix3d Phat;	
 							// for force differentials
 	Eigen::Matrix3d dDs;
 	Eigen::Matrix3d dF;		// the differential of the deformation gradient
 	Eigen::Matrix3d dP;		// the stress differential 
 	Eigen::Matrix3d dH;		// the nodal force differential of the first three vertices
 	Matrix12d K;		// 12x12 stiffness matrix
-	
+	bool isInvert;
 };
