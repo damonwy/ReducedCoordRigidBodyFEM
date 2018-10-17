@@ -46,6 +46,7 @@ public:
 	int idxM;
 		std::vector<Eigen::Vector3d> m_normals;
 
+	bool attached;			
 	bool fixed;					// is fixed?
 	double r;					// radius
 	double m;					// mass

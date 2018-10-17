@@ -251,9 +251,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 				}
 			}
 
-			auto softbody = addSoftBody(density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "cylinder");
-			softbody->transform(Vector3d(10.0, 0.0, 0.0));
-			softbody->setColor(Vector3f(255.0, 204.0, 153.0)/255.0);
+			//auto softbody = addSoftBody(density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "cylinder");
+			//softbody->transform(Vector3d(10.0, 0.0, 0.0));
+			//softbody->setColor(Vector3f(255.0, 204.0, 153.0)/255.0);
 
 		
 			// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
@@ -409,7 +409,7 @@ void World::init() {
 		//m_softbodies[0]->setAttachments(69, m_bodies[1]);
 		//m_softbodies[0]->setAttachments(72, m_bodies[1]);
 
-	
+	/*
 		Vector3d direction, origin;
 		direction = m_softbodies[0]->m_trifaces[0]->m_normal;
 		origin << 9.0, 0.0, 0.0;
@@ -417,7 +417,9 @@ void World::init() {
 		m_softbodies[0]->setAttachmentsByLine(direction, origin, m_bodies[0]);
 		origin << 10.0, 0.0, 0.0;
 
-		m_softbodies[0]->setAttachmentsByLine(-direction, origin, m_bodies[1]);
+		m_softbodies[0]->setAttachmentsByLine(-direction, origin, m_bodies[1]);*/
+
+
 		/*m_softbodies[1]->setAttachments(0, m_bodies[1]);
 		m_softbodies[1]->setAttachments(3, m_bodies[1]);
 		m_softbodies[1]->setAttachments(6, m_bodies[1]);

@@ -321,6 +321,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		softbody0->scatterDofs(yk, nr);
 		softbody0->scatterDDofs(ydotk, nr);
 		t += h;
+		cout << yk << endl;
 		return yk;
 	}
 	break;
@@ -632,7 +633,7 @@ shared_ptr<Solution> Solver::solve() {
 
 				softbody0->scatterDofs(yk, nr);
 				softbody0->scatterDDofs(ydotk, nr);		
-
+				cout << yk << endl;
 				t += h;
 				m_solutions->y.row(k) = yk;
 				m_solutions->t(k) = t;

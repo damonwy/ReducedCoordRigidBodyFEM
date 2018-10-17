@@ -20,6 +20,7 @@
 #include "FaceTriangle.h"
 #include "Tetrahedron.h"
 #include "Body.h"
+#include "Joint.h"
 
 using namespace std;
 using namespace Eigen;
@@ -219,10 +220,22 @@ void SoftBody::countDofs(int &nm, int &nr) {
 	// matrices
 
 	for (int i = 0; i < m_nodes.size(); i++) {
-		m_nodes[i]->idxM = nm;
-		m_nodes[i]->idxR = nr;
-		nm += 3;
-		nr += 3;
+		auto node = m_nodes[i];
+
+		if (node->attached) {
+			node->idxM = nm;
+
+			// If the node is attached to the body, use the reduced coord of parent
+			// 
+			node->idxR = node->getParent()->getJoint()->idxR;
+			//nm += 3;
+		}
+		else {
+			node->idxM = nm;
+			node->idxR = nr;
+			nm += 3;
+			nr += 3;
+		}
 	}
 }
 
@@ -287,6 +300,7 @@ void SoftBody::updatePosNor() {
 
 void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 	auto node = m_nodes[id];
+	node->attached = true;
 	node->setParent(body);
 	node->setColor(body->m_attached_color);
 
@@ -353,9 +367,14 @@ void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_pt
 VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
 	// Gathers qdot and qddot into y
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
-		int idxR = m_nodes[i]->idxR;
-		y.segment<3>(idxR) = m_nodes[i]->x;
-		y.segment<3>(nr + idxR) = m_nodes[i]->v;
+		auto node = m_nodes[i];
+		if (node->attached) {
+			// do nothing
+		}else {
+			int idxR = node->idxR;
+			y.segment<3>(idxR) = m_nodes[i]->x;
+			y.segment<3>(nr + idxR) = m_nodes[i]->v;
+		}	
 	}
 
 	if (next != nullptr) {
@@ -368,9 +387,17 @@ VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
 VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
 	// Gathers qdot and qddot into ydot
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
-		int idxR = m_nodes[i]->idxR;
-		ydot.segment<3>(idxR) = m_nodes[i]->v;
-		ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
+
+		auto node = m_nodes[i];
+		if (node->attached) {
+			// do nothing
+		}
+		else {
+			int idxR = m_nodes[i]->idxR;
+			ydot.segment<3>(idxR) = m_nodes[i]->v;
+			ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
+		}
+		
 	}
 
 	if (next != nullptr) {
@@ -381,15 +408,24 @@ VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
 }
 
 void SoftBody::scatterDofs(VectorXd &y, int nr) {
-	// Scatters q and qdot from y
+	
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
-		int idxR = m_nodes[i]->idxR;
-		if (!m_nodes[i]->fixed) {
-			m_nodes[i]->x = y.segment<3>(idxR);
-			m_nodes[i]->v = y.segment<3>(nr + idxR);
-		}
+		auto node = m_nodes[i];
 
+		if (node->attached) {
+			// do nothing
+
+
+		}
+		else {
+			int idxR = node->idxR;
+			if (!node->fixed) {
+				node->x = y.segment<3>(idxR);
+				node->v = y.segment<3>(nr + idxR);
+			}
+
+		}	
 	}
 	updatePosNor();
 
@@ -426,9 +462,15 @@ MatrixXd SoftBody::computeMass(Vector3d grav, MatrixXd M) {
 	
 	Matrix3d I3 = Matrix3d::Identity();
 	for (int i = 0; i < m_nodes.size(); i++) {
-		int idxM = m_nodes[i]->idxM;
-		double m = m_nodes[i]->m;
-		M.block<3, 3>(idxM, idxM) = m * I3;
+		auto node = m_nodes[i];
+		if (node->attached) {
+			// do nothing
+		}
+		else {
+			int idxM = node->idxM;
+			double m = node->m;
+			M.block<3, 3>(idxM, idxM) = m * I3;
+		}
 	}
 
 	if (next != nullptr) {
@@ -444,6 +486,8 @@ VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 	// Gravity
 	Matrix3d I3 = Matrix3d::Identity();
 	for (int i = 0; i < m_nodes.size(); i++) {
+
+
 		int idxM = m_nodes[i]->idxM;
 		double m = m_nodes[i]->m;
 		//f.segment<3>(idxM) += m * grav;
@@ -451,10 +495,9 @@ VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 
 	// Elastic Forces
 	for (int i = 0; i < m_tets.size(); i++) {
+
 		auto tet = m_tets[i];
 		f = tet->computeElasticForces(f);
-
-
 	}
 
 	if (next != nullptr) {
@@ -465,24 +508,40 @@ VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 }
 
 MatrixXd SoftBody::computeStiffness(MatrixXd K) {
-	VectorXd df(3*m_nodes.size());
-	VectorXd Dx = df;
+	Vector12d df, Dx;
 
 	for (int i = 0; i < m_tets.size(); i++) {
 		auto tet = m_tets[i];
 		for (int ii = 0; ii < 4; ii++) {
 			auto node = tet->m_nodes[ii];
-			int id = node->i;
-			int col = node->idxM;
-			
-			for (int iii = 0; iii < 3; iii++) {
-				df.setZero();
-				Dx.setZero();
-				Dx(3 * id + iii) = 1.0;
-				tet->computeForceDifferentials(Dx, df);
-				//K.col(col + iii) += df;
-				K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
+
+			if (node->attached) {
+				// do nothing
 			}
+			else {
+				int id = node->i;
+				int col = node->idxR;
+			
+				for (int iii = 0; iii < 3; iii++) {
+					df.setZero();
+					Dx.setZero();
+					Dx(3 * ii + iii) = 1.0;
+					//Dx(3 * id + iii) = 1.0;
+					df = tet->computeForceDifferentials(Dx, df);
+
+					for (int t = 0; t < 4; t++) {
+						if (!tet->m_nodes[t]->attached) {
+							int rowt = tet->m_nodes[t]->idxM;
+							K.block<3, 1>(rowt, col + iii) += df.segment<3>(3 * t);
+						}
+					}
+
+					//tet->computeForceDifferentials(Dx, df);
+					//K.col(col + iii) += df;
+					//K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
+				}
+			}
+			
 		}
 	}
 
