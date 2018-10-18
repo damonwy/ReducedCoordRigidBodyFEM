@@ -93,9 +93,6 @@ Energy Body::computeEnergies(Eigen::Vector3d grav, Energy energies) {
 	ener.K = energies.K + 0.5 * V.transpose() * I_j * V;
 	ener.V = energies.V - I_j(5, 5)*grav.transpose() * E_wi.block<3, 1>(0, 3);
 
-	if (next != nullptr) {
-		ener = next->computeEnergies(grav, ener);
-	}
 	return ener;
 }
 

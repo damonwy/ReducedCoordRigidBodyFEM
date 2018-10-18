@@ -12,8 +12,8 @@ Tetrahedron::Tetrahedron()
 
 }
 
-Tetrahedron::Tetrahedron(double young, double poisson, double density, Material material, const vector<shared_ptr<Node>> &nodes):
-m_young(young), m_poisson(poisson), m_density(density), m_material(material), m_nodes(nodes)
+Tetrahedron::Tetrahedron(double young, double poisson, double density, Material material, const vector<shared_ptr<Node>> &nodes) :
+	m_young(young), m_poisson(poisson), m_density(density), m_material(material), m_nodes(nodes)
 {
 	m_mu = m_young / (2.0 * (1.0 + m_poisson));
 	m_lambda = m_young * m_poisson / ((1.0 + m_poisson) * (1.0 - 2.0 * m_poisson));
@@ -35,7 +35,6 @@ m_young(young), m_poisson(poisson), m_density(density), m_material(material), m_
 VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 	isInverted();
 
-	assert(m_nodes.size() == 4);
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
 	}
@@ -54,25 +53,10 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 	}
 
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
-		auto node = m_nodes[i];
-		auto node3 = m_nodes[3];
-
-		if (node->attached) {
-			// do nothing
-		}
-		else {
-			int rowi = node->idxM;
-			f.segment<3>(rowi) += H.col(i);
-			
-		}
-
-		if (node3->attached) {
-			// do nothing
-		}
-		else {
-			int row3 = node3->idxM;
-			f.segment<3>(row3) -= H.col(i);
-		}		
+		int rowi = m_nodes[i]->idxM;
+		f.segment<3>(rowi) += H.col(i);
+		int row3 = m_nodes[3]->idxM;
+		f.segment<3>(row3) -= H.col(i);
 
 		//m_nodes[i]->addForce(H.col(i));
 		//m_nodes[3]->addForce(-H.col(i));
@@ -87,14 +71,12 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 	Matrix3d P = Matrix3d::Zero();
 	Matrix3d I = Matrix3d::Identity();
 
-	double psi;
-
 	switch (m_material)
 	{
 	case LINEAR:
 	{
 		E = 0.5 * (F + F.transpose()) - I;
-		//psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
+		psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
 		P = 2.0 * mu * E + lambda * E.trace() * I;
 		break;
 	}
@@ -105,7 +87,7 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 		double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
 		double I3 = (F.transpose() * F).determinant();
 		double J = sqrt(I3);
-		//psi = 1.0 / 2.0 * mu *(I1 - 3.0) - mu * log(J) + 1.0 / 2.0 * lambda * log(J)*log(J);
+		psi = 1.0 / 2.0 * mu *(I1 - 3.0) - mu * log(J) + 1.0 / 2.0 * lambda * log(J)*log(J);
 		P = mu * (F - F.inverse().transpose()) + lambda * log(J)*(F.inverse().transpose());
 		break;
 	}
@@ -113,7 +95,7 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 	case STVK:
 	{
 		E = 0.5 * (F.transpose() * F - I);
-		//psi = mu * E.norm()*E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
+		psi = mu * E.norm()*E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
 		P = F * (2.0 * mu * E + lambda * E.trace() * I);
 		break;
 	}
@@ -127,7 +109,7 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 		Matrix3d R = F * S.inverse();
 
 		E = S - I;
-		//psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
+		psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
 		//P = R * (2.0 * mu * E + lambda * E.trace() * I);
 		P = 2.0 * mu * (F - R) + lambda * (R.transpose() * F - I).trace() * R;
 		break;
@@ -209,7 +191,7 @@ bool Tetrahedron::isInverted() {
 
 	this->F = Ds * Bm;
 	if (this->F.determinant() < -0.000001) { // some threshold todo
-		//cout << "tet_" << this->i << " is inverted! " << endl;
+											 //cout << "tet_" << this->i << " is inverted! " << endl;
 		diagDeformationGradient(this->F);
 		isInvert = true;
 	}
@@ -259,10 +241,6 @@ void Tetrahedron::diagDeformationGradient(Eigen::Matrix3d F_) {
 
 
 void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
-	assert(m_nodes.size() == 4);
-
-
-
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
 	}
@@ -280,21 +258,7 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	this->dF = dDs * Bm;
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
 	this->dH = -W * dP * (Bm.transpose());
-
-
-
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
-		auto node = m_nodes[i];
-		auto node3 = m_nodes[3];
-
-		if (node->attached) {
-			// do nothing
-		}
-		else {
-
-		}
-
-
 		df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);
 	}
@@ -304,7 +268,6 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	dFRow.row(i) = Bm.row(i);
 	dFRow(3, i) = -Bm(0, i) - Bm(1, i) - Bm(2, i);
 	}
-
 	K.setZero();
 	for (int row = 0; row < 4; ++row) {
 	MatrixXd Kb(12, 3);
@@ -326,35 +289,21 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	}*/
 }
 
-
-Vector12d Tetrahedron::computeForceDifferentials(Vector12d dx, Vector12d &df) {
-	assert(m_nodes.size() == 4);
+double Tetrahedron::computeEnergy() {
+	isInverted();
 
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
 	}
 
 	this->F = Ds * Bm;
-	if (isInverted()) {
+	if (isInvert) {
 		this->F = this->Fhat;
 	}
 
-
-	for (int i = 0; i < m_nodes.size() - 1; i++) {
-		this->dDs.col(i) = dx.segment<3>(3 * i) - dx.segment<3>(3 * 3);
-	}
-
-	this->dF = dDs * Bm;
-	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
-	this->dH = -W * dP * (Bm.transpose());
-
-	for (int i = 0; i < m_nodes.size() - 1; i++) {
-
-		df.segment<3>(3 * i) += this->dH.col(i);
-		df.segment<3>(3 * 3) -= this->dH.col(i);
-	}
-
-	return df;
+	this->P = computePKStress(F, m_mu, m_lambda);
+	this->m_energy = W * psi;
+	return this->m_energy;
 }
 
 Tetrahedron:: ~Tetrahedron() {

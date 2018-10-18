@@ -108,6 +108,7 @@ void Scene::step()
 
 
 	y = m_solver->dynamics(y);
+	m_world->incrementTime();
 
 	//if(tk < m_solution->t(n_steps-1)) {
 	//	m_solution->searchTime(tk, search_idx, output_idx, s);

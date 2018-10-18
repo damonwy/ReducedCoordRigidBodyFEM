@@ -29,9 +29,9 @@ public:
 
 	virtual void countDofs(int &nm, int &nr);
 	void updatePosNor();
-	void computeEnergies(Eigen::Vector3d grav, double &T, double &V);
 	virtual Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J);
 	virtual Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
+	virtual Energy computeEnergies(Eigen::Vector3d grav, Energy ener);
 	virtual Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
 	virtual Eigen::MatrixXd computeStiffness(Eigen::MatrixXd K);
 	virtual Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
@@ -41,6 +41,10 @@ public:
 
 	void setAttachments(int id, std::shared_ptr<Body> body);
 	void setAttachmentsByLine(Eigen::Vector3d dir, Eigen::Vector3d orig, std::shared_ptr<Body> body);
+
+	void setAttachmentsByXYSurface(double z, Eigen::Vector2d xrange, Eigen::Vector2d yrange, std::shared_ptr<Body> body);
+	void setAttachmentsByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, std::shared_ptr<Body> body);
+	void setAttachmentsByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, std::shared_ptr<Body> body);
 
 	void transform(Eigen::Vector3d dx);
 	void setColor(Eigen::Vector3f color) { m_color = color; }
@@ -54,8 +58,7 @@ private:
 	Material m_material;
 	Eigen::Vector3f m_color;
 
-	std::vector<std::shared_ptr<Node> > m_nodes;
-	
+	std::vector<std::shared_ptr<Node> > m_nodes;	
 	std::vector<std::shared_ptr<Tetrahedron> > m_tets;
 
 	std::vector<unsigned int> eleBuf;

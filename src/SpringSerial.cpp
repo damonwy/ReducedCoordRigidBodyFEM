@@ -229,7 +229,7 @@ VectorXd SpringSerial::computeForce_(Vector3d grav, VectorXd f) {
 	return f;
 }
 
-void SpringSerial::computeEnergies_(Vector3d grav, double &T, double &V) {
+Energy SpringSerial::computeEnergies_(Vector3d grav, Energy ener) {
 	int n_nodes = m_nodes.size();
 
 	double m = m_mass / n_nodes;
@@ -237,8 +237,8 @@ void SpringSerial::computeEnergies_(Vector3d grav, double &T, double &V) {
 	for (int i = 0; i < n_nodes; i++) {
 		Vector3d x = m_nodes[i]->x;
 		Vector3d v = m_nodes[i]->v;
-		T = T + 0.5 * m * v.dot(v);
-		V = V - m * grav.dot(x);
+		ener.K = ener.K + 0.5 * m * v.dot(v);
+		ener.V = ener.V - m * grav.dot(x);
 	}
 
 	for (int i = 0; i < n_nodes - 1; i++) {
@@ -248,10 +248,10 @@ void SpringSerial::computeEnergies_(Vector3d grav, double &T, double &V) {
 		double l = dx.norm();
 		double L = m_nodes[i]->L;
 		double e = (l - L) / L;
-		V = V + 0.5 * m_K * e * e;
+		ener.V = ener.V + 0.5 * m_K * e * e;
 
 	}
-
+	return ener;
 }
 
 MatrixXd SpringSerial::computeJacobian_(MatrixXd J) {

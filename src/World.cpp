@@ -28,18 +28,21 @@ using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
-World::World():
-nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_constraints(0), m_countS(0), m_countCM(0),
-m_nsoftbodies(0)
+World::World() :
+	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_constraints(0), m_countS(0), m_countCM(0),
+	m_nsoftbodies(0)
 {
-
+	m_energy.K = 0.0;
+	m_energy.V = 0.0;
 }
 
-World::World(WorldType type):
-m_type(type),
-nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_nconstraints(0), m_countS(0), m_countCM(0),
-m_nsoftbodies(0)
+World::World(WorldType type) :
+	m_type(type),
+	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_nconstraints(0), m_countS(0), m_countCM(0),
+	m_nsoftbodies(0)
 {
+	m_energy.K = 0.0;
+	m_energy.V = 0.0;
 }
 
 World::~World() {
@@ -60,133 +63,136 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	switch (m_type)
 	{
-	case SERIAL_CHAIN: 
-		{	
-			m_h = 1.0e-2;
-			density = 1.0;
-			m_grav << 0.0, -98, 0.0;
-			Eigen::from_json(js["sides"], sides);
-			//m_nbodies = 5;
-			//m_njoints = 5;
-			m_Hexpected = 10000; // todo
-			m_tspan << 0.0, 5.0;
-			
-			// Inits rigid bodies
-			for (int i = 0; i < 1; i++) {
+	case SERIAL_CHAIN:
+	{
+		m_h = 1.0e-2;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		//m_nbodies = 5;
+		//m_njoints = 5;
+		m_Hexpected = 10000; // todo
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		// Inits rigid bodies
+		for (int i = 0; i < 1; i++) {
 
-				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
-				// Inits joints
-				if (i == 0) {
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-				}
-				else {
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i-1]);
-				}
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 			}
-			break;
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+			}
 		}
+		break;
+	}
 	case DIFF_REVOLUTE_AXES:
 		break;
 	case BRANCHING:
-		{
-			m_h = 1.0e-2;
-			m_tspan << 0.0, 50.0;
-			density = 1.0;
-			m_grav << 0.0, -98, 0.0;
-			Eigen::from_json(js["sides"], sides);
-			Vector3d sides_0;
-			sides_0 << 1.0, 10.0, 1.0;
-			Vector3d sides_1;
-			sides_1 << 20.0, 1.0, 1.0;
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		Vector3d sides_0;
+		sides_0 << 1.0, 10.0, 1.0;
+		Vector3d sides_1;
+		sides_1 << 20.0, 1.0, 1.0;
 
-			auto b0 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-			auto b1 = addBody(density, sides_1, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
-			auto b2 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-			auto b3 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-			auto b4 = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
-			auto b5 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-			auto b6 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-			auto b7 = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
-			auto b8 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-			auto b9 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b0 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b1 = addBody(density, sides_1, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
+		auto b2 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b3 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b4 = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+		auto b5 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b6 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b7 = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+		auto b8 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b9 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
 
-			auto j0 = addJointRevolute(b0, Vector3d::UnitX(), Vector3d(0.0, 15.0, 0.0), Matrix3d::Identity(), 0.0);
-			auto j1 = addJointRevolute(b1, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j0);
-			auto j2 = addJointRevolute(b2, Vector3d::UnitX(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j1);
-			auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j1);
-			auto j4 = addJointRevolute(b4, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j2);
-			auto j5 = addJointRevolute(b5, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
-			auto j6 = addJointRevolute(b6, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
-			auto j7 = addJointRevolute(b7, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j3);
-			auto j8 = addJointRevolute(b8, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j7);
-			auto j9 = addJointRevolute(b9, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j7);
-		}
-		break;
+		auto j0 = addJointRevolute(b0, Vector3d::UnitX(), Vector3d(0.0, 15.0, 0.0), Matrix3d::Identity(), 0.0);
+		auto j1 = addJointRevolute(b1, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j0);
+		auto j2 = addJointRevolute(b2, Vector3d::UnitX(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j1);
+		auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j1);
+		auto j4 = addJointRevolute(b4, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j2);
+		auto j5 = addJointRevolute(b5, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
+		auto j6 = addJointRevolute(b6, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
+		auto j7 = addJointRevolute(b7, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j3);
+		auto j8 = addJointRevolute(b8, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j7);
+		auto j9 = addJointRevolute(b9, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j7);
+	}
+	break;
 	case SHPERICAL_JOINT:
 		break;
 	case LOOP:
-		{
-			m_h = 1.0e-2;
-			m_tspan << 0.0, 50.0;
-			density = 1.0;
-			m_grav << 0.0, -98, 0.0;
-			Eigen::from_json(js["sides"], sides);
-			Vector3d sides_0;
-			sides_0 << 1.0, 10.0, 1.0;
-			Vector3d sides_1;
-			sides_1 << 20.0, 1.0, 1.0;
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		Vector3d sides_0;
+		sides_0 << 1.0, 10.0, 1.0;
+		Vector3d sides_1;
+		sides_1 << 20.0, 1.0, 1.0;
 
-			auto b0 = addBody(density, sides_1, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
-			auto b1 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-			auto b2 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-			auto b3 = addBody(density, sides_1, Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
-			auto b4 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b0 = addBody(density, sides_1, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
+		auto b1 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b2 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto b3 = addBody(density, sides_1, Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
+		auto b4 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
 
-			auto j0 = addJointRevolute(b0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-			auto j1 = addJointRevolute(b1, Vector3d::UnitZ(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j0);
-			auto j2 = addJointRevolute(b2, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j0);
-			auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j1);
-			auto j4 = addJointRevolute(b4, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j3);
-			j4->m_qdot(0) = 5.0;
+		auto j0 = addJointRevolute(b0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+		auto j1 = addJointRevolute(b1, Vector3d::UnitZ(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j0);
+		auto j2 = addJointRevolute(b2, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j0);
+		auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j1);
+		auto j4 = addJointRevolute(b4, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j3);
+		j4->m_qdot(0) = 5.0;
 
-			auto constraint = make_shared<ConstraintLoop>(b2, b3);
-			m_constraints.push_back(constraint);
-			constraint->setPositions(Vector3d(0.0, -5.0, 0.0), Vector3d(10.0, 0.0, 0.0));
-			m_nconstraints++;
-	
-		}
-		break;
+		auto constraint = make_shared<ConstraintLoop>(b2, b3);
+		m_constraints.push_back(constraint);
+		constraint->setPositions(Vector3d(0.0, -5.0, 0.0), Vector3d(10.0, 0.0, 0.0));
+		m_nconstraints++;
+
+	}
+	break;
 	case JOINT_TORQUE:
 		break;
 	case JOINT_LIMITS:
-		{
-			m_h = 1.0e-2;
-			m_tspan << 0.0, 50.0;
-			density = 1.0;
-			m_grav << 0.0, -98, 0.0;
-			Eigen::from_json(js["sides"], sides);
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
 
-			for (int i = 0; i < 6; i++) {
-				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+		for (int i = 0; i < 6; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
-				// Inits joints
-				if (i == 0) {
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-				}
-				else {
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
-				}
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+			}
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+			}
 
-				// Init constraints
-				if (i > 0) {
-					addConstraintJointLimit(m_joints[i], -M_PI / 4, M_PI / 4);
-				}
-			}		
-
+			// Init constraints
+			if (i > 0) {
+				addConstraintJointLimit(m_joints[i], -M_PI / 4, M_PI / 4);
+			}
 		}
 
-		break;
+	}
+
+	break;
 	case EQUALITY_CONSTRAINED_ANGLES:
 		break;
 	case EQUALITY_AND_LOOP:
@@ -197,74 +203,76 @@ void World::load(const std::string &RESOURCE_DIR) {
 		break;
 	case JOINT_STIFFNESS:
 		break;
-	case SPRINGS: 
-		{	
-			m_h = 1.0e-2;
-			m_tspan << 0.0, 50.0;
-			density = 1.0;
-			m_grav << 0.0, -98, 0.0;
-			m_stiffness = 5.0e3;
-			Eigen::from_json(js["sides"], sides);
-			
-			for (int i = 0; i < 2; i++) {
-				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+	case SPRINGS:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		m_stiffness = 5.0e3;
+		Eigen::from_json(js["sides"], sides);
 
-				// Inits joints
-				if (i == 0) {
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-				}
-				else {
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
-				}
-			}
+		for (int i = 0; i < 2; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
-			// Init springs
-			auto spring0 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
-			spring0->setStiffness(m_stiffness);
-			auto spring1 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
-			spring1->setStiffness(m_stiffness);
-			for (int i = 0; i < m_springs.size(); i++) {
-				m_springs[i]->load(RESOURCE_DIR);
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 			}
-			
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+			}
 		}
-		break;
+
+		// Init springs
+		auto spring0 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
+		spring0->setStiffness(m_stiffness);
+		auto spring1 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
+		spring1->setStiffness(m_stiffness);
+		for (int i = 0; i < m_springs.size(); i++) {
+			m_springs[i]->load(RESOURCE_DIR);
+		}
+
+	}
+	break;
 	case SOFT_BODIES:
-		{
-			m_h = 1.0e-2;
-			m_tspan << 0.0, 50.0;
-			density = 1.0;
-			m_grav << 0.0, -98, 0.0;
-			Eigen::from_json(js["sides"], sides);
-			double young = 1e3;
-			double possion = 0.45;
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e2;
+		double possion = 0.45;
 
-			for (int i = 0; i < 3; i++) {
-				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+		for (int i = 0; i < 3; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
-				// Inits joints
-				if (i == 0) {
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-				}
-				else {
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
-				}
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 			}
-
-			//auto softbody = addSoftBody(density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "cylinder");
-			//softbody->transform(Vector3d(10.0, 0.0, 0.0));
-			//softbody->setColor(Vector3f(255.0, 204.0, 153.0)/255.0);
-
-		
-			// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
-			// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
-
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+			}
 		}
-		break;
+
+		auto softbody = addSoftBody(0.01 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle3");
+		softbody->transform(Vector3d(10.0, 0.0, 0.0));
+		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
+
+
+		// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
+		// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
+
+	}
+	break;
 	default:
 		break;
 	}
-	
+
 }
 
 shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, Material material, const string &RESOURCE_DIR, string file_name) {
@@ -309,7 +317,7 @@ shared_ptr<SpringSerial> World::addSpringSerial(double mass, int n_points, share
 	auto spring = make_shared<SpringSerial>(n_points, m_countS, m_countCM);
 	m_springs.push_back(spring);
 	spring->setStiffness(m_stiffness);
-	spring->setMass(mass); 
+	spring->setMass(mass);
 	spring->setAttachments(body0, r0, body1, r1);
 	m_nsprings++;
 	return spring;
@@ -342,16 +350,16 @@ shared_ptr<SpringNull> World::addSpringNull() {
 
 void World::init() {
 	for (int i = 0; i < m_nbodies; i++) {
-		
+
 		m_bodies[i]->init(nm);
-		if (i < m_nbodies-1) {
+		if (i < m_nbodies - 1) {
 			m_bodies[i]->next = m_bodies[i + 1];
 		}
 	}
-	
+
 	nm = 0;
 	/*for (int i = 0; i < m_njoints; i++) {
-		m_joints[i]->init(nm, nr);
+	m_joints[i]->init(nm, nr);
 	}*/
 
 	//joint ordering
@@ -375,10 +383,10 @@ void World::init() {
 	}
 
 	m_joints[0]->update();
-	
+
 	for (int i = 0; i < m_nsprings; i++) {
 		m_springs[i]->countDofs(nm, nr);
-		
+
 		m_springs[i]->init();
 		// Create attachment constraints
 		auto constraint = make_shared<ConstraintAttachSpring>(m_springs[i]);
@@ -388,7 +396,7 @@ void World::init() {
 			m_springs[i]->next = m_springs[i + 1];
 		}
 	}
-	
+
 	if (m_nsprings == 0) {
 		addSpringNull();
 	}
@@ -409,16 +417,13 @@ void World::init() {
 		//m_softbodies[0]->setAttachments(69, m_bodies[1]);
 		//m_softbodies[0]->setAttachments(72, m_bodies[1]);
 
-	/*
-		Vector3d direction, origin;
+
+		/*Vector3d direction, origin;
 		direction = m_softbodies[0]->m_trifaces[0]->m_normal;
 		origin << 9.0, 0.0, 0.0;
-
 		m_softbodies[0]->setAttachmentsByLine(direction, origin, m_bodies[0]);
 		origin << 10.0, 0.0, 0.0;
-
 		m_softbodies[0]->setAttachmentsByLine(-direction, origin, m_bodies[1]);*/
-
 
 		/*m_softbodies[1]->setAttachments(0, m_bodies[1]);
 		m_softbodies[1]->setAttachments(3, m_bodies[1]);
@@ -426,7 +431,6 @@ void World::init() {
 		m_softbodies[1]->setAttachments(9, m_bodies[1]);
 		m_softbodies[1]->setAttachments(12, m_bodies[1]);
 		m_softbodies[1]->setAttachments(19, m_bodies[1]);
-
 		m_softbodies[1]->setAttachments(60, m_bodies[2]);
 		m_softbodies[1]->setAttachments(63, m_bodies[2]);
 		m_softbodies[1]->setAttachments(67, m_bodies[2]);
@@ -434,8 +438,17 @@ void World::init() {
 		m_softbodies[1]->setAttachments(72, m_bodies[2]);*/
 
 		//m_softbodies[1]->setAttachments(0, m_bodies[1]);
-	//	m_softbodies[1]->setAttachments(3, m_bodies[1]);
+		//	m_softbodies[1]->setAttachments(3, m_bodies[1]);
 		//m_softbodies[1]->setAttachments(6, m_bodies[2]);
+
+		m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+
+		m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		//m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+
 
 	}
 
@@ -468,7 +481,7 @@ void World::init() {
 			m_constraints[i]->next = m_constraints[i + 1];
 		}
 	}
-	
+
 	if (m_nconstraints == 0) {
 		addConstraintNull();
 	}
@@ -526,4 +539,21 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	for (int i = 0; i < m_nsoftbodies; i++) {
 		m_softbodies[i]->draw(MV, prog, progSimple, P);
 	}
+}
+
+Energy World::computeEnergy() {
+	m_energy.K = 0.0;
+	m_energy.V = 0.0;
+
+	m_energy = m_joints[0]->computeEnergies(m_grav, m_energy);
+	m_energy = m_springs[0]->computeEnergies(m_grav, m_energy);
+	m_energy = m_softbodies[0]->computeEnergies(m_grav, m_energy);
+
+	if (m_t == 0.0) {
+		m_energy0 = m_energy;
+	}
+
+	m_energy.V -= m_energy0.V;
+
+	return m_energy;
 }

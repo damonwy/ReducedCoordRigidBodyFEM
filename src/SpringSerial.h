@@ -33,7 +33,7 @@ public:
 
 	virtual Eigen::MatrixXd computeMass_(Eigen::Vector3d grav, Eigen::MatrixXd M);
 	virtual Eigen::VectorXd computeForce_(Eigen::Vector3d grav, Eigen::VectorXd f);
-	virtual void computeEnergies_(Eigen::Vector3d grav, double &T, double &V);
+	virtual Energy computeEnergies_(Eigen::Vector3d grav, Energy ener);
 	virtual Eigen::MatrixXd computeJacobian_(Eigen::MatrixXd J);
 
 };

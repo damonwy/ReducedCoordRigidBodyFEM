@@ -42,6 +42,8 @@ public:
 	std::shared_ptr<SpringNull> addSpringNull();
 	std::shared_ptr<JointNull> addJointNull();
 
+	Energy computeEnergy();
+
 	void load(const std::string &RESOURCE_DIR);
 	void init();
 	void update();
@@ -51,7 +53,7 @@ public:
 	void setTime(double t) { m_t = t; }
 	double getTime() const { return m_t; }
 	double getH() const { return m_h; }
-	void incrementTime(double dt) { m_t += dt; }
+	void incrementTime() { m_t += m_h; }
 
 	void setGrav(Eigen::Vector3d grav) { m_grav = grav; }
 	Eigen::Vector3d getGrav() const { return m_grav; }
@@ -88,6 +90,9 @@ public:
 	int m_nconstraints;
 
 private:
+	Energy m_energy;
+	Energy m_energy0;
+
 	WorldType m_type;
 	Eigen::Vector3d m_grav;
 	double m_stiffness;
