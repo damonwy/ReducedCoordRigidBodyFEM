@@ -40,7 +40,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pqz", &input_mesh, &output_mesh);
+	tetrahedralize("pqzR", &input_mesh, &output_mesh);
 
 	double r = 0.04;
 
@@ -204,10 +204,10 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	prog->unbind();
 
 	progSimple->bind();
-	for (int i = 0; i < 65; i++) {
+	/*for (int i = 0; i < 65; i++) {
 		auto node = m_nodes[i];
 		node->drawNormal(MV, P, progSimple);
-	}
+	}*/
 	progSimple->unbind();
 
 }
@@ -349,6 +349,47 @@ void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_pt
 
 }
 
+void SoftBody::setAttachmentsByXYSurface(double z, Eigen::Vector2d xrange, Eigen::Vector2d yrange, shared_ptr<Body> body) {
+
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+
+		if (abs(xi(2) - z) < 0.0001 && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
+			setAttachments(i, body);
+		}
+	}
+
+}
+
+
+void SoftBody::setAttachmentsByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, shared_ptr<Body> body) {
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+
+		if (abs(xi(0) - x) < 0.0001 && xi(2) <= zrange(1) && xi(2) >= zrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
+			setAttachments(i, body);
+		}
+	}
+
+}
+
+
+void SoftBody::setAttachmentsByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, shared_ptr<Body> body) {
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+
+		if (abs(xi(1) - y) < 0.0001 && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(2) <= zrange(1) && xi(2) >= zrange(0)) {
+			setAttachments(i, body);
+		}
+	}
+
+}
+
+
+
 
 VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
 	// Gathers qdot and qddot into y
@@ -412,12 +453,6 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 		next->scatterDDofs(ydot, nr);
 
 	}
-
-}
-
-void SoftBody::computeEnergies(Vector3d grav, double &T, double &V) {
-
-
 
 }
 
@@ -486,7 +521,6 @@ MatrixXd SoftBody::computeStiffness(MatrixXd K) {
 		}
 	}
 
-
 	if (next != nullptr) {
 		K = next->computeStiffness(K);
 	}
@@ -503,6 +537,29 @@ MatrixXd SoftBody::computeJacobian(MatrixXd J) {
 	}
 
 	return J;
+}
+
+Energy SoftBody::computeEnergies(Eigen::Vector3d grav, Energy ener) {
+	int n_nodes = m_nodes.size();
+
+	for (int i = 0; i < n_nodes; i++) {
+		Vector3d x = m_nodes[i]->x;
+		Vector3d v = m_nodes[i]->v;
+		double m = m_nodes[i]->m;
+		ener.K = ener.K + 0.5 * m * v.dot(v);
+		ener.V = ener.V - m * grav.dot(x);
+	}
+
+	for (int i = 0; i < m_tets.size(); i++) {
+		double vi = m_tets[i]->computeEnergy();
+		ener.V = ener.V + vi;
+	}
+
+	if (next != nullptr) {
+		ener = next->computeEnergies(grav, ener);
+	}
+
+	return ener;
 }
 
 SoftBody:: ~SoftBody() {

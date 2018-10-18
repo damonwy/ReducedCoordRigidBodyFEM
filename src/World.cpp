@@ -32,7 +32,8 @@ World::World():
 nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_constraints(0), m_countS(0), m_countCM(0),
 m_nsoftbodies(0)
 {
-
+	m_energy.K = 0.0;
+	m_energy.V = 0.0;
 }
 
 World::World(WorldType type):
@@ -40,6 +41,8 @@ m_type(type),
 nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_nconstraints(0), m_countS(0), m_countCM(0),
 m_nsoftbodies(0)
 {
+	m_energy.K = 0.0;
+	m_energy.V = 0.0;
 }
 
 World::~World() {
@@ -70,7 +73,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			//m_njoints = 5;
 			m_Hexpected = 10000; // todo
 			m_tspan << 0.0, 5.0;
-			
+			m_t = 0.0;
 			// Inits rigid bodies
 			for (int i = 0; i < 1; i++) {
 
@@ -92,6 +95,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		{
 			m_h = 1.0e-2;
 			m_tspan << 0.0, 50.0;
+			m_t = 0.0;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
@@ -129,6 +133,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		{
 			m_h = 1.0e-2;
 			m_tspan << 0.0, 50.0;
+			m_t = 0.0;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
@@ -163,6 +168,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		{
 			m_h = 1.0e-2;
 			m_tspan << 0.0, 50.0;
+			m_t = 0.0;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
@@ -201,6 +207,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		{	
 			m_h = 1.0e-2;
 			m_tspan << 0.0, 50.0;
+			m_t = 0.0;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			m_stiffness = 5.0e3;
@@ -233,10 +240,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 		{
 			m_h = 1.0e-2;
 			m_tspan << 0.0, 50.0;
+			m_t = 0.0;
 			density = 1.0;
 			m_grav << 0.0, -98, 0.0;
 			Eigen::from_json(js["sides"], sides);
-			double young = 1e3;
+			double young = 1e2;
 			double possion = 0.45;
 
 			for (int i = 0; i < 3; i++) {
@@ -251,7 +259,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				}
 			}
 
-			auto softbody = addSoftBody(density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "cylinder");
+			auto softbody = addSoftBody(0.01 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle3");
 			softbody->transform(Vector3d(10.0, 0.0, 0.0));
 			softbody->setColor(Vector3f(255.0, 204.0, 153.0)/255.0);
 
@@ -410,14 +418,15 @@ void World::init() {
 		//m_softbodies[0]->setAttachments(72, m_bodies[1]);
 
 	
-		Vector3d direction, origin;
+		/*Vector3d direction, origin;
 		direction = m_softbodies[0]->m_trifaces[0]->m_normal;
 		origin << 9.0, 0.0, 0.0;
 
 		m_softbodies[0]->setAttachmentsByLine(direction, origin, m_bodies[0]);
 		origin << 10.0, 0.0, 0.0;
 
-		m_softbodies[0]->setAttachmentsByLine(-direction, origin, m_bodies[1]);
+		m_softbodies[0]->setAttachmentsByLine(-direction, origin, m_bodies[1]);*/
+
 		/*m_softbodies[1]->setAttachments(0, m_bodies[1]);
 		m_softbodies[1]->setAttachments(3, m_bodies[1]);
 		m_softbodies[1]->setAttachments(6, m_bodies[1]);
@@ -434,6 +443,15 @@ void World::init() {
 		//m_softbodies[1]->setAttachments(0, m_bodies[1]);
 	//	m_softbodies[1]->setAttachments(3, m_bodies[1]);
 		//m_softbodies[1]->setAttachments(6, m_bodies[2]);
+
+		m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+
+		m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		//m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+
 
 	}
 
@@ -525,3 +543,21 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 		m_softbodies[i]->draw(MV, prog, progSimple, P);
 	}
 }
+
+Energy World::computeEnergy() {
+	m_energy.K = 0.0;
+	m_energy.V = 0.0;
+
+	m_energy = m_joints[0]->computeEnergies(m_grav, m_energy);
+	m_energy = m_springs[0]->computeEnergies(m_grav, m_energy);	
+	m_energy = m_softbodies[0]->computeEnergies(m_grav, m_energy);
+
+	if (m_t == 0.0) {
+		m_energy0 = m_energy;
+	}
+
+	m_energy.V -= m_energy0.V;
+
+	return m_energy;
+}
+

@@ -30,7 +30,7 @@ public:
 	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J);
 	Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
 	Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
-	void computeEnergies(Eigen::Vector3d grav, double &T, double &V);
+	Energy computeEnergies(Eigen::Vector3d grav, Energy ener);
 
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	virtual void load(const std::string &RESOURCE_DIR);
@@ -43,7 +43,7 @@ public:
 	virtual void scatterDDofs_(Eigen::VectorXd &ydot, int nr);
 	virtual Eigen::MatrixXd computeMass_(Eigen::Vector3d grav, Eigen::MatrixXd M);
 	virtual Eigen::VectorXd computeForce_(Eigen::Vector3d grav, Eigen::VectorXd f);
-	virtual void computeEnergies_(Eigen::Vector3d grav, double &T, double &V);
+	virtual Energy computeEnergies_(Eigen::Vector3d grav, Energy ener);
 	virtual Eigen::MatrixXd computeJacobian_(Eigen::MatrixXd J);
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	std::shared_ptr<Spring> next;

@@ -108,11 +108,12 @@ VectorXd Spring::computeForce(Vector3d grav, VectorXd f) {
 	return f_;
 }
 
-void Spring::computeEnergies(Vector3d grav, double &T, double &V) {
-	computeEnergies_(grav, T, V);
+Energy Spring::computeEnergies(Vector3d grav, Energy ener) {
+	ener = computeEnergies_(grav, ener);
 	if (next != nullptr) {
-		next->computeEnergies(grav, T, V);
+		ener = next->computeEnergies(grav, ener);
 	}
+	return ener;
 }
 
 VectorXd Spring::gatherDofs_(VectorXd y, int nr) {
@@ -139,8 +140,8 @@ VectorXd Spring::computeForce_(Vector3d grav, VectorXd f) {
 	return f;
 }
 
-void Spring::computeEnergies_(Vector3d grav, double &T, double &V) {
-
+Energy Spring::computeEnergies_(Vector3d grav, Energy ener) {
+	return ener;
 }
 
 

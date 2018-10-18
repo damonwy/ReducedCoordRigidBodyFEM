@@ -21,6 +21,7 @@ public:
 	Eigen::Matrix3d computePKStressDerivative(Eigen::Matrix3d F, Eigen::Matrix3d dF, double mu, double lambda);
 	void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
 	Eigen::VectorXd computeElasticForces(Eigen::VectorXd);
+	double computeEnergy();
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
 	bool isInverted();
 	void diagDeformationGradient(Eigen::Matrix3d F);
@@ -46,6 +47,9 @@ private:
 	Eigen::Matrix3d F;		// deformation gradient
 	Eigen::Matrix3d P;		// Piola stress
 	Eigen::Matrix3d H;		// forces matrix
+
+	double psi;		// strain energy per unit undeformed volume
+	double m_energy;
 
 	// SVD 
 	Eigen::Matrix3d U;

@@ -320,7 +320,12 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 		softbody0->scatterDofs(yk, nr);
 		softbody0->scatterDDofs(ydotk, nr);
-		t += h;
+		
+		Energy ener = m_world->computeEnergy();
+		
+		/*cout << "V" << ener.V << endl;
+		cout << "K" << ener.K << endl;
+		cout << " sum " << ener.V + ener.K << endl;*/
 		return yk;
 	}
 	break;
