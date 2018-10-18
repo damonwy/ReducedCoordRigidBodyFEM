@@ -446,10 +446,12 @@ void World::init() {
 
 		m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
 		m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		
 		//m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), m_bodies[0]);
 		//m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), m_bodies[0]);
 
-
+		m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), -1.0, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), 1.0, m_bodies[0]);
 	}
 
 	for (int i = 0; i < m_nsoftbodies; i++) {

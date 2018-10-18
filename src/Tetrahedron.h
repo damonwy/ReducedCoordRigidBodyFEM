@@ -19,16 +19,18 @@ public:
 
 	Eigen::Matrix3d computePKStress(Eigen::Matrix3d F, double mu, double lambda);
 	Eigen::Matrix3d computePKStressDerivative(Eigen::Matrix3d F, Eigen::Matrix3d dF, double mu, double lambda);
-	//void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
-	Vector12d computeForceDifferentials(Vector12d dx, Vector12d &df);
+	void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
+	//Vector12d computeForceDifferentials(Vector12d dx, Vector12d &df);
 	Eigen::VectorXd computeElasticForces(Eigen::VectorXd);
 	double computeEnergy();
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
 	bool isInverted();
 	void diagDeformationGradient(Eigen::Matrix3d F);
+	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
 
 	int i;
 private:
+	bool m_isInvertible;
 	Material m_material;
 	double m_young;
 	double m_poisson;

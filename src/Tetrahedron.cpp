@@ -18,7 +18,6 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	m_mu = m_young / (2.0 * (1.0 + m_poisson));
 	m_lambda = m_young * m_poisson / ((1.0 + m_poisson) * (1.0 - 2.0 * m_poisson));
 
-	assert(m_nodes.size() == 4);
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		this->Dm.col(i) = m_nodes[i]->x0 - m_nodes[3]->x0;
 	}
@@ -33,22 +32,25 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 }
 
 VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
-	isInverted();
-
+	if (m_isInvertible) {
+		isInverted();
+	}
+	
 	for (int i = 0; i < m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
 	}
 
 	this->F = Ds * Bm;
-	if (isInvert) {
-		this->F = this->Fhat;
+
+	if (isInvert && m_isInvertible) {
+		this->F = this->Fhat; // Use the new F
 	}
 
 	this->P = computePKStress(F, m_mu, m_lambda);
 
 	this->H = -W * P * (Bm.transpose());
 
-	if (isInvert) {
+	if (isInvert && m_isInvertible) {
 		this->H = -W * U * P * V.transpose() * (Bm.transpose());
 	}
 
@@ -191,7 +193,7 @@ bool Tetrahedron::isInverted() {
 
 	this->F = Ds * Bm;
 	if (this->F.determinant() < -0.000001) { // some threshold todo
-											 //cout << "tet_" << this->i << " is inverted! " << endl;
+											
 		diagDeformationGradient(this->F);
 		isInvert = true;
 	}
@@ -246,7 +248,7 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	}
 
 	this->F = Ds * Bm;
-	if (isInverted()) {
+	if (isInverted() && m_isInvertible) {
 		this->F = this->Fhat;
 	}
 
@@ -297,7 +299,7 @@ double Tetrahedron::computeEnergy() {
 	}
 
 	this->F = Ds * Bm;
-	if (isInvert) {
+	if (isInvert && m_isInvertible) {
 		this->F = this->Fhat;
 	}
 

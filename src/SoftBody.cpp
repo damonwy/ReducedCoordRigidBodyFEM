@@ -20,18 +20,18 @@
 #include "FaceTriangle.h"
 #include "Tetrahedron.h"
 #include "Body.h"
-#include "Joint.h"
+#include "Vector.h"
 
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
-SoftBody::SoftBody() {
+SoftBody::SoftBody(): m_isInvertible(true) {
 	m_color << 1.0f, 1.0f, 0.0f;
 }
 
-SoftBody::SoftBody(double density, double young, double poisson, Material material):
-m_density(density), m_young(young), m_poisson(poisson), m_material(material)
+SoftBody::SoftBody(double density, double young, double poisson, Material material) :
+	m_density(density), m_young(young), m_poisson(poisson), m_material(material), m_isInvertible(true)
 {
 	m_color << 1.0f, 1.0f, 0.0f;
 }
@@ -47,13 +47,13 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 
 	// Create Nodes
 	for (int i = 0; i < output_mesh.numberofpoints; i++) {
-		auto node = make_shared<Node>();	
+		auto node = make_shared<Node>();
 		node->r = r;
 
 
 		node->x0 << output_mesh.pointlist[3 * i + 0],
-					output_mesh.pointlist[3 * i + 1],
-					output_mesh.pointlist[3 * i + 2];
+			output_mesh.pointlist[3 * i + 1],
+			output_mesh.pointlist[3 * i + 2];
 
 		node->x = node->x0;
 		node->v0.setZero();
@@ -62,10 +62,10 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		node->i = i;
 		node->load(RESOURCE_DIR);
 		/*if (node->x(1) > 0.5) {
-			node->fixed = true;
+		node->fixed = true;
 		}
 		else {
-			node->fixed = false;
+		node->fixed = false;
 		}*/
 
 		m_nodes.push_back(node);
@@ -74,10 +74,10 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Create Faces
 	for (int i = 0; i < output_mesh.numberoftrifaces; i++) {
 		auto triface = make_shared<FaceTriangle>();
-		
+
 		for (int ii = 0; ii < 3; ii++) {
 			auto node = m_nodes[output_mesh.trifacelist[3 * i + ii]];
-			node->m_nfaces ++;
+			node->m_nfaces++;
 			triface->m_nodes.push_back(node);
 		}
 		triface->update();
@@ -93,6 +93,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		}
 		auto tet = make_shared<Tetrahedron>(m_young, m_poisson, m_density, m_material, tet_nodes);
 		tet->i = i;
+		tet->setInvertiblity(m_isInvertible);
 		m_tets.push_back(tet);
 	}
 
@@ -161,7 +162,7 @@ void SoftBody::init() {
 
 void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	// Draw mesh
-	
+
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
@@ -194,7 +195,7 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	glDisableVertexAttribArray(h_pos);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	
+
 
 	for (int i = 0; i < m_attach_nodes.size(); i++) {
 		auto node = m_attach_nodes[i];
@@ -206,10 +207,16 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 
 	progSimple->bind();
 	/*for (int i = 0; i < 65; i++) {
-		auto node = m_nodes[i];
-		node->drawNormal(MV, P, progSimple);
+	auto node = m_nodes[i];
+	node->drawNormal(MV, P, progSimple);
 	}*/
 	progSimple->unbind();
+
+	// Draw the normals of the sliding nodes
+	for (int i = 0; i < m_normals_sliding.size(); ++i) {
+		auto vec = m_normals_sliding[i];
+		vec->draw(MV, P, progSimple);
+	}
 
 }
 
@@ -220,38 +227,33 @@ void SoftBody::countDofs(int &nm, int &nr) {
 	// matrices
 
 	for (int i = 0; i < m_nodes.size(); i++) {
-		auto node = m_nodes[i];
-
-		if (node->attached) {
-			node->idxM = nm;
-
-			// If the node is attached to the body, use the reduced coord of parent
-			// 
-			node->idxR = node->getParent()->getJoint()->idxR;
-			//nm += 3;
-		}
-		else {
-			node->idxM = nm;
-			node->idxR = nr;
-			nm += 3;
-			nr += 3;
-		}
+		m_nodes[i]->idxM = nm;
+		m_nodes[i]->idxR = nr;
+		nm += 3;
+		nr += 3;
 	}
 }
 
 void SoftBody::transform(Eigen::Vector3d dx) {
 
 	for (int i = 0; i < m_nodes.size(); i++) {
-		auto node = m_nodes[i];		
-		node->x = node->x + dx;	
+		auto node = m_nodes[i];
+		node->x = node->x + dx;
 	}
 }
 
 
 void SoftBody::updatePosNor() {
+	// update normals
+	for (int i = 0; i < m_normals_sliding.size(); ++i) {
+		auto vec = m_normals_sliding[i];
+		vec->update();
+	}
+
+
 	for (int i = 0; i < m_nodes.size(); i++) {
 		auto node = m_nodes[i];
-		node->clearNormals();	
+		node->clearNormals();
 	}
 
 	for (int i = 0; i < m_trifaces.size(); i++) {
@@ -262,12 +264,12 @@ void SoftBody::updatePosNor() {
 		Vector3d p2 = triface->m_nodes[2]->x;
 
 		Vector3d normal = triface->computeNormal();
-		
+
 		for (int ii = 0; ii < 3; ii++) {
 			posBuf[9 * i + 0 + ii] = p0(ii);
 			posBuf[9 * i + 3 + ii] = p1(ii);
 			posBuf[9 * i + 6 + ii] = p2(ii);
-		
+
 			if (!triface->isFlat) {
 				// If the node is on the curved surface, average the normals after this loop
 				auto node = triface->m_nodes[ii];
@@ -290,17 +292,16 @@ void SoftBody::updatePosNor() {
 				// Average normals here
 				Vector3d normal = triface->m_nodes[ii]->computeNormal();
 				for (int iii = 0; iii < 3; iii++) {
-				norBuf[9 * i + 3 * ii + iii] = normal(iii);
+					norBuf[9 * i + 3 * ii + iii] = normal(iii);
 				}
 			}
-		}	
+		}
 	}
 
 }
 
 void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 	auto node = m_nodes[id];
-	node->attached = true;
 	node->setParent(body);
 	node->setColor(body->m_attached_color);
 
@@ -316,8 +317,29 @@ void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 
 }
 
+void SoftBody::setSlidingNodes(int id, std::shared_ptr<Body> body, Eigen::Vector3d init_dir) {
+	auto node = m_nodes[id];
+	node->setParent(body);
+	node->setColor(body->m_attached_color);
 
-void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_ptr<Body> body) {	
+	m_sliding_bodies.push_back(body);
+	m_sliding_nodes.push_back(node);
+
+	Matrix4d E_ws = Matrix4d::Identity();
+	E_ws.block<3, 1>(0, 3) = node->x;
+
+	Matrix4d E_is = body->E_iw * E_ws;
+	Vector3d r = E_is.block<3, 1>(0, 3);
+	m_r_sliding.push_back(r);
+
+	// add normals
+	auto vec = make_shared<Vector>(node, body, init_dir);
+	m_normals_sliding.push_back(vec);
+
+}
+
+
+void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_ptr<Body> body) {
 	double t, u, v;
 	Vector3d xa, xb, xc, xd;
 	int numIntersects = 0;
@@ -364,7 +386,6 @@ void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_pt
 }
 
 void SoftBody::setAttachmentsByXYSurface(double z, Eigen::Vector2d xrange, Eigen::Vector2d yrange, shared_ptr<Body> body) {
-
 	for (int i = 0; i < m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
@@ -373,7 +394,6 @@ void SoftBody::setAttachmentsByXYSurface(double z, Eigen::Vector2d xrange, Eigen
 			setAttachments(i, body);
 		}
 	}
-
 }
 
 
@@ -402,71 +422,90 @@ void SoftBody::setAttachmentsByXZSurface(double y, Eigen::Vector2d xrange, Eigen
 
 }
 
+void SoftBody::setSlidingNodesByXYSurface(double z, Eigen::Vector2d xrange, Eigen::Vector2d yrange, double dir, std::shared_ptr<Body> body) {
+	Vector3d z_axis;
+	z_axis << 0.0, 0.0, 1.0;
+	z_axis *= dir;
 
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+
+		if (abs(xi(2) - z) < 0.0001 && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
+			setSlidingNodes(i, body, z_axis);
+		}
+	}
+}
+
+void SoftBody::setSlidingNodesByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body) {
+	Vector3d y_axis;
+	y_axis << 0.0, 1.0, 0.0;
+	y_axis *= dir;
+
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+
+		if (abs(xi(0) - x) < 0.0001 && xi(2) <= zrange(1) && xi(2) >= zrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
+			setSlidingNodes(i, body, y_axis);
+		}
+	}
+}
+
+void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body) {
+	Vector3d x_axis;
+	x_axis << 1.0, 0.0, 0.0;
+	x_axis *= dir;
+	
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+
+		if (abs(xi(1) - y) < 0.0001 && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(2) <= zrange(1) && xi(2) >= zrange(0)) {
+			setSlidingNodes(i, body, x_axis);
+		}
+	}
+}
 
 
 VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
 	// Gathers qdot and qddot into y
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
-		auto node = m_nodes[i];
-		if (node->attached) {
-			// do nothing
-		}else {
-			int idxR = node->idxR;
-			y.segment<3>(idxR) = m_nodes[i]->x;
-			y.segment<3>(nr + idxR) = m_nodes[i]->v;
-		}	
+		int idxR = m_nodes[i]->idxR;
+		y.segment<3>(idxR) = m_nodes[i]->x;
+		y.segment<3>(nr + idxR) = m_nodes[i]->v;
 	}
 
 	if (next != nullptr) {
 		y = next->gatherDofs(y, nr);
 	}
-
 	return y;
 }
 
 VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
 	// Gathers qdot and qddot into ydot
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
-
-		auto node = m_nodes[i];
-		if (node->attached) {
-			// do nothing
-		}
-		else {
-			int idxR = m_nodes[i]->idxR;
-			ydot.segment<3>(idxR) = m_nodes[i]->v;
-			ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
-		}
-		
+		int idxR = m_nodes[i]->idxR;
+		ydot.segment<3>(idxR) = m_nodes[i]->v;
+		ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
 	}
 
 	if (next != nullptr) {
 		ydot = next->gatherDDofs(ydot, nr);
 	}
-
 	return ydot;
 }
 
 void SoftBody::scatterDofs(VectorXd &y, int nr) {
-	
+	// Scatters q and qdot from y
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
-		auto node = m_nodes[i];
-
-		if (node->attached) {
-			// do nothing
-
-
+		int idxR = m_nodes[i]->idxR;
+		if (!m_nodes[i]->fixed) {
+			m_nodes[i]->x = y.segment<3>(idxR);
+			m_nodes[i]->v = y.segment<3>(nr + idxR);
 		}
-		else {
-			int idxR = node->idxR;
-			if (!node->fixed) {
-				node->x = y.segment<3>(idxR);
-				node->v = y.segment<3>(nr + idxR);
-			}
 
-		}	
 	}
 	updatePosNor();
 
@@ -494,18 +533,12 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 
 MatrixXd SoftBody::computeMass(Vector3d grav, MatrixXd M) {
 	// Computes maximal mass matrix
-	
+
 	Matrix3d I3 = Matrix3d::Identity();
 	for (int i = 0; i < m_nodes.size(); i++) {
-		auto node = m_nodes[i];
-		if (node->attached) {
-			// do nothing
-		}
-		else {
-			int idxM = node->idxM;
-			double m = node->m;
-			M.block<3, 3>(idxM, idxM) = m * I3;
-		}
+		int idxM = m_nodes[i]->idxM;
+		double m = m_nodes[i]->m;
+		M.block<3, 3>(idxM, idxM) = m * I3;
 	}
 
 	if (next != nullptr) {
@@ -517,12 +550,10 @@ MatrixXd SoftBody::computeMass(Vector3d grav, MatrixXd M) {
 
 VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 	// Computes force vector
-	
+
 	// Gravity
 	Matrix3d I3 = Matrix3d::Identity();
 	for (int i = 0; i < m_nodes.size(); i++) {
-
-
 		int idxM = m_nodes[i]->idxM;
 		double m = m_nodes[i]->m;
 		//f.segment<3>(idxM) += m * grav;
@@ -530,7 +561,6 @@ VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 
 	// Elastic Forces
 	for (int i = 0; i < m_tets.size(); i++) {
-
 		auto tet = m_tets[i];
 		f = tet->computeElasticForces(f);
 	}
@@ -543,40 +573,24 @@ VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 }
 
 MatrixXd SoftBody::computeStiffness(MatrixXd K) {
-	Vector12d df, Dx;
+	VectorXd df(3 * m_nodes.size());
+	VectorXd Dx = df;
 
 	for (int i = 0; i < m_tets.size(); i++) {
 		auto tet = m_tets[i];
 		for (int ii = 0; ii < 4; ii++) {
 			auto node = tet->m_nodes[ii];
+			int id = node->i;
+			int col = node->idxM;
 
-			if (node->attached) {
-				// do nothing
+			for (int iii = 0; iii < 3; iii++) {
+				df.setZero();
+				Dx.setZero();
+				Dx(3 * id + iii) = 1.0;
+				tet->computeForceDifferentials(Dx, df);
+				//K.col(col + iii) += df;
+				K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
 			}
-			else {
-				int id = node->i;
-				int col = node->idxR;
-			
-				for (int iii = 0; iii < 3; iii++) {
-					df.setZero();
-					Dx.setZero();
-					Dx(3 * ii + iii) = 1.0;
-					//Dx(3 * id + iii) = 1.0;
-					df = tet->computeForceDifferentials(Dx, df);
-
-					for (int t = 0; t < 4; t++) {
-						if (!tet->m_nodes[t]->attached) {
-							int rowt = tet->m_nodes[t]->idxM;
-							K.block<3, 1>(rowt, col + iii) += df.segment<3>(3 * t);
-						}
-					}
-
-					//tet->computeForceDifferentials(Dx, df);
-					//K.col(col + iii) += df;
-					//K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
-				}
-			}
-			
 		}
 	}
 

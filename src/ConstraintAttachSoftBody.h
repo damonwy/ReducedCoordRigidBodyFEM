@@ -18,4 +18,5 @@ public:
 protected:
 
 	int n_attachments;
+	int n_sliding_nodes;
 };
