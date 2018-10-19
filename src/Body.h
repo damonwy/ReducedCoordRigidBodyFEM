@@ -72,6 +72,7 @@ public:
 	std::shared_ptr<Body> next;				// Next body in traversal order
 	std::shared_ptr<Body> m_parent;
 	Eigen::Vector3f m_attached_color;
+	Eigen::Vector3f m_sliding_color;
 
 private:
 	std::shared_ptr<Shape> boxShape;

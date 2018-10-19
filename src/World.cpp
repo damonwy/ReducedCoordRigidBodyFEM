@@ -245,7 +245,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
 		double young = 1e2;
-		double possion = 0.45;
+		double possion = 0.40;
 
 		for (int i = 0; i < 3; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
@@ -259,7 +259,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 
-		auto softbody = addSoftBody(0.01 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle3");
+		auto softbody = addSoftBody(0.001 * density, young, possion, STVK, RESOURCE_DIR, "muscle3");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -441,17 +441,32 @@ void World::init() {
 		//	m_softbodies[1]->setAttachments(3, m_bodies[1]);
 		//m_softbodies[1]->setAttachments(6, m_bodies[2]);
 
-		m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
-		m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
 
-		m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
-		m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		//m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		//m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
 		
-		//m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), m_bodies[0]);
-		//m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(5.0, 9.5), Vector2d(-0.5, 0.5), m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(5.0, 9.5), Vector2d(-0.5, 0.5), m_bodies[0]);
 
-		m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), -1.0, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), 1.0, m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(10.5, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(10.5, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		//m_softbodies[0]->setSlidingNodes(0, m_bodies[0], Vector3d(0.0, 1.0, 0.0));
+		//m_softbodies[0]->setSlidingNodes(4, m_bodies[0], Vector3d(0.0, 1.0, 0.0));
+		//m_softbodies[0]->setSlidingNodes(7, m_bodies[0], Vector3d(0.0, 1.0, 0.0));
+		//m_softbodies[0]->setAttachments(6, m_bodies[0]);
+		//m_softbodies[0]->setAttachments(3, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByXZSurface(0.5, Vector2d(3.0, 8.0), Vector2d(-0.5, 0.5), -1.0, m_bodies[0]);
+		
+		//m_softbodies[0]->setSlidingNodesByXZSurface(-0.5, Vector2d(8.0, 9.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByXZSurface(-0.5, Vector2d(10.5, 12.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[1]);
+
+		//m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), -1.0, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), 1.0, m_bodies[0]);
+
+		//m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(10.5, 12.5), Vector2d(-0.5, 0.5), -1.0, m_bodies[1]);
+		//m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(10.50, 12.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[1]);
 	}
 
 	for (int i = 0; i < m_nsoftbodies; i++) {

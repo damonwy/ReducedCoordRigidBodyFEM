@@ -34,6 +34,7 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 	m_density(density), m_young(young), m_poisson(poisson), m_material(material), m_isInvertible(true)
 {
 	m_color << 1.0f, 1.0f, 0.0f;
+	
 }
 
 void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
@@ -203,6 +204,14 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 		//glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
 		node->draw(MV, prog);
 	}
+
+	for (int i = 0; i < m_sliding_nodes.size(); i++) {
+		auto node = m_sliding_nodes[i];
+		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
+		//glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
+		node->draw(MV, prog);
+	}
+
 	prog->unbind();
 
 	progSimple->bind();
@@ -320,7 +329,7 @@ void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 void SoftBody::setSlidingNodes(int id, std::shared_ptr<Body> body, Eigen::Vector3d init_dir) {
 	auto node = m_nodes[id];
 	node->setParent(body);
-	node->setColor(body->m_attached_color);
+	node->setColor(body->m_sliding_color);
 
 	m_sliding_bodies.push_back(body);
 	m_sliding_nodes.push_back(node);
@@ -438,31 +447,31 @@ void SoftBody::setSlidingNodesByXYSurface(double z, Eigen::Vector2d xrange, Eige
 }
 
 void SoftBody::setSlidingNodesByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body) {
-	Vector3d y_axis;
-	y_axis << 0.0, 1.0, 0.0;
-	y_axis *= dir;
+	Vector3d x_axis;
+	x_axis << 1.0, 0.0, 0.0;
+	x_axis *= dir;
 
 	for (int i = 0; i < m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
 		if (abs(xi(0) - x) < 0.0001 && xi(2) <= zrange(1) && xi(2) >= zrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
-			setSlidingNodes(i, body, y_axis);
+			setSlidingNodes(i, body, x_axis);
 		}
 	}
 }
 
 void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body) {
-	Vector3d x_axis;
-	x_axis << 1.0, 0.0, 0.0;
-	x_axis *= dir;
+	Vector3d y_axis;
+	y_axis << 0.0, 1.0, 0.0;
+	y_axis *= dir;
 	
 	for (int i = 0; i < m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
 		if (abs(xi(1) - y) < 0.0001 && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(2) <= zrange(1) && xi(2) >= zrange(0)) {
-			setSlidingNodes(i, body, x_axis);
+			setSlidingNodes(i, body, y_axis);
 		}
 	}
 }

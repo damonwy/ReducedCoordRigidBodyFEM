@@ -16,7 +16,7 @@ using namespace Eigen;
 using json = nlohmann::json;
 
 Body::Body() {
-
+	
 }
 
 Body::Body(double _density, Vector3d _sides):
@@ -25,7 +25,7 @@ sides(_sides)
 {
 	wext_i.setZero();
 	m_attached_color << (float)(rand() % 255)/255.0,(float)(rand() % 255)/255.0,(float)(rand() % 255)/255.0;
-
+	m_sliding_color << (float)(rand() % 255) / 255.0, (float)(rand() % 255) / 255.0, (float)(rand() % 255) / 255.0;
 }
 
 

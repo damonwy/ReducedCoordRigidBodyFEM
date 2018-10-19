@@ -26,7 +26,7 @@ Vector::Vector() :
 }
 
 Vector::Vector(shared_ptr<Node> p, shared_ptr<Body> body, Vector3d dir):
-m_p(p), m_body(body), dir0(dir)
+m_p(p), m_body(body), dir0(dir), dir(dir)
 {
 
 
@@ -55,7 +55,7 @@ void Vector::update() {
 		Vector4d pos;
 		pos.segment<3>(0) = this->dir0;
 		pos(3) = 0.0;
-		pos = m_body->E_iw * pos;
+		pos = m_body->E_wi * pos;
 		this->dir = pos.segment<3>(0);
 	}
 }
