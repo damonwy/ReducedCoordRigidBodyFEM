@@ -50,7 +50,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(SOFT_BODIES);
+	m_world = make_shared<World>(COMPONENT);
 	m_world->load(RESOURCE_DIR);
 
 	m_solver = make_shared<Solver>(m_world, REDMAX_EULER);
@@ -108,7 +108,9 @@ void Scene::step()
 
 
 	y = m_solver->dynamics(y);
+	m_world->update();
 	m_world->incrementTime();
+	
 
 	//if(tk < m_solution->t(n_steps-1)) {
 	//	m_solution->searchTime(tk, search_idx, output_idx, s);

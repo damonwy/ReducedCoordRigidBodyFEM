@@ -5,25 +5,36 @@
 #include <json.hpp>
 
 #include "Joint.h"
+#include "JointNull.h"
 #include "JointFixed.h"
 #include "JointRevolute.h"
+
 #include "Body.h"
+#include "SoftBodyNull.h"
 #include "SoftBody.h"
+#include "FaceTriangle.h"
+
 #include "MatrixStack.h"
 #include "Program.h"
 #include "SE3.h"
 #include "JsonEigen.h"
+
 #include "ConstraintJointLimit.h"
 #include "ConstraintNull.h"
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
 #include "ConstraintAttachSoftBody.h"
+
 #include "Spring.h"
 #include "SpringSerial.h"
 #include "SpringNull.h"
-#include "JointNull.h"
-#include "SoftBodyNull.h"
-#include "FaceTriangle.h"
+
+#include "Comp.h"
+#include "CompNull.h"
+#include "CompSphere.h"
+#include "CompCylinder.h"
+#include "CompDoubleCylinder.h"
+
 
 using namespace std;
 using namespace Eigen;
@@ -31,7 +42,7 @@ using json = nlohmann::json;
 
 World::World() :
 	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_constraints(0), m_countS(0), m_countCM(0),
-	m_nsoftbodies(0)
+	m_nsoftbodies(0), m_ncomps(0)
 {
 	m_energy.K = 0.0;
 	m_energy.V = 0.0;
@@ -40,7 +51,7 @@ World::World() :
 World::World(WorldType type) :
 	m_type(type),
 	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_nconstraints(0), m_countS(0), m_countCM(0),
-	m_nsoftbodies(0)
+	m_nsoftbodies(0), m_ncomps(0)
 {
 	m_energy.K = 0.0;
 	m_energy.V = 0.0;
@@ -273,6 +284,40 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
+
+	case COMPONENT:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+
+		for (int i = 0; i < 3; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+
+			// Inits joints
+			if (i == 0) {
+				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				joint->m_qdot(0) = -5.0;
+			}
+		}
+
+		auto compSphere = addCompSphere(2.0, m_bodies[0], Matrix4d::Identity());
+		compSphere->load(RESOURCE_DIR);
+		auto compCylinder = addCompCylinder(1.0, m_bodies[1], Matrix4d::Identity());
+		compCylinder->load(RESOURCE_DIR, "cylinder.obj");
+
+
+	}
+	break;
+
 	default:
 		break;
 	}
@@ -337,6 +382,32 @@ shared_ptr<SpringSerial> World::addSpringSerial(double mass, int n_points, share
 	return spring;
 }
 
+shared_ptr<CompSphere> World::addCompSphere(double r, shared_ptr<Body> parent, Matrix4d E) {
+	auto comp = make_shared<CompSphere>(parent, r);
+	m_comps.push_back(comp);
+	comp->setTransform(E);
+	
+	m_ncomps++;
+	return comp;
+}
+
+shared_ptr<CompCylinder> World::addCompCylinder(double r, shared_ptr<Body> parent, Matrix4d E) {
+	auto comp = make_shared<CompCylinder>(parent, r);
+	m_comps.push_back(comp);
+	comp->setTransform(E);
+	m_ncomps++;
+	return comp;
+
+}
+
+shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(double rA, shared_ptr<Body> parentA, Matrix4d EA, double rB, shared_ptr<Body> parentB, Matrix4d EB) {
+	auto comp = make_shared<CompDoubleCylinder>(parentA, rA, parentB, rB);
+	m_comps.push_back(comp);
+	comp->setTransformA(EA);
+	comp->setTransformA(EB);
+	m_ncomps++;
+	return comp;
+}
 
 shared_ptr<ConstraintNull> World::addConstraintNull() {
 
@@ -360,6 +431,13 @@ shared_ptr<SpringNull> World::addSpringNull() {
 	m_nsprings++;
 	m_springs.push_back(spring);
 	return spring;
+}
+
+shared_ptr<CompNull> World::addCompNull() {
+	auto comp = make_shared<CompNull>();
+	m_ncomps++;
+	m_comps.push_back(comp);
+	return comp;
 }
 
 void World::init() {
@@ -392,11 +470,23 @@ void World::init() {
 		}
 	}
 
+	for (int i = 0; i < m_ncomps; ++i) {
+		m_comps[i]->init();
+		if (i < m_ncomps - 1) {
+			m_comps[i]->next = m_comps[i + 1];
+		}
+	}
+
 	if (m_njoints == 0) {
 		addJointNull();
 	}
 
+	if (m_ncomps == 0) {
+		addCompNull();
+	}
+
 	m_joints[0]->update();
+	m_comps[0]->update();//todo
 
 	for (int i = 0; i < m_nsprings; i++) {
 		m_springs[i]->countDofs(nm, nr);
@@ -411,6 +501,7 @@ void World::init() {
 		}
 	}
 
+	
 	if (m_nsprings == 0) {
 		addSpringNull();
 	}
@@ -520,8 +611,10 @@ void World::init() {
 
 void World::update() {
 	for (int i = 0; i < m_nbodies; i++) {
-		m_bodies[i]->update();
+		//m_bodies[i]->update();
 	}
+
+	m_comps[0]->update();
 }
 
 int World::getNsteps() {
@@ -570,6 +663,12 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	for (int i = 0; i < m_nsoftbodies; i++) {
 		m_softbodies[i]->draw(MV, prog, progSimple, P);
 	}
+
+	// Draw components
+	for (int i = 0; i < m_ncomps; i++) {
+		m_comps[i]->draw(MV, prog, P);
+	}
+
 }
 
 Energy World::computeEnergy() {

@@ -1,5 +1,16 @@
 #include "CompSphere.h"
 
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <iostream>
+#include <fstream>
+
 #include "Body.h"
 #include "Shape.h"
 #include "SE3.h"
@@ -25,21 +36,22 @@ void CompSphere::init() {
 	m_shape->init();
 }
 
-void CompSphere::load(const std::string &RESOURCE_DIR, std::string shape) {
+void CompSphere::load(const std::string &RESOURCE_DIR) {
 	m_shape = make_shared<Shape>();
-	m_shape->loadMesh(RESOURCE_DIR + shape);
+	m_shape->loadMesh(RESOURCE_DIR + "sphere2.obj");
 }
 
 
 void CompSphere::update() {
 	E_wi = m_parent->E_wi * E_ji;
-
+	if (next != nullptr) {
+		this->next->update();
+	}
 }
 
 void CompSphere::setTransform(Eigen::Matrix4d E) {
 
 	E_ji = E;
-	update();
 }
 
 void CompSphere::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const {
@@ -55,10 +67,9 @@ void CompSphere::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Pro
 		glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
 		glUniform3f(prog->getUniform("kd"), 0.8, 0.7, 0.7);
 		glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
-
 		MV->pushMatrix();
 		MV->multMatrix(eigen_to_glm(E_wi));
-
+		MV->scale(m_r);
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		m_shape->draw(prog);
 		MV->popMatrix();

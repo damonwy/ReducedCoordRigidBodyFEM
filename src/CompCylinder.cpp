@@ -13,7 +13,7 @@ using json = nlohmann::json;
 CompCylinder::CompCylinder() {
 }
 
-CompCylinder::CompCylinder(shared_ptr<Body> parent, double r, double h) : m_parent(parent), m_r(r), m_h(h) {
+CompCylinder::CompCylinder(shared_ptr<Body> parent, double r) : m_parent(parent), m_r(r){
 }
 
 
@@ -27,6 +27,10 @@ void CompCylinder::init() {
 
 void CompCylinder::update() {
 	E_wi = m_parent->E_wi * E_ji;
+	if (next != nullptr) {
+		this->next->update();
+	}
+
 }
 
 void CompCylinder::setTransform(Matrix4d E) {

@@ -5,7 +5,7 @@ class CompCylinder : public Comp
 {
 public:
 	CompCylinder();
-	CompCylinder(std::shared_ptr<Body> parent, double r, double h);
+	CompCylinder(std::shared_ptr<Body> parent, double r);
 	virtual ~CompCylinder();
 
 	void load(const std::string &RESOURCE_DIR, std::string shape);

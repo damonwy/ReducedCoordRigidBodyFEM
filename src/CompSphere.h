@@ -8,11 +8,11 @@ public:
 	CompSphere(std::shared_ptr<Body> parent, double r);
 	virtual ~CompSphere();
 
-	void load(const std::string &RESOURCE_DIR, std::string shape);
-	void init();
-	void update();
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
-	void setTransform(Eigen::Matrix4d E);
+	virtual void load(const std::string &RESOURCE_DIR);
+	virtual void init();
+	virtual void update();
+	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
+	virtual void setTransform(Eigen::Matrix4d E);
 
 protected:
 	double m_r;

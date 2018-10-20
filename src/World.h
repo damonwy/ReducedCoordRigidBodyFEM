@@ -26,6 +26,11 @@ class SpringSerial;
 class SpringNull;
 class JointNull;
 class JointFixed;
+class Comp;
+class CompNull;
+class CompSphere;
+class CompCylinder;
+class CompDoubleCylinder;
 
 class World
 {
@@ -43,7 +48,10 @@ public:
 	std::shared_ptr<ConstraintNull> addConstraintNull();
 	std::shared_ptr<SpringNull> addSpringNull();
 	std::shared_ptr<JointNull> addJointNull();
-
+	std::shared_ptr<CompNull> addCompNull();
+	std::shared_ptr<CompSphere> addCompSphere(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E);
+	std::shared_ptr<CompCylinder> addCompCylinder(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E);
+	std::shared_ptr<CompDoubleCylinder> addCompDoubleCylinder(double rA, std::shared_ptr<Body> parentA, Eigen::Matrix4d EA, double rB, std::shared_ptr<Body> parentB, Eigen::Matrix4d EB);
 	Energy computeEnergy();
 
 	void load(const std::string &RESOURCE_DIR);
@@ -90,21 +98,23 @@ public:
 	int m_njoints;
 	int m_nsprings;
 	int m_nconstraints;
+	int m_ncomps;
 
 private:
-	Energy m_energy;
-	Energy m_energy0;
+	Energy m_energy;		// the energy in current state
+	Energy m_energy0;		// the energy in initial state
 
 	WorldType m_type;
 	Eigen::Vector3d m_grav;
 	double m_stiffness;
 	double m_t;
 	double m_h;
-	Eigen::Vector2d m_tspan;
+	Eigen::Vector2d m_tspan;	
 
-	double m_Hexpected;
+	double m_Hexpected;		// used to check correctness
 
 	std::vector<std::shared_ptr<Body>> m_bodies;
+	std::vector<std::shared_ptr<Comp>> m_comps;
 	std::vector <std::shared_ptr<SoftBody>> m_softbodies;
 	std::vector<std::shared_ptr<Joint>> m_joints;
 	std::vector<std::shared_ptr<Spring>> m_springs;
