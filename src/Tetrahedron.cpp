@@ -44,6 +44,9 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 
 	if (isInvert && m_isInvertible) {
 		this->F = this->Fhat; // Use the new F
+		cout << "U" << U << endl;
+		cout << "V" << V << endl;
+
 	}
 
 	this->P = computePKStress(F, m_mu, m_lambda);

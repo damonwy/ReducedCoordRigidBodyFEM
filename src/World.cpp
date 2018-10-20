@@ -5,6 +5,7 @@
 #include <json.hpp>
 
 #include "Joint.h"
+#include "JointFixed.h"
 #include "JointRevolute.h"
 #include "Body.h"
 #include "SoftBody.h"
@@ -252,14 +253,17 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			// Inits joints
 			if (i == 0) {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 			}
 			else {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				joint->m_qdot(0) = -5.0;
 			}
 		}
 
-		auto softbody = addSoftBody(0.001 * density, young, possion, STVK, RESOURCE_DIR, "muscle3");
+		auto softbody = addSoftBody(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle3");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -299,6 +303,16 @@ shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body, Vector3
 	Matrix4d E = SE3::RpToE(R, p);
 	joint->setJointTransform(E);
 	joint->m_q(0) = q;
+	m_joints.push_back(joint);
+	m_njoints++;
+	return joint;
+}
+
+shared_ptr<JointFixed> World::addJointFixed(shared_ptr<Body> body, Vector3d p, Matrix3d R, double q, std::shared_ptr<Joint> parent) {
+	auto joint = make_shared<JointFixed>(body, parent);
+	Matrix4d E = SE3::RpToE(R, p);
+	joint->setJointTransform(E);
+	
 	m_joints.push_back(joint);
 	m_njoints++;
 	return joint;
