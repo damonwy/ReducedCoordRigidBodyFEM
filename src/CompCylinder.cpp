@@ -5,6 +5,8 @@
 #include "SE3.h"
 #include "MatrixStack.h"
 #include "Program.h"
+#include "Vector.h"
+#include "Node.h"
 
 using namespace std;
 using namespace Eigen;
@@ -14,6 +16,8 @@ CompCylinder::CompCylinder() {
 }
 
 CompCylinder::CompCylinder(shared_ptr<Body> parent, double r) : m_parent(parent), m_r(r){
+
+
 }
 
 
@@ -27,6 +31,10 @@ void CompCylinder::init() {
 
 void CompCylinder::update() {
 	E_wi = m_parent->E_wi * E_ji;
+
+	m_Z->update(E_wi);
+	m_O->update(E_wi);
+
 	if (next != nullptr) {
 		this->next->update();
 	}
@@ -35,7 +43,8 @@ void CompCylinder::update() {
 
 void CompCylinder::setTransform(Matrix4d E) {
 	E_ji = E;
-	update();
+	E_wi = m_parent->E_wi * E_ji;
+	
 }
 
 void CompCylinder::load(const string &RESOURCE_DIR, string shape) {

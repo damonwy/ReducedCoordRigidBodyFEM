@@ -18,7 +18,7 @@
 #include "MatrixStack.h"
 #include "Program.h"
 
-enum Status { wrap, inside_radius, no_wrap, empty };
+enum Status { wrap, inside_radius, no_wrap, empty_status};
 enum Type { none, sphere, cylinder, double_cylinder };
 #define PI 3.141593
 
@@ -39,10 +39,10 @@ protected:
 	double m_radius;			// Obstacle sphere radius
 	int m_num_points;					// Number of points
 	Eigen::MatrixXd m_arc_points;		// Each col stores the pos of a point 
-
+	
 
 public:
-
+	std::shared_ptr<WrapObst> next;
 	// Set muscle origin point
 	void setOrigin(const std::shared_ptr<Node> &P) {
 		m_point_P = P;
@@ -53,7 +53,6 @@ public:
 		m_point_S = S;
 	}
 
-	// Default constructor
 	WrapObst() {
 
 		m_point_P = std::make_shared<Node>();
@@ -68,7 +67,7 @@ public:
 		m_point_t->x.setZero();
 
 		M = Eigen::MatrixXd(3, 3);
-		m_status = empty;
+		m_status = empty_status;
 		m_path_length = 0.0;
 		m_radius = 0.0;
 		m_type = none;
@@ -87,7 +86,7 @@ public:
 		m_point_t->x.setZero();
 
 		M = Eigen::MatrixXd(3, 3);
-		m_status = empty;
+		m_status = empty_status;
 		m_path_length = 0.0;
 		m_radius = 0.0;
 		m_type = none;

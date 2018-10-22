@@ -33,7 +33,7 @@ class CompCylinder;
 class CompDoubleCylinder;
 class WrapObst;
 class WrapSphere;
-
+class WrapCylinder;
 
 enum WorldType { 
 	SERIAL_CHAIN, 
@@ -50,7 +50,8 @@ enum WorldType {
 	SPRINGS, 
 	SOFT_BODIES, 
 	COMPONENT,
-	WRAPSPHERE
+	WRAPSPHERE,
+	WRAPCYLINDER
 };
 
 
@@ -71,9 +72,13 @@ public:
 	std::shared_ptr<SpringNull> addSpringNull();
 	std::shared_ptr<JointNull> addJointNull();
 	std::shared_ptr<CompNull> addCompNull();
+	std::shared_ptr<WrapObst> addWrapNull();
 	std::shared_ptr<CompSphere> addCompSphere(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E, const std::string &RESOURCE_DIR);
-	std::shared_ptr<CompCylinder> addCompCylinder(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E);
+	std::shared_ptr<CompCylinder> addCompCylinder(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E, Eigen::Vector3d z, Eigen::Vector3d o, const std::string &RESOURCE_DIR, std::string shape);
 	std::shared_ptr<CompDoubleCylinder> addCompDoubleCylinder(double rA, std::shared_ptr<Body> parentA, Eigen::Matrix4d EA, double rB, std::shared_ptr<Body> parentB, Eigen::Matrix4d EB);
+	std::shared_ptr<WrapSphere> addWrapSphere(std::shared_ptr<Body> b0, Eigen::Vector3d r0, std::shared_ptr<Body> b1, Eigen::Vector3d r1, std::shared_ptr<CompSphere> compSphere, int num_points, const std::string &RESOURCE_DIR);
+	std::shared_ptr<WrapCylinder> addWrapCylinder(std::shared_ptr<Body> b0, Eigen::Vector3d r0, std::shared_ptr<Body> b1, Eigen::Vector3d r1, std::shared_ptr<CompCylinder> compCylinder, int num_points, const std::string &RESOURCE_DIR);
+
 	Energy computeEnergy();
 
 	void load(const std::string &RESOURCE_DIR);

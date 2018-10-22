@@ -18,7 +18,7 @@ using namespace std;
 using namespace Eigen;
 
 Node::Node() :
-	r(0.3),
+	r(0.1),
 	m(1.0),
 	i(-1),
 	x(0.0, 0.0, 0.0),
