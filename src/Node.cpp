@@ -11,13 +11,14 @@
 #include "Node.h"
 #include "Shape.h"
 #include "Program.h"
+#include "Body.h"
 #include "MatrixStack.h"
 
 using namespace std;
 using namespace Eigen;
 
 Node::Node() :
-	r(1.0),
+	r(0.3),
 	m(1.0),
 	i(-1),
 	x(0.0, 0.0, 0.0),
@@ -78,6 +79,10 @@ void Node::update(Matrix4d E) {
 
 	pos = E * pos;
 	this->x = pos.segment<3>(0);
+}
+
+void Node::update() {
+	update(this->parent->E_wi);
 }
 
 double Node::computePotentialEnergy(Vector3d grav) {

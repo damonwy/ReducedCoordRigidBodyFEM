@@ -31,6 +31,28 @@ class CompNull;
 class CompSphere;
 class CompCylinder;
 class CompDoubleCylinder;
+class WrapObst;
+class WrapSphere;
+
+
+enum WorldType { 
+	SERIAL_CHAIN, 
+	DIFF_REVOLUTE_AXES, 
+	BRANCHING, 
+	SHPERICAL_JOINT, 
+	LOOP, 
+	JOINT_TORQUE, 
+	JOINT_LIMITS, 
+	EQUALITY_CONSTRAINED_ANGLES, 
+	EQUALITY_AND_LOOP, HYBRID_DYNAMICS, 
+	EXTERNAL_WORLD_FORCE, 
+	JOINT_STIFFNESS, 
+	SPRINGS, 
+	SOFT_BODIES, 
+	COMPONENT,
+	WRAPSPHERE
+};
+
 
 class World
 {
@@ -49,7 +71,7 @@ public:
 	std::shared_ptr<SpringNull> addSpringNull();
 	std::shared_ptr<JointNull> addJointNull();
 	std::shared_ptr<CompNull> addCompNull();
-	std::shared_ptr<CompSphere> addCompSphere(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E);
+	std::shared_ptr<CompSphere> addCompSphere(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E, const std::string &RESOURCE_DIR);
 	std::shared_ptr<CompCylinder> addCompCylinder(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E);
 	std::shared_ptr<CompDoubleCylinder> addCompDoubleCylinder(double rA, std::shared_ptr<Body> parentA, Eigen::Matrix4d EA, double rB, std::shared_ptr<Body> parentB, Eigen::Matrix4d EB);
 	Energy computeEnergy();
@@ -99,6 +121,7 @@ public:
 	int m_nsprings;
 	int m_nconstraints;
 	int m_ncomps;
+	int m_nwraps;
 
 private:
 	Energy m_energy;		// the energy in current state
@@ -115,6 +138,7 @@ private:
 
 	std::vector<std::shared_ptr<Body>> m_bodies;
 	std::vector<std::shared_ptr<Comp>> m_comps;
+	std::vector<std::shared_ptr<WrapObst>> m_wraps;
 	std::vector <std::shared_ptr<SoftBody>> m_softbodies;
 	std::vector<std::shared_ptr<Joint>> m_joints;
 	std::vector<std::shared_ptr<Spring>> m_springs;

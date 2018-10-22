@@ -31,6 +31,7 @@ public:
 	void addNormal(Eigen::Vector3d normal) { m_normals.push_back(normal); }
 	void clearNormals();
 	void update(Eigen::Matrix4d E);
+	void update();	// update position wrt parent
 
 	std::shared_ptr<Body> getParent() const { return this->parent; }
 
@@ -44,7 +45,7 @@ public:
 
 	int idxR;
 	int idxM;
-		std::vector<Eigen::Vector3d> m_normals;
+	std::vector<Eigen::Vector3d> m_normals;
 
 	bool attached;			
 	bool fixed;					// is fixed?

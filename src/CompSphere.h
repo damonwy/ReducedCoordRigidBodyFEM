@@ -1,6 +1,8 @@
 #pragma once
 #include "Comp.h"
 
+class Node;
+
 class CompSphere : public Comp
 {
 public:
@@ -8,15 +10,17 @@ public:
 	CompSphere(std::shared_ptr<Body> parent, double r);
 	virtual ~CompSphere();
 
-	virtual void load(const std::string &RESOURCE_DIR);
-	virtual void init();
-	virtual void update();
-	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
-	virtual void setTransform(Eigen::Matrix4d E);
+	void load(const std::string &RESOURCE_DIR);
+	void init();
+	void update();
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
+	void setTransform(Eigen::Matrix4d E);
+	double getRadius() { return m_r; }
+	std::shared_ptr<Node> getOrigin() { return m_O; }
 
 protected:
 	double m_r;
-
+	std::shared_ptr<Node> m_O;
 	Eigen::Matrix4d E_wi;	// Where the component is wrt world
 	Eigen::Matrix4d E_ji;	// Where the component is wrt body
 
