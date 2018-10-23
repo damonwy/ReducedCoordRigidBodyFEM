@@ -38,6 +38,15 @@ void CompDoubleCylinder::init() {
 void CompDoubleCylinder::update() {
 	E_wiA = m_parentA->E_wi * E_jiA;
 	E_wiB = m_parentB->E_wi * E_jiB;
+	
+	m_OA->update(E_wiA);
+	m_OB->update(E_wiB);
+	m_ZA->update(E_wiA);
+	m_ZB->update(E_wiB);
+
+	if (next != nullptr) {
+		this->next->update();
+	}
 }
 
 void CompDoubleCylinder::setTransformA(Matrix4d E) {

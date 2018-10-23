@@ -34,6 +34,7 @@ class CompDoubleCylinder;
 class WrapObst;
 class WrapSphere;
 class WrapCylinder;
+class WrapDoubleCylinder;
 
 enum WorldType { 
 	SERIAL_CHAIN, 
@@ -51,7 +52,8 @@ enum WorldType {
 	SOFT_BODIES, 
 	COMPONENT,
 	WRAPSPHERE,
-	WRAPCYLINDER
+	WRAPCYLINDER,
+	WRAPDOUBLECYLINDER
 };
 
 
@@ -62,22 +64,113 @@ public:
 	World(WorldType type);
 	virtual ~World();
 
-	std::shared_ptr<Body> addBody(double density, Eigen::Vector3d sides, Eigen::Vector3d p, Eigen::Matrix3d R, const std::string &RESOURCE_DIR, std::string file_name);
-	std::shared_ptr<JointRevolute> addJointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent=nullptr);
-	std::shared_ptr<JointFixed> addJointFixed(std::shared_ptr<Body> body, Eigen::Vector3d p, Eigen::Matrix3d R, double q, std::shared_ptr<Joint> parent = nullptr);
-	std::shared_ptr<ConstraintJointLimit> addConstraintJointLimit(std::shared_ptr<Joint> joint, double ql, double qu);
-	std::shared_ptr<SpringSerial> addSpringSerial(double mass, int n_points, std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);
-	std::shared_ptr<SoftBody> addSoftBody(double density, double young, double possion, Material material, const std::string &RESOURCE_DIR, std::string file_name);
+	std::shared_ptr<Body> addBody(
+		double density, 
+		Eigen::Vector3d sides, 
+		Eigen::Vector3d p, 
+		Eigen::Matrix3d R, 
+		const std::string &RESOURCE_DIR, 
+		std::string file_name);
+
+	std::shared_ptr<JointRevolute> addJointRevolute(
+		std::shared_ptr<Body> body, 
+		Eigen::Vector3d axis, 
+		Eigen::Vector3d p, 
+		Eigen::Matrix3d R, 
+		double q, 
+		std::shared_ptr<Joint> parent=nullptr);
+	
+	std::shared_ptr<JointFixed> addJointFixed(
+		std::shared_ptr<Body> body, 
+		Eigen::Vector3d p, 
+		Eigen::Matrix3d R, 
+		double q, 
+		std::shared_ptr<Joint> parent = nullptr);
+	
+	std::shared_ptr<ConstraintJointLimit> addConstraintJointLimit(
+		std::shared_ptr<Joint> joint, 
+		double ql, 
+		double qu);
+	
+	std::shared_ptr<SpringSerial> addSpringSerial(
+		double mass, 
+		int n_points, 
+		std::shared_ptr<Body> body0, 
+		Eigen::Vector3d r0, 
+		std::shared_ptr<Body> body1, 
+		Eigen::Vector3d r1);
+	
+	std::shared_ptr<SoftBody> addSoftBody(
+		double density, 
+		double young, 
+		double possion, 
+		Material material, 
+		const std::string &RESOURCE_DIR, 
+		std::string file_name);
+
 	std::shared_ptr<ConstraintNull> addConstraintNull();
 	std::shared_ptr<SpringNull> addSpringNull();
 	std::shared_ptr<JointNull> addJointNull();
 	std::shared_ptr<CompNull> addCompNull();
 	std::shared_ptr<WrapObst> addWrapNull();
-	std::shared_ptr<CompSphere> addCompSphere(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E, const std::string &RESOURCE_DIR);
-	std::shared_ptr<CompCylinder> addCompCylinder(double r, std::shared_ptr<Body> parent, Eigen::Matrix4d E, Eigen::Vector3d z, Eigen::Vector3d o, const std::string &RESOURCE_DIR, std::string shape);
-	std::shared_ptr<CompDoubleCylinder> addCompDoubleCylinder(double rA, std::shared_ptr<Body> parentA, Eigen::Matrix4d EA, double rB, std::shared_ptr<Body> parentB, Eigen::Matrix4d EB);
-	std::shared_ptr<WrapSphere> addWrapSphere(std::shared_ptr<Body> b0, Eigen::Vector3d r0, std::shared_ptr<Body> b1, Eigen::Vector3d r1, std::shared_ptr<CompSphere> compSphere, int num_points, const std::string &RESOURCE_DIR);
-	std::shared_ptr<WrapCylinder> addWrapCylinder(std::shared_ptr<Body> b0, Eigen::Vector3d r0, std::shared_ptr<Body> b1, Eigen::Vector3d r1, std::shared_ptr<CompCylinder> compCylinder, int num_points, const std::string &RESOURCE_DIR);
+
+	std::shared_ptr<CompSphere> addCompSphere(
+		double r, 
+		std::shared_ptr<Body> parent, 
+		Eigen::Matrix4d E, 
+		const std::string &RESOURCE_DIR);
+	
+	std::shared_ptr<CompCylinder> addCompCylinder(
+		double r, 
+		std::shared_ptr<Body> parent, 
+		Eigen::Matrix4d E, 
+		Eigen::Vector3d z, 
+		Eigen::Vector3d o, 
+		const std::string &RESOURCE_DIR, 
+		std::string shape);
+	
+	std::shared_ptr<CompDoubleCylinder> addCompDoubleCylinder(
+		double rA, 
+		std::shared_ptr<Body> parentA, 
+		Eigen::Matrix4d EA, 
+		double rB, 
+		std::shared_ptr<Body> parentB, 
+		Eigen::Matrix4d EB,
+		const std::string &RESOURCE_DIR, 
+		std::string shapeA, 
+		std::string shapeB);
+	
+	std::shared_ptr<WrapSphere> addWrapSphere(
+		std::shared_ptr<Body> b0, 
+		Eigen::Vector3d r0, 
+		std::shared_ptr<Body> b1, 
+		Eigen::Vector3d r1, 
+		std::shared_ptr<CompSphere> compSphere, 
+		int num_points, 
+		const std::string &RESOURCE_DIR);
+
+	std::shared_ptr<WrapCylinder> addWrapCylinder(
+		std::shared_ptr<Body> b0, 
+		Eigen::Vector3d r0, 
+		std::shared_ptr<Body> b1, 
+		Eigen::Vector3d r1, 
+		std::shared_ptr<CompCylinder> compCylinder, 
+		int num_points, 
+		const std::string &RESOURCE_DIR);
+
+	std::shared_ptr<WrapDoubleCylinder> addWrapDoubleCylinder(
+		std::shared_ptr<Body> b0,
+		Eigen::Vector3d r0,
+		std::shared_ptr<Body> b1,
+		Eigen::Vector3d r1,
+		Eigen::Vector3d u,
+		Eigen::Vector3d v,
+		Eigen::Vector3d z_u,
+		Eigen::Vector3d z_v,
+		std::shared_ptr<CompDoubleCylinder> compDoubleCylinder,
+		int num_points,
+		const std::string &RESOURCE_DIR);
+
 
 	Energy computeEnergy();
 
@@ -85,7 +178,12 @@ public:
 	void init();
 	void update();
 	
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, const std::shared_ptr<Program> progSoft, std::shared_ptr<MatrixStack> P);
+	void draw(
+		std::shared_ptr<MatrixStack> MV, 
+		const std::shared_ptr<Program> prog, 
+		const std::shared_ptr<Program> progSimple, 
+		const std::shared_ptr<Program> progSoft, 
+		std::shared_ptr<MatrixStack> P);
 
 	void setTime(double t) { m_t = t; }
 	double getTime() const { return m_t; }

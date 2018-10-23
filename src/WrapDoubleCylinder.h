@@ -1,4 +1,3 @@
-
 #pragma once
 #ifndef MUSCLEMASS_SRC_WRAPDOUBLECYLINDER_H_
 #define MUSCLEMASS_SRC_WRAPDOUBLECYLINDER_H_
@@ -34,8 +33,8 @@ private:
 		M_V;          // Obstacle Coord Transformation Matrix for V
 
 	double
-		radius_U,     // U Cylinder Radius
-		radius_V;     // V Cylinder Radius
+		m_radius_U,     // U Cylinder Radius
+		m_radius_V;     // V Cylinder Radius
 
 	Status
 		status_U,     // U Wrapping Status

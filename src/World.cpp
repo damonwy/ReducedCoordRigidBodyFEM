@@ -39,6 +39,7 @@
 #include "WrapNull.h"
 #include "WrapSphere.h"
 #include "WrapCylinder.h"
+#include "WrapDoubleCylinder.h"
 #include "Vector.h"
 
 using namespace std;
@@ -316,9 +317,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		auto compSphere = addCompSphere(2.0, m_bodies[0], Matrix4d::Identity(), RESOURCE_DIR);
 		auto compCylinder = addCompCylinder(1.0, m_bodies[1], Matrix4d::Identity(), Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0), RESOURCE_DIR, "obstacle.obj");
-		auto compDoubleCylinder = addCompDoubleCylinder(0.5, m_bodies[0], Matrix4d::Identity(), 0.5, m_bodies[2], Matrix4d::Identity());
-		compDoubleCylinder->load(RESOURCE_DIR, "obstacle.obj", "obstacle.obj");
-
+		auto compDoubleCylinder = addCompDoubleCylinder(0.5, m_bodies[0], Matrix4d::Identity(), 0.5, m_bodies[2], Matrix4d::Identity(), RESOURCE_DIR, "obstacle.obj", "obstacle.obj");
 	}
 	break;
 
@@ -377,6 +376,40 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(0.0, 1.0, 0.0));
 		auto compCylinder = addCompCylinder(0.5, m_bodies[1], E, Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0), RESOURCE_DIR, "obstacle.obj");
 		auto wrapCylinder = addWrapCylinder(m_bodies[0], Vector3d(1.0, 0.0, 0.0), m_bodies[2], Vector3d(1.0, 0.0, 0.0), compCylinder, 20, RESOURCE_DIR);
+
+	}
+	break;
+
+	case WRAPDOUBLECYLINDER:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+
+		for (int i = 0; i < 3; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				joint->m_qdot(0) = -5.0;
+			}
+		}
+
+		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(3.0, 1.0, 0.0));
+		auto compDoubleCylinder = addCompDoubleCylinder(0.5, m_bodies[0], E, 0.5, m_bodies[2], E, RESOURCE_DIR, "obstacle.obj", "obstacle.obj");
+
+		auto wrapDoubleCylinder = addWrapDoubleCylinder(
+			m_bodies[0], Vector3d(-5.0, 0.5, 0.0), 
+			m_bodies[2], Vector3d(5.0, 0.5, 0.0), 
+			Vector3d(0.0, 0.0, 0.0), Vector3d(0.0, 0.0, 0.0), 
+			Vector3d(0.0, 0.0, -1.0), Vector3d(0.0, 0.0, 1.0), 
+			compDoubleCylinder, 20, RESOURCE_DIR);
 
 	}
 	break;
@@ -470,11 +503,12 @@ shared_ptr<CompCylinder> World::addCompCylinder(double r, shared_ptr<Body> paren
 
 }
 
-shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(double rA, shared_ptr<Body> parentA, Matrix4d EA, double rB, shared_ptr<Body> parentB, Matrix4d EB) {
+shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(double rA, shared_ptr<Body> parentA, Matrix4d EA, double rB, shared_ptr<Body> parentB, Matrix4d EB, const string &RESOURCE_DIR, string shapeA, string shapeB) {
 	auto comp = make_shared<CompDoubleCylinder>(parentA, rA, parentB, rB);
 	m_comps.push_back(comp);
 	comp->setTransformA(EA);
 	comp->setTransformB(EB);
+	comp->load(RESOURCE_DIR, shapeA, shapeB);
 	m_ncomps++;
 	return comp;
 }
@@ -548,6 +582,34 @@ shared_ptr<WrapCylinder> World::addWrapCylinder(shared_ptr<Body> b0, Vector3d r0
 	m_wraps.push_back(wrapCylinder);
 
 	return wrapCylinder;
+}
+
+shared_ptr<WrapDoubleCylinder> World::addWrapDoubleCylinder(shared_ptr<Body> b0, Vector3d r0, shared_ptr<Body> b1, Vector3d r1, Vector3d u, Vector3d v, Vector3d z_u, Vector3d z_v, shared_ptr<CompDoubleCylinder> compDoubleCylinder, int num_points, const string &RESOURCE_DIR) {
+	auto z_axis_U = make_shared<Vector>();
+	z_axis_U->dir0 = z_u;
+	auto z_axis_V = make_shared<Vector>();
+	z_axis_V->dir0 = z_v;
+	compDoubleCylinder->setZAxisA(z_axis_U);
+	compDoubleCylinder->setZAxisB(z_axis_V);
+
+	auto origin_U = make_shared<Node>();
+	origin_U->x0 = u;
+	compDoubleCylinder->setOriginA(origin_U);
+	auto origin_V = make_shared<Node>();
+	origin_V->x0 = v;
+	compDoubleCylinder->setOriginB(origin_V);
+
+	auto P = make_shared<Node>();
+	P->x0 = r0;
+	P->setParent(b0);
+	auto S = make_shared<Node>();
+	S->x0 = r1;
+	S->setParent(b1);
+	auto wrapDoubleCylinder = make_shared<WrapDoubleCylinder>(P, S, compDoubleCylinder, num_points);
+	wrapDoubleCylinder->load(RESOURCE_DIR);
+	m_wraps.push_back(wrapDoubleCylinder);
+	m_nwraps++;
+	return wrapDoubleCylinder;
 }
 
 void World::init() {

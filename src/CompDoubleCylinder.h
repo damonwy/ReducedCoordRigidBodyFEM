@@ -1,5 +1,7 @@
 #pragma once
 #include "Comp.h"
+#include "Node.h"
+#include "Vector.h"
 
 class CompDoubleCylinder : public Comp
 {
@@ -14,6 +16,16 @@ public:
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 	void setTransformA(Eigen::Matrix4d E);
 	void setTransformB(Eigen::Matrix4d E);
+	double getRadiusA() { return m_rA; }
+	double getRadiusB() { return m_rB; }
+	std::shared_ptr<Node> getOriginA() { return m_OA; }
+	std::shared_ptr<Node> getOriginB() { return m_OB; }
+	std::shared_ptr<Vector> getZAxisA() { return m_ZA; }
+	std::shared_ptr<Vector> getZAxisB() { return m_ZB; }
+	void setZAxisA(std::shared_ptr<Vector> ZA) { m_ZA = ZA; }
+	void setOriginA(std::shared_ptr<Node> OA) { m_OA = OA; }
+	void setZAxisB(std::shared_ptr<Vector> ZB) { m_ZB = ZB; }
+	void setOriginB(std::shared_ptr<Node> OB) { m_OB = OB; }
 
 protected:
 	double m_rA;
@@ -24,6 +36,11 @@ protected:
 
 	std::shared_ptr<Body> m_parentA;
 	std::shared_ptr<Body> m_parentB;
+
+	std::shared_ptr<Vector> m_ZA;	//Z axis
+	std::shared_ptr<Node> m_OA;      // Origin
+	std::shared_ptr<Vector> m_ZB;	//Z axis
+	std::shared_ptr<Node> m_OB;      // Origin
 
 	Eigen::Matrix4d E_wiA;	// Where the component is wrt world
 	Eigen::Matrix4d E_jiA;	// Where the component is wrt body

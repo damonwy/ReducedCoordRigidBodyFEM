@@ -30,6 +30,17 @@ WrapDoubleCylinder::WrapDoubleCylinder(const std::shared_ptr<Node> &P,
 {
 	m_type = double_cylinder;
 	m_arc_points.resize(3, 3 * m_num_points + 1);
+	m_point_g = std::make_shared<Node>();
+	m_point_g->x0.setZero();
+	m_point_h = std::make_shared<Node>();
+	m_point_h->x0.setZero();
+	m_radius_U = compDoubleCylinder->getRadiusA();
+	m_radius_V = compDoubleCylinder->getRadiusB();
+	m_point_U = compDoubleCylinder->getOriginA();
+	m_point_V = compDoubleCylinder->getOriginB();
+	m_vec_z_U = compDoubleCylinder->getZAxisA();
+	m_vec_z_V = compDoubleCylinder->getZAxisB();
+
 }
 
 void WrapDoubleCylinder::load(const std::string &RESOURCE_DIR) {
@@ -83,7 +94,7 @@ void WrapDoubleCylinder::compute()
 
 	double denom_h = pv(0)*pv(0) + pv(1)*pv(1);
 	double denom_t = sv(0)*sv(0) + sv(1)*sv(1);
-	double Rv = this->radius_V;
+	double Rv = m_radius_V;
 
 	double root_h = sqrt(denom_h - Rv*Rv);
 	double root_t = sqrt(denom_t - Rv*Rv);
@@ -144,7 +155,7 @@ void WrapDoubleCylinder::compute()
 
 		double denom_q = pu(0)*pu(0) + pu(1)*pu(1);
 		double denom_g = hu(0)*hu(0) + hu(1)*hu(1);
-		double Ru = -this->radius_U;
+		double Ru = -m_radius_U;
 
 		double root_q = sqrt(denom_q - Ru*Ru);
 		double root_g = sqrt(denom_g - Ru*Ru);
@@ -328,8 +339,8 @@ Eigen::MatrixXd WrapDoubleCylinder::getPoints(int num_points) const
 				break;
 			}
 			Eigen::Vector3d point = this->M_U.transpose() *
-				Eigen::Vector3d(this->radius_U * cos(i),
-					this->radius_U * sin(i), z_i) +
+				Eigen::Vector3d(m_radius_U * cos(i),
+					m_radius_U * sin(i), z_i) +
 				m_point_U->x;
 			z_i += dz;
 			points.col(col++) = point;
@@ -384,8 +395,8 @@ Eigen::MatrixXd WrapDoubleCylinder::getPoints(int num_points) const
 			}
 
 			Eigen::Vector3d point = this->M_V.transpose() *
-				Eigen::Vector3d(this->radius_V * cos(i),
-					this->radius_V * sin(i), z_i) +
+				Eigen::Vector3d(m_radius_V * cos(i),
+					m_radius_V * sin(i), z_i) +
 				m_point_V->x;
 			z_i += dz;
 			points.col(col--) = point;
