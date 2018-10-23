@@ -316,6 +316,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		auto compSphere = addCompSphere(2.0, m_bodies[0], Matrix4d::Identity(), RESOURCE_DIR);
 		auto compCylinder = addCompCylinder(1.0, m_bodies[1], Matrix4d::Identity(), Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0), RESOURCE_DIR, "obstacle.obj");
+		auto compDoubleCylinder = addCompDoubleCylinder(0.5, m_bodies[0], Matrix4d::Identity(), 0.5, m_bodies[2], Matrix4d::Identity());
+		compDoubleCylinder->load(RESOURCE_DIR, "obstacle.obj", "obstacle.obj");
 
 	}
 	break;
@@ -472,7 +474,7 @@ shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(double rA, shared_pt
 	auto comp = make_shared<CompDoubleCylinder>(parentA, rA, parentB, rB);
 	m_comps.push_back(comp);
 	comp->setTransformA(EA);
-	comp->setTransformA(EB);
+	comp->setTransformB(EB);
 	m_ncomps++;
 	return comp;
 }
