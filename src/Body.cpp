@@ -180,18 +180,19 @@ VectorXd Body::computeForce(Vector3d grav, VectorXd f) {
 	f.segment<6>(idxM) = fcor + fgrav + wext_i;
 	
 	// Joint torque
-	if (!m_joint->presc) {
-		
-		Vector6d tau = m_joint->m_S * (m_joint->m_tau - m_joint->m_K * m_joint->m_q);
-		f.segment<6>(idxM) += Ad_ji.transpose() * tau;
-		// Also apply to parent
-		if (m_joint->getParent() != nullptr) {
-			m_parent = m_joint->getParent()->getBody();
-			int idxM_P = m_parent->idxM;
-			Matrix4d E_jp = E_ji * E_iw * m_parent->E_wi; // this joint -> parent body
-			f.segment<6>(idxM_P) -= SE3::adjoint(E_jp).transpose() * tau;
-		}
-	}
+
+	//if (!m_joint->presc) {
+	//	
+	//	Vector6d tau = m_joint->m_S * (m_joint->m_tau - m_joint->m_K * m_joint->m_q);
+	//	f.segment<6>(idxM) += Ad_ji.transpose() * tau;
+	//	// Also apply to parent
+	//	if (m_joint->getParent() != nullptr) {
+	//		m_parent = m_joint->getParent()->getBody();
+	//		int idxM_P = m_parent->idxM;
+	//		Matrix4d E_jp = E_ji * E_iw * m_parent->E_wi; // this joint -> parent body
+	//		f.segment<6>(idxM_P) -= SE3::adjoint(E_jp).transpose() * tau;
+	//	}
+	//}
 
 	if (next != nullptr) {
 		f = next->computeForce(grav, f);

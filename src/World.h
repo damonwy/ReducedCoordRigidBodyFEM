@@ -233,6 +233,7 @@ private:
 	WorldType m_type;
 	Eigen::Vector3d m_grav;
 	double m_stiffness;
+	double m_damping;
 	double m_t;
 	double m_h;
 	Eigen::Vector2d m_tspan;	

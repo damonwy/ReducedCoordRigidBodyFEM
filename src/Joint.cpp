@@ -10,7 +10,7 @@ using namespace std;
 using namespace Eigen;
 
 Joint::Joint() {
-
+	presc = false;
 }
 
 Joint::Joint(shared_ptr<Body> body, double ndof, shared_ptr<Joint> parent) :
@@ -40,13 +40,14 @@ m_ndof(ndof)
 	m_tauCon.setZero();
 
 	m_K = 0.0;
+	m_D = 0.0;
 
 	m_S.resize(6, ndof);
 	m_S.setZero();
 	m_Sdot.resize(6, ndof);
 	m_Sdot.setZero();
 	
-	
+	presc = false;
 
 }
 
@@ -125,6 +126,63 @@ MatrixXd Joint::computeJacobian(MatrixXd J, int nm, int nr) {
 		J = next->computeJacobian(J, nm, nr);
 	}
 	return J;
+}
+
+VectorXd Joint::computeForceStiffness(VectorXd fr) {
+	// Computes joint stiffness force vector
+	if (presc == false) {
+		int row = this->idxR;
+		// Add the joint torque here rather than having a separate function
+		fr.segment(row, m_ndof) += m_tau - m_K * m_q;
+	}
+
+	if (next != nullptr) {
+		fr = next->computeForceStiffness(fr);
+	}
+	return fr;
+}
+
+MatrixXd Joint::computeMatrixStiffness(MatrixXd Ksr) {
+	// Computes joint stiffness matrix
+	if (presc == false) {
+		int row = this->idxR;
+		MatrixXd I(m_ndof, m_ndof);
+		I.setIdentity();
+		Ksr.block(row, row, m_ndof, m_ndof) -= m_K * I;
+	}
+
+	if (next != nullptr) {
+		Ksr = next->computeMatrixStiffness(Ksr);
+	}
+	return Ksr;
+}
+
+VectorXd Joint::computeForceDamping(VectorXd fr) {
+	// Computes joint damping force vector
+	if (presc == false) {
+		int row = this->idxR;
+		fr.segment(row, m_ndof) -= m_D * m_qdot;
+	}
+
+	if (next != nullptr) {
+		fr = next->computeForceDamping(fr);
+	}
+	return fr;
+}
+
+MatrixXd Joint::computeMatrixDamping(MatrixXd Ddr) {
+	// Computes joint damping matrix
+	if (presc == false) {
+		int row = this->idxR;
+		MatrixXd I(m_ndof, m_ndof);
+		I.setIdentity();
+		Ddr.block(row, row, m_ndof, m_ndof) += m_D * I;
+	}
+
+	if (next != nullptr) {
+		Ddr = next->computeMatrixDamping(Ddr);
+	}
+	return Ddr;
 }
 
 MatrixXd Joint::computeJacobianDerivative(MatrixXd Jdot, MatrixXd J, int nm, int nr) {

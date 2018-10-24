@@ -220,6 +220,40 @@ void World::load(const std::string &RESOURCE_DIR) {
 	case EXTERNAL_WORLD_FORCE:
 		break;
 	case JOINT_STIFFNESS:
+	{	
+		m_h = 1.0e-2;
+		density = 1.0;
+		m_grav << 0.0, 0.0, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		
+		m_stiffness = 1.0e4;
+		m_damping = 1.0e3;
+		m_Hexpected = 10000; // todo
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		// Inits rigid bodies
+		for (int i = 0; i < 3; i++) {
+
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+			}
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+			}
+			m_joints[i]->setStiffness(m_stiffness);
+			m_joints[i]->setDamping(m_damping);
+
+		}
+
+		m_joints[0]->m_qdot(0) = 1.0;
+
+		break;
+
+	}
+
 		break;
 	case SPRINGS:
 	{

@@ -93,6 +93,11 @@ private:
 
 	Eigen::MatrixXd Mtilde;
 	Eigen::VectorXd ftilde;
+	Eigen::MatrixXd Ddr;
+	Eigen::MatrixXd Ksr;
+	Eigen::VectorXd fr;
+	Eigen::VectorXd fsr;
+	Eigen::VectorXd fdr;
 
 	Eigen::MatrixXd Gm;
 	Eigen::MatrixXd Gmdot;

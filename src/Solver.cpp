@@ -29,8 +29,6 @@ Solver::Solver(shared_ptr<World> world, Integrator integrator) :
 	m_integrator(integrator)
 {
 	m_solutions = make_shared<Solution>();
-
-
 }
 
 void Solver::init() {
@@ -52,6 +50,20 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 		M.resize(nm, nm);
 		M.setZero();
+		Mtilde.resize(nr, nr);
+		Mtilde.setZero();
+		ftilde.resize(nr, 1);
+		ftilde.setZero();
+		fr.resize(nr, 1);
+		fr.setZero();
+		fdr.resize(nr, 1);
+		fsr.resize(nr, 1);
+		fdr.setZero();
+		fsr.setZero();
+		Ksr.resize(nr, nr);
+		Ksr.setZero();
+		Ddr.resize(nr, nr);
+		Ddr.setZero();
 
 		K.resize(nm, nm);
 		K.setZero();
@@ -101,9 +113,6 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		auto spring0 = m_world->getSpring0();
 		auto softbody0 = m_world->getSoftBody0();
 		auto constraint0 = m_world->getConstraint0();
-
-		//m_solutions->y.resize(2 * nr);
-		//m_solutions->y.setZero();
 
 		double t = m_world->getTspan()(0);
 		double h = m_world->getH();
@@ -160,12 +169,20 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 		K = softbody0->computeStiffness(K);
 
+		fsr = joint0->computeForceStiffness(fsr);
+		fdr = joint0->computeForceDamping(fdr);
+		//cout << fsr << endl;
+		//cout << fdr << endl;
+
+		Ksr = joint0->computeMatrixStiffness(Ksr);
+		
+		Ddr = joint0->computeMatrixDamping(Ddr);
+		
 		J = joint0->computeJacobian(J, nm, nr);
 		Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 
 		// spring jacobian todo
 		J = spring0->computeJacobian(J);
-
 		J = softbody0->computeJacobian(J);
 
 		q0 = y.segment(0, nr);
@@ -173,8 +190,12 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 		Mtilde = J.transpose() * (M - h * h * K) * J;
 		Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
-		ftilde = Mtilde * qdot0 + h * J.transpose() * (f - M * Jdot * qdot0);
 
+		fr = J.transpose() * (f - M * Jdot * qdot0) + fsr;
+
+		ftilde = Mtilde * qdot0 + h * fr;
+		Mtilde = Mtilde + h * Ddr - h * h * Ksr;
+		
 		if (ne > 0) {
 			constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
 			constraint0->computeJacEqR(Gr, Grdot, gr);
@@ -304,8 +325,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		}
 
 		qddot = (qdot1 - qdot0) / h;
-		q1 = q0 + h * qdot1;
-		//cout << q1 << endl;
+		q1 = q0 + h * qdot1;	
 		yk.segment(0, nr) = q1;
 		yk.segment(nr, nr) = qdot1;
 
@@ -350,6 +370,20 @@ shared_ptr<Solution> Solver::solve() {
 
 		M.resize(nm, nm);
 		M.setZero();
+		Mtilde.resize(nr, nr);
+		Mtilde.setZero();
+		ftilde.resize(nr, 1);
+		ftilde.setZero();
+		fr.resize(nr, 1);
+		fr.setZero();
+		fdr.resize(nr, 1);
+		fsr.resize(nr, 1);
+		fdr.setZero();
+		fsr.setZero();
+		Ksr.resize(nr, nr);
+		Ksr.setZero();
+		Ddr.resize(nr, nr);
+		Ddr.setZero();
 
 		K.resize(nm, nm);
 		K.setZero();
@@ -465,7 +499,14 @@ shared_ptr<Solution> Solver::solve() {
 			f = softbody0->computeForce(grav, f);
 
 			K = softbody0->computeStiffness(K);
-			//cout << K << endl;
+
+
+			fsr = joint0->computeForceStiffness(fsr);
+			fdr = joint0->computeForceDamping(fdr);
+
+			Ksr = joint0->computeMatrixStiffness(Ksr);
+			Ddr = joint0->computeMatrixDamping(Ddr);
+
 
 			J = joint0->computeJacobian(J, nm, nr);
 			Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
@@ -481,8 +522,10 @@ shared_ptr<Solution> Solver::solve() {
 			//cout << "q0" << qdot0 << endl;
 			Mtilde = J.transpose() * (M - h * h * K) * J;
 			Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
-			ftilde = Mtilde * qdot0 + h * J.transpose() * (f - M * Jdot * qdot0);
-
+			
+			fr = J.transpose() * (f - M * Jdot * qdot0) + fsr;
+			ftilde = Mtilde * qdot0 + h * fr;
+			Mtilde = Mtilde + h * Ddr - h * h * Ksr;
 
 			if (ne > 0) {
 				constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
@@ -619,8 +662,8 @@ shared_ptr<Solution> Solver::solve() {
 
 			}
 			qddot = (qdot1 - qdot0) / h;
-			//cout << "ddot" << qddot << endl;
-			//cout <<"qdot1"<< qdot1 << endl;
+			cout << "ddot" << qddot << endl;
+			cout <<"qdot1"<< qdot1 << endl;
 			q1 = q0 + h * qdot1;
 			//cout << "q1" << q1 << endl;
 			yk.segment(0, nr) = q1;

@@ -30,13 +30,14 @@ public:
 	virtual void update();
 	virtual void updateSelf();
 
-	double m_ndof;					// Number of DOF
+	int m_ndof;					// Number of DOF
 	Eigen::VectorXd m_q;			// Position
 	Eigen::VectorXd m_qdot;			// Velocity
 	Eigen::VectorXd m_qddot;		// Acceleration
 	Eigen::VectorXd m_tau;			// Joint torque
 	Eigen::VectorXd m_tauCon;		// Constraint torque
 	double m_K;						// Joint stiffness
+	double m_D;						// Joint damping
 	Eigen::MatrixXd m_S;			// Jacobian
 	Eigen::MatrixXd m_Sdot;			// dS/dt
 
@@ -55,6 +56,7 @@ public:
 	int countR(int &nr, int data);
 	void setJointTransform(Eigen::Matrix4d E);
 	void setStiffness(double K) { m_K = K; } // Sets this joint's linear stiffness
+	void setDamping(double D) { m_D = D; } // Sets this joint's linear velocity damping
 
 	std::string getName() const { return m_name; }
 	int getUID() const { return m_uid; }
@@ -66,6 +68,11 @@ public:
 	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J, int nm, int nr);
 	Eigen::MatrixXd computeJacobianDerivative(Eigen::MatrixXd Jdot, Eigen::MatrixXd J, int nm, int nr);
 	Eigen::VectorXd computerJacTransProd(Eigen::VectorXd y, Eigen::VectorXd x, int nr);
+	Eigen::VectorXd computeForceStiffness(Eigen::VectorXd fr);
+	Eigen::MatrixXd computeMatrixStiffness(Eigen::MatrixXd Ksr);
+	
+	Eigen::VectorXd computeForceDamping(Eigen::VectorXd fr);
+	Eigen::MatrixXd computeMatrixDamping(Eigen::MatrixXd Ddr);
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy ener);
 	Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
