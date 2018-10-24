@@ -49,7 +49,8 @@ void JointSplineCurve::addControlFrame(Matrix4d C) {
 
 void JointSplineCurve::updateSelf() {
 	m_Q = evalQ(m_q(0));
-	auto dSdq = evalS(m_q(0));
+	Matrix4d S, dSdq;
+	evalS(m_q(0), S, dSdq);
 	m_Sdot = dSdq * m_qdot(0);
 
 }
@@ -118,7 +119,7 @@ double JointSplineCurve::d2Bsum(int i, double q) {
 	return d2f;
 }
 
-Matrix4d JointSplineCurve::evalQ(double q) {
+Matrix4d JointSplineCurve::evalQ(double q) const {
 	Matrix4d Q;
 
 	// Evaluate spline frame
@@ -152,4 +153,152 @@ Matrix4d JointSplineCurve::evalQ(double q) {
 	}
 
 	return Q;
+}
+
+void JointSplineCurve::evalS(double q, Matrix4d &S, Matrix4d &dSdq) {
+
+	// Evaluates spline frame derivatives
+	int ncfs = m_Cs.size();
+	// Wrap around
+	int qmax = ncfs;
+	if (q < 0) {
+		q += qmax;
+	}
+	else if (q >= qmax) {
+		q -= qmax;
+	}
+
+	int k = floor(q); // starting control frame 
+	if (k >= ncfs) {
+		k -= 1; // overflow
+	}
+
+	double q_ = q - k; // local q in [0, 1]
+	for (int i = 1; i < 3; ++i) {
+		int ki = k + i;
+		if (ki > ncfs) {
+			ki = ki - ncfs; // Wrap for cyclic
+		}
+		Matrix4d dC = m_dCs[ki];
+		double dBsum = JointSplineCurve::dBsum(i, q_);
+		double d2Bsum = JointSplineCurve::d2Bsum(i, q_);
+		if (i == 1) {
+			S = dC *dBsum;
+			dSdq = dC * d2Bsum;
+		}
+		else {
+			double Bsum = JointSplineCurve::Bsum(i, q_);
+			Matrix6d Ad = SE3::adjoint(SE3::inverse(SE3::exp(dC * Bsum)));
+			Matrix6d ad = SE3::ad(S);
+			S = dC * dBsum + Ad * S;
+			dSdq = dC * d2Bsum + Ad *(dSdq + ad * dC * dBsum);
+		}
+	}
+
+}
+
+void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const {
+	int ncfs = m_Cs.size();
+	std::ptrdiff_t i;
+	double s = getBody()->sides.minCoeff(&i);
+	Matrix4d E_wp;
+
+	if (getParent() == nullptr) {
+		E_wp.setIdentity();
+	}
+	else {
+		E_wp = getParent()->E_wj;
+	}
+
+	Matrix4d E_wj0 = E_wp * E_pj0;
+
+	prog->bind();
+	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	// Draw control frames
+	for (int i = 0; i < ncfs-1; ++i) {
+		MV->pushMatrix();
+		Matrix4d E = E_wj0 * m_Cs[i];
+		MV->multMatrix(eigen_to_glm(E));
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		glLineWidth(5);
+		glBegin(GL_LINES);
+		// X axis
+		glColor3f(1.0, 0.0, 0.0);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(3.0, 0.0, 0.0);
+
+		// Y axis
+		glColor3f(0.0, 1.0, 0.0);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, 3.0, 0.0);
+
+		// Z axis
+		glColor3f(0.0, 0.0, 1.0);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, 0.0, 3.0);
+
+		glEnd();
+		MV->popMatrix();
+	
+	}
+
+	int qmax = ncfs;
+	Vector6d q = Vector6d::LinSpaced(qmax, 0, qmax * 5);
+
+	// Draw spline frames
+	for (int i = 0; i < 6; ++i) {
+		double qi = q(i);
+		Matrix4d Q = evalQ(qi);
+		MV->pushMatrix();
+		Matrix4d E = E_wj0 * Q;
+		MV->multMatrix(eigen_to_glm(E));
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		glLineWidth(3);
+		glBegin(GL_LINES);
+		// X axis
+		glColor3f(1.0, 0.0, 0.0);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(3.0, 0.0, 0.0);
+
+		// Y axis
+		glColor3f(0.0, 1.0, 0.0);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, 3.0, 0.0);
+
+		// Z axis
+		glColor3f(0.0, 0.0, 1.0);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, 0.0, 3.0);
+
+		glEnd();
+		MV->popMatrix();
+	}
+	
+	// Draw current frame
+	MV->pushMatrix();
+	Matrix4d E = E_wj;
+	MV->multMatrix(eigen_to_glm(E));
+	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+	glLineWidth(3);
+	glBegin(GL_LINES);
+	// X axis
+	glColor3f(1.0, 0.0, 0.0);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(3.0, 0.0, 0.0);
+
+	// Y axis
+	glColor3f(0.0, 1.0, 0.0);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.0, 3.0, 0.0);
+
+	// Z axis
+	glColor3f(0.0, 0.0, 1.0);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.0, 0.0, 3.0);
+
+	glEnd();
+	MV->popMatrix();
+	
+	prog->unbind();
+
 }

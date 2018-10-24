@@ -16,7 +16,6 @@ public:
 	virtual ~JointRevolute();
 
 	virtual void updateSelf();
-	virtual void draw();
 
 	//Eigen::Vector3d m_axis;
 

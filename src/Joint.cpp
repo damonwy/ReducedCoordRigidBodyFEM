@@ -307,4 +307,9 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 	MV->popMatrix();
 	prog->unbind();
 
+	drawSelf(MV, prog, P);
+}
+
+void Joint::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const {
+
 }

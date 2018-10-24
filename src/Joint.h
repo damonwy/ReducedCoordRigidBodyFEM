@@ -27,6 +27,7 @@ public:
 
 	virtual void init(int &nm, int &nr);
 	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
+	virtual void drawSelf(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
 	virtual void update();
 	virtual void updateSelf();
 
