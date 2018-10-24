@@ -80,7 +80,8 @@ public:
 	void scatterDofs(Eigen::VectorXd y, int nr);
 	void scatterDDofs(Eigen::VectorXd ydot, int nr);
 	Vector6d getAlpha() const { return m_alpha; }
-
+protected:
+	Matrix4d m_Q;										// Transformation matrix applied about the joint
 private:
 	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);
 
@@ -91,6 +92,7 @@ private:
 	std::vector<std::shared_ptr<Joint> > m_children;	// Children joints
 
 	Vector6d m_alpha;
+	
 
 };
 

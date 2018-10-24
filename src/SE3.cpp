@@ -241,3 +241,77 @@ Matrix6d SE3::ad(Vector6d phi) {
 	a.block<3, 3>(3, 0) = bracket3(v);
 	return a;
 }
+
+Matrix4d SE3::exp(const Vector6d & phi)
+{
+	Matrix3d I = Matrix3d::Identity();
+	Vector3d w = phi.segment<3>(0);
+	double wlen = w.norm();
+	Matrix3d R = Matrix3d::Identity();;
+	if (wlen > 1e-9) {
+		w = w / wlen;
+		// Rodrigues forumula ----------------------
+		double wX = w(0);
+		double wY = w(1);
+		double wZ = w(2);
+		double c = cos(wlen);
+		double s = sin(wlen);
+		double c1 = 1 - c;
+		Matrix3d fillR;
+		fillR <<
+			c + wX*wX*c1, -wZ*s + wX*wY*c1, wY*s + wX*wZ*c1,
+			wZ*s + wX*wY*c1, c + wY*wY*c1, -wX*s + wY*wZ*c1,
+			-wY*s + wX*wZ*c1, wX*s + wY*wZ*c1, c + wZ*wZ*c1;
+		R = fillR;
+		//------------------------------------------
+	}
+	Matrix4d E = Matrix4d::Identity();
+	E.block<3, 3>(0, 0) = R;
+	// Translational part
+	Eigen::Vector3d v = phi.segment<3>(3);
+	if (wlen > 1e-9) {
+		v = v / wlen;
+		Matrix3d A = I - R;
+		Vector3d cc = w.cross(v);
+		Vector3d d = A * cc;
+		double wv = w.transpose() * v;
+		Vector3d p = (wv * wlen) * w + d;
+		E.block<3, 1>(0, 3) = p;
+	}
+	else {
+		E.block<3, 1>(0, 3) = v;
+	}
+
+	return E;
+}
+
+Vector6d SE3::log(const Matrix4d & A)
+{
+	Matrix3d R = A.block<3, 3>(0, 0);
+	Vector3d p = A.block<3, 1>(0, 3);
+	Vector6d phi;
+
+	double cosTheta = 0.5*(R.trace() - 1);
+	double theta = acos(cosTheta);
+
+	if (cosTheta > 0.999999999999)
+		theta = 0;
+	else if (cosTheta < -0.999999999999)
+		theta = M_PI;
+
+	if (abs(theta) < 1e-8)
+	{
+		phi.segment<3>(0) << 0.0, 0.0, 0.0;
+		phi.segment<3>(3) = p;
+	}
+	else
+	{
+		double sinTheta = sin(theta);
+		Matrix3d wBracket = theta / (2 * sinTheta)*(R - R.transpose());
+		phi.segment<3>(0) = unbracket3(wBracket);
+		Matrix3d V = Eigen::Matrix3d::Identity() + ((1 - cosTheta) / (theta * theta) * wBracket) + ((theta - sinTheta) / (theta * theta * theta) * wBracket*wBracket);
+		phi.segment<3>(3) = V.colPivHouseholderQr().solve(p);
+	}
+
+	return phi;
+}
