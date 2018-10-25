@@ -29,6 +29,7 @@ public:
 	static Eigen::Matrix4d RpToE(Eigen::Matrix3d R, Eigen::Vector3d p);
 	static Matrix6d ad(Vector6d phi);
 	static Eigen::Matrix4d exp(const Vector6d &phi);
+	static Eigen::Matrix4d exp(const Eigen::Matrix4d &phi);
 	static Vector6d log(const Eigen::Matrix4d &A);
 };
 

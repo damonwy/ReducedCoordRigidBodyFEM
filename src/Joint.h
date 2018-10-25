@@ -39,8 +39,8 @@ public:
 	Eigen::VectorXd m_tauCon;		// Constraint torque
 	double m_K;						// Joint stiffness
 	double m_D;						// Joint damping
-	Eigen::MatrixXd m_S;			// Jacobian
-	Eigen::MatrixXd m_Sdot;			// dS/dt
+	Vector6d m_S;			// Jacobian
+	Vector6d m_Sdot;			// dS/dt
 
 	Eigen::Matrix4d E_pj;			// Transform of this joint wrt parent joint
 	Eigen::Matrix4d E_pj0;			// Transform when q is zero
@@ -82,7 +82,7 @@ public:
 	void scatterDDofs(Eigen::VectorXd ydot, int nr);
 	Vector6d getAlpha() const { return m_alpha; }
 protected:
-	Matrix4d m_Q;										// Transformation matrix applied about the joint
+	Eigen::Matrix4d m_Q;										// Transformation matrix applied about the joint
 private:
 	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);
 

@@ -285,6 +285,13 @@ Matrix4d SE3::exp(const Vector6d & phi)
 	return E;
 }
 
+Matrix4d SE3::exp(const Matrix4d &phi) {
+	// Convert from skew symmetric matrix to vector
+	Vector6d phi_ = unbracket6(phi);
+	Matrix4d E = exp(phi_);
+	return E;
+}
+
 Vector6d SE3::log(const Matrix4d & A)
 {
 	Matrix3d R = A.block<3, 3>(0, 0);

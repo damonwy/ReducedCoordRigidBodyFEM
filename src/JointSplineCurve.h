@@ -60,13 +60,11 @@ private:
 	std::vector<Eigen::Matrix4d> m_Cs;
 	std::vector<Vector6d> m_dCs;
 	Eigen::Matrix4d evalQ(double q)const;
-	void evalS(double q, Eigen::Matrix4d &S, Eigen::Matrix4d &dSdq);
+	void evalS(double q, Vector6d &S, Vector6d &dSdq);
 
 };
 
-const Eigen::Matrix4d JointSplineCurve::m_B = getB();
-const Matrix4x3d JointSplineCurve::m_B1 = getB1();
-const Matrix4x2d JointSplineCurve::m_B2 = getB2();
+
 
 
 #endif //MUSCLEMASS_SRC_JOINTSPLINECURVE_H_

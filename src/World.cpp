@@ -8,6 +8,7 @@
 #include "JointNull.h"
 #include "JointFixed.h"
 #include "JointRevolute.h"
+#include "JointSplineCurve.h"
 
 #include "Node.h"
 #include "Body.h"
@@ -444,6 +445,41 @@ void World::load(const std::string &RESOURCE_DIR) {
 			Vector3d(0.0, 0.0, 0.0), Vector3d(0.0, 0.0, 0.0), 
 			Vector3d(0.0, 0.0, -1.0), Vector3d(0.0, 0.0, 1.0), 
 			compDoubleCylinder, 20, RESOURCE_DIR);
+
+	}
+	break;
+
+	case SPLINE_CURVE_JOINT:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+
+		auto body0 = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto joint0 = addJointRevolute(body0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+		auto body1 = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+		auto joint1 = make_shared<JointSplineCurve>(body1, joint0);
+		m_joints.push_back(joint1);
+		m_njoints++;
+		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(0.0, -10.0, 0.0));
+		joint1->setJointTransform(E);
+		Matrix4d cf0 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI), Vector3d(-10.0, 0.0, 0.0));
+		Matrix4d cf1 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI / 2.0), Vector3d(0.0, -2.0, 0.0));
+		Matrix4d cf2 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), 0.0), Vector3d(10.0, 0.0, 0.0));
+		Matrix4d cf3 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), - PI / 2.0), Vector3d(0.0, 2.0, 0.0));
+
+		joint1->addControlFrame(cf0);
+		joint1->addControlFrame(cf1);
+		joint1->addControlFrame(cf2);
+		joint1->addControlFrame(cf3);
+
+		auto body2 = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+		auto joint2 = addJointRevolute(body2, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, joint1);
+		joint1->m_q(0) = 0.0;
+		joint2->m_q(0) = 15.0 * PI / 16.0;
 
 	}
 	break;
