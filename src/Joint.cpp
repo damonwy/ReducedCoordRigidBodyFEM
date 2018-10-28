@@ -73,10 +73,15 @@ void Joint::setJointTransform(Matrix4d E) {
 void Joint::update() {
 	// Updates this joint and the attached body
 	updateSelf();
+	E_pj = E_pj0 * m_Q;
+
+
 	E_jp = SE3::inverse(E_pj);
 	Ad_jp = SE3::adjoint(E_jp);
 
 	Matrix4d E_wp;
+
+
 
 	if (m_parent == nullptr) {
 		E_wp.setIdentity();
@@ -84,6 +89,12 @@ void Joint::update() {
 	else {
 		E_wp = m_parent->E_wj;
 	}
+	
+	cout << m_Q << endl;
+	
+	
+	//cout << E_wp << endl;
+	//cout << E_pj << endl;
 
 	E_wj = E_wp * E_pj;
 

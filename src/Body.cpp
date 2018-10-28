@@ -64,6 +64,7 @@ void Body::setTransform(Eigen::Matrix4d E) {
 void Body::update() {
 	// Updates transforms and maximal velocities
 	E_wi = m_joint->E_wj * E_ji;
+	cout << m_joint->E_wj << endl;
 	cout << E_wi << endl;
 	E_iw = SE3::inverse(E_wi);
 	Ad_wi = SE3::adjoint(E_wi);
@@ -83,7 +84,7 @@ void Body::update() {
 	Ad_ip = SE3::adjoint(E_ip);
 	phi = Ad_ij * V;
 	Addot_wi = SE3::dAddt(E_wi, phi);
-
+	
 }
 
 Energy Body::computeEnergies(Eigen::Vector3d grav, Energy energies) {

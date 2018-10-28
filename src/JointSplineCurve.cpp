@@ -40,14 +40,24 @@ void JointSplineCurve::addControlFrame(Matrix4d C) {
 	if (ncfs >= 2) {
 		Matrix4d C0 = m_Cs[ncfs - 2];
 		Matrix4d C1 = C;
-		MatrixXd x = C0.ldlt().solve(C1);
+		Matrix4d x = C0.colPivHouseholderQr().solve(C1);
 		m_dCs.push_back(SE3::log(x));
+		//cout << C1 << endl;
+		//cout << C0 << endl;
+		//cout << x << endl;
+		//cout << SE3::log(x) << endl;
 	}
 
 	// Cyclic
 	Matrix4d C0 = C;
 	Matrix4d C1 = m_Cs[0];
-	Matrix4d x = C0.ldlt().solve(C1);
+	Matrix4d x = C0.colPivHouseholderQr().solve(C1);
+	//Matrix4d x = C0.ldlt().solve(C1);
+	//cout << C1 << endl;
+	//cout << C0 << endl;
+	//cout << x << endl;
+	//cout << SE3::log(x) << endl;
+
 	if (m_dCs.size() < 1) {
 		m_dCs.push_back(SE3::log(x));
 	}
@@ -58,7 +68,9 @@ void JointSplineCurve::addControlFrame(Matrix4d C) {
 }
 
 void JointSplineCurve::updateSelf() {
+	cout << m_q(0) << endl;
 	m_Q = evalQ(m_q(0));
+	//cout << m_Q << endl;
 	Vector6d S, dSdq;
 	evalS(m_q(0), S, dSdq);
 	m_Sdot = dSdq * m_qdot(0);
@@ -70,13 +82,13 @@ double JointSplineCurve::Bsum(int i, double q) {
 	Vector4d qvec;
 	Vector4d b;
 	qvec << 1, q, q * q, q * q * q;
-	if (i == 1) {
+	if (i == 0) {
 		b = m_B.row(0) + m_B.row(1) + m_B.row(2) + m_B.row(3);
 	}
-	else if (i == 2) {
+	else if (i == 1) {
 		b = m_B.row(1) + m_B.row(2) + m_B.row(3);
 	}
-	else if (i == 3) {
+	else if (i == 2) {
 		b = m_B.row(2) + m_B.row(3);
 	}
 	else {
@@ -91,13 +103,13 @@ double JointSplineCurve::dBsum(int i, double q) {
 	Vector3d qvec;
 	Vector3d b;
 	qvec << 1, 2 * q, 3 * q * q;
-	if (i == 1) {
+	if (i == 0) {
 		b = m_B1.row(0) + m_B1.row(1) + m_B1.row(2) + m_B1.row(3);
 	}
-	else if (i == 2) {
+	else if (i == 1) {
 		b = m_B1.row(1) + m_B1.row(2) + m_B1.row(3);
 	}
-	else if (i == 3) {
+	else if (i == 2) {
 		b = m_B1.row(2) + m_B1.row(3);
 	}
 	else {
@@ -112,13 +124,13 @@ double JointSplineCurve::d2Bsum(int i, double q) {
 	Vector2d qvec;
 	qvec << 2, 6 * q;
 	Vector2d b;
-	if (i == 1) {
+	if (i == 0) {
 		b = m_B2.row(0) + m_B2.row(1) + m_B2.row(2) + m_B2.row(3);
 	}
-	else if (i == 2) {
+	else if (i == 1) {
 		b = m_B2.row(1) + m_B2.row(2) + m_B2.row(3);
 	}
-	else if (i == 3) {
+	else if (i == 2) {
 		b = m_B2.row(2) + m_B2.row(3);
 	}
 	else {
@@ -132,6 +144,11 @@ double JointSplineCurve::d2Bsum(int i, double q) {
 Matrix4d JointSplineCurve::evalQ(double q) const {
 	Matrix4d Q;
 	
+	for (int i = 0; i < m_dCs.size(); i++) {
+		//cout << m_dCs[i] << endl;
+		//cout << m_Cs[i] << endl;
+	}
+
 	// Evaluate spline frame
 	int ncfs = m_Cs.size();
 	// Wrap around
@@ -151,6 +168,7 @@ Matrix4d JointSplineCurve::evalQ(double q) const {
 	double q_ = q - k; // local q in [0, 1]
 	
 	Q = m_Cs[k];
+	//cout << Q << endl;
 
 	for (int i = 1; i < 3; ++i) {
 		int ki = k + i;
@@ -159,8 +177,12 @@ Matrix4d JointSplineCurve::evalQ(double q) const {
 		}
 		double Bsum = JointSplineCurve::Bsum(i, q_);
 		Matrix4d dC = SE3::bracket6(m_dCs[ki]);
+		//cout << dC << endl;
+		//cout << m_dCs[ki] << endl;
+
 		Matrix4d dCBsum = dC * Bsum;
 		Q = Q * SE3::exp(dCBsum);
+		//cout << Q << endl;
 	}
 
 	return Q;
@@ -257,7 +279,7 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 	
 	}
 
-	int qmax = ncfs;
+	int qmax = ncfs-1;
 	VectorXd q = VectorXd::LinSpaced(qmax * 5, 0, qmax);
 	
 	// Draw spline frames

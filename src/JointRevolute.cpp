@@ -28,7 +28,8 @@ void JointRevolute::updateSelf() {
 	Matrix4d Q;
 	Q.setIdentity();
 	Q.block<3, 3>(0, 0) = R;
-	E_pj = E_pj0 * Q;
+	m_Q = Q;
+	//E_pj = E_pj0 * Q;
 	
 	m_S.block<3, 1>(0, 0) = m_axis;
 }
