@@ -546,8 +546,11 @@ VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
 void SoftBody::scatterDofs(VectorXd &y, int nr) {
 	// Scatters q and qdot from y
 
+	// Update points
 	for (int i = 0; i < m_compared_nodes.size(); ++i) {
 		m_compared_nodes[i]->update();
+		
+
 	}
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
