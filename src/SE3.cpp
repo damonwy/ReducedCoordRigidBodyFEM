@@ -164,7 +164,7 @@ Matrix3d SE3::aaToMat(Vector3d axis, double angle) {
 		if (abs(axis(0)) < THRESH && abs(axis(1)) < THRESH) {
 			// Rotation about Z
 			if (axis(2) < 0.0) {
-				angle = -angle;
+				//angle = -angle;
 			}
 			double sinTheta = sin(angle);
 			double cosTheta = cos(angle);
@@ -177,7 +177,7 @@ Matrix3d SE3::aaToMat(Vector3d axis, double angle) {
 		else if (abs(axis(1)) < THRESH && abs(axis(2)) < THRESH) {
 			// Rotation about X
 			if (axis(0) < 0.0) {
-				angle = -angle;
+				//angle = -angle;
 			}
 			double sinTheta = sin(angle);
 			double cosTheta = cos(angle);
@@ -189,7 +189,7 @@ Matrix3d SE3::aaToMat(Vector3d axis, double angle) {
 		else if (abs(axis(2)) < THRESH && abs(axis(0)) < THRESH) {
 			// Rotation about Y
 			if (axis(1) < 0.0) {
-				angle = -angle;
+				//angle = -angle;
 			}
 			double sinTheta = sin(angle);
 			double cosTheta = cos(angle);

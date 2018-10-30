@@ -98,6 +98,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
+
 			// Inits joints
 			if (i == 0) {
 				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
@@ -300,14 +301,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 		double young = 1e2;
 		double possion = 0.40;
 
-		for (int i = 0; i < 3; i++) {
-			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+		for (int i = 0; i < 2; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "bone_cyc.obj");
 
 			// Inits joints
 			if (i == 0) {
-				addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 
-				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 			}
 			else {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
@@ -315,7 +316,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 
-		auto softbody = addSoftBody(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle3");
+		auto softbody = addSoftBody(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -467,9 +468,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(0.0, -10.0, 0.0));
 		joint1->setJointTransform(E);
 		Matrix4d cf0 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI), Vector3d(-10.0, 0.0, 0.0));
-		Matrix4d cf1 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -PI / 2.0), Vector3d(0.0, -2.0, 0.0));
+		Matrix4d cf1 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI / 2.0), Vector3d(0.0, 2.0, 0.0));
 		Matrix4d cf2 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), 0.0), Vector3d(10.0, 0.0, 0.0));
-		Matrix4d cf3 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI / 2.0), Vector3d(0.0, 2.0, 0.0));
+		Matrix4d cf3 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -PI / 2.0), Vector3d(0.0, -2.0, 0.0));
 
 		joint1->addControlFrame(cf0);
 		joint1->addControlFrame(cf1);
@@ -811,11 +812,12 @@ void World::init() {
 		//m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
 		//m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
 		
-		m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(5.0, 9.5), Vector2d(-0.5, 0.5), m_bodies[0]);
-		m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(5.0, 9.5), Vector2d(-0.5, 0.5), m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(5.0, 9.5), Vector2d(-0.5, 0.5), m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(5.0, 9.5), Vector2d(-0.5, 0.5), m_bodies[0]);
 
-		m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(10.5, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
-		m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(10.5, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		//m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(10.5, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+		//m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(10.5, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
+
 		//m_softbodies[0]->setSlidingNodes(0, m_bodies[0], Vector3d(0.0, 1.0, 0.0));
 		//m_softbodies[0]->setSlidingNodes(4, m_bodies[0], Vector3d(0.0, 1.0, 0.0));
 		//m_softbodies[0]->setSlidingNodes(7, m_bodies[0], Vector3d(0.0, 1.0, 0.0));

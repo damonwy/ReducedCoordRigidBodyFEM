@@ -42,10 +42,12 @@ m_ndof(ndof)
 	m_K = 0.0;
 	m_D = 0.0;
 
+	
 	m_S.resize(6, ndof);
 	m_S.setZero();
 	m_Sdot.resize(6, ndof);
 	m_Sdot.setZero();
+	m_Q.setIdentity();
 	
 	presc = false;
 
@@ -90,7 +92,7 @@ void Joint::update() {
 		E_wp = m_parent->E_wj;
 	}
 	
-	cout << m_Q << endl;
+	//cout << m_Q << endl;
 	
 	
 	//cout << E_wp << endl;

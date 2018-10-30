@@ -39,8 +39,8 @@ public:
 	Eigen::VectorXd m_tauCon;		// Constraint torque
 	double m_K;						// Joint stiffness
 	double m_D;						// Joint damping
-	Vector6d m_S;			// Jacobian
-	Vector6d m_Sdot;			// dS/dt
+	Eigen::MatrixXd m_S;			// Jacobian
+	Eigen::MatrixXd m_Sdot;			// dS/dt
 
 	Eigen::Matrix4d E_pj;			// Transform of this joint wrt parent joint
 	Eigen::Matrix4d E_pj0;			// Transform when q is zero
