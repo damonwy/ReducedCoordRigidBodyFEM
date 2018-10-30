@@ -44,7 +44,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
 	tetrahedralize("pqzR", &input_mesh, &output_mesh);
 
-	double r = 0.04;
+	double r = 0.01;
 
 	// Create Nodes
 	for (int i = 0; i < output_mesh.numberofpoints; i++) {
@@ -62,13 +62,6 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		node->m = 0.0;
 		node->i = i;
 		node->load(RESOURCE_DIR);
-		/*if (node->x(1) > 0.5) {
-		node->fixed = true;
-		}
-		else {
-		node->fixed = false;
-		}*/
-
 		m_nodes.push_back(node);
 	}
 
@@ -122,6 +115,11 @@ void SoftBody::init() {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		m_nodes[i]->init();
 	}
+
+	for (int i = 0; i < m_compared_nodes.size(); ++i) {
+		m_compared_nodes[i]->init();
+	}
+
 	// Init Buffers
 	posBuf.clear();
 	norBuf.clear();
@@ -201,17 +199,20 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	for (int i = 0; i < m_attach_nodes.size(); i++) {
 		auto node = m_attach_nodes[i];
 		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
-		//glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
 		node->draw(MV, prog);
 	}
 
 	for (int i = 0; i < m_sliding_nodes.size(); i++) {
 		auto node = m_sliding_nodes[i];
 		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
-		//glUniform3fv(prog->getUniform("kdFront"), 1, node->m_color.data());
 		node->draw(MV, prog);
 	}
 
+	for (int i = 0; i < m_compared_nodes.size(); i++) {
+		auto node = m_compared_nodes[i];
+		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
+		node->draw(MV, prog);
+	}
 	prog->unbind();
 
 	progSimple->bind();
@@ -389,12 +390,9 @@ void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_pt
 		}
 
 	}
-
-
-
 }
 
-void SoftBody::setAttachmentsByXYSurface(double z, Eigen::Vector2d xrange, Eigen::Vector2d yrange, shared_ptr<Body> body) {
+void SoftBody::setAttachmentsByXYSurface(double z, Vector2d xrange, Vector2d yrange, shared_ptr<Body> body) {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
@@ -406,7 +404,7 @@ void SoftBody::setAttachmentsByXYSurface(double z, Eigen::Vector2d xrange, Eigen
 }
 
 
-void SoftBody::setAttachmentsByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, shared_ptr<Body> body) {
+void SoftBody::setAttachmentsByYZSurface(double x, Vector2d yrange, Vector2d zrange, shared_ptr<Body> body) {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
@@ -418,6 +416,18 @@ void SoftBody::setAttachmentsByYZSurface(double x, Eigen::Vector2d yrange, Eigen
 
 }
 
+
+void SoftBody::setAttachmentsByYZCircle(double x, Vector2d O, double r, shared_ptr<Body> body) {
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+		double diff = pow((xi(1) - 0(0)), 2) + pow((xi(2) - 0(1)), 2) - r * r;
+
+		if (abs(xi(0) - x) < 0.3 && diff < 0.01) {
+			setAttachments(i, body);
+		}
+	}
+}
 
 void SoftBody::setAttachmentsByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, shared_ptr<Body> body) {
 	for (int i = 0; i < m_nodes.size(); i++) {
@@ -459,6 +469,34 @@ void SoftBody::setSlidingNodesByYZSurface(double x, Eigen::Vector2d yrange, Eige
 			setSlidingNodes(i, body, x_axis);
 		}
 	}
+}
+
+void SoftBody::setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, std::shared_ptr<Body> body) {
+	Vector3d x_axis;
+
+	for (int i = 0; i < m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+		x_axis << 0.0, O(0) - xi(1), O(1) - xi(2);
+		x_axis.normalized();
+
+		double diff = pow((xi(1) - 0(0)), 2) + pow((xi(2) - 0(1)), 2) - r * r;
+		if (abs(xi(0) - x) < 0.3 && diff < 0.01) {
+			setSlidingNodes(i, body, x_axis);
+
+			// Create Attached node to compare if they are really sliding
+			auto comp_node = make_shared<Node>();
+			comp_node->x0 = m_nodes[i]->x0;
+			comp_node->x0(0) -= 5.0;
+			//comp_node->x = m_nodes[i]->x;
+			comp_node->r = m_nodes[i]->r;
+			comp_node->sphere = m_nodes[i]->sphere;
+			comp_node->setParent(body);
+			m_compared_nodes.push_back(comp_node);
+
+		}
+	}
+
 }
 
 void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body) {
@@ -507,6 +545,10 @@ VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
 
 void SoftBody::scatterDofs(VectorXd &y, int nr) {
 	// Scatters q and qdot from y
+
+	for (int i = 0; i < m_compared_nodes.size(); ++i) {
+		m_compared_nodes[i]->update();
+	}
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;

@@ -64,8 +64,7 @@ void Body::setTransform(Eigen::Matrix4d E) {
 void Body::update() {
 	// Updates transforms and maximal velocities
 	E_wi = m_joint->E_wj * E_ji;
-	cout << m_joint->E_wj << endl;
-	cout << E_wi << endl;
+
 	E_iw = SE3::inverse(E_wi);
 	Ad_wi = SE3::adjoint(E_wi);
 	Ad_iw = SE3::adjoint(E_iw);

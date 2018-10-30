@@ -47,10 +47,13 @@ public:
 	void setAttachmentsByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, std::shared_ptr<Body> body);
 	void setAttachmentsByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, std::shared_ptr<Body> body);
 
+	void setAttachmentsByYZCircle(double x, Eigen::Vector2d O, double r, std::shared_ptr<Body> body);
+
 	void setSlidingNodes(int id, std::shared_ptr<Body> body, Eigen::Vector3d init_dir);
 	void setSlidingNodesByXYSurface(double z, Eigen::Vector2d xrange, Eigen::Vector2d yrange, double dir, std::shared_ptr<Body> body);
 	void setSlidingNodesByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body);
 	void setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body);
+	void setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, std::shared_ptr<Body> body);
 
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
 	bool getInvertiblity() { return m_isInvertible; }
@@ -67,6 +70,10 @@ public:
 	std::vector<std::shared_ptr<Body> > m_sliding_bodies;
 	std::vector<Eigen::Vector3d> m_r_sliding;
 	std::vector<std::shared_ptr<Vector>> m_normals_sliding;
+
+	// nodes for comparing to sliding
+	std::vector<std::shared_ptr<Node> > m_compared_nodes;
+
 
 	std::shared_ptr<SoftBody> next;
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;

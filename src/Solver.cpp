@@ -203,7 +203,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 			G.block(nem, 0, ner, nr) = Gr;
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
-			rhsG = -gdot - 5.0 * g;// todo!!!!!
+			rhsG = -gdot - 100.0 * g;// todo!!!!!
 
 		}
 

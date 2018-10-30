@@ -63,8 +63,9 @@ public:
 								// 0 at muscle origin and 1 at insertion; remain fixed.
 	Eigen::Vector3f m_color; 
 	double L;
-private:
 	std::shared_ptr<Shape> sphere;
+private:
+	
 	double V;					// potential energy
 	double K;					// kinetic energy
 

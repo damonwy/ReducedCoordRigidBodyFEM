@@ -5,6 +5,7 @@
 #include "SE3.h"
 #include "MatrixStack.h"
 #include "Program.h"
+#include "Shape.h"
 
 using namespace std;
 using namespace Eigen;
@@ -57,7 +58,18 @@ Joint::~Joint() {
 
 }
 
+void Joint::load(const std::string &RESOURCE_DIR, std::string joint_shape) {
+
+	m_jointShape = make_shared<Shape>();
+	m_jointShape->loadMesh(RESOURCE_DIR + joint_shape);
+
+}
+
 void Joint::init(int &nm, int &nr) {
+	if (m_jointShape) {
+		m_jointShape->init();
+	}
+
 	m_body->setJoint(getJoint());
 
 	if (m_parent != nullptr) {
@@ -77,13 +89,10 @@ void Joint::update() {
 	updateSelf();
 	E_pj = E_pj0 * m_Q;
 
-
 	E_jp = SE3::inverse(E_pj);
 	Ad_jp = SE3::adjoint(E_jp);
 
 	Matrix4d E_wp;
-
-
 
 	if (m_parent == nullptr) {
 		E_wp.setIdentity();
@@ -91,13 +100,6 @@ void Joint::update() {
 	else {
 		E_wp = m_parent->E_wj;
 	}
-	
-	//cout << m_Q << endl;
-	
-	
-	//cout << E_wp << endl;
-	//cout << E_pj << endl;
-
 	E_wj = E_wp * E_pj;
 
 	// Update attached body
@@ -291,9 +293,9 @@ void Joint::scatterDofsNoUpdate(Eigen::VectorXd y, int nr) {
 	}
 }
 
-void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const {
+void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 
-	prog->bind();
+	progSimple->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	MV->pushMatrix();
 	MV->multMatrix(eigen_to_glm(E_wj));
@@ -318,11 +320,30 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 
 	glEnd();
 	MV->popMatrix();
-	prog->unbind();
+	progSimple->unbind();
 
-	drawSelf(MV, prog, P);
+	drawSelf(MV, prog, progSimple, P);
 }
 
-void Joint::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const {
+void Joint::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+	prog->bind();
+	if (m_jointShape) {
+		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+		glUniform3f(prog->getUniform("lightPos1"), 66.0, 25.0, 25.0);
+		glUniform1f(prog->getUniform("intensity_1"), 0.6);
+		glUniform3f(prog->getUniform("lightPos2"), -66.0, 25.0, 25.0);
+		glUniform1f(prog->getUniform("intensity_2"), 0.2);
+		glUniform1f(prog->getUniform("s"), 300);
+		glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
+		glUniform3f(prog->getUniform("kd"), 0.8, 0.7, 0.7);
+		glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
 
+		MV->pushMatrix();
+		MV->multMatrix(eigen_to_glm(E_wj));
+
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		m_jointShape->draw(prog);
+		MV->popMatrix();
+	}
+	prog->unbind();
 }

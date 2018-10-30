@@ -101,10 +101,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			// Inits joints
 			if (i == 0) {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 		}
 		break;
@@ -135,16 +135,16 @@ void World::load(const std::string &RESOURCE_DIR) {
 		auto b8 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
 		auto b9 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
 
-		auto j0 = addJointRevolute(b0, Vector3d::UnitX(), Vector3d(0.0, 15.0, 0.0), Matrix3d::Identity(), 0.0);
-		auto j1 = addJointRevolute(b1, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j0);
-		auto j2 = addJointRevolute(b2, Vector3d::UnitX(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j1);
-		auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j1);
-		auto j4 = addJointRevolute(b4, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j2);
-		auto j5 = addJointRevolute(b5, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
-		auto j6 = addJointRevolute(b6, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j4);
-		auto j7 = addJointRevolute(b7, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j3);
-		auto j8 = addJointRevolute(b8, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j7);
-		auto j9 = addJointRevolute(b9, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, j7);
+		auto j0 = addJointRevolute(b0, Vector3d::UnitX(), Vector3d(0.0, 15.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+		auto j1 = addJointRevolute(b1, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j0);
+		auto j2 = addJointRevolute(b2, Vector3d::UnitX(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, RESOURCE_DIR, j1);
+		auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, RESOURCE_DIR, j1);
+		auto j4 = addJointRevolute(b4, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, RESOURCE_DIR, j2);
+		auto j5 = addJointRevolute(b5, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, RESOURCE_DIR, j4);
+		auto j6 = addJointRevolute(b6, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, RESOURCE_DIR, j4);
+		auto j7 = addJointRevolute(b7, Vector3d::UnitY(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, RESOURCE_DIR, j3);
+		auto j8 = addJointRevolute(b8, Vector3d::UnitX(), Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, RESOURCE_DIR, j7);
+		auto j9 = addJointRevolute(b9, Vector3d::UnitY(), Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), M_PI / 4.0, RESOURCE_DIR, j7);
 	}
 	break;
 	case SHPERICAL_JOINT:
@@ -168,11 +168,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 		auto b3 = addBody(density, sides_1, Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box20_1_1.obj");
 		auto b4 = addBody(density, sides_0, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
 
-		auto j0 = addJointRevolute(b0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-		auto j1 = addJointRevolute(b1, Vector3d::UnitZ(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j0);
-		auto j2 = addJointRevolute(b2, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j0);
-		auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, j1);
-		auto j4 = addJointRevolute(b4, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, j3);
+		auto j0 = addJointRevolute(b0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+		auto j1 = addJointRevolute(b1, Vector3d::UnitZ(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j0);
+		auto j2 = addJointRevolute(b2, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j0);
+		auto j3 = addJointRevolute(b3, Vector3d::UnitZ(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j1);
+		auto j4 = addJointRevolute(b4, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j3);
 		j4->m_qdot(0) = 5.0;
 
 		auto constraint = make_shared<ConstraintLoop>(b2, b3);
@@ -198,10 +198,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			// Inits joints
 			if (i == 0) {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 
 			// Init constraints
@@ -240,10 +240,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			// Inits joints
 			if (i == 0) {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 			m_joints[i]->setStiffness(m_stiffness);
 			m_joints[i]->setDamping(m_damping);
@@ -272,10 +272,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			// Inits joints
 			if (i == 0) {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 		}
 
@@ -302,16 +302,16 @@ void World::load(const std::string &RESOURCE_DIR) {
 		double possion = 0.40;
 
 		for (int i = 0; i < 2; i++) {
-			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "bone_cyc.obj");
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
 
 			// Inits joints
 			if (i == 0) {
 				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 				joint->m_qdot(0) = -5.0;
 			}
 		}
@@ -319,7 +319,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 		auto softbody = addSoftBody(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
-
 
 		// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
 		// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
@@ -343,10 +342,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 			if (i == 0) {
 				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 				joint->m_qdot(0) = -5.0;
 			}
 		}
@@ -357,7 +356,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 	break;
 
-	case WRAPSPHERE:
+	case WRAP_SPHERE:
 	{
 		m_h = 1.0e-2;
 		m_tspan << 0.0, 50.0;
@@ -372,23 +371,21 @@ void World::load(const std::string &RESOURCE_DIR) {
 			// Inits joints
 			if (i == 0) {
 				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 				joint->m_qdot(0) = -5.0;
 			}
 		}
 
 		auto compSphere = addCompSphere(1.0, m_bodies[1], Matrix4d::Identity(), RESOURCE_DIR);
 		auto wrapSphere = addWrapSphere(m_bodies[0], Vector3d(1.0, 0.0, 0.0), m_bodies[2], Vector3d(1.0, 0.0, 0.0), compSphere, 20, RESOURCE_DIR);
-		/*auto compCylinder = addCompCylinder(1.0, m_bodies[1], Matrix4d::Identity());
-		compCylinder->load(RESOURCE_DIR, "cylinder.obj");*/
 
 	}
 	break;
 
-	case WRAPCYLINDER:
+	case WRAP_CYLINDER:
 	{
 		m_h = 1.0e-2;
 		m_tspan << 0.0, 50.0;
@@ -401,10 +398,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
 			if (i == 0) {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 				//joint->m_qdot(0) = -5.0;
 			}
 		}
@@ -416,7 +413,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 	break;
 
-	case WRAPDOUBLECYLINDER:
+	case WRAP_DOUBLECYLINDER:
 	{
 		m_h = 1.0e-2;
 		m_tspan << 0.0, 50.0;
@@ -429,10 +426,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
 			if (i == 0) {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
-				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, m_joints[i - 1]);
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 				joint->m_qdot(0) = -5.0;
 			}
 		}
@@ -460,8 +457,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Eigen::from_json(js["sides"], sides);
 
 		auto body0 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
-		auto joint0 = addJointRevolute(body0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-		auto body1 = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+		auto joint0 = addJointRevolute(body0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+		auto body1 = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
 		auto joint1 = make_shared<JointSplineCurve>(body1, joint0);
 		m_joints.push_back(joint1);
 		m_njoints++;
@@ -477,8 +474,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 		joint1->addControlFrame(cf2);
 		joint1->addControlFrame(cf3);
 
-		auto body2 = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
-		auto joint2 = addJointRevolute(body2, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, joint1);
+		auto body2 = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+		auto joint2 = addJointRevolute(body2, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, joint1);
 		E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
 
 		joint2->setJointTransform(E);
@@ -512,11 +509,18 @@ shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p, Matr
 	return body;
 }
 
-shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body, Vector3d axis, Vector3d p, Matrix3d R, double q, shared_ptr<Joint> parent) {
+shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body, 
+	Vector3d axis, 
+	Vector3d p, 
+	Matrix3d R, 
+	double q, 
+	const string &RESOURCE_DIR,
+	shared_ptr<Joint> parent) {
 	auto joint = make_shared<JointRevolute>(body, axis, parent);
 	Matrix4d E = SE3::RpToE(R, p);
 	joint->setJointTransform(E);
 	joint->m_q(0) = q;
+	joint->load(RESOURCE_DIR, "sphere2.obj");
 	m_joints.push_back(joint);
 	m_njoints++;
 	return joint;
@@ -833,6 +837,17 @@ void World::init() {
 
 		//m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(10.5, 12.5), Vector2d(-0.5, 0.5), -1.0, m_bodies[1]);
 		//m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(10.50, 12.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[1]);
+
+		m_softbodies[0]->setAttachmentsByYZCircle(6.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(9.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+
+		m_softbodies[0]->setSlidingNodesByYZCircle(8.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+
+		m_softbodies[0]->setSlidingNodesByYZCircle(14.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(12.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(13.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		//m_softbodies[0]->setAttachmentsByYZCircle(12.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+
 	}
 
 	for (int i = 0; i < m_nsoftbodies; i++) {
@@ -893,7 +908,7 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 
 	// Draw joints
 	for (int i = 0; i < m_njoints; i++) {
-		m_joints[i]->draw(MV, progSimple, P);
+		m_joints[i]->draw(MV, prog, progSimple, P);
 	}
 
 	// Draw springs

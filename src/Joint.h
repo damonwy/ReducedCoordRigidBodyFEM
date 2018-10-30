@@ -17,6 +17,7 @@ class SE3;
 class Body;
 class MatrixStack;
 class Program;
+class Shape;
 
 
 class Joint : public std::enable_shared_from_this<Joint> {
@@ -25,9 +26,10 @@ public:
 	Joint(std::shared_ptr<Body> body, double ndof, std::shared_ptr<Joint> parent = nullptr);
 	virtual ~Joint();
 
+	virtual void load(const std::string &RESOURCE_DIR, std::string joint_shape);
 	virtual void init(int &nm, int &nr);
-	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
-	virtual void drawSelf(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
+	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
+	virtual void drawSelf(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
 	virtual void update();
 	virtual void updateSelf();
 
@@ -83,6 +85,8 @@ public:
 	Vector6d getAlpha() const { return m_alpha; }
 protected:
 	Eigen::Matrix4d m_Q;										// Transformation matrix applied about the joint
+	std::shared_ptr<Shape> m_jointShape;				
+
 private:
 	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);
 

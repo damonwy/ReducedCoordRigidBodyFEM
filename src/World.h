@@ -51,9 +51,9 @@ enum WorldType {
 	SPRINGS, 
 	SOFT_BODIES, 
 	COMPONENT,
-	WRAPSPHERE,
-	WRAPCYLINDER,
-	WRAPDOUBLECYLINDER,
+	WRAP_SPHERE,
+	WRAP_CYLINDER,
+	WRAP_DOUBLECYLINDER,
 	SPLINE_CURVE_JOINT,
 	SPLINE_SURFACE_JOINT
 };
@@ -80,6 +80,7 @@ public:
 		Eigen::Vector3d p, 
 		Eigen::Matrix3d R, 
 		double q, 
+		const std::string &RESOURCE_DIR,
 		std::shared_ptr<Joint> parent=nullptr);
 	
 	std::shared_ptr<JointFixed> addJointFixed(

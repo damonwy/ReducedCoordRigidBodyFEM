@@ -156,6 +156,4 @@ void ConstraintAttachSoftBody::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, Vec
 
 	}
 
-	//mat_to_file(Gm, "Gm");
-
 }

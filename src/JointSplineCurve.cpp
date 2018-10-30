@@ -213,7 +213,7 @@ void JointSplineCurve::evalS(double q, Vector6d &S, Vector6d &dSdq) {
 
 }
 
-void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const {
+void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	int ncfs = m_Cs.size();
 	std::ptrdiff_t i;
 	double s = getBody()->sides.minCoeff(&i);
@@ -228,7 +228,7 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 
 	Matrix4d E_wj0 = E_wp * E_pj0;
 
-	prog->bind();
+	progSimple->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	// Draw control frames
 	for (int i = 0; i < ncfs; ++i) {
@@ -315,6 +315,6 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 	glEnd();
 	MV->popMatrix();
 	
-	prog->unbind();
+	progSimple->unbind();
 
 }

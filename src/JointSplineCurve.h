@@ -19,7 +19,7 @@ public:
 
 	void addControlFrame(Eigen::Matrix4d C);
 	void updateSelf();
-	void drawSelf(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P) const;
+	void drawSelf(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 
 	static double Bsum(int i, double q);
 	static double dBsum(int i, double q);
