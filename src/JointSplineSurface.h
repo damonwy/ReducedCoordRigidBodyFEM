@@ -7,7 +7,6 @@
 #define MUSCLEMASS_SRC_JOINTSPLINESURFACE_H_
 
 #include "Joint.h"
-#include <unsupported/Eigen/CXX11/Tensor>
 
 class Body;
 
@@ -19,11 +18,11 @@ public:
 	virtual ~JointSplineSurface();
 
 	void addControlFrame(int i, int j, Vector6d C);
-	void updateSelf();
+	/*void updateSelf();
 	void drawSelf(std::shared_ptr<MatrixStack> MV, 
 		const std::shared_ptr<Program> prog, 
 		const std::shared_ptr<Program> progSimple, 
-		std::shared_ptr<MatrixStack> P) const;
+		std::shared_ptr<MatrixStack> P) const;*/
 
 	static double Cfun(Eigen::Matrix4d C, Eigen::Vector2d q);
 	static double dCfun(Eigen::Matrix4d C, int i, Eigen::Vector2d q);
@@ -53,12 +52,12 @@ public:
 	static const Matrix6d m_E;		  // 6 basis twists in Eq.(25)
 
 private:
-	Eigen::Tensor<double, 3> m_cs;
+	//Eigen::Tensor<double, 3> m_cs;
 
 	std::vector<Eigen::Matrix4d> m_Cs;
 	std::vector<Vector6d> m_dCs;
 	Eigen::Matrix4d evalQ(Eigen::Vector2d q)const;
-	void evalS(Eigen::Vector2d q, Vector6d &S, Vector6d &dSdq);
+	void evalS(Eigen::Vector2d q, Matrix6x2d &S, Eigen::Tensor<double, 3> &dSdq);
 
 };
 

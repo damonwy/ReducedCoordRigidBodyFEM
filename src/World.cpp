@@ -312,9 +312,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 			else {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
-				joint->m_qdot(0) = -5.0;
+				
 			}
 		}
+
+		m_joints[0]->m_qdot(0) = 5.0;
+		m_joints[1]->m_qdot(0) = -15.0;
 
 		auto softbody = addSoftBody(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
