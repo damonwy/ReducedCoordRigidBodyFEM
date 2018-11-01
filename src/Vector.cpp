@@ -67,7 +67,7 @@ void Vector::draw(shared_ptr<MatrixStack> MV, shared_ptr<MatrixStack> P, const s
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		MV->pushMatrix();
-		glColor3f(0.8, 0.7, 0.0);
+		glColor3f(0.8f, 0.7f, 0.0f);
 		glLineWidth(3);
 		glBegin(GL_LINES);
 		Vector3f p0 = m_p->x.cast<float>();

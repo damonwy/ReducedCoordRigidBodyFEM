@@ -14,7 +14,7 @@ Joint::Joint() {
 	presc = false;
 }
 
-Joint::Joint(shared_ptr<Body> body, double ndof, shared_ptr<Joint> parent) :
+Joint::Joint(shared_ptr<Body> body, int ndof, shared_ptr<Joint> parent) :
 m_body(body),
 m_parent(parent),
 m_ndof(ndof)

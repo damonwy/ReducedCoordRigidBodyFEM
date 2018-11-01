@@ -71,8 +71,16 @@ bool rayTriangleIntersects(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector
 
 void eigen_sym(Eigen::Matrix3d &a, Eigen::Vector3d &eig_val, Eigen::Matrix3d &eig_vec) {
 	Eigen::EigenSolver<Eigen::Matrix3d> es(a);
-	eig_val = es.eigenvalues();
-	eig_vec = es.eigenvectors();
+
+	for (int i = 0; i < 3; i++) {
+		std::complex<double> ev = es.eigenvalues()[i];
+		eig_val(i) = ev.real();
+		Eigen::Vector3cd v = es.eigenvectors().col(i);
+		eig_vec(0, i) = v(0).real();
+		eig_vec(1, i) = v(1).real();
+		eig_vec(2, i) = v(2).real();
+	}
+
 
 }
 
@@ -113,7 +121,7 @@ int SVD(Eigen::Matrix3d &F,
 	// Handle situation:
 	// 1. det(V) == -1
 	//    - multiply the first column of V by -1
-	if (V.determinant() < 0.0) {
+	if (V.determinant() < -0.0000001) {
 		// convert V into a rotation (multiply column 1 by -1)
 		V.col(0) *= -1.0;
 	}
@@ -126,8 +134,8 @@ int SVD(Eigen::Matrix3d &F,
 	// also check if singular values are close to zero
 	Eigen::Vector3d SigmaInverse;
 	SigmaInverse(0) = (Sigma(0) > sv_eps) ? (1.0 / Sigma(0)) : 0.0;
-	SigmaInverse(1) = (Sigma[1] > sv_eps) ? (1.0 / Sigma(1)) : 0.0;
-	SigmaInverse(2) = (Sigma[2] > sv_eps) ? (1.0 / Sigma(2)) : 0.0;
+	SigmaInverse(1) = (Sigma(1) > sv_eps) ? (1.0 / Sigma(1)) : 0.0;
+	SigmaInverse(2) = (Sigma(2) > sv_eps) ? (1.0 / Sigma(2)) : 0.0;
 
 	// compute U using the formula:
 	// U = F * V * diag(SigmaInverse)
@@ -139,7 +147,7 @@ int SVD(Eigen::Matrix3d &F,
 	// Handle situation:
 	// 2. An entry of Sigma is near zero
 	// ---------------------------------------------------------
-	if ((Sigma[0] < sv_eps) && (Sigma[1] < sv_eps) && (Sigma[2] < sv_eps))
+	if ((Sigma(0) < sv_eps) && (Sigma(1) < sv_eps) && (Sigma(2) < sv_eps))
 	{
 		// extreme case, all singular values are small, material has collapsed almost to a point
 		// see [Irving 04], p. 4
@@ -165,7 +173,7 @@ int SVD(Eigen::Matrix3d &F,
 				U.col(dimB) = tmpVec2;
 				U.col(dimC) = tmpVec3;
 				
-				if (U.determinant() < 0.0)
+				if (U.determinant() < -0.0000001)
 				{	
 					U.col(dimB) *= -1.0;
 				}
@@ -193,7 +201,7 @@ int SVD(Eigen::Matrix3d &F,
 					Eigen::Vector3d tmpVec3 = tmpVec1.cross(tmpVec2).normalized();
 					U.col(dimA) = tmpVec3;
 				
-					if (U.determinant() < 0.0)
+					if (U.determinant() < -0.0000001)
 					{	
 						U.col(dimA) *= -1.0;
 					}
@@ -213,7 +221,7 @@ int SVD(Eigen::Matrix3d &F,
 			//      and the corresponding column of U
 
 			double detU = U.determinant();
-			if (detU < 0.0)
+			if (detU < -0.0000001)
 			{
 				// negative determinant
 				// find the smallest singular value (they are all non-negative)
@@ -225,6 +233,7 @@ int SVD(Eigen::Matrix3d &F,
 				// negate the smallest singular value
 				Sigma(smallestSingularValueIndex) *= -1.0;
 				U.col(smallestSingularValueIndex) *= -1.0;
+				
 			}
 		}
 	}

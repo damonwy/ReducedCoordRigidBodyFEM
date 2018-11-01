@@ -18,11 +18,11 @@ public:
 	virtual ~JointSplineSurface();
 
 	void addControlFrame(int i, int j, Vector6d C);
-	/*void updateSelf();
+	void updateSelf();
 	void drawSelf(std::shared_ptr<MatrixStack> MV, 
 		const std::shared_ptr<Program> prog, 
 		const std::shared_ptr<Program> progSimple, 
-		std::shared_ptr<MatrixStack> P) const;*/
+		std::shared_ptr<MatrixStack> P) const;
 
 	static double Cfun(Eigen::Matrix4d C, Eigen::Vector2d q);
 	static double dCfun(Eigen::Matrix4d C, int i, Eigen::Vector2d q);
@@ -38,7 +38,7 @@ public:
 	}
 
 	static const Matrix6d& getE() {
-		static Matrix6d _E(1.0 / 6.0 * (Matrix6d() <<
+		static Matrix6d _E((Matrix6d() <<
 			0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 
 			0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
 			0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
@@ -52,12 +52,12 @@ public:
 	static const Matrix6d m_E;		  // 6 basis twists in Eq.(25)
 
 private:
-	//Eigen::Tensor<double, 3> m_cs;
+	Tensor4x4x6d m_cs;
 
 	std::vector<Eigen::Matrix4d> m_Cs;
 	std::vector<Vector6d> m_dCs;
 	Eigen::Matrix4d evalQ(Eigen::Vector2d q)const;
-	void evalS(Eigen::Vector2d q, Matrix6x2d &S, Eigen::Tensor<double, 3> &dSdq);
+	void evalS(Eigen::Vector2d q, Eigen::MatrixXd &S, Tensor6x2x2d &dSdq);
 
 };
 

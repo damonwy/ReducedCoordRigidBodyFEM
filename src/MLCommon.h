@@ -15,7 +15,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <iostream>
-
+#include <complex>
 #include <unsupported/Eigen/CXX11/Tensor>
 
 typedef Eigen::Matrix<int, 6, 1> Vector6i;
@@ -31,7 +31,8 @@ typedef Eigen::Matrix<double, 3, 12> Matrix3x12d;
 typedef Eigen::Matrix<double, 12, 12> Matrix12d;
 typedef Eigen::Matrix<double, 4, 2> Matrix4x2d;
 typedef Eigen::Matrix<double, 4, 3> Matrix4x3d;
-
+typedef Eigen::TensorFixedSize<double, Eigen::Sizes<4, 4, 6>> Tensor4x4x6d;
+typedef Eigen::TensorFixedSize<double, Eigen::Sizes<6, 2, 2>> Tensor6x2x2d;
 
 enum Integrator { REDMAX_EULER, REDUCED_ODE45, REDMAX_ODE45 };
 enum Material {LINEAR, CO_ROTATED, STVK, NEO_HOOKEAN, MOONEY_RIVLIN};

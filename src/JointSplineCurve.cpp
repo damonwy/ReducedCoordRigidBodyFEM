@@ -144,7 +144,7 @@ Matrix4d JointSplineCurve::evalQ(double q) const {
 		q -= qmax;
 	}
 
-	int k = floor(q); // starting control frame (0-index)
+	int k = int(floor(q)); // starting control frame (0-index)
 	if (k >= ncfs) {
 		k -= 1; // overflow
 	}
@@ -180,7 +180,7 @@ void JointSplineCurve::evalS(double q, Vector6d &S, Vector6d &dSdq) {
 		q -= qmax;
 	}
 
-	int k = floor(q); // starting control frame 
+	int k = int(floor(q)); // starting control frame 
 	if (k >= ncfs) {
 		k -= 1; // overflow
 	}

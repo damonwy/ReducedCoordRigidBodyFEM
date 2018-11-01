@@ -7,6 +7,8 @@
 #include "MLCommon.h"
 
 class Node;
+class MatrixStack;
+class Program;
 
 class Tetrahedron
 {
@@ -16,6 +18,7 @@ public:
 
 	virtual ~Tetrahedron();
 
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 
 	Eigen::Matrix3d computePKStress(Eigen::Matrix3d F, double mu, double lambda);
 	Eigen::Matrix3d computePKStressDerivative(Eigen::Matrix3d F, Eigen::Matrix3d dF, double mu, double lambda);

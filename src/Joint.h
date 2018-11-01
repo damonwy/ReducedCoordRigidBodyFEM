@@ -23,7 +23,7 @@ class Shape;
 class Joint : public std::enable_shared_from_this<Joint> {
 public:
 	Joint();
-	Joint(std::shared_ptr<Body> body, double ndof, std::shared_ptr<Joint> parent = nullptr);
+	Joint(std::shared_ptr<Body> body, int ndof, std::shared_ptr<Joint> parent = nullptr);
 	virtual ~Joint();
 
 	virtual void load(const std::string &RESOURCE_DIR, std::string joint_shape);

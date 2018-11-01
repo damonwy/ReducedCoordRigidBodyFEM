@@ -9,6 +9,7 @@
 #include "JointFixed.h"
 #include "JointRevolute.h"
 #include "JointSplineCurve.h"
+#include "JointSplineSurface.h"
 
 #include "Node.h"
 #include "Body.h"
@@ -298,7 +299,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		density = 1.0;
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e2;
+		double young = 1e3;
 		double possion = 0.40;
 
 		for (int i = 0; i < 2; i++) {
@@ -317,9 +318,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 		}
 
 		m_joints[0]->m_qdot(0) = 5.0;
-		m_joints[1]->m_qdot(0) = -15.0;
+		m_joints[1]->m_qdot(0) = -20.0;
 
-		auto softbody = addSoftBody(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
+		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -487,7 +488,55 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
+	case SPLINE_SURFACE_JOINT:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
 
+		auto body0 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto joint0 = addJointRevolute(body0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+		auto body1 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+
+		auto joint1 = make_shared<JointSplineSurface>(body1, joint0);
+		m_joints.push_back(joint1);
+		m_njoints++;
+		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(0.0, -14.0, 0.0));
+		joint1->setJointTransform(E);
+
+		double t0 = 15.0;
+		double r0 = PI * 0.25;
+		double x, y, z, a, b, c, s1, s2;
+		for (int i = 0; i < 4; ++i) {
+			s1 = i / 3.0;
+			x = (1 - s1)*(-t0) + s1 * t0;
+			a = (1 - s1) * (-r0) + s1 * r0;
+			for (int j = 0; j < 4; ++j) {
+				s2 = j / 3.0;
+				y = (1 - s2) * (-t0) + s2 * t0;
+				z = 0.05 * (x * x + y * y);
+				b = (1 - s1) * (-r0) + s1 * r0;
+				c = 0;
+				Vector6d ctf;
+				ctf << x, z, y, a, c, b;
+				joint1->addControlFrame(i,j,ctf);
+			}
+		}
+
+		auto body2 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto joint2 = addJointRevolute(body2, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, joint1);
+		E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(0.0, -10.0, 0.0));
+		joint2->setJointTransform(E);
+		joint0->m_q(0) = PI / 8.0;
+		joint1->m_q(0) = 0.5;
+		joint1->m_q(1) = 0.5;
+		joint2->m_q(0) = PI / 4.0;
+
+	}
+	break;
 	default:
 		break;
 	}
@@ -841,15 +890,22 @@ void World::init() {
 		//m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(10.5, 12.5), Vector2d(-0.5, 0.5), -1.0, m_bodies[1]);
 		//m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(10.50, 12.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[1]);
 
-		m_softbodies[0]->setAttachmentsByYZCircle(6.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(9.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 
-		m_softbodies[0]->setSlidingNodesByYZCircle(8.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByYZCircle(15.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 
-		m_softbodies[0]->setSlidingNodesByYZCircle(14.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(12.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(13.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
-		//m_softbodies[0]->setAttachmentsByYZCircle(12.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(9.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(6.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(7.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(10.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+
+		//m_softbodies[0]->setSlidingNodesByYZCircle(8.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(11.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+
+		//m_softbodies[0]->setSlidingNodesByYZCircle(14.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(12.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(13.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 
 	}
 

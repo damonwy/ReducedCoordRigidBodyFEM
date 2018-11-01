@@ -97,7 +97,7 @@ void Node::clearNormals() {
 
 Vector3d Node::computeNormal() {
 	normal.setZero();
-	for (int i = 0; i < m_normals.size(); i++) {
+	for (int i = 0; i < (int)m_normals.size(); i++) {
 		normal += m_normals[i];
 	}
 

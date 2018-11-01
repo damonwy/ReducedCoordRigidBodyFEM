@@ -92,7 +92,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	}
 
 	// Fix the normal of top and bottom surface
-	for (int i = 0; i < m_trifaces.size(); i++) {
+	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 
 		Vector3d p0 = triface->m_nodes[0]->x;
@@ -112,11 +112,11 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 
 void SoftBody::init() {
 
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		m_nodes[i]->init();
 	}
 
-	for (int i = 0; i < m_compared_nodes.size(); ++i) {
+	for (int i = 0; i < (int)m_compared_nodes.size(); ++i) {
 		m_compared_nodes[i]->init();
 	}
 
@@ -131,7 +131,7 @@ void SoftBody::init() {
 	eleBuf.resize(m_trifaces.size() * 3);
 	updatePosNor();
 
-	for (int i = 0; i < m_trifaces.size(); i++) {
+	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		eleBuf[3 * i + 0] = 3 * i;
 		eleBuf[3 * i + 1] = 3 * i + 1;
 		eleBuf[3 * i + 2] = 3 * i + 2;
@@ -165,13 +165,13 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-	glUniform3f(prog->getUniform("lightPos1"), 66.0, 50.0, 50.0);
-	glUniform1f(prog->getUniform("intensity_1"), 0.6);
-	glUniform3f(prog->getUniform("lightPos2"), -66.0, 50.0, 50.0);
-	glUniform1f(prog->getUniform("intensity_2"), 0.2);
-	glUniform1f(prog->getUniform("s"), 200);
-	glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
-	glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
+	glUniform3f(prog->getUniform("lightPos1"), 66.0f, 50.0f, 50.0f);
+	glUniform1f(prog->getUniform("intensity_1"), 0.6f);
+	glUniform3f(prog->getUniform("lightPos2"), -66.0f, 50.0f, 50.0f);
+	glUniform1f(prog->getUniform("intensity_2"), 0.2f);
+	glUniform1f(prog->getUniform("s"), 200.0f);
+	glUniform3f(prog->getUniform("ka"), 0.2f, 0.2f, 0.2f);
+	glUniform3f(prog->getUniform("ks"), 1.0f, 0.9f, 0.8f);
 	glUniform3fv(prog->getUniform("kd"), 1, this->m_color.data());
 
 	int h_pos = prog->getAttribute("aPos");
@@ -196,22 +196,27 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 
-	for (int i = 0; i < m_attach_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_attach_nodes.size(); i++) {
 		auto node = m_attach_nodes[i];
 		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
 		node->draw(MV, prog);
 	}
 
-	for (int i = 0; i < m_sliding_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_sliding_nodes.size(); i++) {
 		auto node = m_sliding_nodes[i];
 		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
 		node->draw(MV, prog);
 	}
 
-	for (int i = 0; i < m_compared_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_compared_nodes.size(); i++) {
 		auto node = m_compared_nodes[i];
 		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
 		node->draw(MV, prog);
+	}
+
+	for (int i = 0; i < (int)m_tets.size(); ++i) {
+		auto tet = m_tets[i];
+		tet->draw(MV, prog, progSimple, P);
 	}
 	prog->unbind();
 
@@ -223,7 +228,7 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 	progSimple->unbind();
 
 	// Draw the normals of the sliding nodes
-	for (int i = 0; i < m_normals_sliding.size(); ++i) {
+	for (int i = 0; i < (int)m_normals_sliding.size(); ++i) {
 		auto vec = m_normals_sliding[i];
 		vec->draw(MV, P, progSimple);
 	}
@@ -236,7 +241,7 @@ void SoftBody::countDofs(int &nm, int &nr) {
 	// and the Jacobian must pass them through with the identity 
 	// matrices
 
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		m_nodes[i]->idxM = nm;
 		m_nodes[i]->idxR = nr;
 		nm += 3;
@@ -246,7 +251,7 @@ void SoftBody::countDofs(int &nm, int &nr) {
 
 void SoftBody::transform(Eigen::Vector3d dx) {
 
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		node->x = node->x + dx;
 	}
@@ -255,18 +260,18 @@ void SoftBody::transform(Eigen::Vector3d dx) {
 
 void SoftBody::updatePosNor() {
 	// update normals
-	for (int i = 0; i < m_normals_sliding.size(); ++i) {
+	for (int i = 0; i < (int)m_normals_sliding.size(); ++i) {
 		auto vec = m_normals_sliding[i];
 		vec->update();
 	}
 
 
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		node->clearNormals();
 	}
 
-	for (int i = 0; i < m_trifaces.size(); i++) {
+	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 
 		Vector3d p0 = triface->m_nodes[0]->x;
@@ -276,9 +281,9 @@ void SoftBody::updatePosNor() {
 		Vector3d normal = triface->computeNormal();
 
 		for (int ii = 0; ii < 3; ii++) {
-			posBuf[9 * i + 0 + ii] = p0(ii);
-			posBuf[9 * i + 3 + ii] = p1(ii);
-			posBuf[9 * i + 6 + ii] = p2(ii);
+			posBuf[9 * i + 0 + ii] = float(p0(ii));
+			posBuf[9 * i + 3 + ii] = float(p1(ii));
+			posBuf[9 * i + 6 + ii] = float(p2(ii));
 
 			if (!triface->isFlat) {
 				// If the node is on the curved surface, average the normals after this loop
@@ -287,14 +292,14 @@ void SoftBody::updatePosNor() {
 			}
 			else {
 				// Don't average normals if it's a flat surface
-				norBuf[9 * i + 0 + ii] = normal(ii);
-				norBuf[9 * i + 3 + ii] = normal(ii);
-				norBuf[9 * i + 6 + ii] = normal(ii);
+				norBuf[9 * i + 0 + ii] = float(normal(ii));
+				norBuf[9 * i + 3 + ii] = float(normal(ii));
+				norBuf[9 * i + 6 + ii] = float(normal(ii));
 			}
 		}
 	}
 
-	for (int i = 0; i < m_trifaces.size(); i++) {
+	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 		if (!triface->isFlat) {
 			// Use the average normals if it's a curved surface
@@ -302,7 +307,7 @@ void SoftBody::updatePosNor() {
 				// Average normals here
 				Vector3d normal = triface->m_nodes[ii]->computeNormal();
 				for (int iii = 0; iii < 3; iii++) {
-					norBuf[9 * i + 3 * ii + iii] = normal(iii);
+					norBuf[9 * i + 3 * ii + iii] = float(normal(iii));
 				}
 			}
 		}
@@ -354,7 +359,7 @@ void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_pt
 	Vector3d xa, xb, xc, xd;
 	int numIntersects = 0;
 
-	for (int i = 0; i < m_tets.size(); i++) {
+	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
 		xa = tet->m_nodes[0]->x;
 		xb = tet->m_nodes[1]->x;
@@ -393,7 +398,7 @@ void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_pt
 }
 
 void SoftBody::setAttachmentsByXYSurface(double z, Vector2d xrange, Vector2d yrange, shared_ptr<Body> body) {
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
@@ -405,7 +410,7 @@ void SoftBody::setAttachmentsByXYSurface(double z, Vector2d xrange, Vector2d yra
 
 
 void SoftBody::setAttachmentsByYZSurface(double x, Vector2d yrange, Vector2d zrange, shared_ptr<Body> body) {
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
@@ -418,19 +423,19 @@ void SoftBody::setAttachmentsByYZSurface(double x, Vector2d yrange, Vector2d zra
 
 
 void SoftBody::setAttachmentsByYZCircle(double x, Vector2d O, double r, shared_ptr<Body> body) {
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
-		double diff = pow((xi(1) - 0(0)), 2) + pow((xi(2) - 0(1)), 2) - r * r;
+		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - 0(1)), 2) - r * r;
 
-		if (abs(xi(0) - x) < 0.3 && diff < 0.01) {
+		if (abs(xi(0) - x) < 4.3 && diff < 0.01) {
 			setAttachments(i, body);
 		}
 	}
 }
 
 void SoftBody::setAttachmentsByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, shared_ptr<Body> body) {
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
@@ -446,7 +451,7 @@ void SoftBody::setSlidingNodesByXYSurface(double z, Eigen::Vector2d xrange, Eige
 	z_axis << 0.0, 0.0, 1.0;
 	z_axis *= dir;
 
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
@@ -461,7 +466,7 @@ void SoftBody::setSlidingNodesByYZSurface(double x, Eigen::Vector2d yrange, Eige
 	x_axis << 1.0, 0.0, 0.0;
 	x_axis *= dir;
 
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
@@ -474,14 +479,14 @@ void SoftBody::setSlidingNodesByYZSurface(double x, Eigen::Vector2d yrange, Eige
 void SoftBody::setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, std::shared_ptr<Body> body) {
 	Vector3d x_axis;
 
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 		x_axis << 0.0, O(0) - xi(1), O(1) - xi(2);
 		x_axis.normalized();
 
-		double diff = pow((xi(1) - 0(0)), 2) + pow((xi(2) - 0(1)), 2) - r * r;
-		if (abs(xi(0) - x) < 0.3 && diff < 0.01) {
+		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - 0(1)), 2) - r * r;
+		if (abs(xi(0) - x) < 0.6 && diff < 0.01) {
 			setSlidingNodes(i, body, x_axis);
 
 			// Create Attached node to compare if they are really sliding
@@ -504,7 +509,7 @@ void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eige
 	y_axis << 0.0, 1.0, 0.0;
 	y_axis *= dir;
 	
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
@@ -547,7 +552,7 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 	// Scatters q and qdot from y
 
 	// Update points
-	for (int i = 0; i < m_compared_nodes.size(); ++i) {
+	for (int i = 0; i < (int)m_compared_nodes.size(); ++i) {
 		m_compared_nodes[i]->update();
 		
 
@@ -558,6 +563,13 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 		if (!m_nodes[i]->fixed) {
 			m_nodes[i]->x = y.segment<3>(idxR);
 			m_nodes[i]->v = y.segment<3>(nr + idxR);
+			/*if (y.segment<3>(idxR)(1) < -5.0) {
+				m_nodes[i]->x(1) = -4.9;
+				m_nodes[i]->v(1) = 0.0;
+
+			}*/
+
+			
 		}
 
 	}
@@ -575,6 +587,12 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 		if (!m_nodes[i]->fixed) {
 			m_nodes[i]->v = ydot.segment<3>(idxR);
 			m_nodes[i]->a = ydot.segment<3>(nr + idxR);
+
+			/*if (m_nodes[i]->x(1) <= -4.9) {
+				m_nodes[i]->v(1) = 0.0;
+				m_nodes[i]->a(1) = 0.0;
+
+			}*/
 		}
 	}
 
@@ -589,7 +607,7 @@ MatrixXd SoftBody::computeMass(Vector3d grav, MatrixXd M) {
 	// Computes maximal mass matrix
 
 	Matrix3d I3 = Matrix3d::Identity();
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxM = m_nodes[i]->idxM;
 		double m = m_nodes[i]->m;
 		M.block<3, 3>(idxM, idxM) = m * I3;
@@ -607,14 +625,14 @@ VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
 
 	// Gravity
 	Matrix3d I3 = Matrix3d::Identity();
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxM = m_nodes[i]->idxM;
 		double m = m_nodes[i]->m;
 		//f.segment<3>(idxM) += m * grav;
 	}
 
 	// Elastic Forces
-	for (int i = 0; i < m_tets.size(); i++) {
+	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
 		f = tet->computeElasticForces(f);
 	}
@@ -630,7 +648,7 @@ MatrixXd SoftBody::computeStiffness(MatrixXd K) {
 	VectorXd df(3 * m_nodes.size());
 	VectorXd Dx = df;
 
-	for (int i = 0; i < m_tets.size(); i++) {
+	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
 		for (int ii = 0; ii < 4; ii++) {
 			auto node = tet->m_nodes[ii];
@@ -655,7 +673,7 @@ MatrixXd SoftBody::computeStiffness(MatrixXd K) {
 }
 
 MatrixXd SoftBody::computeJacobian(MatrixXd J) {
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
 	}
 
@@ -667,7 +685,7 @@ MatrixXd SoftBody::computeJacobian(MatrixXd J) {
 }
 
 Energy SoftBody::computeEnergies(Eigen::Vector3d grav, Energy ener) {
-	int n_nodes = m_nodes.size();
+	int n_nodes = (int)m_nodes.size();
 
 	for (int i = 0; i < n_nodes; i++) {
 		Vector3d x = m_nodes[i]->x;
@@ -677,7 +695,7 @@ Energy SoftBody::computeEnergies(Eigen::Vector3d grav, Energy ener) {
 		ener.V = ener.V - m * grav.dot(x);
 	}
 
-	for (int i = 0; i < m_tets.size(); i++) {
+	for (int i = 0; i < (int)m_tets.size(); i++) {
 		double vi = m_tets[i]->computeEnergy();
 		ener.V = ener.V + vi;
 	}
