@@ -63,19 +63,20 @@ public:
 
 	std::string getName() const { return m_name; }
 	int getUID() const { return m_uid; }
+
 	std::shared_ptr<Body> getBody() const { return m_body; }
 	std::shared_ptr<Joint> getParent() const { return m_parent; }
 	void addChild(std::shared_ptr<Joint> joint) { m_children.push_back(joint); }
 	std::shared_ptr<Joint> getJoint() { return shared_from_this(); }
 
-	Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J, int nm, int nr);
-	Eigen::MatrixXd computeJacobianDerivative(Eigen::MatrixXd Jdot, Eigen::MatrixXd J, int nm, int nr);
+	void computeJacobian(Eigen::MatrixXd &J, int nm, int nr);
+	void computeJacobianDerivative(Eigen::MatrixXd &Jdot, Eigen::MatrixXd J, int nm, int nr);
 	Eigen::VectorXd computerJacTransProd(Eigen::VectorXd y, Eigen::VectorXd x, int nr);
-	Eigen::VectorXd computeForceStiffness(Eigen::VectorXd fr);
-	Eigen::MatrixXd computeMatrixStiffness(Eigen::MatrixXd Ksr);
+	void computeForceStiffness(Eigen::VectorXd &fr);
+	void computeMatrixStiffness(Eigen::MatrixXd &Ksr);
 	
-	Eigen::VectorXd computeForceDamping(Eigen::VectorXd fr);
-	Eigen::MatrixXd computeMatrixDamping(Eigen::MatrixXd Ddr);
+	void computeForceDamping(Eigen::VectorXd &fr);
+	void computeMatrixDamping(Eigen::MatrixXd &Ddr);
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy ener);
 	Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
@@ -83,6 +84,7 @@ public:
 	void scatterDofs(Eigen::VectorXd y, int nr);
 	void scatterDDofs(Eigen::VectorXd ydot, int nr);
 	Vector6d getAlpha() const { return m_alpha; }
+
 protected:
 	Eigen::Matrix4d m_Q;										// Transformation matrix applied about the joint
 	std::shared_ptr<Shape> m_jointShape;				

@@ -161,14 +161,14 @@ void WrapSphere::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Pro
 	prog->bind();
 
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-	glUniform3f(prog->getUniform("lightPos1"), 1.0, 1.0, 1.0);
-	glUniform1f(prog->getUniform("intensity_1"), 0.8);
-	glUniform3f(prog->getUniform("lightPos2"), -1.0, 1.0, 1.0);
-	glUniform1f(prog->getUniform("intensity_2"), 0.2);
-	glUniform1f(prog->getUniform("s"), 200);
-	glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
-	glUniform3f(prog->getUniform("kd"), 0, 0, 1);
-	glUniform3f(prog->getUniform("ks"), 0, 1.0, 0);
+	glUniform3f(prog->getUniform("lightPos1"), 1.0f, 1.0f, 1.0f);
+	glUniform1f(prog->getUniform("intensity_1"), 0.8f);
+	glUniform3f(prog->getUniform("lightPos2"), -1.0f, 1.0f, 1.0f);
+	glUniform1f(prog->getUniform("intensity_2"), 0.2f);
+	glUniform1f(prog->getUniform("s"), 200.0f);
+	glUniform3f(prog->getUniform("ka"), 0.2f, 0.2f, 0.2f);
+	glUniform3f(prog->getUniform("kd"), 0.0f, 0.0f, 1.0f);
+	glUniform3f(prog->getUniform("ks"), 0.0f, 1.0f, 0.0f);
 	MV->pushMatrix();
 
 	// Draw P, S points
@@ -184,7 +184,7 @@ void WrapSphere::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Pro
 	glUniformMatrix4fv(prog2->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	glUniformMatrix4fv(prog2->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 	MV->pushMatrix();
-	glColor3f(0.0, 0.0, 0.0);
+	glColor3f(0.0f, 0.0f, 0.0f);
 	glLineWidth(4);
 	glBegin(GL_LINE_STRIP);
 	glVertex3f(float(m_point_S->x(0)), float(m_point_S->x(1)), float(m_point_S->x(2)));

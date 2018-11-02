@@ -158,32 +158,28 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		rhsG.setZero();
 
 		// sceneFcn()
-		M = body0->computeMass(grav, M);
-		f = body0->computeForce(grav, f);
+		body0->computeMass(grav, M);
+		body0->computeForce(grav, f);
 
 		M = spring0->computeMass(grav, M);
 		f = spring0->computeForce(grav, f);
 
-		M = softbody0->computeMass(grav, M);
-		f = softbody0->computeForce(grav, f);
+		softbody0->computeMass(grav, M);
+		softbody0->computeForce(grav, f);
 
-		K = softbody0->computeStiffness(K);
+		softbody0->computeStiffness(K);
 
-		fsr = joint0->computeForceStiffness(fsr);
-		fdr = joint0->computeForceDamping(fdr);
-		//cout << fsr << endl;
-		//cout << fdr << endl;
-
-		Ksr = joint0->computeMatrixStiffness(Ksr);
+		joint0->computeForceStiffness(fsr);
+		joint0->computeForceDamping(fdr);
+		joint0->computeMatrixStiffness(Ksr);
+		joint0->computeMatrixDamping(Ddr);
 		
-		Ddr = joint0->computeMatrixDamping(Ddr);
-		
-		J = joint0->computeJacobian(J, nm, nr);
-		Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
+		joint0->computeJacobian(J, nm, nr);
+		joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 
 		// spring jacobian todo
 		J = spring0->computeJacobian(J);
-		J = softbody0->computeJacobian(J);
+		softbody0->computeJacobian(J);
 
 		q0 = y.segment(0, nr);
 		qdot0 = y.segment(nr, nr);
@@ -197,6 +193,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		Mtilde = Mtilde + h * Ddr - h * h * Ksr;
 		
 		if (ne > 0) {
+			
 			constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
 			constraint0->computeJacEqR(Gr, Grdot, gr);
 			G.block(0, 0, nem, nr) = Gm * J;
@@ -489,32 +486,30 @@ shared_ptr<Solution> Solver::solve() {
 			G.setZero();
 			rhsG.setZero();
 			// sceneFcn()
-			M = body0->computeMass(grav, M);
-			f = body0->computeForce(grav, f);
+			body0->computeMass(grav, M);
+			body0->computeForce(grav, f);
 
 			M = spring0->computeMass(grav, M);
 			f = spring0->computeForce(grav, f);
 
-			M = softbody0->computeMass(grav, M);
-			f = softbody0->computeForce(grav, f);
+			softbody0->computeMass(grav, M);
+			softbody0->computeForce(grav, f);
 
-			K = softbody0->computeStiffness(K);
+			softbody0->computeStiffness(K);
 
+			joint0->computeForceStiffness(fsr);
+			joint0->computeForceDamping(fdr);
 
-			fsr = joint0->computeForceStiffness(fsr);
-			fdr = joint0->computeForceDamping(fdr);
+			joint0->computeMatrixStiffness(Ksr);
+			joint0->computeMatrixDamping(Ddr);
 
-			Ksr = joint0->computeMatrixStiffness(Ksr);
-			Ddr = joint0->computeMatrixDamping(Ddr);
-
-
-			J = joint0->computeJacobian(J, nm, nr);
-			Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
-
+			joint0->computeJacobian(J, nm, nr);
+			//Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
+			joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 			// spring jacobian todo
 			J = spring0->computeJacobian(J);
 
-			J = softbody0->computeJacobian(J);
+			softbody0->computeJacobian(J);
 
 			q0 = m_solutions->y.row(k - 1).segment(0, nr);
 			//cout << "q0"<<q0 << endl;

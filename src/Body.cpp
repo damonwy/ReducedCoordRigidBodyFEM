@@ -155,19 +155,18 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 
 }
 
-MatrixXd Body::computeMass(Vector3d grav, MatrixXd M) {
+void Body::computeMass(Vector3d grav, MatrixXd &M) {
 	// Computes maximal mass matrix 
 	Matrix6d M_i = Matrix6d(I_i.asDiagonal());
 	
 	M.block<6, 6>(idxM, idxM) = M_i;
 	if (next != nullptr) {
-		M = next->computeMass(grav, M);
+		next->computeMass(grav, M);
 	}
 
-	return M;
 }
 
-VectorXd Body::computeForce(Vector3d grav, VectorXd f) {
+void Body::computeForce(Vector3d grav, VectorXd &f) {
 	// Computes maximal force vector
 	Matrix6d M_i = Matrix6d(I_i.asDiagonal());
 	Vector6d fcor = SE3::ad(phi).transpose() * M_i * phi;
@@ -196,8 +195,7 @@ VectorXd Body::computeForce(Vector3d grav, VectorXd f) {
 	//}
 
 	if (next != nullptr) {
-		f = next->computeForce(grav, f);
+		next->computeForce(grav, f);
 	}
 
-	return f;
 }

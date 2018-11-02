@@ -124,7 +124,7 @@ void Node::drawNormal(shared_ptr<MatrixStack> MV, shared_ptr<MatrixStack> P, con
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-	glColor3f(0.8, 0.7, 0.0);
+	glColor3f(0.8f, 0.7f, 0.0f);
 	glLineWidth(2);
 	glBegin(GL_LINES);
 	Vector3f p0 = x.cast<float>();

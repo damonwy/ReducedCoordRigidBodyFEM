@@ -14,6 +14,7 @@
 #include "Node.h"
 #include "Body.h"
 #include "SoftBodyNull.h"
+#include "SoftBodyInvertibleFEM.h"
 #include "SoftBody.h"
 #include "FaceTriangle.h"
 
@@ -95,7 +96,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_tspan << 0.0, 5.0;
 		m_t = 0.0;
 		// Inits rigid bodies
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 5; i++) {
 
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
@@ -285,7 +286,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		spring0->setStiffness(m_stiffness);
 		auto spring1 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
 		spring1->setStiffness(m_stiffness);
-		for (int i = 0; i < m_springs.size(); i++) {
+		for (int i = 0; i < (int)m_springs.size(); i++) {
 			m_springs[i]->load(RESOURCE_DIR);
 		}
 
@@ -320,7 +321,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[0]->m_qdot(0) = 5.0;
 		m_joints[1]->m_qdot(0) = -20.0;
 
-		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
+		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc20");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -538,6 +539,45 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
+	case SOFT_BODIES_INVERTIBLE:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e3;
+		double possion = 0.40;
+
+		for (int i = 0; i < 2; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+
+			// Inits joints
+			if (i == 0) {
+				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+		}
+
+		m_joints[0]->m_qdot(0) = 5.0;
+		m_joints[1]->m_qdot(0) = -20.0;
+
+		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
+		softbody->transform(Vector3d(10.0, 0.0, 0.0));
+		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
+
+		// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
+		// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
+
+	}
+	break;
+
 	default:
 		break;
 	}
@@ -546,6 +586,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, Material material, const string &RESOURCE_DIR, string file_name) {
 	auto softbody = make_shared<SoftBody>(density, young, possion, material);
+	softbody->load(RESOURCE_DIR, file_name);
+	m_softbodies.push_back(softbody);
+	m_nsoftbodies++;
+	return softbody;
+}
+
+shared_ptr<SoftBodyInvertibleFEM> World::addSoftBodyInvertibleFEM(double density, double young, double possion, Material material, const string &RESOURCE_DIR, string file_name) {
+	auto softbody = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
 	softbody->load(RESOURCE_DIR, file_name);
 	m_softbodies.push_back(softbody);
 	m_nsoftbodies++;
@@ -823,7 +871,7 @@ void World::init() {
 		addSpringNull();
 	}
 
-	if (m_type == SOFT_BODIES) {
+	if (m_type == SOFT_BODIES | m_type == SOFT_BODIES_INVERTIBLE) {
 		//m_softbodies[0]->setAttachments(0, m_bodies[0]);
 		//m_softbodies[0]->setAttachments(3, m_bodies[0]);
 		//m_softbodies[0]->setAttachments(6, m_bodies[0]);
@@ -956,7 +1004,7 @@ void World::update() {
 
 int World::getNsteps() {
 	// Computes the number of results
-	int nsteps = (m_tspan(1) - m_tspan(0)) / m_h;
+	int nsteps = int((m_tspan(1) - m_tspan(0)) / m_h);
 	return nsteps;
 }
 

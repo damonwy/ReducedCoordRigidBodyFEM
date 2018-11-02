@@ -30,11 +30,11 @@ public:
 	void updatePosNor();
 
 	virtual void countDofs(int &nm, int &nr);
-	virtual Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J);
-	virtual Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
+	virtual void computeJacobian(Eigen::MatrixXd &J);
+	virtual void computeMass(Eigen::Vector3d grav, Eigen::MatrixXd &M);
 	virtual Energy computeEnergies(Eigen::Vector3d grav, Energy ener);
-	virtual Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
-	virtual Eigen::MatrixXd computeStiffness(Eigen::MatrixXd K);
+	virtual void computeForce(Eigen::Vector3d grav, Eigen::VectorXd &f);
+	virtual void computeStiffness(Eigen::MatrixXd &K);
 	virtual Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
 	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
@@ -74,12 +74,15 @@ public:
 	// nodes for comparing to sliding
 	std::vector<std::shared_ptr<Node> > m_compared_nodes;
 
-
 	std::shared_ptr<SoftBody> next;
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
+	bool m_isInvert;
 
-private:
+protected:
 	bool m_isInvertible;
+	bool m_isGravity;
+	bool m_isElasticForce;
+
 	Material m_material;
 	Eigen::Vector3f m_color;
 

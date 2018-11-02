@@ -26,15 +26,18 @@ using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
-SoftBody::SoftBody(): m_isInvertible(true) {
+SoftBody::SoftBody(): m_isInvertible(true), m_isGravity(false), m_isElasticForce(true){
 	m_color << 1.0f, 1.0f, 0.0f;
+	m_isInvert = false;
 }
 
 SoftBody::SoftBody(double density, double young, double poisson, Material material) :
-	m_density(density), m_young(young), m_poisson(poisson), m_material(material), m_isInvertible(true)
+	m_density(density), m_young(young), m_poisson(poisson), m_material(material), 
+	m_isInvertible(true), m_isGravity(false), m_isElasticForce(true)
 {
 	m_color << 1.0f, 1.0f, 0.0f;
-	
+	m_isInvert= false;
+
 }
 
 void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
@@ -50,8 +53,6 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	for (int i = 0; i < output_mesh.numberofpoints; i++) {
 		auto node = make_shared<Node>();
 		node->r = r;
-
-
 		node->x0 << output_mesh.pointlist[3 * i + 0],
 			output_mesh.pointlist[3 * i + 1],
 			output_mesh.pointlist[3 * i + 2];
@@ -250,7 +251,6 @@ void SoftBody::countDofs(int &nm, int &nr) {
 }
 
 void SoftBody::transform(Eigen::Vector3d dx) {
-
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		node->x = node->x + dx;
@@ -264,7 +264,6 @@ void SoftBody::updatePosNor() {
 		auto vec = m_normals_sliding[i];
 		vec->update();
 	}
-
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
@@ -408,7 +407,6 @@ void SoftBody::setAttachmentsByXYSurface(double z, Vector2d xrange, Vector2d yra
 	}
 }
 
-
 void SoftBody::setAttachmentsByYZSurface(double x, Vector2d yrange, Vector2d zrange, shared_ptr<Body> body) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
@@ -420,7 +418,6 @@ void SoftBody::setAttachmentsByYZSurface(double x, Vector2d yrange, Vector2d zra
 	}
 
 }
-
 
 void SoftBody::setAttachmentsByYZCircle(double x, Vector2d O, double r, shared_ptr<Body> body) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
@@ -519,7 +516,6 @@ void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eige
 	}
 }
 
-
 VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
 	// Gathers qdot and qddot into y
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
@@ -554,7 +550,6 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 	// Update points
 	for (int i = 0; i < (int)m_compared_nodes.size(); ++i) {
 		m_compared_nodes[i]->update();
-		
 
 	}
 
@@ -567,11 +562,8 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 				m_nodes[i]->x(1) = -4.9;
 				m_nodes[i]->v(1) = 0.0;
 
-			}*/
-
-			
+			}*/	
 		}
-
 	}
 	updatePosNor();
 
@@ -598,12 +590,10 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 
 	if (next != nullptr) {
 		next->scatterDDofs(ydot, nr);
-
 	}
-
 }
 
-MatrixXd SoftBody::computeMass(Vector3d grav, MatrixXd M) {
+void SoftBody::computeMass(Vector3d grav, MatrixXd &M) {
 	// Computes maximal mass matrix
 
 	Matrix3d I3 = Matrix3d::Identity();
@@ -614,37 +604,36 @@ MatrixXd SoftBody::computeMass(Vector3d grav, MatrixXd M) {
 	}
 
 	if (next != nullptr) {
-		M = next->computeMass(grav, M);
+		next->computeMass(grav, M);
 	}
-
-	return M;
 }
 
-VectorXd SoftBody::computeForce(Vector3d grav, VectorXd f) {
+void SoftBody::computeForce(Vector3d grav, VectorXd &f) {
 	// Computes force vector
 
-	// Gravity
-	Matrix3d I3 = Matrix3d::Identity();
-	for (int i = 0; i < (int)m_nodes.size(); i++) {
-		int idxM = m_nodes[i]->idxM;
-		double m = m_nodes[i]->m;
-		//f.segment<3>(idxM) += m * grav;
+	if (m_isGravity) {
+		for (int i = 0; i < (int)m_nodes.size(); i++) {
+			int idxM = m_nodes[i]->idxM;
+			double m = m_nodes[i]->m;
+			f.segment<3>(idxM) += m * grav;
+		}
 	}
 
 	// Elastic Forces
-	for (int i = 0; i < (int)m_tets.size(); i++) {
-		auto tet = m_tets[i];
-		f = tet->computeElasticForces(f);
+	if (m_isElasticForce) {
+		for (int i = 0; i < (int)m_tets.size(); i++) {
+			auto tet = m_tets[i];
+			f = tet->computeElasticForces(f);
+		}
 	}
+
 
 	if (next != nullptr) {
-		f = next->computeForce(grav, f);
+		next->computeForce(grav, f);
 	}
-
-	return f;
 }
 
-MatrixXd SoftBody::computeStiffness(MatrixXd K) {
+void SoftBody::computeStiffness(MatrixXd &K) {
 	VectorXd df(3 * m_nodes.size());
 	VectorXd Dx = df;
 
@@ -667,21 +656,20 @@ MatrixXd SoftBody::computeStiffness(MatrixXd K) {
 	}
 
 	if (next != nullptr) {
-		K = next->computeStiffness(K);
+		next->computeStiffness(K);
 	}
-	return K;
+
 }
 
-MatrixXd SoftBody::computeJacobian(MatrixXd J) {
+void SoftBody::computeJacobian(MatrixXd &J) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
 	}
 
 	if (next != nullptr) {
-		J = next->computeJacobian(J);
+		next->computeJacobian(J);
 	}
 
-	return J;
 }
 
 Energy SoftBody::computeEnergies(Eigen::Vector3d grav, Energy ener) {

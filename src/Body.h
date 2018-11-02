@@ -29,8 +29,8 @@ public:
 	void countDofs(int &nm);
 	int countM(int &nm, int data);
 
-	Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
-	Eigen::VectorXd computeForce(Eigen::Vector3d grav, Eigen::VectorXd f);
+	void computeMass(Eigen::Vector3d grav, Eigen::MatrixXd &M);
+	void computeForce(Eigen::Vector3d grav, Eigen::VectorXd &f);
 
 	Energy computeEnergies(Eigen::Vector3d grav, Energy energies);
 

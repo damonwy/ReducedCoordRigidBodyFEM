@@ -31,7 +31,7 @@ void SpringSerial::init() {
 	// Sets the world positions of the nodes using the attachment
 	// points. r0 and r1 are in local coords.
 
-	for (int i = 0; i < m_nodes.size(); i++) {		
+	for (int i = 0; i < (int)m_nodes.size(); i++) {		
 		m_nodes[i]->init();
 	}
 
@@ -59,7 +59,7 @@ void SpringSerial::init() {
 	Vector4d x1 = E1 * r1;
 
 	// Set the nodal positions
-	int n_nodes = m_nodes.size();
+	int n_nodes = (int)m_nodes.size();
 
 	for (int i = 0; i < n_nodes; i++) {
 		double s = double(i) / (n_nodes - 1);
@@ -76,7 +76,7 @@ void SpringSerial::init() {
 }
 
 void SpringSerial::load(const string &RESOURCE_DIR) {
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		m_nodes[i]->load(RESOURCE_DIR);
 	}
 
@@ -90,7 +90,7 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 	MV->pushMatrix();
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 
-	int n_nodes = m_nodes.size();
+	int n_nodes = (int)m_nodes.size();
 	for (int i = 0; i < n_nodes; i++) {	
 		m_nodes[i]->draw(MV, prog);
 	}
@@ -136,7 +136,7 @@ void SpringSerial::countDofs_(int &nm, int &nr) {
 	// and the Jacobian must pass them through with the identity 
 	// matrices
 
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		m_nodes[i]->idxM = nm;
 		m_nodes[i]->idxR = nr;
 		nm += 3;
@@ -188,7 +188,7 @@ void SpringSerial::scatterDDofs_(VectorXd &ydot, int nr) {
 
 MatrixXd SpringSerial::computeMass_(Vector3d grav, MatrixXd M) {
 	// Computes maximal mass matrix
-	int n_nodes = m_nodes.size();
+	int n_nodes = (int)m_nodes.size();
 	double m = m_mass / n_nodes;
 
 	Matrix3d I3 = Matrix3d::Identity();
@@ -230,7 +230,7 @@ VectorXd SpringSerial::computeForce_(Vector3d grav, VectorXd f) {
 }
 
 Energy SpringSerial::computeEnergies_(Vector3d grav, Energy ener) {
-	int n_nodes = m_nodes.size();
+	int n_nodes = (int)m_nodes.size();
 
 	double m = m_mass / n_nodes;
 
@@ -255,7 +255,7 @@ Energy SpringSerial::computeEnergies_(Vector3d grav, Energy ener) {
 }
 
 MatrixXd SpringSerial::computeJacobian_(MatrixXd J) {
-	for (int i = 0; i < m_nodes.size(); i++) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
 	}
 	return J;

@@ -125,7 +125,7 @@ int Joint::countR(int &nr, int data) {
 	return (nr - data);
 }
 
-MatrixXd Joint::computeJacobian(MatrixXd J, int nm, int nr) {
+void Joint::computeJacobian(MatrixXd &J, int nm, int nr) {
 	// Computes the redmax Jacobian
 	Matrix6d Ad_ij = m_body->Ad_ij;
 	J.block(m_body->idxM, idxR, 6, m_ndof) = Ad_ij * m_S;
@@ -138,12 +138,11 @@ MatrixXd Joint::computeJacobian(MatrixXd J, int nm, int nr) {
 		jointA = jointA->getParent();
 	}
 	if (next != nullptr) {
-		J = next->computeJacobian(J, nm, nr);
+		next->computeJacobian(J, nm, nr);
 	}
-	return J;
 }
 
-VectorXd Joint::computeForceStiffness(VectorXd fr) {
+void Joint::computeForceStiffness(VectorXd &fr) {
 	// Computes joint stiffness force vector
 	if (presc == false) {
 		int row = this->idxR;
@@ -152,12 +151,11 @@ VectorXd Joint::computeForceStiffness(VectorXd fr) {
 	}
 
 	if (next != nullptr) {
-		fr = next->computeForceStiffness(fr);
+		next->computeForceStiffness(fr);
 	}
-	return fr;
 }
 
-MatrixXd Joint::computeMatrixStiffness(MatrixXd Ksr) {
+void Joint::computeMatrixStiffness(MatrixXd &Ksr) {
 	// Computes joint stiffness matrix
 	if (presc == false) {
 		int row = this->idxR;
@@ -167,12 +165,11 @@ MatrixXd Joint::computeMatrixStiffness(MatrixXd Ksr) {
 	}
 
 	if (next != nullptr) {
-		Ksr = next->computeMatrixStiffness(Ksr);
+		next->computeMatrixStiffness(Ksr);
 	}
-	return Ksr;
 }
 
-VectorXd Joint::computeForceDamping(VectorXd fr) {
+void Joint::computeForceDamping(VectorXd &fr) {
 	// Computes joint damping force vector
 	if (presc == false) {
 		int row = this->idxR;
@@ -180,12 +177,11 @@ VectorXd Joint::computeForceDamping(VectorXd fr) {
 	}
 
 	if (next != nullptr) {
-		fr = next->computeForceDamping(fr);
+		next->computeForceDamping(fr);
 	}
-	return fr;
 }
 
-MatrixXd Joint::computeMatrixDamping(MatrixXd Ddr) {
+void Joint::computeMatrixDamping(MatrixXd &Ddr) {
 	// Computes joint damping matrix
 	if (presc == false) {
 		int row = this->idxR;
@@ -195,12 +191,11 @@ MatrixXd Joint::computeMatrixDamping(MatrixXd Ddr) {
 	}
 
 	if (next != nullptr) {
-		Ddr = next->computeMatrixDamping(Ddr);
+		next->computeMatrixDamping(Ddr);
 	}
-	return Ddr;
 }
 
-MatrixXd Joint::computeJacobianDerivative(MatrixXd Jdot, MatrixXd J, int nm, int nr) {
+void Joint::computeJacobianDerivative(MatrixXd &Jdot, MatrixXd J, int nm, int nr) {
 	Matrix6d Ad_ij = m_body->Ad_ij;
 	Jdot.block(m_body->idxM, idxR, 6, m_ndof) = Ad_ij * m_Sdot;
 	// Loop through all ancestors
@@ -219,9 +214,8 @@ MatrixXd Joint::computeJacobianDerivative(MatrixXd Jdot, MatrixXd J, int nm, int
 		jointA = jointA->getParent();
 	}
 	if (next != nullptr) {
-		Jdot = next->computeJacobianDerivative(Jdot, J, nm, nr);
+		next->computeJacobianDerivative(Jdot, J, nm, nr);
 	}
-	return Jdot;
 }
 
 VectorXd Joint::computerJacTransProd(VectorXd y, VectorXd x, int nr) {
@@ -304,19 +298,19 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	glLineWidth(5);
 	glBegin(GL_LINES);
 	// X axis
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(3.0, 0.0, 0.0);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(3.0f, 0.0f, 0.0f);
 
 	// Y axis
-	glColor3f(0.0, 1.0, 0.0);
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 3.0, 0.0);
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 3.0f, 0.0f);
 
 	// Z axis
-	glColor3f(0.0, 0.0, 1.0);
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 0.0, 3.0);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 3.0f);
 
 	glEnd();
 	MV->popMatrix();
@@ -329,14 +323,14 @@ void Joint::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog,
 	prog->bind();
 	if (m_jointShape) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
-		glUniform3f(prog->getUniform("lightPos1"), 66.0, 25.0, 25.0);
-		glUniform1f(prog->getUniform("intensity_1"), 0.6);
-		glUniform3f(prog->getUniform("lightPos2"), -66.0, 25.0, 25.0);
-		glUniform1f(prog->getUniform("intensity_2"), 0.2);
-		glUniform1f(prog->getUniform("s"), 300);
-		glUniform3f(prog->getUniform("ka"), 0.2, 0.2, 0.2);
-		glUniform3f(prog->getUniform("kd"), 0.8, 0.7, 0.7);
-		glUniform3f(prog->getUniform("ks"), 1.0, 0.9, 0.8);
+		glUniform3f(prog->getUniform("lightPos1"), 66.0f, 25.0f, 25.0f);
+		glUniform1f(prog->getUniform("intensity_1"), 0.6f);
+		glUniform3f(prog->getUniform("lightPos2"), -66.0f, 25.0f, 25.0f);
+		glUniform1f(prog->getUniform("intensity_2"), 0.2f);
+		glUniform1f(prog->getUniform("s"), 300.0f);
+		glUniform3f(prog->getUniform("ka"), 0.2f, 0.2f, 0.2f);
+		glUniform3f(prog->getUniform("kd"), 0.8f, 0.7f, 0.7f);
+		glUniform3f(prog->getUniform("ks"), 1.0f, 0.9f, 0.8f);
 
 		MV->pushMatrix();
 		MV->multMatrix(eigen_to_glm(E_wj));

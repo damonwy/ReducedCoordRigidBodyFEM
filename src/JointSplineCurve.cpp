@@ -343,7 +343,7 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 	
 	progSimple->unbind();
 
-	double r = 0.5;
+	float r = 0.5f;
 	prog->bind();
 	if (m_jointShape) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));

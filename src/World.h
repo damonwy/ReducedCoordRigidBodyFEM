@@ -16,6 +16,7 @@ class Joint;
 class JointRevolute;
 class Body;
 class SoftBody;
+class SoftBodyInvertibleFEM;
 class MatrixStack;
 class Program;
 class Constraint;
@@ -49,13 +50,14 @@ enum WorldType {
 	EXTERNAL_WORLD_FORCE, 
 	JOINT_STIFFNESS, 
 	SPRINGS, 
-	SOFT_BODIES, 
+	SOFT_BODIES,
 	COMPONENT,
 	WRAP_SPHERE,
 	WRAP_CYLINDER,
 	WRAP_DOUBLECYLINDER,
 	SPLINE_CURVE_JOINT,
-	SPLINE_SURFACE_JOINT
+	SPLINE_SURFACE_JOINT,
+	SOFT_BODIES_INVERTIBLE
 };
 
 
@@ -109,6 +111,14 @@ public:
 		double possion, 
 		Material material, 
 		const std::string &RESOURCE_DIR, 
+		std::string file_name);
+
+	std::shared_ptr<SoftBodyInvertibleFEM> addSoftBodyInvertibleFEM(
+		double density,
+		double young,
+		double possion,
+		Material material,
+		const std::string &RESOURCE_DIR,
 		std::string file_name);
 
 	std::shared_ptr<ConstraintNull> addConstraintNull();

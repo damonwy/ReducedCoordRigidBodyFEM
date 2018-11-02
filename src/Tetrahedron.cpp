@@ -10,7 +10,7 @@
 using namespace Eigen;
 using namespace std;
 
-#define Fthreshold -0.5
+#define Fthreshold 0.005
 
 Tetrahedron::Tetrahedron()
 {
@@ -34,67 +34,93 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	for (int i = 0; i < (int)nodes.size(); i++) {
 		nodes[i]->m += this->m_mass * 0.25;
 	}
+
+	computeAreaWeightedVertexNormals();
 }
 
-VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
-	if (m_isInvertible) {
-		isInverted();
-	}
-	
+Eigen::Matrix3d Tetrahedron::computeDeformationGradient() {
+
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
 	}
 
 	this->F = Ds * Bm;
+	return this->F;
+}
 
-	if (isInvert && m_isInvertible) {
-		this->F = this->Fhat; // Use the new F
-		//cout << "U" << U << endl;
-		//cout << "V" << V << endl;
+Matrix3x4d Tetrahedron::computeAreaWeightedVertexNormals() {
+	Vector3d va, vb, vc, vd;
+	va = m_nodes[0]->x;
+	vb = m_nodes[1]->x;
+	vc = m_nodes[2]->x;
+	vd = m_nodes[3]->x;
 
+	// Computes normals for the four faces: acb, adc, abd, bcd
+	Vector3d acb_normal, adc_normal, abd_normal, bcd_normal;
+	acb_normal = (vc - va).cross(vb - va);
+	adc_normal = (vd - va).cross(vc - va);
+	abd_normal = (vb - va).cross(vd - va);
+	bcd_normal = (vc - vb).cross(vd - vb);
+
+	// if the tet vertices abcd form a positive orientation, no need to correct
+	// if not, flip them
+	double orientation = (vd - va).dot((vb- va).cross(vc - va));
+	if (orientation < 0.0) {
+		acb_normal *= -1.0;
+		adc_normal *= -1.0;
+		abd_normal *= -1.0;
+		bcd_normal *= -1.0;
 	}
 
-	// clamp if below the principal stretch threshold
-	int clamped = 0;
-	for (int i = 0; i < 3; i++)
-	{
-		if (abs(this->F(i, i)) < Fthreshold)
-		{
-			//dropBelowThreshold = true;
-			cout << this->F(i, i) << endl;
-			if (this->F(i, i) < 0.0) {
-				this->F(i, i) = -Fthreshold;
-			}
-			else {
-				this->F(i, i) = Fthreshold;
-			}
-			
-			clamped |= (1 << i);
-		}
-	}
+	// Computes the area of triangles
+	// area = 0.5 * | u x v |
+	double acb_area, adc_area, abd_area, bcd_area;
+	acb_area = 0.5 * sqrt(acb_normal.dot(acb_normal));
+	adc_area = 0.5 * sqrt(adc_normal.dot(adc_normal));
+	abd_area = 0.5 * sqrt(abd_normal.dot(abd_normal));
+	bcd_area = 0.5 * sqrt(bcd_normal.dot(bcd_normal));
 
-	clamped = 0; // disable clamping
+	acb_normal.normalized();
+	adc_normal.normalized();
+	abd_normal.normalized();
+	bcd_normal.normalized();
+
+	this->Nm.col(0) = (acb_area * acb_normal + adc_area * adc_normal + abd_area * abd_normal) / 3.0;
+	this->Nm.col(1) = (acb_area * acb_normal + abd_area * abd_normal + bcd_area * bcd_normal) / 3.0;
+	this->Nm.col(2) = (acb_area * acb_normal + adc_area * adc_normal + bcd_area * bcd_normal) / 3.0;
+	this->Nm.col(3) = (adc_area * adc_normal + abd_area * abd_normal + bcd_area * bcd_normal) / 3.0;
+
+	return this->Nm;
+}
+
+VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
+	/*if (m_isInvertible) {
+		isInverted();
+	}
+	*/
+
+	this->F = computeDeformationGradient();
+	// The deformation gradient is available in this->F
+
+
+	//if (isInvert && m_isInvertible) {
+	//	this->F = this->Fhat; // Use the new F
+	//}
 
 	this->P = computePKStress(F, m_mu, m_lambda);
-
 	this->H = -W * P * (Bm.transpose());
 
-	if (isInvert && m_isInvertible) {
+	/*if (isInvert && m_isInvertible) {
 		this->H = -W * U * P * V.transpose() * (Bm.transpose());
-		cout << "FHAT" << Fhat << endl;
-		cout << "P" << P << endl;
-		cout << "H" << H << endl;
-	}
+	}*/
 
-	for (int i = 0; i < 3; i++) {
-		double force = this->H.col(i).norm();
-		if (force > 1.0e2) {
-			this->H *= 1.0e2 / force;
-			cout << this->H << endl;
-		}
-	}
-	
-
+	//for (int i = 0; i < 3; i++) {
+	//	double force = this->H.col(i).norm();
+	//	if (force > 1.0e2) {
+	//		this->H *= 1.0e2 / force;
+	//	}
+	//}
+	//
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		int rowi = m_nodes[i]->idxM;
@@ -107,6 +133,149 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 	}
 
 	return f;
+}
+
+
+
+VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
+
+	this->F = computeDeformationGradient();
+	// The deformation gradient is available in this->F
+	if (this->F.determinant() < 0.0) {
+		isInvert = true;
+	}
+	else {
+		isInvert = false;
+	}
+
+	// SVD on the deformation gradient
+	int modifiedSVD = 1;
+	Vector3d Fhat_vec;
+
+	if (!SVD(this->F, this->U, Fhat_vec, this->V, 1e-8, modifiedSVD)) {
+		//cout << "error in svd " << endl;
+	}
+	this->Fhat = Fhat_vec.asDiagonal();
+
+	// SVD result is available in this->U, this->V, Fhat_vec, this->Fhat
+
+	// clamp if below the principal stretch threshold
+	int clamped = 0;
+	for (int i = 0; i < 3; i++)
+	{
+		if (this->Fhat(i, i) < Fthreshold)
+		{
+			this->Fhat(i, i) = Fthreshold;
+			clamped |= (1 << i);
+		}
+	}
+
+	clamped = 0; // disable clamping
+
+	// Computes the internal forces
+	// Computes P first and computes the nodal forces G=PBm in section 4 of [Irving 04]
+
+	// Computes the diagonal P tensor
+	this->Phat = computeInvertiblePKStress(this->Fhat, m_mu, m_lambda);
+	
+	// P = U * diag(Phat) * V'
+	this->P = this->U * this->Phat * this->V.transpose();
+
+	// Computes the nodal forces by G=PBm=PNm
+
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		int rowi = m_nodes[i]->idxM;
+		f.segment<3>(rowi) += this->P * this->Nm.col(i);
+	}
+
+	return f;
+}
+
+void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df) {
+	this->F = computeDeformationGradient();
+
+	/*if (isInvert && m_isInvertible) {
+	this->F = this->Fhat;
+	}*/
+
+	//// clamp if below the principal stretch threshold
+	//int clamped = 0;
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	if (abs(this->F(i, i)) < Fthreshold)
+	//	{
+	//		//dropBelowThreshold = true;
+	//		cout << this->F(i, i) << endl;
+	//		if (this->F(i, i) < 0.0) {
+	//			this->F(i, i) = -Fthreshold;
+	//		}
+	//		else {
+	//			this->F(i, i) = Fthreshold;
+	//		}
+
+	//		clamped |= (1 << i);
+	//	}
+	//}
+
+	//clamped = 0; // disable clamping
+
+	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
+	}
+
+	this->dF = dDs * Bm;
+	this->dP = computePKStressDerivative(this->Fhat, dF, m_mu, m_lambda);
+
+	this->dH = -W * dP * (Bm.transpose());
+
+	/*for (int i = 0; i < 3; i++) {
+	double force = this->dH.col(i).norm();
+
+	if (force > 1.0e3) {
+	this->dH *= 1.0e3 / force;
+	}
+	}*/
+
+	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+		df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
+		df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);
+	}
+
+}
+
+Matrix3d Tetrahedron::computeInvertiblePKStress(Matrix3d F, double mu, double lambda) {
+	Vector3d invariants;
+	Vector3d lambda1, lambda2;
+	lambda1 << F(0, 0), F(1, 1), F(2, 2);
+
+	lambda2 << lambda1(0) * lambda1(0), lambda1(1) * lambda1(1), lambda1(2) * lambda1(2);
+	double IC = lambda2(0) + lambda2(1) + lambda2(2);
+	double IIC = lambda2(0) * lambda2(0) + lambda2(1) * lambda2(1) + lambda2(2) * lambda2(2);
+	double IIIC = lambda2(0) * lambda2(1) * lambda2(2);
+
+	invariants << IC, IIC, IIIC;
+
+	Vector3d dPsidIV;
+	dPsidIV << 0.5 * mu, 0.0, (-0.5 * mu + 0.25 * lambda * log(IIIC)) / IIIC;
+
+	// PDiag = [ dI / dlambda ]^T * dPsidI
+	Matrix3d matM;
+	matM << 2.0 * lambda1(0), 2.0 * lambda1(1), 2.0 * lambda1(2),
+		4.0 * lambda1(0) * lambda1(0) * lambda1(0), 4.0 * lambda1(1) * lambda1(1) * lambda1(1), 4.0 * lambda1(2) * lambda1(2) * lambda1(2),
+		2.0 * lambda1(0) * lambda2(1) * lambda2(2), 2.0 * lambda1(1) * lambda2(0) * lambda2(2), 2.0 * lambda1(2) * lambda2(0) * lambda2(1);
+
+	Vector3d result;
+	result = matM.transpose() * dPsidIV;
+	this->Phat = result.asDiagonal();
+	return this->Phat;
+
+}
+
+Matrix3d Tetrahedron::computeInvertiblePKStressDerivative(Matrix3d F, Matrix3d dF, double mu, double lambda) {
+
+
+	return F;
+
 }
 
 Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
@@ -133,41 +302,7 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 		double J = sqrt(I3);
 		psi = 1.0 / 2.0 * mu *(I1 - 3.0) - mu * log(J) + 1.0 / 2.0 * lambda * log(J)*log(J);
 		P = mu * (F - F.inverse().transpose()) + lambda * log(J)*(F.inverse().transpose());
-		if (isInvert) {
-		/*	cout << "I1" << I1 << endl;
-			cout << "I2" << I2 << endl;
-			cout << "I3" << I3 << endl;
-			cout << "J" << J << endl;
-			cout << "F.inverse().transpose()" << F.inverse().transpose() << endl;*/
 
-		}
-
-		Vector3d invariants;
-		Vector3d lambda1, lambda2;
-		lambda1 << F(0, 0), F(1, 1), F(2, 2);
-
-		lambda2 << lambda1(0) * lambda1(0), lambda1(1) * lambda1(1), lambda1(2) * lambda1(2);
-		double IC = lambda2(0) + lambda2(1) + lambda2(2);
-		double IIC = lambda2(0) * lambda2(0) + lambda2(1) * lambda2(1) + lambda2(2) * lambda2(2);
-		double IIIC = lambda2(0) * lambda2(1) * lambda2(2);
-
-		invariants(0) = IC;
-		invariants(1) = IIC;
-		invariants(2) = IIIC;
-
-		Vector3d dPsidIV;
-		dPsidIV << 0.5 * mu, 0.0, (-0.5 * mu + 0.25 * lambda * log(IIIC)) / IIIC;
-
-		// PDiag = [ dI / dlambda ]^T * dPsidI
-		Matrix3d matM;
-		matM << 2.0 * lambda1(0), 2.0 * lambda1(1), 2.0 * lambda1(2),
-			4.0 * lambda1(0) * lambda1(0) * lambda1(0), 4.0 * lambda1(1) * lambda1(1) * lambda1(1), 4.0 * lambda1(2) * lambda1(2) * lambda1(2),
-			2.0 * lambda1(0) * lambda2(1) * lambda2(2), 2.0 * lambda1(1) * lambda2(0) * lambda2(2), 2.0 * lambda1(2) * lambda2(0) * lambda2(1);
-	
-		Vector3d result;
-
-		result = matM.transpose() * dPsidIV;
-		//P = result.asDiagonal();
 
 		break;
 	}
@@ -288,7 +423,7 @@ bool Tetrahedron::isInverted() {
 				else {
 					Fhat_vec(i) = Fthreshold;
 				}
-				//dropBelowThreshold = true;
+				
 				//Fhat_vec(i) = 0.5;
 				clamped |= (1 << i);
 
@@ -355,36 +490,32 @@ void Tetrahedron::diagDeformationGradient(Eigen::Matrix3d F_) {
 
 
 void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
-	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
-		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
-	}
+	this->F = computeDeformationGradient();
 
-	this->F = Ds * Bm;
-
-	if (isInvert && m_isInvertible) {
+	/*if (isInvert && m_isInvertible) {
 		this->F = this->Fhat;
-	}
+	}*/
 
-	// clamp if below the principal stretch threshold
-	int clamped = 0;
-	for (int i = 0; i < 3; i++)
-	{
-		if (abs(this->F(i, i)) < Fthreshold)
-		{
-			//dropBelowThreshold = true;
-			cout << this->F(i, i) << endl;
-			if (this->F(i, i) < 0.0) {
-				this->F(i, i) = -Fthreshold;
-			}
-			else {
-				this->F(i, i) = Fthreshold;
-			}
+	//// clamp if below the principal stretch threshold
+	//int clamped = 0;
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	if (abs(this->F(i, i)) < Fthreshold)
+	//	{
+	//		//dropBelowThreshold = true;
+	//		cout << this->F(i, i) << endl;
+	//		if (this->F(i, i) < 0.0) {
+	//			this->F(i, i) = -Fthreshold;
+	//		}
+	//		else {
+	//			this->F(i, i) = Fthreshold;
+	//		}
 
-			clamped |= (1 << i);
-		}
-	}
+	//		clamped |= (1 << i);
+	//	}
+	//}
 
-	clamped = 0; // disable clamping
+	//clamped = 0; // disable clamping
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
@@ -393,15 +524,15 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	this->dF = dDs * Bm;
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
 	this->dH = -W * dP * (Bm.transpose());
-	//cout << this->dH << endl;
-	for (int i = 0; i < 3; i++) {
+	
+	/*for (int i = 0; i < 3; i++) {
 		double force = this->dH.col(i).norm();
 		
 		if (force > 1.0e3) {
 			this->dH *= 1.0e3 / force;
-			//cout << this->dH << endl;
 		}
-	}
+	}*/
+
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);
@@ -434,16 +565,16 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 }
 
 double Tetrahedron::computeEnergy() {
-	isInverted();
+	//isInverted();
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
 	}
 
 	this->F = Ds * Bm;
-	if (isInvert && m_isInvertible) {
+	/*if (isInvert && m_isInvertible) {
 		this->F = this->Fhat;
-	}
+	}*/
 
 	this->P = computePKStress(F, m_mu, m_lambda);
 	this->m_energy = W * psi;
