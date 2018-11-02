@@ -219,8 +219,8 @@ void JointSplineSurface::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<P
 	int qmax = 1;
 	Vector2d qvec;
 
-	VectorXd q0 = VectorXd::LinSpaced(qmax * 5, 0, qmax);
-	VectorXd q1 = VectorXd::LinSpaced(qmax * 5, 0, qmax);
+	VectorXd q0 = VectorXd::LinSpaced(qmax * 10, 0, qmax);
+	VectorXd q1 = VectorXd::LinSpaced(qmax * 10, 0, qmax);
 	for (int i = 0; i < q0.size(); ++i) {
 		for (int j = 0; j < q1.size(); ++j) {
 			qvec(0) = q0(i);

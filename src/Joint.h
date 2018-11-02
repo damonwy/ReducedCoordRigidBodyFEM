@@ -86,19 +86,16 @@ public:
 protected:
 	Eigen::Matrix4d m_Q;										// Transformation matrix applied about the joint
 	std::shared_ptr<Shape> m_jointShape;				
+	std::shared_ptr<Body> m_body;						// Attached body
+	std::shared_ptr<Joint> m_parent;					// Parent joint
 
 private:
 	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);
-
 	std::string m_name;
 	int m_uid;
-	std::shared_ptr<Body> m_body;						// Attached body
-	std::shared_ptr<Joint> m_parent;					// Parent joint
 	std::vector<std::shared_ptr<Joint> > m_children;	// Children joints
-
 	Vector6d m_alpha;
 	
-
 };
 
 #endif // MUSCLEMASS_SRC_JOINT_H_

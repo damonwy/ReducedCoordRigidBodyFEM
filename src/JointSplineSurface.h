@@ -54,8 +54,6 @@ public:
 private:
 	Tensor4x4x6d m_cs;
 
-	std::vector<Eigen::Matrix4d> m_Cs;
-	std::vector<Vector6d> m_dCs;
 	Eigen::Matrix4d evalQ(Eigen::Vector2d q)const;
 	void evalS(Eigen::Vector2d q, Eigen::MatrixXd &S, Tensor6x2x2d &dSdq);
 

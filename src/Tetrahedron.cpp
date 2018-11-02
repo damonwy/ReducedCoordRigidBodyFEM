@@ -10,7 +10,7 @@
 using namespace Eigen;
 using namespace std;
 
-#define Fthreshold -1111110.5
+#define Fthreshold -0.5
 
 Tetrahedron::Tetrahedron()
 {

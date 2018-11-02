@@ -8,6 +8,7 @@
 #include "MatrixStack.h"
 #include "Program.h"
 #include "SE3.h"
+#include "Shape.h"
 
 using namespace std;
 using namespace Eigen;
@@ -27,6 +28,31 @@ JointSplineCurve::JointSplineCurve(shared_ptr<Body> body, shared_ptr<Joint> pare
 Joint(body, 1, parent)
 {
 
+
+}
+
+void JointSplineCurve::load(const std::string &RESOURCE_DIR, std::string joint_shape) {
+
+	m_jointShape = make_shared<Shape>();
+	m_jointShape->loadMesh(RESOURCE_DIR + joint_shape);
+	m_jointSphereShape = make_shared<Shape>();
+	m_jointSphereShape->loadMesh(RESOURCE_DIR + "sphere2.obj");
+}
+
+void JointSplineCurve::init(int &nm, int &nr) {
+	if (m_jointShape) {
+		m_jointShape->init();
+	}
+	if (m_jointSphereShape) {
+		m_jointSphereShape->init();
+	}
+
+	m_body->setJoint(getJoint());
+
+	if (m_parent != nullptr) {
+		m_parent->addChild(getJoint());
+	}
+	countDofs(nm, nr);
 
 }
 
@@ -241,17 +267,17 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 		// X axis
 		glColor3f(1.0, 0.0, 0.0);
 		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(3.0, 0.0, 0.0);
+		glVertex3f(2.0, 0.0, 0.0);
 
 		// Y axis
 		glColor3f(0.0, 1.0, 0.0);
 		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(0.0, 3.0, 0.0);
+		glVertex3f(0.0, 2.0, 0.0);
 
 		// Z axis
 		glColor3f(0.0, 0.0, 1.0);
 		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(0.0, 0.0, 3.0);
+		glVertex3f(0.0, 0.0, 2.0);
 
 		glEnd();
 		MV->popMatrix();
@@ -269,22 +295,22 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 		Matrix4d E = E_wj0 * Q;
 		MV->multMatrix(eigen_to_glm(E));
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-		glLineWidth(3);
+		glLineWidth(2);
 		glBegin(GL_LINES);
 		// X axis
 		glColor3f(1.0, 0.0, 0.0);
 		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(3.0, 0.0, 0.0);
+		glVertex3f(1.0, 0.0, 0.0);
 
 		// Y axis
 		glColor3f(0.0, 1.0, 0.0);
 		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(0.0, 3.0, 0.0);
+		glVertex3f(0.0, 1.0, 0.0);
 
 		// Z axis
 		glColor3f(0.0, 0.0, 1.0);
 		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(0.0, 0.0, 3.0);
+		glVertex3f(0.0, 0.0, 1.0);
 
 		glEnd();
 		MV->popMatrix();
@@ -295,7 +321,7 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 	Matrix4d E = E_wj;
 	MV->multMatrix(eigen_to_glm(E));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
-	glLineWidth(3);
+	glLineWidth(4);
 	glBegin(GL_LINES);
 	// X axis
 	glColor3f(1.0, 0.0, 0.0);
@@ -316,5 +342,39 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 	MV->popMatrix();
 	
 	progSimple->unbind();
+
+	double r = 0.5;
+	prog->bind();
+	if (m_jointShape) {
+		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+		glUniform3f(prog->getUniform("lightPos1"), 66.0f, 25.0f, 25.0f);
+		glUniform1f(prog->getUniform("intensity_1"), 0.6f);
+		glUniform3f(prog->getUniform("lightPos2"), -66.0f, 25.0f, 25.0f);
+		glUniform1f(prog->getUniform("intensity_2"), 0.2f);
+		glUniform1f(prog->getUniform("s"), 300.0f);
+		glUniform3f(prog->getUniform("ka"), 0.2f, 0.2f, 0.2f);
+		glUniform3f(prog->getUniform("kd"), 0.8f, 0.7f, 0.7f);
+		glUniform3f(prog->getUniform("ks"), 1.0f, 0.9f, 0.8f);
+
+		MV->pushMatrix();
+		Matrix4d E_wj0 = E_wp * E_pj0;
+
+		MV->multMatrix(eigen_to_glm(E_wj0));
+
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		m_jointShape->draw(prog);
+		MV->popMatrix();
+
+	}
+	if (m_jointSphereShape) {
+		MV->pushMatrix();
+		MV->multMatrix(eigen_to_glm(E_wj));
+		MV->scale(r);
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		m_jointSphereShape->draw(prog);
+		MV->popMatrix();
+	}
+
+	prog->unbind();
 
 }

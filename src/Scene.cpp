@@ -50,7 +50,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(SPLINE_SURFACE_JOINT);
+	m_world = make_shared<World>(SPLINE_CURVE_JOINT);
 	m_world->load(RESOURCE_DIR);
 
 	m_solver = make_shared<Solver>(m_world, REDMAX_EULER);

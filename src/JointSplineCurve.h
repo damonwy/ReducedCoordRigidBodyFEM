@@ -9,6 +9,7 @@
 #include "Joint.h"
 
 class Body;
+class Shape;
 
 class JointSplineCurve : public Joint {
 
@@ -16,7 +17,8 @@ public:
 	JointSplineCurve();
 	JointSplineCurve(std::shared_ptr<Body> body, std::shared_ptr<Joint> parent = nullptr);
 	virtual ~JointSplineCurve();
-
+	void load(const std::string &RESOURCE_DIR, std::string joint_shape);
+	void init(int &nm, int &nr);
 	void addControlFrame(Eigen::Matrix4d C);
 	void updateSelf();
 	void drawSelf(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
@@ -61,6 +63,7 @@ private:
 	std::vector<Vector6d> m_dCs;
 	Eigen::Matrix4d evalQ(double q)const;
 	void evalS(double q, Vector6d &S, Vector6d &dSdq);
+	std::shared_ptr<Shape> m_jointSphereShape;
 
 };
 

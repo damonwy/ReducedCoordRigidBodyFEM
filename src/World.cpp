@@ -460,7 +460,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
 
-		auto body0 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+		auto body0 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_y_9.obj");
 		auto joint0 = addJointRevolute(body0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 		auto body1 = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
 		auto joint1 = make_shared<JointSplineCurve>(body1, joint0);
@@ -468,6 +468,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_njoints++;
 		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(0.0, -10.0, 0.0));
 		joint1->setJointTransform(E);
+		joint1->load(RESOURCE_DIR, "joint_spline_curve2.obj");
 		Matrix4d cf0 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI), Vector3d(-10.0, 0.0, 0.0));
 		Matrix4d cf1 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI / 2.0), Vector3d(0.0, 2.0, 0.0));
 		Matrix4d cf2 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), 0.0), Vector3d(10.0, 0.0, 0.0));
@@ -483,7 +484,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
 
 		joint2->setJointTransform(E);
-		joint1->m_q(0) =0.0;
+		joint1->m_q(0) = -PI/4.0;
 		joint2->m_q(0) = 15.0 * PI / 16.0;
 
 	}
