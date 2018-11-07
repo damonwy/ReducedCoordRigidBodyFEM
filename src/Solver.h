@@ -121,6 +121,7 @@ private:
 	Eigen::MatrixXd Cr;
 	Eigen::MatrixXd Crdot;
 	Eigen::VectorXd cr;
+	Eigen::VectorXd rhsC;
 
 	Eigen::MatrixXd C;
 	Eigen::VectorXd c;

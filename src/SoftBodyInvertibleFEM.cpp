@@ -20,6 +20,7 @@ SoftBodyInvertibleFEM::SoftBodyInvertibleFEM(double density, double young, doubl
 SoftBody(density, young, poisson, material)
 {
 	m_isInvert = false;
+	m_isGravity = true;
 }
 
 void SoftBodyInvertibleFEM::computeForce(Vector3d grav, VectorXd &f) {
@@ -80,3 +81,4 @@ void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 	}
 
 }
+

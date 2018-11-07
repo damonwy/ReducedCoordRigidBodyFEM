@@ -1,4 +1,4 @@
-#include "SpringSerial.h"
+#include "DeformableSpring.h"
 
 #include <iostream>
 #include "Body.h"
@@ -10,12 +10,12 @@ using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
-SpringSerial::SpringSerial() {
+DeformableSpring::DeformableSpring() {
 }
 
 
-SpringSerial::SpringSerial(int n_nodes, int &countS, int &countCM):
-Spring(countS, countCM)
+DeformableSpring::DeformableSpring(int n_nodes, int &countS, int &countCM):
+Deformable(countS, countCM)
 {
 	for (int i = 0; i < n_nodes; i++) {
 		auto node = make_shared<Node>();
@@ -27,14 +27,13 @@ Spring(countS, countCM)
 	}
 }
 
-void SpringSerial::init() {
+void DeformableSpring::init_() {
 	// Sets the world positions of the nodes using the attachment
 	// points. r0 and r1 are in local coords.
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {		
 		m_nodes[i]->init();
 	}
-
 
 	Matrix4d E0, E1;
 	if (m_body0 == nullptr) {
@@ -75,14 +74,14 @@ void SpringSerial::init() {
 	}
 }
 
-void SpringSerial::load(const string &RESOURCE_DIR) {
+void DeformableSpring::load(const string &RESOURCE_DIR) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		m_nodes[i]->load(RESOURCE_DIR);
 	}
 
 }
 
-void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+void DeformableSpring::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	// Draw nodes
 	prog->bind();
 
@@ -112,7 +111,6 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 		Vector3f x0 = m_nodes[i]->x.cast<float>();
 		Vector3f x1 = m_nodes[i + 1]->x.cast<float>();
 
-
 		glVertex3f(x0(0), x0(1), x0(2));
 		glVertex3f(x1(0), x1(1), x1(2));
 	}
@@ -122,7 +120,7 @@ void SpringSerial::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 	
 }
 
-void SpringSerial::setAttachments(shared_ptr<Body> body0, Vector3d r0, shared_ptr<Body> body1, Vector3d r1) {
+void DeformableSpring::setAttachments(shared_ptr<Body> body0, Vector3d r0, shared_ptr<Body> body1, Vector3d r1) {
 	// Attaches this spring to body0 and body1
 	m_body0 = body0;
 	m_body1 = body1;
@@ -130,7 +128,7 @@ void SpringSerial::setAttachments(shared_ptr<Body> body0, Vector3d r0, shared_pt
 	m_r1 = r1;
 }
 
-void SpringSerial::countDofs_(int &nm, int &nr) {
+void DeformableSpring::countDofs_(int &nm, int &nr) {
 	// Counts maximal and reduced DOFs
 	// For non-rigid DOFs, we need both maximal and reduced DOFs,
 	// and the Jacobian must pass them through with the identity 
@@ -145,27 +143,25 @@ void SpringSerial::countDofs_(int &nm, int &nr) {
 }
 
 
-VectorXd SpringSerial::gatherDofs_(VectorXd y, int nr) {
+void DeformableSpring::gatherDofs_(VectorXd &y, int nr) {
 	// Gathers q and qdot into y
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		y.segment<3>(idxR) = m_nodes[i]->x;
 		y.segment<3>(nr + idxR) = m_nodes[i]->v;
 	}
-	return y;
 }
 
-VectorXd SpringSerial::gatherDDofs_(VectorXd ydot, int nr) {
+void DeformableSpring::gatherDDofs_(VectorXd &ydot, int nr) {
 	// Gathers qdot and qddot into ydot
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		ydot.segment<3>(idxR) = m_nodes[i]->v;
 		ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
 	}
-	return ydot;
 }
 
-void SpringSerial::scatterDofs_(VectorXd &y, int nr) {
+void DeformableSpring::scatterDofs_(VectorXd &y, int nr) {
 	// Scatters q and qdot from y
 	
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
@@ -176,7 +172,7 @@ void SpringSerial::scatterDofs_(VectorXd &y, int nr) {
 	}
 }
 
-void SpringSerial::scatterDDofs_(VectorXd &ydot, int nr) {
+void DeformableSpring::scatterDDofs_(VectorXd &ydot, int nr) {
 	// Scatters qdot and qddot from ydot
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
@@ -186,27 +182,16 @@ void SpringSerial::scatterDDofs_(VectorXd &ydot, int nr) {
 	}
 }
 
-MatrixXd SpringSerial::computeMass_(Vector3d grav, MatrixXd M) {
+void DeformableSpring::computeMass_(Vector3d grav, MatrixXd &M, VectorXd &f) {
 	// Computes maximal mass matrix
 	int n_nodes = (int)m_nodes.size();
 	double m = m_mass / n_nodes;
-
+	// Computes force vector
 	Matrix3d I3 = Matrix3d::Identity();
+
 	for (int i = 0; i < n_nodes; i++) {
 		int idxM = m_nodes[i]->idxM;
 		M.block<3, 3>(idxM, idxM) = m * I3;
-	}
-	return M;
-}
-
-VectorXd SpringSerial::computeForce_(Vector3d grav, VectorXd f) {
-	// Computes force vector
-	int n_nodes = m_nodes.size();
-	double m = m_mass / n_nodes;
-
-	Matrix3d I3 = Matrix3d::Identity();
-	for (int i = 0; i < n_nodes; i++) {
-		int idxM = m_nodes[i]->idxM;
 		f.segment<3>(idxM) += m * grav;
 	}
 
@@ -216,7 +201,7 @@ VectorXd SpringSerial::computeForce_(Vector3d grav, VectorXd f) {
 		Vector3d x0 = m_nodes[i]->x;
 		Vector3d x1 = m_nodes[i + 1]->x;
 		Vector3d dx = x1 - x0;
-		
+
 		double l = dx.norm();
 		double L = m_nodes[i]->L;
 		double e = (l - L) / L;
@@ -226,10 +211,22 @@ VectorXd SpringSerial::computeForce_(Vector3d grav, VectorXd f) {
 		f.segment<3>(row0) += fs;
 		f.segment<3>(row1) -= fs;
 	}
-	return f;
 }
 
-Energy SpringSerial::computeEnergies_(Vector3d grav, Energy ener) {
+void DeformableSpring::computeForceDamping_(Vector3d grav, VectorXd &f, MatrixXd &D) {
+	// Computes maximal damping vector and matrix
+	int n_nodes = (int)m_nodes.size();
+	Matrix3d I3 = Matrix3d::Identity();
+
+	for (int i = 0; i < n_nodes; i++) {
+		int idxM = m_nodes[i]->idxM;
+		D.block<3, 3>(idxM, idxM) += m_damping * I3;
+		f.segment<3>(idxM) -= m_damping * m_nodes[i]->v;
+	}
+
+}
+
+void DeformableSpring::computeEnergies_(Vector3d grav, Energy &ener) {
 	int n_nodes = (int)m_nodes.size();
 
 	double m = m_mass / n_nodes;
@@ -251,16 +248,10 @@ Energy SpringSerial::computeEnergies_(Vector3d grav, Energy ener) {
 		ener.V = ener.V + 0.5 * m_K * e * e;
 
 	}
-	return ener;
 }
 
-MatrixXd SpringSerial::computeJacobian_(MatrixXd J) {
+void DeformableSpring::computeJacobian_(MatrixXd &J, MatrixXd &Jdot) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
 	}
-	return J;
-}
-
-SpringSerial:: ~SpringSerial() {
-
 }

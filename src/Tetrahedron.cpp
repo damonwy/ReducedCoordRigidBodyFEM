@@ -10,7 +10,7 @@
 using namespace Eigen;
 using namespace std;
 
-#define Fthreshold 0.005
+#define Fthreshold 0.0005
 
 Tetrahedron::Tetrahedron()
 {
@@ -27,7 +27,7 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 		this->Dm.col(i) = m_nodes[i]->x0 - m_nodes[3]->x0;
 	}
 	this->Bm = this->Dm.inverse();
-	this->W = 1.0 / 6.0 * Dm.determinant();
+	this->W = abs(1.0 / 6.0 * Dm.determinant());
 	m_mass = this->W * this->m_density;
 
 	// Distribute 1/4 mass to each node
@@ -160,7 +160,7 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 	// SVD result is available in this->U, this->V, Fhat_vec, this->Fhat
 
 	// clamp if below the principal stretch threshold
-	int clamped = 0;
+	clamped = 0;
 	for (int i = 0; i < 3; i++)
 	{
 		if (this->Fhat(i, i) < Fthreshold)
@@ -170,7 +170,7 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 		}
 	}
 
-	clamped = 0; // disable clamping
+	//clamped = 0; // disable clamping
 
 	// Computes the internal forces
 	// Computes P first and computes the nodal forces G=PBm in section 4 of [Irving 04]
@@ -379,6 +379,35 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 		double J = sqrt(I3);
 		P = mu * (F - FIT) + lambda * log(J) * FIT;
 		dP = mu * dF + (mu - lambda * log(J)) * FIT * (dF.transpose()) * FIT + lambda * ((F.inverse() * dF)).trace() * FIT;
+		// modify hessian to compute correct values if in the inversion handling regime
+		if (clamped & 1) // first lambda was clamped (in inversion handling)
+		{
+			dP(0, 0) = 0.0;
+			dP(1, 0) = 0.0;
+			dP(0, 1) = 0.0;
+			//hessian[0] = hessian[1] = hessian[2] = 0.0;
+		}
+
+		if (clamped & 2) // second lambda was clamped (in inversion handling)
+		{
+			dP(2, 1) = 0.0;
+			dP(1, 2) = 0.0;
+			dP(1, 0) = 0.0;
+			dP(0, 1) = 0.0;
+			dP(1, 1) = 0.0;
+			//hessian[1] = hessian[3] = hessian[4] = 0.0;
+		}
+
+		if (clamped & 4) // third lambda was clamped (in inversion handling)
+		{
+			dP(0, 0) = 0.0;
+			dP(1, 0) = 0.0;
+			dP(0, 1) = 0.0;
+			dP(2, 1) = 0.0;
+			dP(1, 2) = 0.0;
+			dP(2, 2) = 0.0;
+			//hessian[0] = hessian[1] = hessian[2] = hessian[4] = hessian[5] = 0.0;
+		}
 
 		//P = mu * (F - (F.inverse().transpose())) + lambda * log(J) * (F.inverse().transpose());
 		//dP = mu * dF + (mu - lambda * log(J)) * (F.inverse().transpose()) * (dF.transpose()) * (F.inverse().transpose()) + lambda * ((F.inverse() * dF)).trace() * (F.inverse().transpose());
@@ -593,6 +622,63 @@ void Tetrahedron::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> pro
 	}
 
 }
+
+void Tetrahedron::compute_dPdF() {
+	Vector3d sigma, invariants, gradient;
+	sigma << Fhat(0, 0), Fhat(1, 1), Fhat(2, 2);
+
+	double sigma1square = sigma[0] * sigma[0];
+	double sigma2square = sigma[1] * sigma[1];
+	double sigma3square = sigma[2] * sigma[2];
+
+	invariants[0] = sigma1square + sigma2square + sigma3square;
+	invariants[1] = (sigma1square * sigma1square +
+		sigma2square * sigma2square +
+		sigma3square * sigma3square);
+	invariants[2] = sigma1square * sigma2square * sigma3square;
+	
+	gradient << 0.5 * m_mu, 0.0, (-0.5 * m_mu + 0.25 * m_lambda * log(invariants[2])) / invariants[2];
+
+	Vector6d hessian;
+	hessian.setZero();
+	hessian(5) = (0.25 * m_lambda + 0.5 * m_mu - 0.25 * m_lambda * log(invariants[2])) / (invariants[2] * invariants[2]);
+
+	// modify hessian to compute correct values if in the inversion handling regime
+	if (clamped & 1) // first lambda was clamped (in inversion handling)
+	{
+		hessian[0] = hessian[1] = hessian[2] = 0.0;
+	}
+
+	if (clamped & 2) // second lambda was clamped (in inversion handling)
+	{
+		hessian[1] = hessian[3] = hessian[4] = 0.0;
+	}
+
+	if (clamped & 4) // third lambda was clamped (in inversion handling)
+	{
+		hessian[0] = hessian[1] = hessian[2] = hessian[4] = hessian[5] = 0.0;
+	}
+
+
+
+}
+
+void Tetrahedron::compute_dGdF() {
+	Vector3d b0 = this->Nm.col(0);
+	Vector3d b1 = this->Nm.col(1);
+	Vector3d b2 = this->Nm.col(2);
+
+
+
+}
+
+void Tetrahedron::compute_dFdU() {
+
+
+
+}
+
+
 
 Tetrahedron:: ~Tetrahedron() {
 

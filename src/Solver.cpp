@@ -4,8 +4,8 @@
 #include "Body.h"
 #include "SoftBody.h"
 #include "Joint.h"
-#include "Spring.h"
-#include "SpringSerial.h"
+#include "Deformable.h"
+#include "DeformableSpring.h"
 #include "ConstraintJointLimit.h"
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
@@ -110,7 +110,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 		auto body0 = m_world->getBody0();
 		auto joint0 = m_world->getJoint0();
-		auto spring0 = m_world->getSpring0();
+		auto deformable0 = m_world->getDeformable0();
 		auto softbody0 = m_world->getSoftBody0();
 		auto constraint0 = m_world->getConstraint0();
 
@@ -156,14 +156,14 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		Gmdot.setZero();
 		G.setZero();
 		rhsG.setZero();
+		
 
 		// sceneFcn()
 		body0->computeMass(grav, M);
 		body0->computeForce(grav, f);
 
-		M = spring0->computeMass(grav, M);
-		f = spring0->computeForce(grav, f);
-
+		deformable0->computeMass(grav, M, f);
+		
 		softbody0->computeMass(grav, M);
 		softbody0->computeForce(grav, f);
 
@@ -178,7 +178,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 
 		// spring jacobian todo
-		J = spring0->computeJacobian(J);
+		deformable0->computeJacobian(J, Jdot);
 		softbody0->computeJacobian(J);
 
 		q0 = y.segment(0, nr);
@@ -225,6 +225,14 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 				MatrixXd CmJ = m_Cm * J;
 				C.resize(CmJ.rows() + m_Cr.rows(), m_Cr.cols());
 				C << CmJ, m_Cr;
+				rhsC.resize(C.rows());
+				VectorXd c(C.rows());
+				c << cm, cr;
+				VectorXd cdot(C.rows());
+				cdot << Cmdot, Crdot;
+				rhsC = -cdot - 5.0 * c;
+				
+
 			}
 		}
 
@@ -304,7 +312,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 			program_->setObjectiveVector(-ftilde);
 			program_->setNumberOfInequalities(ni);
 			program_->setInequalityMatrix(C.sparseView());
-
+			program_->setNumberOfEqualities(ne);
 			VectorXd cvec(ni);
 			cvec.setZero();
 
@@ -313,7 +321,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 			VectorXd gvec(ne);
 			gvec.setZero();
-			program_->setEqualityVector(gvec);
+			program_->setEqualityVector(rhsG);
 
 			bool success = program_->solve();
 			VectorXd sol = program_->getPrimalSolution();
@@ -332,8 +340,8 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		joint0->scatterDofs(yk, nr);
 		joint0->scatterDDofs(ydotk, nr);
 
-		spring0->scatterDofs(yk, nr);
-		spring0->scatterDDofs(ydotk, nr);
+		deformable0->scatterDofs(yk, nr);
+		deformable0->scatterDDofs(ydotk, nr);
 
 		softbody0->scatterDofs(yk, nr);
 		softbody0->scatterDDofs(ydotk, nr);
@@ -427,7 +435,7 @@ shared_ptr<Solution> Solver::solve() {
 
 		auto body0 = m_world->getBody0();
 		auto joint0 = m_world->getJoint0();
-		auto spring0 = m_world->getSpring0();
+		auto deformable0 = m_world->getDeformable0();
 		auto softbody0 = m_world->getSoftBody0();
 		auto constraint0 = m_world->getConstraint0();
 
@@ -439,7 +447,9 @@ shared_ptr<Solution> Solver::solve() {
 		// initial state
 		m_solutions->t(0) = m_world->getTspan()(0);
 		m_solutions->y.row(0) = joint0->gatherDofs(m_solutions->y.row(0), nr);
-		m_solutions->y.row(0) = spring0->gatherDofs(m_solutions->y.row(0), nr);
+		VectorXd sol_y = m_solutions->y.row(0);
+		deformable0->gatherDofs(sol_y, nr);
+		m_solutions->y.row(0) = sol_y;
 		m_solutions->y.row(0) = softbody0->gatherDofs(m_solutions->y.row(0), nr);
 
 		double t = m_world->getTspan()(0);
@@ -489,8 +499,7 @@ shared_ptr<Solution> Solver::solve() {
 			body0->computeMass(grav, M);
 			body0->computeForce(grav, f);
 
-			M = spring0->computeMass(grav, M);
-			f = spring0->computeForce(grav, f);
+			deformable0->computeMass(grav, M, f);
 
 			softbody0->computeMass(grav, M);
 			softbody0->computeForce(grav, f);
@@ -507,7 +516,7 @@ shared_ptr<Solution> Solver::solve() {
 			//Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 			joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 			// spring jacobian todo
-			J = spring0->computeJacobian(J);
+			deformable0->computeJacobian(J, Jdot);
 
 			softbody0->computeJacobian(J);
 
@@ -670,8 +679,8 @@ shared_ptr<Solution> Solver::solve() {
 			joint0->scatterDofs(yk, nr);
 			joint0->scatterDDofs(ydotk, nr);
 
-			spring0->scatterDofs(yk, nr);
-			spring0->scatterDDofs(ydotk, nr);
+			deformable0->scatterDofs(yk, nr);
+			deformable0->scatterDDofs(ydotk, nr);
 
 			softbody0->scatterDofs(yk, nr);
 			softbody0->scatterDDofs(ydotk, nr);

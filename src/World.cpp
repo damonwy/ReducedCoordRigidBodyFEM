@@ -29,9 +29,9 @@
 #include "ConstraintAttachSpring.h"
 #include "ConstraintAttachSoftBody.h"
 
-#include "Spring.h"
-#include "SpringSerial.h"
-#include "SpringNull.h"
+#include "Deformable.h"
+#include "DeformableSpring.h"
+#include "DeformableNull.h"
 
 #include "Comp.h"
 #include "CompNull.h"
@@ -50,7 +50,7 @@ using namespace Eigen;
 using json = nlohmann::json;
 
 World::World() :
-	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_constraints(0), m_countS(0), m_countCM(0),
+	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_constraints(0), m_countS(0), m_countCM(0),
 	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0)
 {
 	m_energy.K = 0.0;
@@ -59,7 +59,7 @@ World::World() :
 
 World::World(WorldType type) :
 	m_type(type),
-	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_nsprings(0), m_nconstraints(0), m_countS(0), m_countCM(0),
+	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_nconstraints(0), m_countS(0), m_countCM(0),
 	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0)
 {
 	m_energy.K = 0.0;
@@ -282,12 +282,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 		}
 
 		// Init springs
-		auto spring0 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
-		spring0->setStiffness(m_stiffness);
-		auto spring1 = addSpringSerial(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
-		spring1->setStiffness(m_stiffness);
-		for (int i = 0; i < (int)m_springs.size(); i++) {
-			m_springs[i]->load(RESOURCE_DIR);
+		auto deformable0 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
+		deformable0->setStiffness(m_stiffness);
+		auto deformable1 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
+		deformable1->setStiffness(m_stiffness);
+		for (int i = 0; i < (int)m_deformables.size(); i++) {
+			m_deformables[i]->load(RESOURCE_DIR);
 		}
 
 	}
@@ -300,8 +300,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 		density = 1.0;
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e3;
-		double possion = 0.40;
+		double young = 1e1;
+		double possion = 0.25;
 
 		for (int i = 0; i < 2; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
@@ -316,12 +316,16 @@ void World::load(const std::string &RESOURCE_DIR) {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 				
 			}
+			if (i > 0) {
+			//addConstraintJointLimit(m_joints[i], -M_PI / 4, M_PI / 4);
+			}
 		}
 
-		m_joints[0]->m_qdot(0) = 5.0;
-		m_joints[1]->m_qdot(0) = -20.0;
-
-		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc20");
+		//m_joints[0]->m_qdot(0) = 5.0;
+		//m_joints[1]->m_qdot(0) = -20.0;
+		// Init constraints
+		
+		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -645,15 +649,15 @@ shared_ptr<ConstraintJointLimit> World::addConstraintJointLimit(shared_ptr<Joint
 	return constraint;
 }
 
-shared_ptr<SpringSerial> World::addSpringSerial(double mass, int n_points, shared_ptr<Body> body0, Vector3d r0, shared_ptr<Body> body1, Vector3d r1) {
+shared_ptr<DeformableSpring> World::addDeformableSpring(double mass, int n_points, shared_ptr<Body> body0, Vector3d r0, shared_ptr<Body> body1, Vector3d r1) {
 
-	auto spring = make_shared<SpringSerial>(n_points, m_countS, m_countCM);
-	m_springs.push_back(spring);
-	spring->setStiffness(m_stiffness);
-	spring->setMass(mass);
-	spring->setAttachments(body0, r0, body1, r1);
-	m_nsprings++;
-	return spring;
+	auto deformable = make_shared<DeformableSpring>(n_points, m_countS, m_countCM);
+	m_deformables.push_back(deformable);
+	deformable->setStiffness(m_stiffness);
+	deformable->setMass(mass);
+	deformable->setAttachments(body0, r0, body1, r1);
+	m_ndeformables++;
+	return deformable;
 }
 
 shared_ptr<CompSphere> World::addCompSphere(double r, shared_ptr<Body> parent, Matrix4d E, const string &RESOURCE_DIR) {
@@ -708,12 +712,12 @@ shared_ptr<JointNull> World::addJointNull() {
 	return joint;
 }
 
-shared_ptr<SpringNull> World::addSpringNull() {
+shared_ptr<DeformableNull> World::addDeformableNull() {
 
-	auto spring = make_shared<SpringNull>();
-	m_nsprings++;
-	m_springs.push_back(spring);
-	return spring;
+	auto deformable = make_shared<DeformableNull>();
+	m_ndeformables++;
+	m_deformables.push_back(deformable);
+	return deformable;
 }
 
 shared_ptr<CompNull> World::addCompNull() {
@@ -853,25 +857,25 @@ void World::init() {
 
 	
 
-	for (int i = 0; i < m_nsprings; i++) {
-		m_springs[i]->countDofs(nm, nr);
+	for (int i = 0; i < m_ndeformables; i++) {
+		m_deformables[i]->countDofs(nm, nr);
 
-		m_springs[i]->init();
+		m_deformables[i]->init();
 		// Create attachment constraints
-		auto constraint = make_shared<ConstraintAttachSpring>(m_springs[i]);
+		auto constraint = make_shared<ConstraintAttachSpring>(m_deformables[i]);
 		m_constraints.push_back(constraint);
 		m_nconstraints++;
-		if (i < m_nsprings - 1) {
-			m_springs[i]->next = m_springs[i + 1];
+		if (i < m_ndeformables - 1) {
+			m_deformables[i]->next = m_deformables[i + 1];
 		}
 	}
 
 	
-	if (m_nsprings == 0) {
-		addSpringNull();
+	if (m_ndeformables == 0) {
+		addDeformableNull();
 	}
 
-	if (m_type == SOFT_BODIES | m_type == SOFT_BODIES_INVERTIBLE) {
+	if (m_type == SOFT_BODIES) {
 		//m_softbodies[0]->setAttachments(0, m_bodies[0]);
 		//m_softbodies[0]->setAttachments(3, m_bodies[0]);
 		//m_softbodies[0]->setAttachments(6, m_bodies[0]);
@@ -938,10 +942,15 @@ void World::init() {
 
 		//m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(10.5, 12.5), Vector2d(-0.5, 0.5), -1.0, m_bodies[1]);
 		//m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(10.50, 12.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[1]);
+		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.7, m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.8, m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.9, m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.6, m_bodies[0]);
+
 
 		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-
-		m_softbodies[0]->setAttachmentsByYZCircle(15.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 
 		//m_softbodies[0]->setSlidingNodesByYZCircle(9.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 		//m_softbodies[0]->setSlidingNodesByYZCircle(6.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
@@ -1020,8 +1029,8 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	}
 
 	// Draw springs
-	for (int i = 0; i < m_nsprings; i++) {
-		m_springs[i]->draw(MV, prog, progSimple, P);
+	for (int i = 0; i < m_ndeformables; i++) {
+		m_deformables[i]->draw(MV, prog, progSimple, P);
 	}
 
 	// Draw soft bodies
@@ -1046,7 +1055,7 @@ Energy World::computeEnergy() {
 	m_energy.V = 0.0;
 
 	m_energy = m_joints[0]->computeEnergies(m_grav, m_energy);
-	m_energy = m_springs[0]->computeEnergies(m_grav, m_energy);
+	m_deformables[0]->computeEnergies(m_grav, m_energy);
 	m_energy = m_softbodies[0]->computeEnergies(m_grav, m_energy);
 
 	if (m_t == 0.0) {

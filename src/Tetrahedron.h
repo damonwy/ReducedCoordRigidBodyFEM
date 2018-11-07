@@ -33,6 +33,10 @@ public:
 	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
 	Eigen::Matrix3d computeInvertiblePKStress(Eigen::Matrix3d F, double mu, double lambda);
 	Eigen::Matrix3d computeInvertiblePKStressDerivative(Eigen::Matrix3d F, Eigen::Matrix3d dF, double mu, double lambda);
+	void compute_dPdF();
+	void compute_dGdF();
+	void compute_dFdU();
+
 
 	double computeEnergy();
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
@@ -41,6 +45,10 @@ public:
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
 	bool isInvert;
 	int i;
+
+	Matrix9d dPdF;
+	Matrix9d dGdF;
+	int clamped;
 private:
 	bool m_isInvertible;
 	Material m_material;

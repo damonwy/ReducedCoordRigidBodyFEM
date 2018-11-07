@@ -30,6 +30,7 @@ typedef Eigen::Matrix<double, 3, 6> Matrix3x6d;
 typedef Eigen::Matrix<double, 6, 3> Matrix6x3d;
 typedef Eigen::Matrix<double, 5, 6> Matrix5x6d;
 typedef Eigen::Matrix<double, 3, 12> Matrix3x12d;
+typedef Eigen::Matrix<double, 9, 9> Matrix9d;
 typedef Eigen::Matrix<double, 12, 12> Matrix12d;
 typedef Eigen::Matrix<double, 4, 2> Matrix4x2d;
 typedef Eigen::Matrix<double, 4, 3> Matrix4x3d;

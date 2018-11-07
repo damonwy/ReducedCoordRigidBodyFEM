@@ -37,7 +37,7 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 {
 	m_color << 1.0f, 1.0f, 0.0f;
 	m_isInvert= false;
-
+	//m_isGravity = true;
 }
 
 void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
@@ -318,7 +318,7 @@ void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 	auto node = m_nodes[id];
 	node->setParent(body);
 	node->setColor(body->m_attached_color);
-
+	node->r = 0.1;
 	m_attach_bodies.push_back(body);
 	m_attach_nodes.push_back(node);
 
@@ -335,7 +335,7 @@ void SoftBody::setSlidingNodes(int id, std::shared_ptr<Body> body, Eigen::Vector
 	auto node = m_nodes[id];
 	node->setParent(body);
 	node->setColor(body->m_sliding_color);
-
+	node->r = 0.1;
 	m_sliding_bodies.push_back(body);
 	m_sliding_nodes.push_back(node);
 
@@ -423,9 +423,9 @@ void SoftBody::setAttachmentsByYZCircle(double x, Vector2d O, double r, shared_p
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
-		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - 0(1)), 2) - r * r;
+		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
 
-		if (abs(xi(0) - x) < 4.3 && diff < 0.01) {
+		if (abs(xi(0) - x) < 0.3 && diff < 4.3) {
 			setAttachments(i, body);
 		}
 	}
@@ -483,7 +483,7 @@ void SoftBody::setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, 
 		x_axis.normalized();
 
 		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - 0(1)), 2) - r * r;
-		if (abs(xi(0) - x) < 0.6 && diff < 0.01) {
+		if (abs(xi(0) - x) < 1.7 && diff < 0.01) {
 			setSlidingNodes(i, body, x_axis);
 
 			// Create Attached node to compare if they are really sliding

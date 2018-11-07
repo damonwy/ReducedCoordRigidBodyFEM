@@ -22,9 +22,12 @@ class Program;
 class Constraint;
 class ConstraintJointLimit;
 class ConstraintNull;
+
+
 class Spring;
-class SpringSerial;
-class SpringNull;
+class Deformable;
+class DeformableSpring;
+class DeformableNull;
 class JointNull;
 class JointFixed;
 class Comp;
@@ -97,7 +100,7 @@ public:
 		double ql, 
 		double qu);
 	
-	std::shared_ptr<SpringSerial> addSpringSerial(
+	std::shared_ptr<DeformableSpring> addDeformableSpring(
 		double mass, 
 		int n_points, 
 		std::shared_ptr<Body> body0, 
@@ -122,7 +125,7 @@ public:
 		std::string file_name);
 
 	std::shared_ptr<ConstraintNull> addConstraintNull();
-	std::shared_ptr<SpringNull> addSpringNull();
+	std::shared_ptr<DeformableNull> addDeformableNull();
 	std::shared_ptr<JointNull> addJointNull();
 	std::shared_ptr<CompNull> addCompNull();
 	std::shared_ptr<WrapObst> addWrapNull();
@@ -214,7 +217,7 @@ public:
 
 	std::shared_ptr<Body> getBody0() const { return m_bodies[0]; }
 	std::shared_ptr<Joint> getJoint0() const { return m_joints[0]; }
-	std::shared_ptr<Spring> getSpring0() const { return m_springs[0]; }
+	std::shared_ptr<Deformable> getDeformable0() const { return m_deformables[0]; }
 	std::shared_ptr<SoftBody> getSoftBody0() const { return m_softbodies[0]; }
 	std::shared_ptr<Constraint> getConstraint0() const { return m_constraints[0]; }
 
@@ -234,7 +237,7 @@ public:
 	int m_nbodies;
 	int m_nsoftbodies;
 	int m_njoints;
-	int m_nsprings;
+	int m_ndeformables;
 	int m_nconstraints;
 	int m_ncomps;
 	int m_nwraps;
@@ -258,7 +261,7 @@ private:
 	std::vector<std::shared_ptr<WrapObst>> m_wraps;
 	std::vector <std::shared_ptr<SoftBody>> m_softbodies;
 	std::vector<std::shared_ptr<Joint>> m_joints;
-	std::vector<std::shared_ptr<Spring>> m_springs;
+	std::vector<std::shared_ptr<Deformable>> m_deformables;
 	std::vector<std::shared_ptr<Constraint>> m_constraints;
 
 	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;

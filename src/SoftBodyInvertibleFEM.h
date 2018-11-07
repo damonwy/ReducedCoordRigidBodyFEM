@@ -12,9 +12,10 @@ public:
 	virtual ~SoftBodyInvertibleFEM() {};
 	void computeStiffness(Eigen::MatrixXd &K);
 	void computeForce(Eigen::Vector3d grav, Eigen::VectorXd &f);
-
-protected:
 	
+protected:
+
+
 
 private:
 
