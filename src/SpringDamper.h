@@ -14,36 +14,36 @@ class SpringDamper : public Spring
 {
 public:
 	SpringDamper();
-	SpringDamper(int &countS, int &countCM);
+	SpringDamper(std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);
 	virtual ~SpringDamper() {}
 
 	void setStiffness(double K) { m_K = K; }
-	void setMass(double mass) { m_mass = mass; }
-	void setDamping(double damping) { m_d = damping; }
+	void setDamping(double damping) { m_damping = damping; }
 	void setRestLength(double L) { m_L = L; }
-	void setAttachments(std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);
 
 	void init();
 	void load(const std::string &RESOURCE_DIR);
 	void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 
-	void countDofs_(int &nm, int &nr);
-	Eigen::VectorXd gatherDofs_(Eigen::VectorXd y, int nr);
-	Eigen::VectorXd gatherDDofs_(Eigen::VectorXd ydot, int nr);
-	void scatterDofs_(Eigen::VectorXd &y, int nr);
-	void scatterDDofs_(Eigen::VectorXd &ydot, int nr);
+	void computeEnergies_(Eigen::Vector3d grav, Energy &ener);
 
-	Eigen::MatrixXd computeMass_(Eigen::Vector3d grav, Eigen::MatrixXd M);
-	Eigen::VectorXd computeForce_(Eigen::Vector3d grav, Eigen::VectorXd f);
-	Energy computeEnergies_(Eigen::Vector3d grav, Energy ener);
-	Eigen::MatrixXd computeJacobian_(Eigen::MatrixXd J);
+private:
+	void computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D);
 
 protected:
+	void computeForceStiffnessDamping_(Eigen::Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &K, Eigen::MatrixXd &D);
+	void computeStiffnessProd_(Eigen::VectorXd x, Eigen::VectorXd &y);
+	void computeDampingProd_(Eigen::VectorXd x, Eigen::VectorXd &y);
+
 	double m_L;		// Rest Length
-	double m_d;		// Damping parameter
 	double m_l;		// Current Length
 
-
+	double m_K;
+	double m_damping;
+	std::shared_ptr<Body> m_body0;
+	std::shared_ptr<Body> m_body1;
+	Eigen::Vector3d m_r0;
+	Eigen::Vector3d m_r1;
 
 };
 

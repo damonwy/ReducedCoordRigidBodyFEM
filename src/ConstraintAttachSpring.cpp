@@ -3,8 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
-#include "Spring.h"
-#include "SpringSerial.h"
+#include "Deformable.h"
+#include "DeformableSpring.h"
 #include "Node.h"
 #include "Body.h"
 #include "SE3.h"
@@ -17,7 +17,7 @@ ConstraintAttachSpring::ConstraintAttachSpring() {
 
 }
 
-ConstraintAttachSpring::ConstraintAttachSpring(shared_ptr<Spring> spring) :
+ConstraintAttachSpring::ConstraintAttachSpring(shared_ptr<Deformable> spring) :
 Constraint(6, 0, 0, 0), m_spring(spring)
 {
 
