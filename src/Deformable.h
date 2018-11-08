@@ -1,6 +1,6 @@
 #pragma once
-#ifndef MUSCLEMASS_SRC_DEFORMABLE_H_
-#define MUSCLEMASS_SRC_DEFORMABLE_H_
+#ifndef REDUCEDCOORD_SRC_DEFORMABLE_H_
+#define REDUCEDCOORD_SRC_DEFORMABLE_H_
 
 #include <vector>
 #include <memory>
@@ -67,4 +67,4 @@ public:
 	double m_mass;
 };
 
-#endif // MUSCLEMASS_SRC_DEFORMABLE_H_
+#endif // REDUCEDCOORD_SRC_DEFORMABLE_H_

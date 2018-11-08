@@ -1,7 +1,8 @@
 #pragma once
+// Body A rigid body connected through a joint to a parent
 
-#ifndef MUSCLEMASS_SRC_BODY_H_
-#define MUSCLEMASS_SRC_BODY_H_
+#ifndef REDUCEDCOORD_SRC_BODY_H_
+#define REDUCEDCOORD_SRC_BODY_H_
 
 #include <vector>
 #include <memory>
@@ -20,71 +21,64 @@ class Body
 {
 public:
 	Body();
-	Body(double _density, Eigen::Vector3d _sides);
-	virtual ~Body();
+	Body(double density);
+	virtual ~Body() {}
 
+	void setDamping(double damping) { m_damping = damping; }
+	void setTransform(Matrix4d E);	
+	void setJoint(std::shared_ptr<Joint> joint) { m_joint = joint; };
+	void setAttachedColor(Vector3f color) { m_attached_color = color; }
 
-	void setTransform(Eigen::Matrix4d E);
+	std::string getName() const { return m_name; };
+	std::shared_ptr<Joint> getJoint() const { return m_joint; };
+
 	void computeInertia();
 	void countDofs(int &nm);
 	int countM(int &nm, int data);
-
-	void computeMass(Eigen::Vector3d grav, Eigen::MatrixXd &M);
-	void computeForce(Eigen::Vector3d grav, Eigen::VectorXd &f);
-
-	Energy computeEnergies(Eigen::Vector3d grav, Energy energies);
+	void computeMassGrav(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
+	void computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D);
+	void computeEnergies(Vector3d grav, Energy &energies);
 
 	void load(const std::string &RESOURCE_DIR, std::string box_shape);
 	void init(int &nm);
 	void update();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 
-	std::string getName() const { return m_name; };
-	void setJoint(std::shared_ptr<Joint> joint) { m_joint = joint; };
-	std::shared_ptr<Joint> getJoint() const { return m_joint; };
-	void setAttachedColor(Eigen::Vector3f color) { m_attached_color = color; }
+	double m_density;					// Mass/volume
+	Vector6d I_i;						// Inertia at body center
+	Matrix4d E_ji;						// Where the body is wrt joint
+	Matrix4d E_ij;						// Where the joint is wrt body
+	Matrix4d E_wi;						// Where the body is wrt world
+	Matrix4d E_iw;						// Where the world is wrt body
+	Matrix4d E_ip;						// Where the parent is wrt body
+	Matrix6d Ad_ji;						// Adjoint of E_ji
+	Matrix6d Ad_ij;						// Adjoint of E_ij
+	Matrix6d Ad_iw;						// Adjoint of E_iw
+	Matrix6d Ad_wi;						// Adjoint of E_wi
+	Matrix6d Ad_ip;						// Adjoint of E_ip
+	Matrix6d Addot_wi;					// Adjoint dot of E_wi
+	Vector6d phi;						// Twist at body center
+	Vector6d phidot;					// Acceleration at body center
+	Vector6d wext_i;					// External wrench in body space (not used by redmax)
+	Matrix6d Kmdiag;					// Maximal stiffness block diagonal term
+	Matrix6d Dmdiag;					// Maximal damping block diagonal term
+	double m_damping;					// Viscous damping
+	std::shared_ptr<Joint> m_joint;		// Joint to parent
+	int idxM;							// Maximal indices
+	std::shared_ptr<Body> next;			// Next body in traversal order
 
-	double density;			// Mass/volume
-	Eigen::Vector3d sides;
-
-	Matrix6d I_j;			// Inertia at the parent joint
-	Vector6d I_i;			// Inertia at body center
-
-	Eigen::Matrix4d E_ji;	// Where the body is wrt joint
-	Eigen::Matrix4d E_ij;	// Where the joint is wrt body
-
-	Eigen::Matrix4d E_wi;	// Where the body is wrt world
-	Eigen::Matrix4d E_iw;	// Where the world is wrt body
-	Eigen::Matrix4d E_ip;   // Where the parent is wrt body
-	Matrix6d Ad_ji;			// Adjoint of E_ji
-	Matrix6d Ad_ij;			// Adjoint of E_ij
-	Matrix6d Ad_iw;			// Adjoint of E_iw
-	Matrix6d Ad_wi;			// Adjoint of E_wi
-	Matrix6d Ad_ip;			// Adjoint of E_ip
-	Matrix6d Addot_wi;		// Adjoint dot of E_wi
-
-	Vector6d V;				// Twist at parent joint
-	Vector6d Vdot;			// Acceleration at parent joint
-	Vector6d phi;			// Twist at body center
-	Vector6d wext_i;		// External wrench in body space
-	
-	int idxM;				// Maximal indices
-	std::shared_ptr<Body> next;				// Next body in traversal order
 	std::shared_ptr<Body> m_parent;
-	Eigen::Vector3f m_attached_color;
-	Eigen::Vector3f m_sliding_color;
+	Vector3f m_attached_color;
+	Vector3f m_sliding_color;
 
-private:
-	std::shared_ptr<Shape> boxShape;
-
-	void computeInertiaBody();
-	void computeInertiaJoint();
+protected:
+	std::shared_ptr<Shape> bodyShape;
+	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const {}
+	virtual void computeInertia_() {}
 	std::string m_name;
-	int m_uid;
-	std::shared_ptr<Joint> m_joint;			// Joint to parent
-
+	
 };
 
 
 
-#endif // MUSCLEMASS_SRC_BODY_H_
+#endif // REDUCEDCOORD_SRC_BODY_H_

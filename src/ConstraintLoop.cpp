@@ -10,8 +10,6 @@ using namespace Eigen;
 using json = nlohmann::json;
 
 ConstraintLoop::ConstraintLoop() {
-
-
 }
 
 ConstraintLoop::ConstraintLoop(shared_ptr<Body> bodyA, shared_ptr<Body> bodyB) :
@@ -56,7 +54,6 @@ void ConstraintLoop::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm,
 	Matrix3d wbBrac = SE3::bracket3(m_bodyB->phi.segment<3>(0));
 	// idxQ - [colsA, colsB];
 	
-
 	int colA = m_bodyA->idxM;
 	int colB = m_bodyB->idxM;
 	idxQ.resize(6, 2);
@@ -68,4 +65,11 @@ void ConstraintLoop::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm,
 
 	Gmdot.block(row, colA, nconEM, 6) = v12.transpose() * R_wa * waBrac * GammaA;
 	Gmdot.block(row, colB, nconEM, 6) = -v12.transpose() * R_wb * wbBrac * GammaB;
+
+	Vector4d temp0, temp1;
+	temp0 << m_xA, 1.0;
+	temp1 << m_xB, 1.0;
+
+	Vector4d dx = E_wa * temp0 - E_wb * temp1;
+	gm.segment<2>(row) = v12.transpose() * dx.segment<3>(0);
 }

@@ -40,9 +40,8 @@ m_ndof(ndof)
 	m_tauCon.resize(m_ndof);
 	m_tauCon.setZero();
 
-	m_K = 0.0;
-	m_D = 0.0;
-
+	m_Kr = 0.0;
+	m_Dr = 0.0;
 	
 	m_S.resize(6, ndof);
 	m_S.setZero();
@@ -50,15 +49,19 @@ m_ndof(ndof)
 	m_Sdot.setZero();
 	m_Q.setIdentity();
 	
+	m_I_j.setIdentity();
+	V.setZero();
+	Vdot.setZero();
+
+	m_body->m_joint = getJoint();
+	if (m_parent != nullptr) {
+		m_parent->addChild(getJoint());
+	}
+
 	presc = false;
-
 }
 
-Joint::~Joint() {
-
-}
-
-void Joint::load(const std::string &RESOURCE_DIR, std::string joint_shape) {
+void Joint::load(const string &RESOURCE_DIR, string joint_shape) {
 
 	m_jointShape = make_shared<Shape>();
 	m_jointShape->loadMesh(RESOURCE_DIR + joint_shape);
@@ -69,14 +72,7 @@ void Joint::init(int &nm, int &nr) {
 	if (m_jointShape) {
 		m_jointShape->init();
 	}
-
-	m_body->setJoint(getJoint());
-
-	if (m_parent != nullptr) {
-		m_parent->addChild(getJoint());
-	}
 	countDofs(nm, nr);
-
 }
 
 void Joint::setJointTransform(Matrix4d E) {
@@ -86,7 +82,8 @@ void Joint::setJointTransform(Matrix4d E) {
 
 void Joint::update() {
 	// Updates this joint and the attached body
-	updateSelf();
+	update_();
+	// Transforms and adjoints
 	E_pj = E_pj0 * m_Q;
 
 	E_jp = SE3::inverse(E_pj);
@@ -102,15 +99,18 @@ void Joint::update() {
 	}
 	E_wj = E_wp * E_pj;
 
+	// Joint velocity
+	V = m_S * m_qdot;
+	if (m_parent != nullptr) {
+		// Add parent velocity
+		V += Ad_jp * m_parent->V;
+	}
+
 	// Update attached body
 	m_body->update();
 	if (next != nullptr) {
 		next->update();
 	}
-
-}
-
-void Joint::updateSelf() {
 
 }
 
@@ -125,82 +125,14 @@ int Joint::countR(int &nr, int data) {
 	return (nr - data);
 }
 
-void Joint::computeJacobian(MatrixXd &J, int nm, int nr) {
+void Joint::computeJacobian(MatrixXd &J, MatrixXd &Jdot, int nm, int nr) {
 	// Computes the redmax Jacobian
 	Matrix6d Ad_ij = m_body->Ad_ij;
 	J.block(m_body->idxM, idxR, 6, m_ndof) = Ad_ij * m_S;
-	// Loop through all ancestors
-	auto jointA = m_parent;
-	while (jointA != nullptr) {
-		int idxM_P = m_parent->getBody()->idxM;
-		Matrix6d Ad_ip = m_body->Ad_ip;
-		J.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
-		jointA = jointA->getParent();
-	}
-	if (next != nullptr) {
-		next->computeJacobian(J, nm, nr);
-	}
-}
-
-void Joint::computeForceStiffness(VectorXd &fr) {
-	// Computes joint stiffness force vector
-	if (presc == false) {
-		int row = this->idxR;
-		// Add the joint torque here rather than having a separate function
-		fr.segment(row, m_ndof) += m_tau - m_K * m_q;
-	}
-
-	if (next != nullptr) {
-		next->computeForceStiffness(fr);
-	}
-}
-
-void Joint::computeMatrixStiffness(MatrixXd &Ksr) {
-	// Computes joint stiffness matrix
-	if (presc == false) {
-		int row = this->idxR;
-		MatrixXd I(m_ndof, m_ndof);
-		I.setIdentity();
-		Ksr.block(row, row, m_ndof, m_ndof) -= m_K * I;
-	}
-
-	if (next != nullptr) {
-		next->computeMatrixStiffness(Ksr);
-	}
-}
-
-void Joint::computeForceDamping(VectorXd &fr) {
-	// Computes joint damping force vector
-	if (presc == false) {
-		int row = this->idxR;
-		fr.segment(row, m_ndof) -= m_D * m_qdot;
-	}
-
-	if (next != nullptr) {
-		next->computeForceDamping(fr);
-	}
-}
-
-void Joint::computeMatrixDamping(MatrixXd &Ddr) {
-	// Computes joint damping matrix
-	if (presc == false) {
-		int row = this->idxR;
-		MatrixXd I(m_ndof, m_ndof);
-		I.setIdentity();
-		Ddr.block(row, row, m_ndof, m_ndof) += m_D * I;
-	}
-
-	if (next != nullptr) {
-		next->computeMatrixDamping(Ddr);
-	}
-}
-
-void Joint::computeJacobianDerivative(MatrixXd &Jdot, MatrixXd J, int nm, int nr) {
-	Matrix6d Ad_ij = m_body->Ad_ij;
 	Jdot.block(m_body->idxM, idxR, 6, m_ndof) = Ad_ij * m_Sdot;
+
 	// Loop through all ancestors
 	auto jointA = m_parent;
-
 	while (jointA != nullptr) {
 		int idxM_P = m_parent->getBody()->idxM;
 		Matrix6d Ad_ip = m_body->Ad_ip;
@@ -208,13 +140,60 @@ void Joint::computeJacobianDerivative(MatrixXd &Jdot, MatrixXd J, int nm, int nr
 		Matrix6d Ad_wp = m_parent->getBody()->Ad_wi;
 		Matrix6d Addot_wi = m_body->Addot_wi;
 		Matrix6d Addot_wp = m_parent->getBody()->Addot_wi;
-
 		Matrix6d Addot_ip = -Ad_iw * (Addot_wi * Ad_iw * Ad_wp - Addot_wp);
+		J.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
 		Jdot.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * Jdot.block(idxM_P, jointA->idxR, 6, jointA->m_ndof) + Addot_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
 		jointA = jointA->getParent();
 	}
 	if (next != nullptr) {
-		next->computeJacobianDerivative(Jdot, J, nm, nr);
+		next->computeJacobian(J, Jdot, nm, nr);
+	}
+}
+
+void Joint::computeInertia() {
+	double m = m_body->I_i(3);
+
+	Matrix3d R, pBrac, Ic;
+	Vector3d p;
+	SE3::EToRp(m_body->E_ji, R, p);
+
+	pBrac = SE3::bracket3(p);
+	Ic = (m_body->I_i.segment<3>(0)).asDiagonal();
+
+	m_I_j.block<3, 3>(0, 0) = R * Ic *R.transpose() + m *(pBrac.transpose()*pBrac);
+	m_I_j.block<3, 3>(0, 3) = m * pBrac;
+	m_I_j.block<3, 3>(3, 0) = m * pBrac.transpose();
+	m_I_j.block<3, 3>(3, 3) = m * Matrix3d::Identity();
+}
+
+void Joint::computeForceStiffness(VectorXd &fr, MatrixXd &Kr) {
+	// Computes joint stiffness force vector and matrix
+	if (presc == false) {
+		int row = this->idxR;
+		// Add the joint torque here rather than having a separate function
+		fr.segment(row, m_ndof) += m_tau - m_Kr * m_q;
+		MatrixXd I(m_ndof, m_ndof);
+		I.setIdentity();
+		Kr.block(row, row, m_ndof, m_ndof) -= m_Kr * I;
+	}
+
+	if (next != nullptr) {
+		next->computeForceStiffness(fr, Kr);
+	}
+}
+
+void Joint::computeForceDamping(VectorXd &fr, MatrixXd &Dr) {
+	// Computes joint damping force vector and matrix
+	if (presc == false) {
+		int row = this->idxR;
+		fr.segment(row, m_ndof) -= m_Dr * m_qdot;
+		MatrixXd I(m_ndof, m_ndof);
+		I.setIdentity();
+		Dr.block(row, row, m_ndof, m_ndof) += m_Dr * I;
+	}
+
+	if (next != nullptr) {
+		next->computeForceDamping(fr, Dr);
 	}
 }
 
@@ -226,24 +205,24 @@ VectorXd Joint::computerJacTransProd(VectorXd y, VectorXd x, int nr) {
 		yi = yi + m_children[k]->getAlpha();
 	}
 	m_alpha = m_body->Ad_ip.transpose() * yi;
+	x.segment(idxR, m_ndof) = (m_body->Ad_ij * m_S).transpose() * yi;
+
 	if (prev != nullptr) {
 		x = prev->computerJacTransProd(y, x, nr);
 	}
 	return x;
 }
 
-
-Energy Joint::computeEnergies(Vector3d grav, Energy ener) {
+void Joint::computeEnergies(Vector3d grav, Energy &ener) {
 	// Computes kinetic and potential energies
-	ener = m_body->computeEnergies(grav, ener);
-	ener.V += 0.5 * m_K * m_q.dot(m_q);
+	m_body->computeEnergies(grav, ener);
+	ener.V += 0.5 * m_Kr * m_q.dot(m_q);
 	if (next != nullptr) {
-		ener = next->computeEnergies(grav, ener);
+		next->computeEnergies(grav, ener);
 	}
-	return ener;
 }
 
-Eigen::VectorXd Joint::gatherDofs(Eigen::VectorXd y, int nr) {
+Eigen::VectorXd Joint::gatherDofs(VectorXd y, int nr) {
 	// Gathers q and qdot into y
 	y.segment(idxR, m_ndof) = m_q;
 	y.segment(nr + idxR, m_ndof) = m_qdot;
@@ -253,7 +232,7 @@ Eigen::VectorXd Joint::gatherDofs(Eigen::VectorXd y, int nr) {
 	return y;
 }
 
-Eigen::VectorXd Joint::gatherDDofs(Eigen::VectorXd ydot, int nr) {
+Eigen::VectorXd Joint::gatherDDofs(VectorXd ydot, int nr) {
 	// Gathers qdot and qddot into ydot
 	ydot.segment(idxR, m_ndof) = m_qdot;
 	ydot.segment(nr + idxR, m_ndof) = m_qddot;
@@ -263,13 +242,13 @@ Eigen::VectorXd Joint::gatherDDofs(Eigen::VectorXd ydot, int nr) {
 	return ydot;
 }
 
-void Joint::scatterDofs(Eigen::VectorXd y, int nr) {
+void Joint::scatterDofs(VectorXd y, int nr) {
 	// Scatters q and qdot from y
 	scatterDofsNoUpdate(y, nr);
 	update();
 }
 
-void Joint::scatterDDofs(Eigen::VectorXd ydot, int nr) {
+void Joint::scatterDDofs(VectorXd ydot, int nr) {
 	// Scatters qdot and qddot from ydot
 	m_qdot.segment(0, m_ndof) = ydot.segment(idxR, m_ndof);
 	m_qddot.segment(0, m_ndof) = ydot.segment(nr + idxR, m_ndof);
@@ -278,12 +257,20 @@ void Joint::scatterDDofs(Eigen::VectorXd ydot, int nr) {
 	}
 }
 
-void Joint::scatterDofsNoUpdate(Eigen::VectorXd y, int nr) {
+void Joint::scatterDofsNoUpdate(VectorXd y, int nr) {
 	// Helper function to scatter without updating
 	m_q.segment(0, m_ndof) = y.segment(idxR, m_ndof);
 	m_qdot.segment(0, m_ndof) = y.segment(nr + idxR, m_ndof);
 	if (next != nullptr) {
 		next->scatterDofsNoUpdate(y, nr);
+	}
+}
+
+void Joint::scatterTauCon(VectorXd tauc) {
+	// Scatters constraint force
+	m_tauCon = tauc.segment(idxR, m_ndof);
+	if (next != nullptr) {
+		next->scatterTauCon(tauc);
 	}
 }
 
@@ -317,6 +304,11 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	progSimple->unbind();
 
 	drawSelf(MV, prog, progSimple, P);
+
+	if (next != nullptr) {
+		next->draw(MV, prog, progSimple, P);
+	}
+
 }
 
 void Joint::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {

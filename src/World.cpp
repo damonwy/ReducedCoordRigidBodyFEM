@@ -1054,7 +1054,7 @@ Energy World::computeEnergy() {
 	m_energy.K = 0.0;
 	m_energy.V = 0.0;
 
-	m_energy = m_joints[0]->computeEnergies(m_grav, m_energy);
+	m_joints[0]->computeEnergies(m_grav, m_energy);
 	m_deformables[0]->computeEnergies(m_grav, m_energy);
 	m_energy = m_softbodies[0]->computeEnergies(m_grav, m_energy);
 

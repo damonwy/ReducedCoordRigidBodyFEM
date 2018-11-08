@@ -14,7 +14,7 @@ class SpringDamper : public Spring
 {
 public:
 	SpringDamper();
-	SpringDamper(std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);
+	SpringDamper(std::shared_ptr<Body> body0, Vector3d r0, std::shared_ptr<Body> body1, Vector3d r1);
 	virtual ~SpringDamper() {}
 
 	void setStiffness(double K) { m_K = K; }
@@ -31,7 +31,7 @@ private:
 	void computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D);
 
 protected:
-	void computeForceStiffnessDamping_(Eigen::Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &K, Eigen::MatrixXd &D);
+	void computeForceStiffnessDamping_(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &K, Eigen::MatrixXd &D);
 	void computeStiffnessProd_(Eigen::VectorXd x, Eigen::VectorXd &y);
 	void computeDampingProd_(Eigen::VectorXd x, Eigen::VectorXd &y);
 
@@ -42,8 +42,8 @@ protected:
 	double m_damping;
 	std::shared_ptr<Body> m_body0;
 	std::shared_ptr<Body> m_body1;
-	Eigen::Vector3d m_r0;
-	Eigen::Vector3d m_r1;
+	Vector3d m_r0;
+	Vector3d m_r1;
 
 };
 

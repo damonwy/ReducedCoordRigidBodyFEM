@@ -19,21 +19,31 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 
 typedef Eigen::Matrix<int, 6, 1> Vector6i;
+typedef Eigen::Matrix<float, 3, 1> Vector3f;
 
+typedef Eigen::Matrix<double, 3, 1> Vector3d;
+typedef Eigen::Matrix<double, 4, 1> Vector4d;
 typedef Eigen::Matrix<double, 6, 1> Vector6d;
-typedef Eigen::Matrix<double, 6, 2> Matrix6x2d;
 typedef Eigen::Matrix<double, 12, 1> Vector12d;
-typedef Eigen::Matrix<double, 6, 6> Matrix6d;
-typedef Eigen::Matrix<double, 3, 4> Matrix3x4d;
 
-typedef Eigen::Matrix<double, 3, 6> Matrix3x6d;
-typedef Eigen::Matrix<double, 6, 3> Matrix6x3d;
-typedef Eigen::Matrix<double, 5, 6> Matrix5x6d;
-typedef Eigen::Matrix<double, 3, 12> Matrix3x12d;
+typedef Eigen::Matrix<double, 3, 3> Matrix3d;
+typedef Eigen::Matrix<double, 4, 4> Matrix4d;
+typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 typedef Eigen::Matrix<double, 9, 9> Matrix9d;
 typedef Eigen::Matrix<double, 12, 12> Matrix12d;
+
+typedef Eigen::Matrix<double, 3, 4> Matrix3x4d;
+typedef Eigen::Matrix<double, 3, 6> Matrix3x6d;
+typedef Eigen::Matrix<double, 3, 12> Matrix3x12d;
+
 typedef Eigen::Matrix<double, 4, 2> Matrix4x2d;
 typedef Eigen::Matrix<double, 4, 3> Matrix4x3d;
+
+typedef Eigen::Matrix<double, 5, 6> Matrix5x6d;
+
+typedef Eigen::Matrix<double, 6, 2> Matrix6x2d;
+typedef Eigen::Matrix<double, 6, 3> Matrix6x3d;
+
 typedef Eigen::TensorFixedSize<double, Eigen::Sizes<4, 4, 6>> Tensor4x4x6d;
 typedef Eigen::TensorFixedSize<double, Eigen::Sizes<6, 2, 2>> Tensor6x2x2d;
 

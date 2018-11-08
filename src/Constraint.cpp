@@ -23,14 +23,6 @@ activeR(false)
 
 }
 
-void Constraint::update() {
-
-}
-
-void Constraint::draw() {
-
-}
-
 void Constraint::countDofs(int &nem, int &ner, int &nim, int &nir) {
 	// Counts DOFs
 	idxEM = nem;
@@ -65,46 +57,26 @@ void Constraint::computeJacEqM(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, Vect
 	}
 }
 
+void Constraint::computeJacEqR(MatrixXd &Gr, MatrixXd &Grdot, VectorXd &gr, VectorXd &grdot, VectorXd &grddot) {
 
-void Constraint::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
-
-}
-
-void Constraint::computeJacEqR(MatrixXd &Gr, MatrixXd &Grdot, VectorXd &gr) {
-
-	computeJacEqR_(Gr, Grdot, gr);
+	computeJacEqR_(Gr, Grdot, gr, grdot, grddot);
 	if (next != nullptr) {
-		next->computeJacEqR(Gr, Grdot, gr);
+		next->computeJacEqR(Gr, Grdot, gr, grdot, grddot);
 	}
 }
 
-
-void Constraint::computeJacEqR_(MatrixXd &Gr, MatrixXd &Grdot, VectorXd &gr) {
-
-
-}
-
-void Constraint::computeJacIneqM(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm) {
-	computeJacIneqM_(Cm, Cmdot, cm);
+void Constraint::computeJacIneqM(MatrixXd &Cm, MatrixXd &Cmdot, VectorXd &cm, VectorXd &cmdot, VectorXd &cmddot) {
+	computeJacIneqM_(Cm, Cmdot, cm, cmdot, cmddot);
 	if (next != nullptr) {
-		next->computeJacIneqM(Cm, Cmdot, cm);
+		next->computeJacIneqM(Cm, Cmdot, cm, cmdot, cmddot);
 	}
 }
 
-void Constraint::computeJacIneqM_(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm) {
-
-
-}
-
-void Constraint::computeJacIneqR(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr) {
-	computeJacIneqR_(Cr, Crdot, cr);
+void Constraint::computeJacIneqR(MatrixXd &Cr, MatrixXd &Crdot, VectorXd &cr, VectorXd &crdot, VectorXd &crddot) {
+	computeJacIneqR_(Cr, Crdot, cr, crdot, crddot);
 	if (next != nullptr) {
-		next->computeJacIneqR(Cr, Crdot, cr);
+		next->computeJacIneqR(Cr, Crdot, cr, crdot, crddot);
 	}
-
-}
-
-void Constraint::computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr) {
 
 }
 
@@ -139,8 +111,6 @@ void Constraint::scatterForceEqR(Eigen::MatrixXd Grt, Eigen::VectorXd lr) {
 			temp.block(6 * i, 0, 6, nconER) = Grt.block(idxQ(0, i), idxER, 6, nconER);
 		}
 		fcon = -temp * lr.segment(idxER, nconER);
-
-
 		//fcon = -Grt.block(idxQ, idxER, nQ, nconER) * lr.segment(idxER, nconER);
 	}
 	else {
@@ -181,26 +151,17 @@ void Constraint::scatterForceIneqM(Eigen::MatrixXd Cmt, Eigen::VectorXd lm) {
 	}
 }
 
-void Constraint::scatterForceEqM_() {
-
-
+void Constraint::ineqEventFcn(vector<double> &value, vector<int> &isterminal, vector<int> &direction) {
+	ineqEventFcn_(value, isterminal, direction);
+	if (next != nullptr) {
+		next->ineqEventFcn(value, isterminal, direction);
+	}
 }
 
-void Constraint::scatterForceEqR_() {
+void Constraint::ineqProjPos() {
+	ineqProjPos_();
 
-
-}
-
-void Constraint::scatterForceIneqR_() {
-
-
-}
-
-void Constraint::scatterForceIneqM_() {
-
-
-}
-
-Constraint::~Constraint() {
-
+	if (next != nullptr) {
+		next->ineqProjPos();
+	}
 }

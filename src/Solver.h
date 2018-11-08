@@ -64,12 +64,12 @@ class Solver
 public:
 	Solver();
 	Solver(std::shared_ptr<World> world, Integrator integrator);
-	virtual ~Solver();
+	virtual ~Solver() {}
 	std::shared_ptr<Solution> solve();
 	Eigen::VectorXd dynamics(Eigen::VectorXd y);
 
-
 	void init();
+	void reset();
 	void load(const std::string &RESOURCE_DIR);
 	
 private:
@@ -108,6 +108,8 @@ private:
 	Eigen::MatrixXd Gr;
 	Eigen::MatrixXd Grdot;
 	Eigen::VectorXd gr;
+	Eigen::VectorXd grdot;
+	Eigen::VectorXd grddot;
 
 	Eigen::MatrixXd G;
 	Eigen::VectorXd g;
@@ -117,10 +119,15 @@ private:
 	Eigen::MatrixXd Cm;
 	Eigen::MatrixXd Cmdot;
 	Eigen::VectorXd cm;
+	Eigen::VectorXd cmdot;
+	Eigen::VectorXd cmddot;
 
 	Eigen::MatrixXd Cr;
 	Eigen::MatrixXd Crdot;
 	Eigen::VectorXd cr;
+	Eigen::VectorXd crdot;
+	Eigen::VectorXd crddot;
+
 	Eigen::VectorXd rhsC;
 
 	Eigen::MatrixXd C;

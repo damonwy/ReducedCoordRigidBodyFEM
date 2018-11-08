@@ -228,6 +228,11 @@ Matrix4d SE3::RpToE(Matrix3d R, Vector3d p) {
 	return E;
 }
 
+void SE3::EToRp(const Eigen::Matrix4d &E, Eigen::Matrix3d &R, Eigen::Vector3d &p) {
+	R = E.block<3, 3>(0, 0);
+	p = E.block<3, 1>(0, 3);
+}
+
 Matrix6d SE3::ad(Vector6d phi) {
 	Matrix6d a;
 	a.setZero();

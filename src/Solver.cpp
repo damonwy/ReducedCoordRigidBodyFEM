@@ -39,6 +39,119 @@ void Solver::load(const string &RESOURCE_DIR) {
 
 }
 
+void Solver::reset() {
+	int nr = m_world->nr;
+	int nm = m_world->nm;
+	// constraints
+	int nem = m_world->nem;
+	int ner = m_world->ner;
+	int ne = nem + ner;
+
+	M.resize(nm, nm);
+	M.setZero();
+	K.resize(nm, nm);
+	K.setZero();
+	f.resize(nm);
+	f.setZero();
+
+	Mtilde.resize(nr, nr);
+	Mtilde.setZero();
+	ftilde.resize(nr, 1);
+	ftilde.setZero();
+	fr.resize(nr, 1);
+	fr.setZero();
+	fdr.resize(nr, 1);
+	fsr.resize(nr, 1);
+	Ksr.resize(nr, nr);
+	Ksr.setZero();
+	Ddr.resize(nr, nr);
+	Ddr.setZero();
+
+
+	J.resize(nm, nr);
+	Jdot.resize(nm, nr);
+	J.setZero();
+	Jdot.setZero();
+
+	Gm.resize(nem, nm);
+	Gm.setZero();
+	Gmdot.resize(nem, nm);
+	Gmdot.setZero();
+	gm.resize(nem);
+	gm.setZero();
+	gmdot.resize(nem);
+	gmdot.setZero();
+	gmddot.resize(nem);
+	gmddot.setZero();
+
+	Gr.resize(ner, nr);
+	Gr.setZero();
+	Grdot.resize(ner, nr);
+	Grdot.setZero();
+	gr.resize(ner);
+	gr.setZero();
+	grdot.resize(ner);
+	grdot.setZero();
+	grddot.resize(ner);
+	grddot.setZero();
+
+	G.resize(ne, nr);
+	g.resize(ne);
+	rhsG.resize(ne);
+	gdot.resize(ne);
+	G.setZero();
+	g.setZero();
+	gdot.setZero();
+	rhsG.setZero();
+
+	int nim = m_world->nim;
+	int nir = m_world->nir;
+	int ni = nim + nir;
+
+	Cm.resize(nim, nm);
+	Cm.setZero();
+	Cmdot.resize(nim, nm);
+	Cmdot.setZero();
+	cm.resize(nim);
+	cm.setZero();
+	cmdot.resize(nim);
+	cmdot.setZero();
+	cmddot.resize(nim);
+	cmddot.setZero();
+
+	Cr.resize(nir, nr);
+	Cr.setZero();
+	Crdot.resize(nir, nr);
+	Crdot.setZero();
+	cr.resize(nir);
+	cr.setZero();
+	crdot.resize(nir);
+	crdot.setZero();
+	crddot.resize(nir);
+	crddot.setZero();
+
+	M.setZero();
+	K.setZero();
+	f.setZero();
+	J.setZero();
+	Jdot.setZero();
+	g.setZero();
+	gdot.setZero();
+	gm.setZero();
+	gmdot.setZero();
+	gmddot.setZero();
+	gr.setZero();
+	grdot.setZero();
+	grddot.setZero();
+	Gr.setZero();
+	Grdot.setZero();
+	Gm.setZero();
+	Gmdot.setZero();
+	G.setZero();
+	rhsG.setZero();
+}
+
+
 Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 {
 	switch (m_integrator)
@@ -96,8 +209,13 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		Grdot.resize(ner, nr);
 		Grdot.setZero();
 
+		
 		gr.resize(ner);
 		gr.setZero();
+		grdot.resize(ner);
+		grdot.setZero();
+		grddot.resize(ner);
+		grddot.setZero();
 
 		G.resize(ne, nr);
 		g.resize(ne);
@@ -131,6 +249,10 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		Cmdot.setZero();
 		cm.resize(nim);
 		cm.setZero();
+		cmdot.resize(nim);
+		cmdot.setZero();
+		cmddot.resize(nim);
+		cmddot.setZero();
 
 		Cr.resize(nir, nr);
 		Cr.setZero();
@@ -138,6 +260,10 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		Crdot.setZero();
 		cr.resize(nir);
 		cr.setZero();
+		crdot.resize(nir);
+		crdot.setZero();
+		crddot.resize(nir);
+		crddot.setZero();
 
 		M.setZero();
 		K.setZero();
@@ -150,6 +276,8 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		gmdot.setZero();
 		gmddot.setZero();
 		gr.setZero();
+		grdot.setZero();
+		grddot.setZero();
 		Gr.setZero();
 		Grdot.setZero();
 		Gm.setZero();
@@ -159,23 +287,21 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		
 
 		// sceneFcn()
-		body0->computeMass(grav, M);
-		body0->computeForce(grav, f);
+		body0->computeMassGrav(grav, M, f);
 
 		deformable0->computeMass(grav, M, f);
-		
+		deformable0->computeForceDamping(grav, tmp, Dm);
+
+
 		softbody0->computeMass(grav, M);
 		softbody0->computeForce(grav, f);
 
 		softbody0->computeStiffness(K);
 
-		joint0->computeForceStiffness(fsr);
-		joint0->computeForceDamping(fdr);
-		joint0->computeMatrixStiffness(Ksr);
-		joint0->computeMatrixDamping(Ddr);
+		joint0->computeForceStiffness(fsr, Ksr);
+		joint0->computeForceDamping(fdr, Ddr);
 		
-		joint0->computeJacobian(J, nm, nr);
-		joint0->computeJacobianDerivative(Jdot, J, nm, nr);
+		joint0->computeJacobian(J, Jdot, nm, nr);
 
 		// spring jacobian todo
 		deformable0->computeJacobian(J, Jdot);
@@ -195,7 +321,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		if (ne > 0) {
 			
 			constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
-			constraint0->computeJacEqR(Gr, Grdot, gr);
+			constraint0->computeJacEqR(Gr, Grdot, gr, grdot, grddot);
 			G.block(0, 0, nem, nr) = Gm * J;
 			G.block(nem, 0, ner, nr) = Gr;
 			g.segment(0, nem) = gm;
@@ -206,8 +332,8 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 		if (ni > 0) {
 			// Check for active inequality constraint
-			constraint0->computeJacIneqM(Cm, Cmdot, cm);
-			constraint0->computeJacIneqR(Cr, Crdot, cr);
+			constraint0->computeJacIneqM(Cm, Cmdot, cm, cmdot, cmddot);
+			constraint0->computeJacIneqR(Cr, Crdot, cr, crdot, crddot);
 			rowsR.clear();
 			rowsM.clear();
 
@@ -496,9 +622,7 @@ shared_ptr<Solution> Solver::solve() {
 			G.setZero();
 			rhsG.setZero();
 			// sceneFcn()
-			body0->computeMass(grav, M);
-			body0->computeForce(grav, f);
-
+			body0->computeMassGrav(grav, M, f);
 			deformable0->computeMass(grav, M, f);
 
 			softbody0->computeMass(grav, M);
@@ -506,15 +630,11 @@ shared_ptr<Solution> Solver::solve() {
 
 			softbody0->computeStiffness(K);
 
-			joint0->computeForceStiffness(fsr);
-			joint0->computeForceDamping(fdr);
+			joint0->computeForceStiffness(fsr, Ksr);
+			joint0->computeForceDamping(fdr, Ddr);
 
-			joint0->computeMatrixStiffness(Ksr);
-			joint0->computeMatrixDamping(Ddr);
-
-			joint0->computeJacobian(J, nm, nr);
+			joint0->computeJacobian(J, Jdot, nm, nr);
 			//Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
-			joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 			// spring jacobian todo
 			deformable0->computeJacobian(J, Jdot);
 
@@ -533,7 +653,7 @@ shared_ptr<Solution> Solver::solve() {
 
 			if (ne > 0) {
 				constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
-				constraint0->computeJacEqR(Gr, Grdot, gr);
+				constraint0->computeJacEqR(Gr, Grdot, gr, grdot, grddot);
 				G.block(0, 0, nem, nr) = Gm * J;
 				G.block(nem, 0, ner, nr) = Gr;
 				g.segment(0, nem) = gm;
@@ -544,8 +664,8 @@ shared_ptr<Solution> Solver::solve() {
 
 			if (ni > 0) {
 				// Check for active inequality constraint
-				constraint0->computeJacIneqM(Cm, Cmdot, cm);
-				constraint0->computeJacIneqR(Cr, Crdot, cr);
+				constraint0->computeJacIneqM(Cm, Cmdot, cm, cmdot, cmddot);
+				constraint0->computeJacIneqR(Cr, Crdot, cr, crdot, crddot);
 				rowsR.clear();
 				rowsM.clear();
 

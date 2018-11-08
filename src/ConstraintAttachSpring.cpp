@@ -14,7 +14,6 @@ using namespace Eigen;
 
 ConstraintAttachSpring::ConstraintAttachSpring() {
 
-
 }
 
 ConstraintAttachSpring::ConstraintAttachSpring(shared_ptr<Deformable> spring) :
@@ -22,7 +21,6 @@ Constraint(6, 0, 0, 0), m_spring(spring)
 {
 
 }
-
 
 void ConstraintAttachSpring::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
 	int row0 = idxEM;
@@ -63,15 +61,12 @@ void ConstraintAttachSpring::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, Vecto
 		W0 = SE3::bracket3(body0->phi.segment<3>(0));
 		Gm.block<3, 6>(row0, col0B) = R0 * G0;
 		Gmdot.block<3, 6>(row0, col0B) = R0 * W0 * G0;
-
 	}
-
 
 	if (body1 != nullptr) {
 		W1 = SE3::bracket3(body1->phi.segment<3>(0));
 		Gm.block<3, 6>(row1, col1B) = R1 * G1;
 		Gmdot.block<3, 6>(row1, col1B) = R1 * W1 * G1;
-
 	}
 
 	Gm.block<3, 3>(row0, col0S) = -Matrix3d::Identity();

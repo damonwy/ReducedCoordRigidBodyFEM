@@ -26,7 +26,7 @@ void Spring::init() {
 	}
 }
 
-void Spring::computeForceStiffnessDamping(Eigen::Vector3d grav, Eigen::Vector3d &f, Eigen::MatrixXd K, Eigen::MatrixXd D) {
+void Spring::computeForceStiffnessDamping(Vector3d grav, VectorXd &f, MatrixXd K, MatrixXd D) {
 	computeForceStiffnessDamping_(grav, f, K, D);
 
 	if (next != nullptr) {
@@ -35,7 +35,7 @@ void Spring::computeForceStiffnessDamping(Eigen::Vector3d grav, Eigen::Vector3d 
 
 }
 
-void Spring::computeStiffnessProd(Eigen::VectorXd x, Eigen::VectorXd &y) {
+void Spring::computeStiffnessProd(VectorXd x, VectorXd &y) {
 	// Computes y=K*x
 	computeStiffnessProd_(x, y);
 	if (next != nullptr) {
@@ -43,7 +43,7 @@ void Spring::computeStiffnessProd(Eigen::VectorXd x, Eigen::VectorXd &y) {
 	}
 }
 
-void Spring::computeDampingProd(Eigen::VectorXd x, Eigen::VectorXd &y) {
+void Spring::computeDampingProd(VectorXd x, VectorXd &y) {
 	// Computes y=D*x
 	computeDampingProd_(x, y);
 	if (next != nullptr) {
