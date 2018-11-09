@@ -11,11 +11,12 @@
 #include "MatlabDebug.h"
 #include "Vector.h"
 #include "JsonEigen.h"
-#include "Stepper.h"
 #include "World.h"
 #include "Solver.h"
-#include "Spring.h"
-#include "SpringSerial.h"
+//#include "Spring.h"
+#include "Deformable.h"
+#include "DeformableSpring.h"
+
 #include "SoftBody.h"
 
 using namespace std;
@@ -50,7 +51,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(SOFT_BODIES);
+	m_world = make_shared<World>(SOFT_BODIES_INVERTIBLE2);
 	m_world->load(RESOURCE_DIR);
 
 	m_solver = make_shared<Solver>(m_world, REDMAX_EULER);
@@ -73,7 +74,7 @@ void Scene::init()
 	y.resize(2 * m_world->nr);
 	y.setZero();
 	y = m_world->getJoint0()->gatherDofs(y, m_world->nr);
-	y = m_world->getSpring0()->gatherDofs(y, m_world->nr);
+	m_world->getDeformable0()->gatherDofs(y, m_world->nr);
 	y = m_world->getSoftBody0()->gatherDofs(y, m_world->nr);
 	//m_solution = m_solver->solve();
 
@@ -101,8 +102,8 @@ void Scene::step()
 {	
 	//int n_steps = m_solution->getNsteps();
 
-	int output_idx;
-	double s;
+	//int output_idx;
+	//double s;
 	VectorXd ys;
 
 

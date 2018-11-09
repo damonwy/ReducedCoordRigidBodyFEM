@@ -9,8 +9,10 @@
 class WrapNull : public WrapObst {
 
 public:
-	WrapNull();
-	virtual ~WrapNull();
+	WrapNull() : WrapObst() {
+
+	}
+	virtual ~WrapNull() {}
 
 };
 

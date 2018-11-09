@@ -3,8 +3,8 @@
 //		want to make this an abstract class and derive from it. 
 
 #pragma once
-#ifndef MUSCLEMASS_SRC_DEFORMABLESPRING_H_
-#define MUSCLEMASS_SRC_DEFORMABLESPRING_H_
+#ifndef REDUCEDCOORD_SRC_DEFORMABLESPRING_H_
+#define REDUCEDCOORD_SRC_DEFORMABLESPRING_H_
 
 #include "Deformable.h"
 
@@ -20,7 +20,7 @@ public:
 
 	void setStiffness(double K) { m_K = K; }
 	void setMass(double mass) { m_mass = mass; }
-	void setAttachments(std::shared_ptr<Body> body0, Eigen::Vector3d r0, std::shared_ptr<Body> body1, Eigen::Vector3d r1);
+	void setAttachments(std::shared_ptr<Body> body0, Vector3d r0, std::shared_ptr<Body> body1, Vector3d r1);
 
 protected:
 	void init_();
@@ -33,12 +33,12 @@ protected:
 	void scatterDofs_(Eigen::VectorXd &y, int nr);
 	void scatterDDofs_(Eigen::VectorXd &ydot, int nr);
 
-	void computeMass_(Eigen::Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
-	void computeForceDamping_(Eigen::Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &D);
-	void computeEnergies_(Eigen::Vector3d grav, Energy &ener);
+	void computeMass_(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
+	void computeForceDamping_(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &D);
+	void computeEnergies_(Vector3d grav, Energy &ener);
 	void computeJacobian_(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
 
 };
 
 
-#endif // MUSCLEMASS_SRC_DEFORMABLESPRING_H_
+#endif // REDUCEDCOORD_SRC_DEFORMABLESPRING_H_

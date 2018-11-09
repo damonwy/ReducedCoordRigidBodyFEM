@@ -53,10 +53,7 @@ m_ndof(ndof)
 	V.setZero();
 	Vdot.setZero();
 
-	m_body->m_joint = getJoint();
-	if (m_parent != nullptr) {
-		m_parent->addChild(getJoint());
-	}
+	
 
 	presc = false;
 }
@@ -71,6 +68,11 @@ void Joint::load(const string &RESOURCE_DIR, string joint_shape) {
 void Joint::init(int &nm, int &nr) {
 	if (m_jointShape) {
 		m_jointShape->init();
+	}
+
+	m_body->m_joint = getJoint();
+	if (m_parent != nullptr) {
+		m_parent->addChild(getJoint());
 	}
 	countDofs(nm, nr);
 }
@@ -303,7 +305,7 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	MV->popMatrix();
 	progSimple->unbind();
 
-	drawSelf(MV, prog, progSimple, P);
+	draw_(MV, prog, progSimple, P);
 
 	if (next != nullptr) {
 		next->draw(MV, prog, progSimple, P);
@@ -311,7 +313,7 @@ void Joint::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 
 }
 
-void Joint::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+void Joint::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	prog->bind();
 	if (m_jointShape) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));

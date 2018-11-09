@@ -20,6 +20,7 @@
 
 typedef Eigen::Matrix<int, 6, 1> Vector6i;
 typedef Eigen::Matrix<float, 3, 1> Vector3f;
+typedef Eigen::Matrix<double, 2, 1> Vector2d;
 
 typedef Eigen::Matrix<double, 3, 1> Vector3d;
 typedef Eigen::Matrix<double, 4, 1> Vector4d;

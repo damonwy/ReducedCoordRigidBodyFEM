@@ -35,7 +35,7 @@ void JointSplineSurface::addControlFrame(int i, int j, Vector6d C) {
 	}
 }
 
-Eigen::Matrix4d JointSplineSurface::evalQ(Eigen::Vector2d q)const {
+Eigen::Matrix4d JointSplineSurface::evalQ(Vector2d q)const {
 	// Evaluates spline frame
 	Matrix4d Q;
 	Q.setIdentity();
@@ -56,7 +56,7 @@ Eigen::Matrix4d JointSplineSurface::evalQ(Eigen::Vector2d q)const {
 }
 
 
-void JointSplineSurface::evalS(Eigen::Vector2d q, MatrixXd &S, Tensor6x2x2d &dSdq) {
+void JointSplineSurface::evalS(Vector2d q, MatrixXd &S, Tensor6x2x2d &dSdq) {
 	// Evaluates spline frame derivatives
 
 	S.setZero();
@@ -125,7 +125,7 @@ void JointSplineSurface::evalS(Eigen::Vector2d q, MatrixXd &S, Tensor6x2x2d &dSd
 	}
 }
 
-void JointSplineSurface::updateSelf() {
+void JointSplineSurface::update_() {
 	m_Q = evalQ(m_q);
 	Tensor6x2x2d dSdq;
 	evalS(m_q, m_S, dSdq);
@@ -202,7 +202,7 @@ double JointSplineSurface::d2Cfun(Eigen::Matrix4d C, int i, int j, Eigen::Vector
 	return d2f;
 }
 
-void JointSplineSurface::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+void JointSplineSurface::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 
 	Matrix4d E_wp;
 	if (getParent() == nullptr) {
@@ -279,9 +279,4 @@ void JointSplineSurface::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<P
 	MV->popMatrix();
 
 	progSimple->unbind();
-}
-
-
-JointSplineSurface:: ~JointSplineSurface() {
-
 }

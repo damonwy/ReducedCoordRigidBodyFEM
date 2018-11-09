@@ -86,6 +86,7 @@ private:
 	Eigen::Matrix3d dDs;
 	Eigen::Matrix3d dF;		// the differential of the deformation gradient
 	Eigen::Matrix3d dP;		// the stress differential 
+	Eigen::Matrix3d dPhat;
 	Eigen::Matrix3d dH;		// the nodal force differential of the first three vertices
 	Matrix12d K;			// 12x12 stiffness matrix
 	

@@ -80,9 +80,11 @@ private:
 	Integrator m_integrator;
 	std::shared_ptr<Solution> m_solutions;
 
-	Eigen::MatrixXd M;
+	Eigen::MatrixXd Mm;
+	Eigen::MatrixXd MDKr_;
 	Eigen::MatrixXd K;
-	Eigen::VectorXd f;
+	Eigen::MatrixXd Km;
+	Eigen::VectorXd fm;
 	Eigen::MatrixXd J;
 	Eigen::MatrixXd Jdot;
 	Eigen::VectorXd q0;
@@ -91,12 +93,16 @@ private:
 	Eigen::VectorXd qdot1;
 	Eigen::VectorXd qddot;
 
-	Eigen::MatrixXd Mtilde;
-	Eigen::VectorXd ftilde;
-	Eigen::MatrixXd Ddr;
-	Eigen::MatrixXd Ksr;
+	Eigen::MatrixXd Mr;
+	Eigen::MatrixXd Dm; // nm x nm
+	Eigen::VectorXd tmp; // nm x 1
+	Eigen::MatrixXd Dr;
+
+	Eigen::MatrixXd Kr;
 	Eigen::VectorXd fr;
-	Eigen::VectorXd fsr;
+	Eigen::VectorXd fr_;
+
+	//Eigen::VectorXd fsr;
 	Eigen::VectorXd fdr;
 
 	Eigen::MatrixXd Gm;

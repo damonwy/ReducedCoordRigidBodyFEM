@@ -73,7 +73,7 @@ public:
 
 protected:
 	std::shared_ptr<Shape> bodyShape;
-	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const {}
+	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 	virtual void computeInertia_() {}
 	std::string m_name;
 	

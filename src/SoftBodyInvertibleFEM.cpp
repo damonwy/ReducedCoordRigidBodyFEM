@@ -41,6 +41,7 @@ void SoftBodyInvertibleFEM::computeForce(Vector3d grav, VectorXd &f) {
 			f = tet->computeInvertibleElasticForces(f);
 			if (tet->isInvert) {
 				//m_isInvert = true;
+				cout << "inverted!" << endl;
 			}
 		}
 	}
@@ -54,6 +55,7 @@ void SoftBodyInvertibleFEM::computeForce(Vector3d grav, VectorXd &f) {
 
 void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 	VectorXd df(3 * m_nodes.size());
+	VectorXd temp = df;
 	VectorXd Dx = df;
 
 	for (int i = 0; i < (int)m_tets.size(); i++) {
@@ -65,12 +67,22 @@ void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 
 			for (int iii = 0; iii < 3; iii++) {
 				df.setZero();
+				temp.setZero();
 				Dx.setZero();
 				Dx(3 * id + iii) = 1.0;
 				tet->computeForceDifferentials(Dx, df);
+				//tet->computeInvertibleForceDifferentials(Dx, temp);
+				//cout << "diff" << df - temp << endl;
+
 				//tet->computeInvertibleForceDifferentials(Dx, df);
-				//K.col(col + iii) += df;
-				K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
+				if (!tet->isInvert) {
+
+					//K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
+				}
+				else {
+					cout << "inverted!" << endl;
+				}
+				
 			}
 		}
 	}

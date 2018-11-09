@@ -14,24 +14,20 @@ using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
-const Eigen::Matrix4d JointSplineCurve::m_B = getB();
+const Matrix4d JointSplineCurve::m_B = getB();
 const Matrix4x3d JointSplineCurve::m_B1 = getB1();
 const Matrix4x2d JointSplineCurve::m_B2 = getB2();
 
-
 JointSplineCurve::JointSplineCurve()
 {
-
 }
 
 JointSplineCurve::JointSplineCurve(shared_ptr<Body> body, shared_ptr<Joint> parent):
 Joint(body, 1, parent)
 {
-
-
 }
 
-void JointSplineCurve::load(const std::string &RESOURCE_DIR, std::string joint_shape) {
+void JointSplineCurve::load(const string &RESOURCE_DIR, string joint_shape) {
 
 	m_jointShape = make_shared<Shape>();
 	m_jointShape->loadMesh(RESOURCE_DIR + joint_shape);
@@ -53,11 +49,6 @@ void JointSplineCurve::init(int &nm, int &nr) {
 		m_parent->addChild(getJoint());
 	}
 	countDofs(nm, nr);
-
-}
-
-JointSplineCurve:: ~JointSplineCurve() {
-
 }
 
 void JointSplineCurve::addControlFrame(Matrix4d C) {
@@ -83,13 +74,12 @@ void JointSplineCurve::addControlFrame(Matrix4d C) {
 	}
 }
 
-void JointSplineCurve::updateSelf() {
+void JointSplineCurve::update_() {
 	m_Q = evalQ(m_q(0));
 	Vector6d S, dSdq;
 	evalS(m_q(0), S, dSdq);
 	m_S = S;
 	m_Sdot = dSdq * m_qdot(0);
-
 }
 
 double JointSplineCurve::Bsum(int i, double q) {
@@ -236,13 +226,10 @@ void JointSplineCurve::evalS(double q, Vector6d &S, Vector6d &dSdq) {
 			dSdq = dC * d2Bsum + AdSum;
 		}
 	}
-
 }
 
-void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+void JointSplineCurve::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	int ncfs = m_Cs.size();
-	std::ptrdiff_t i;
-	double s = getBody()->sides.minCoeff(&i);
 	Matrix4d E_wp;
 
 	if (getParent() == nullptr) {
@@ -281,7 +268,6 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 
 		glEnd();
 		MV->popMatrix();
-	
 	}
 
 	int qmax = ncfs;
@@ -340,7 +326,6 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 
 	glEnd();
 	MV->popMatrix();
-	
 	progSimple->unbind();
 
 	float r = 0.5f;
@@ -358,7 +343,6 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 
 		MV->pushMatrix();
 		Matrix4d E_wj0 = E_wp * E_pj0;
-
 		MV->multMatrix(eigen_to_glm(E_wj0));
 
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
@@ -374,7 +358,5 @@ void JointSplineCurve::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Pro
 		m_jointSphereShape->draw(prog);
 		MV->popMatrix();
 	}
-
 	prog->unbind();
-
 }

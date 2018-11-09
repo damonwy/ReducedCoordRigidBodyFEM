@@ -2,8 +2,8 @@
 //		f = k * (l-L)/L - d * v
 //		
 #pragma once
-#ifndef MUSCLEMASS_SRC_SPRINGDAMPER_H_
-#define MUSCLEMASS_SRC_SPRINGDAMPER_H_
+#ifndef REDUCEDCOORD_SRC_SPRINGDAMPER_H_
+#define REDUCEDCOORD_SRC_SPRINGDAMPER_H_
 
 #include "Spring.h"
 
@@ -48,4 +48,4 @@ protected:
 };
 
 
-#endif // MUSCLEMASS_SRC_SPRINGSERIAL_H_
+#endif // REDUCEDCOORD_SRC_SPRINGSERIAL_H_

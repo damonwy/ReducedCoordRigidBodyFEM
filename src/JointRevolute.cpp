@@ -11,11 +11,6 @@
 using namespace std;
 using namespace Eigen;
 
-JointRevolute::JointRevolute() {
-
-}
-
-
 JointRevolute::JointRevolute(std::shared_ptr<Body> body, Eigen::Vector3d axis, std::shared_ptr<Joint> parent):
 Joint(body, 1, parent)
 {
@@ -29,23 +24,16 @@ void JointRevolute::load(const std::string &RESOURCE_DIR, std::string joint_shap
 
 }
 
-
-JointRevolute::~JointRevolute() {
-
-}
-
-void JointRevolute::updateSelf() {
+void JointRevolute::update_() {
 	Matrix3d R = SE3::aaToMat(m_axis, m_q(0));
 	Matrix4d Q;
 	Q.setIdentity();
 	Q.block<3, 3>(0, 0) = R;
 	m_Q = Q;
-	//E_pj = E_pj0 * Q;
-	
 	m_S.block<3, 1>(0, 0) = m_axis;
 }
 
-void JointRevolute::drawSelf(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+void JointRevolute::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	prog->bind();
 
 	float r = 0.5f;

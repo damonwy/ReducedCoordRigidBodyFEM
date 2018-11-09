@@ -4,7 +4,6 @@
 #include <fstream>
 #include <json.hpp>
 
-#include "Wrench.h"
 #include "Joint.h"
 #include "SE3.h"
 #include "Shape.h"
@@ -58,7 +57,7 @@ void Body::load(const string &RESOURCE_DIR, string box_shape) {
 
 void Body::init(int &nm) {
 	bodyShape->init();
-	computeInertia();
+	
 	countDofs(nm);
 }
 
@@ -71,6 +70,8 @@ void Body::setTransform(Eigen::Matrix4d E) {
 }
 
 void Body::update() {
+	computeInertia();
+
 	// Updates this body's transforms and velocities
 	E_wi = m_joint->E_wj * E_ji;
 	E_iw = SE3::inverse(E_wi);

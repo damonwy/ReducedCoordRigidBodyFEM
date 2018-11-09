@@ -28,7 +28,6 @@ public:
 	virtual void load(const std::string &RESOURCE_DIR, std::string joint_shape);
 	virtual void init(int &nm, int &nr);
 	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
-	virtual void drawSelf(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
 	virtual void update();
 
 	int m_ndof;						// Number of DOF
@@ -93,9 +92,9 @@ protected:
 private:
 	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);
 	std::string m_name;
-	std::vector<std::shared_ptr<Joint> > m_children;	// Children joints
 	Vector6d m_alpha;									// For J'*x product
-	
+	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
+
 };
 
 #endif // REDUCEDCOORD_SRC_JOINT_H_

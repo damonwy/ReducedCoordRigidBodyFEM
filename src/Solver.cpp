@@ -47,108 +47,6 @@ void Solver::reset() {
 	int ner = m_world->ner;
 	int ne = nem + ner;
 
-	M.resize(nm, nm);
-	M.setZero();
-	K.resize(nm, nm);
-	K.setZero();
-	f.resize(nm);
-	f.setZero();
-
-	Mtilde.resize(nr, nr);
-	Mtilde.setZero();
-	ftilde.resize(nr, 1);
-	ftilde.setZero();
-	fr.resize(nr, 1);
-	fr.setZero();
-	fdr.resize(nr, 1);
-	fsr.resize(nr, 1);
-	Ksr.resize(nr, nr);
-	Ksr.setZero();
-	Ddr.resize(nr, nr);
-	Ddr.setZero();
-
-
-	J.resize(nm, nr);
-	Jdot.resize(nm, nr);
-	J.setZero();
-	Jdot.setZero();
-
-	Gm.resize(nem, nm);
-	Gm.setZero();
-	Gmdot.resize(nem, nm);
-	Gmdot.setZero();
-	gm.resize(nem);
-	gm.setZero();
-	gmdot.resize(nem);
-	gmdot.setZero();
-	gmddot.resize(nem);
-	gmddot.setZero();
-
-	Gr.resize(ner, nr);
-	Gr.setZero();
-	Grdot.resize(ner, nr);
-	Grdot.setZero();
-	gr.resize(ner);
-	gr.setZero();
-	grdot.resize(ner);
-	grdot.setZero();
-	grddot.resize(ner);
-	grddot.setZero();
-
-	G.resize(ne, nr);
-	g.resize(ne);
-	rhsG.resize(ne);
-	gdot.resize(ne);
-	G.setZero();
-	g.setZero();
-	gdot.setZero();
-	rhsG.setZero();
-
-	int nim = m_world->nim;
-	int nir = m_world->nir;
-	int ni = nim + nir;
-
-	Cm.resize(nim, nm);
-	Cm.setZero();
-	Cmdot.resize(nim, nm);
-	Cmdot.setZero();
-	cm.resize(nim);
-	cm.setZero();
-	cmdot.resize(nim);
-	cmdot.setZero();
-	cmddot.resize(nim);
-	cmddot.setZero();
-
-	Cr.resize(nir, nr);
-	Cr.setZero();
-	Crdot.resize(nir, nr);
-	Crdot.setZero();
-	cr.resize(nir);
-	cr.setZero();
-	crdot.resize(nir);
-	crdot.setZero();
-	crddot.resize(nir);
-	crddot.setZero();
-
-	M.setZero();
-	K.setZero();
-	f.setZero();
-	J.setZero();
-	Jdot.setZero();
-	g.setZero();
-	gdot.setZero();
-	gm.setZero();
-	gmdot.setZero();
-	gmddot.setZero();
-	gr.setZero();
-	grdot.setZero();
-	grddot.setZero();
-	Gr.setZero();
-	Grdot.setZero();
-	Gm.setZero();
-	Gmdot.setZero();
-	G.setZero();
-	rhsG.setZero();
 }
 
 
@@ -161,27 +59,32 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		int nr = m_world->nr;
 		int nm = m_world->nm;
 
-		M.resize(nm, nm);
-		M.setZero();
-		Mtilde.resize(nr, nr);
-		Mtilde.setZero();
-		ftilde.resize(nr, 1);
-		ftilde.setZero();
-		fr.resize(nr, 1);
+		Mm.resize(nm, nm);
+		Mm.setZero();
+		Mr.resize(nr, nr);
+		Mr.setZero();
+		MDKr_.resize(nr, nr);
+		MDKr_.setZero();
+
+		fm.resize(nm);
+		fr.resize(nr);
+		fr_.resize(nr);
+		fm.setZero();
 		fr.setZero();
-		fdr.resize(nr, 1);
-		fsr.resize(nr, 1);
-		fdr.setZero();
-		fsr.setZero();
-		Ksr.resize(nr, nr);
-		Ksr.setZero();
-		Ddr.resize(nr, nr);
-		Ddr.setZero();
+		fr_.setZero();
+		tmp.resize(nm);
+		tmp.setZero();
+
+		Kr.resize(nr, nr);
+		Dr.resize(nr, nr);
+		Kr.setZero();
+		Dr.setZero();
 
 		K.resize(nm, nm);
 		K.setZero();
-		f.resize(nm);
-		f.setZero();
+		Km.resize(nm, nm);
+		Km.setZero();
+
 		J.resize(nm, nr);
 		Jdot.resize(nm, nr);
 		J.setZero();
@@ -265,9 +168,9 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		crddot.resize(nir);
 		crddot.setZero();
 
-		M.setZero();
+		Mm.setZero();
 		K.setZero();
-		f.setZero();
+		fm.setZero();
 		J.setZero();
 		Jdot.setZero();
 		g.setZero();
@@ -284,40 +187,38 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		Gmdot.setZero();
 		G.setZero();
 		rhsG.setZero();
-		
+		tmp.resize(nm);
+		Dm.resize(nm, nm);
+		tmp.setZero();
+		Dm.setZero();
 
 		// sceneFcn()
-		body0->computeMassGrav(grav, M, f);
+		body0->computeMassGrav(grav, Mm, fm);
+		body0->computeForceDamping(tmp, Dm);
 
-		deformable0->computeMass(grav, M, f);
+		deformable0->computeMass(grav, Mm, fm);
 		deformable0->computeForceDamping(grav, tmp, Dm);
 
-
-		softbody0->computeMass(grav, M);
-		softbody0->computeForce(grav, f);
-
+		softbody0->computeMass(grav, Mm);
+		softbody0->computeForce(grav, fm);
 		softbody0->computeStiffness(K);
 
-		joint0->computeForceStiffness(fsr, Ksr);
-		joint0->computeForceDamping(fdr, Ddr);
-		
+		joint0->computeForceStiffness(fr, Kr);
+		joint0->computeForceDamping(tmp, Dr);
 		joint0->computeJacobian(J, Jdot, nm, nr);
 
-		// spring jacobian todo
 		deformable0->computeJacobian(J, Jdot);
 		softbody0->computeJacobian(J);
 
 		q0 = y.segment(0, nr);
 		qdot0 = y.segment(nr, nr);
 
-		Mtilde = J.transpose() * (M - h * h * K) * J;
-		Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
+		Mr = J.transpose() * (Mm - h * h * K) * J;
+		Mr = 0.5 * (Mr + Mr.transpose());
 
-		fr = J.transpose() * (f - M * Jdot * qdot0) + fsr;
+		fr_ = Mr * qdot0 + h * (J.transpose() * (fm - Mm * Jdot * qdot0) + fr);
+		MDKr_ = Mr + J.transpose() * (h * Dm - h * h * Km)*J + h * Dr - h * h * Kr;
 
-		ftilde = Mtilde * qdot0 + h * fr;
-		Mtilde = Mtilde + h * Ddr - h * h * Ksr;
-		
 		if (ne > 0) {
 			
 			constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
@@ -348,37 +249,40 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 				MatrixXd m_Cm = Cm(m_rowsM, Eigen::placeholders::all);
 				MatrixXd m_Cr = Cr(m_rowsR, Eigen::placeholders::all);
+				VectorXd m_cm = cm(m_rowsM);
+				VectorXd m_cr = cr(m_rowsR);
+				VectorXd m_cmdot = cmdot(m_rowsM);
+				VectorXd m_crdot = crdot(m_rowsR);
+
 				MatrixXd CmJ = m_Cm * J;
 				C.resize(CmJ.rows() + m_Cr.rows(), m_Cr.cols());
 				C << CmJ, m_Cr;
 				rhsC.resize(C.rows());
 				VectorXd c(C.rows());
-				c << cm, cr;
+				c << m_cm, m_cr;
 				VectorXd cdot(C.rows());
-				cdot << Cmdot, Crdot;
-				rhsC = -cdot - 5.0 * c;
-				
-
+				cdot << m_cmdot, m_crdot;
+				rhsC = -cdot - 105.0 * c;		
 			}
 		}
 
 		if (ne == 0 && ni == 0) {	// No constraints	
-			qdot1 = Mtilde.ldlt().solve(ftilde);
+			qdot1 = MDKr_.ldlt().solve(fr_);
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
-			int rows = Mtilde.rows() + G.rows();
-			int cols = Mtilde.cols() + G.rows();
+			int rows = MDKr_.rows() + G.rows();
+			int cols = MDKr_.cols() + G.rows();
 			MatrixXd LHS(rows, cols);
 			VectorXd rhs(rows);
 			LHS.setZero();
 			rhs.setZero();
-			LHS.block(0, 0, Mtilde.rows(), Mtilde.cols()) = Mtilde;
-			LHS.block(0, Mtilde.cols(), Mtilde.rows(), G.rows()) = G.transpose();
-			LHS.block(Mtilde.rows(), 0, G.rows(), G.cols()) = G;
-			rhs.segment(0, ftilde.rows()) = ftilde;
+			LHS.block(0, 0, MDKr_.rows(), MDKr_.cols()) = MDKr_;
+			LHS.block(0, MDKr_.cols(), MDKr_.rows(), G.rows()) = G.transpose();
+			LHS.block(MDKr_.rows(), 0, G.rows(), G.cols()) = G;
+			rhs.segment(0, fr_.rows()) = fr_;
 			//rhs.segment(ftilde.rows(), g.rows()) = g;
 			//cout << "g" << endl << g << endl;
-			rhs.segment(ftilde.rows(), g.rows()) = rhsG;
+			rhs.segment(fr_.rows(), g.rows()) = rhsG;
 
 			VectorXd sol = LHS.ldlt().solve(rhs);
 			//cout << LHS << endl;
@@ -404,8 +308,8 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
 
 			program_->setNumberOfVariables(nr);
-			program_->setObjectiveMatrix(Mtilde.sparseView());
-			program_->setObjectiveVector(-ftilde);
+			program_->setObjectiveMatrix(MDKr_.sparseView());
+			program_->setObjectiveVector(-fr_);
 			program_->setNumberOfInequalities(ni);
 			program_->setInequalityMatrix(C.sparseView());
 
@@ -434,8 +338,8 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 			program_->setNumberOfVariables(nr);
 
-			program_->setObjectiveMatrix(Mtilde.sparseView());
-			program_->setObjectiveVector(-ftilde);
+			program_->setObjectiveMatrix(MDKr_.sparseView());
+			program_->setObjectiveVector(-fr_);
 			program_->setNumberOfInequalities(ni);
 			program_->setInequalityMatrix(C.sparseView());
 			program_->setNumberOfEqualities(ne);
@@ -499,27 +403,23 @@ shared_ptr<Solution> Solver::solve() {
 		int nr = m_world->nr;
 		int nm = m_world->nm;
 
-		M.resize(nm, nm);
-		M.setZero();
-		Mtilde.resize(nr, nr);
-		Mtilde.setZero();
-		ftilde.resize(nr, 1);
-		ftilde.setZero();
+		Mm.resize(nm, nm);
+		Mm.setZero();
+		MDKr_.resize(nr, nr);
+		MDKr_.setZero();
+		fr_.resize(nr, 1);
+		fr_.setZero();
 		fr.resize(nr, 1);
 		fr.setZero();
-		fdr.resize(nr, 1);
-		fsr.resize(nr, 1);
-		fdr.setZero();
-		fsr.setZero();
-		Ksr.resize(nr, nr);
-		Ksr.setZero();
-		Ddr.resize(nr, nr);
-		Ddr.setZero();
+		Kr.resize(nr, nr);
+		Kr.setZero();
+		Dr.resize(nr, nr);
+		Dr.setZero();
 
 		K.resize(nm, nm);
 		K.setZero();
-		f.resize(nm);
-		f.setZero();
+		fm.resize(nm);
+		fm.setZero();
 		J.resize(nm, nr);
 		Jdot.resize(nm, nr);
 		J.setZero();
@@ -604,9 +504,9 @@ shared_ptr<Solution> Solver::solve() {
 			cr.resize(nir);
 			cr.setZero();
 
-			M.setZero();
+			Mm.setZero();
 			K.setZero();
-			f.setZero();
+			fm.setZero();
 			J.setZero();
 			Jdot.setZero();
 			g.setZero();
@@ -622,16 +522,16 @@ shared_ptr<Solution> Solver::solve() {
 			G.setZero();
 			rhsG.setZero();
 			// sceneFcn()
-			body0->computeMassGrav(grav, M, f);
-			deformable0->computeMass(grav, M, f);
+			body0->computeMassGrav(grav, Mm, fm);
+			deformable0->computeMass(grav, Mm, fm);
 
-			softbody0->computeMass(grav, M);
-			softbody0->computeForce(grav, f);
+			softbody0->computeMass(grav, Mm);
+			softbody0->computeForce(grav, fm);
 
 			softbody0->computeStiffness(K);
 
-			joint0->computeForceStiffness(fsr, Ksr);
-			joint0->computeForceDamping(fdr, Ddr);
+			joint0->computeForceStiffness(fr, Kr);
+			joint0->computeForceDamping(tmp, Dr);
 
 			joint0->computeJacobian(J, Jdot, nm, nr);
 			//Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
@@ -644,12 +544,11 @@ shared_ptr<Solution> Solver::solve() {
 			//cout << "q0"<<q0 << endl;
 			qdot0 = m_solutions->y.row(k - 1).segment(nr, nr);
 			//cout << "q0" << qdot0 << endl;
-			Mtilde = J.transpose() * (M - h * h * K) * J;
-			Mtilde = 0.5 * (Mtilde + Mtilde.transpose());
-			
-			fr = J.transpose() * (f - M * Jdot * qdot0) + fsr;
-			ftilde = Mtilde * qdot0 + h * fr;
-			Mtilde = Mtilde + h * Ddr - h * h * Ksr;
+			Mr = J.transpose() * (Mm - h * h * K) * J;
+			Mr = 0.5 * (Mr + Mr.transpose());
+
+			fr_ = Mr * qdot0 + h * (J.transpose() * (fm - Mm * Jdot * qdot0) + fr);
+			MDKr_ = Mr + J.transpose() * (h * Dm - h * h * Km)*J + h * Dr - h * h * Kr;
 
 			if (ne > 0) {
 				constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
@@ -690,26 +589,26 @@ shared_ptr<Solution> Solver::solve() {
 			}
 
 			if (ne == 0 && ni == 0) {	// No constraints	
-				qdot1 = Mtilde.ldlt().solve(ftilde);
+				qdot1 = MDKr_.ldlt().solve(fr_);
 
 				//cout << Mtilde << endl;
 				//cout << ftilde << endl;
 
 			}
 			else if (ne > 0 && ni == 0) {  // Just equality
-				int rows = Mtilde.rows() + G.rows();
-				int cols = Mtilde.cols() + G.rows();
+				int rows = MDKr_.rows() + G.rows();
+				int cols = MDKr_.cols() + G.rows();
 				MatrixXd LHS(rows, cols);
 				VectorXd rhs(rows);
 				LHS.setZero();
 				rhs.setZero();
-				LHS.block(0, 0, Mtilde.rows(), Mtilde.cols()) = Mtilde;
-				LHS.block(0, Mtilde.cols(), Mtilde.rows(), G.rows()) = G.transpose();
-				LHS.block(Mtilde.rows(), 0, G.rows(), G.cols()) = G;
-				rhs.segment(0, ftilde.rows()) = ftilde;
+				LHS.block(0, 0, MDKr_.rows(), MDKr_.cols()) = MDKr_;
+				LHS.block(0, MDKr_.cols(), MDKr_.rows(), G.rows()) = G.transpose();
+				LHS.block(MDKr_.rows(), 0, G.rows(), G.cols()) = G;
+				rhs.segment(0, fr_.rows()) = fr_;
 				//rhs.segment(ftilde.rows(), g.rows()) = g;
 				//cout << "g" << endl << g << endl;
-				rhs.segment(ftilde.rows(), g.rows()) = rhsG;
+				rhs.segment(fr_.rows(), g.rows()) = rhsG;
 
 				VectorXd sol = LHS.ldlt().solve(rhs);
 				//cout << LHS << endl;
@@ -735,8 +634,8 @@ shared_ptr<Solution> Solver::solve() {
 				program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
 
 				program_->setNumberOfVariables(nr);
-				program_->setObjectiveMatrix(Mtilde.sparseView());
-				program_->setObjectiveVector(-ftilde);
+				program_->setObjectiveMatrix(MDKr_.sparseView());
+				program_->setObjectiveVector(-fr_);
 				program_->setNumberOfInequalities(ni);
 				program_->setInequalityMatrix(C.sparseView());
 
@@ -765,8 +664,8 @@ shared_ptr<Solution> Solver::solve() {
 
 				program_->setNumberOfVariables(nr);
 
-				program_->setObjectiveMatrix(Mtilde.sparseView());
-				program_->setObjectiveVector(-ftilde);
+				program_->setObjectiveMatrix(MDKr_.sparseView());
+				program_->setObjectiveVector(-fr_);
 				program_->setNumberOfInequalities(ni);
 				program_->setInequalityMatrix(C.sparseView());
 
@@ -821,7 +720,4 @@ shared_ptr<Solution> Solver::solve() {
 	default:
 		break;
 	}
-}
-
-Solver::~Solver() {
 }

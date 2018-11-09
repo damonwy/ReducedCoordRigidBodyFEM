@@ -13,6 +13,7 @@
 
 #include "Node.h"
 #include "Body.h"
+#include "BodyCuboid.h"
 #include "SoftBodyNull.h"
 #include "SoftBodyInvertibleFEM.h"
 #include "SoftBody.h"
@@ -294,14 +295,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 	break;
 	case SOFT_BODIES:
 	{
-		m_h = 1.0e-2;
+		m_h = 1.0e-4;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e1;
-		double possion = 0.25;
+		double young = 1e2;
+		double possion = 0.4;
 
 		for (int i = 0; i < 2; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
@@ -321,11 +322,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 
-		//m_joints[0]->m_qdot(0) = 5.0;
-		//m_joints[1]->m_qdot(0) = -20.0;
+		m_joints[0]->m_qdot(0) = 10.0;
+		m_joints[1]->m_qdot(0) = -40.0;
 		// Init constraints
 		
-		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
+		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "box10_1_1");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -545,7 +546,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	break;
 	case SOFT_BODIES_INVERTIBLE:
 	{
-		m_h = 1.0e-2;
+		m_h = 1.0e-4;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
@@ -569,8 +570,46 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 
-		m_joints[0]->m_qdot(0) = 5.0;
-		m_joints[1]->m_qdot(0) = -20.0;
+		m_joints[0]->m_qdot(0) = 10.0;
+		m_joints[1]->m_qdot(0) = -40.0;
+
+		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "box10_1_1");
+		softbody->transform(Vector3d(10.0, 0.0, 0.0));
+		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
+
+		// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
+		// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
+
+	}
+	break;
+	case SOFT_BODIES_INVERTIBLE2:
+	{
+		m_h = 1.0e-4;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e2;
+		double possion = 0.40;
+
+		for (int i = 0; i < 2; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+
+			// Inits joints
+			if (i == 0) {
+				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+		}
+
+		m_joints[0]->m_qdot(0) = 10.0;
+		m_joints[1]->m_qdot(0) = -40.0;
 
 		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
@@ -581,7 +620,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
-
 	default:
 		break;
 	}
@@ -605,7 +643,7 @@ shared_ptr<SoftBodyInvertibleFEM> World::addSoftBodyInvertibleFEM(double density
 }
 
 shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p, Matrix3d R, const string &RESOURCE_DIR, string file_name) {
-	auto body = make_shared<Body>(density, sides);
+	auto body = make_shared<BodyCuboid>(density, sides);
 	Matrix4d E = SE3::RpToE(R, p);
 	body->setTransform(E);
 	body->load(RESOURCE_DIR, file_name);
@@ -875,7 +913,7 @@ void World::init() {
 		addDeformableNull();
 	}
 
-	if (m_type == SOFT_BODIES) {
+	if (m_type == SOFT_BODIES | m_type == SOFT_BODIES_INVERTIBLE2) {
 		//m_softbodies[0]->setAttachments(0, m_bodies[0]);
 		//m_softbodies[0]->setAttachments(3, m_bodies[0]);
 		//m_softbodies[0]->setAttachments(6, m_bodies[0]);
@@ -950,6 +988,9 @@ void World::init() {
 
 		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+
 		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 
 		//m_softbodies[0]->setSlidingNodesByYZCircle(9.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);

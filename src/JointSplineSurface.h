@@ -3,8 +3,8 @@
 //    Uses cubic B-splines.
 //    
 
-#ifndef MUSCLEMASS_SRC_JOINTSPLINESURFACE_H_
-#define MUSCLEMASS_SRC_JOINTSPLINESURFACE_H_
+#ifndef REDUCEDCOORD_SRC_JOINTSPLINESURFACE_H_
+#define REDUCEDCOORD_SRC_JOINTSPLINESURFACE_H_
 
 #include "Joint.h"
 
@@ -15,21 +15,15 @@ class JointSplineSurface : public Joint {
 public:
 	JointSplineSurface();
 	JointSplineSurface(std::shared_ptr<Body> body, std::shared_ptr<Joint> parent = nullptr);
-	virtual ~JointSplineSurface();
+	virtual ~JointSplineSurface() {}
 
 	void addControlFrame(int i, int j, Vector6d C);
-	void updateSelf();
-	void drawSelf(std::shared_ptr<MatrixStack> MV, 
-		const std::shared_ptr<Program> prog, 
-		const std::shared_ptr<Program> progSimple, 
-		std::shared_ptr<MatrixStack> P) const;
+	static double Cfun(Matrix4d C, Vector2d q);
+	static double dCfun(Matrix4d C, int i, Vector2d q);
+	static double d2Cfun(Matrix4d C, int i, int j, Vector2d q);
 
-	static double Cfun(Eigen::Matrix4d C, Eigen::Vector2d q);
-	static double dCfun(Eigen::Matrix4d C, int i, Eigen::Vector2d q);
-	static double d2Cfun(Eigen::Matrix4d C, int i, int j, Eigen::Vector2d q);
-
-	static const Eigen::Matrix4d& getB() {
-		static Eigen::Matrix4d _B(1.0 / 6.0 * (Eigen::Matrix4d() <<
+	static const Matrix4d& getB() {
+		static Matrix4d _B(1.0 / 6.0 * (Matrix4d() <<
 			1.0, -3.0, 3.0, -1.0,
 			4.0, 0.0, -6.0, 3.0,
 			1.0, 3.0, 3.0, -3.0,
@@ -48,18 +42,23 @@ public:
 		return _E;
 	}
 
-	static const Eigen::Matrix4d m_B; // Bspline coeffs
-	static const Matrix6d m_E;		  // 6 basis twists in Eq.(25)
+	static const Matrix4d m_B;			// Bspline coeffs
+	static const Matrix6d m_E;			// 6 basis twists in Eq.(25)
 
+protected:
+	void update_();
+	void draw_(std::shared_ptr<MatrixStack> MV, 
+		const std::shared_ptr<Program> prog, 
+		const std::shared_ptr<Program> progSimple, 
+		std::shared_ptr<MatrixStack> P) const;
 private:
 	Tensor4x4x6d m_cs;
-
-	Eigen::Matrix4d evalQ(Eigen::Vector2d q)const;
-	void evalS(Eigen::Vector2d q, Eigen::MatrixXd &S, Tensor6x2x2d &dSdq);
+	Matrix4d evalQ(Vector2d q)const;
+	void evalS(Vector2d q, Eigen::MatrixXd &S, Tensor6x2x2d &dSdq);
 
 };
 
 
 
 
-#endif //MUSCLEMASS_SRC_JOINTSPLINESURFACE_H_
+#endif // REDUCEDCOORD_SRC_JOINTSPLINESURFACE_H_

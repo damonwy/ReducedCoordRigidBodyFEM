@@ -78,7 +78,6 @@ void DeformableSpring::load(const string &RESOURCE_DIR) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		m_nodes[i]->load(RESOURCE_DIR);
 	}
-
 }
 
 void DeformableSpring::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {

@@ -28,13 +28,6 @@ Vector::Vector() :
 Vector::Vector(shared_ptr<Node> p, shared_ptr<Body> body, Vector3d dir):
 m_p(p), m_body(body), dir0(dir), dir(dir)
 {
-
-
-
-}
-
-Vector::~Vector()
-{
 }
 
 void Vector::reset()

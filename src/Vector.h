@@ -23,7 +23,7 @@ public:
 	Vector();
 	Vector(std::shared_ptr<Node> p, std::shared_ptr<Body> body, Eigen::Vector3d dir);
 
-	~Vector();
+	virtual ~Vector() {}
 	void reset();
 	void setP(std::shared_ptr<Node> p) { this->m_p = p; }
 	void draw(std::shared_ptr<MatrixStack> MV, std::shared_ptr<MatrixStack> P, const std::shared_ptr<Program> p) const;

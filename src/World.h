@@ -22,8 +22,6 @@ class Program;
 class Constraint;
 class ConstraintJointLimit;
 class ConstraintNull;
-
-
 class Spring;
 class Deformable;
 class DeformableSpring;
@@ -60,7 +58,8 @@ enum WorldType {
 	WRAP_DOUBLECYLINDER,
 	SPLINE_CURVE_JOINT,
 	SPLINE_SURFACE_JOINT,
-	SOFT_BODIES_INVERTIBLE
+	SOFT_BODIES_INVERTIBLE,
+	SOFT_BODIES_INVERTIBLE2
 };
 
 
