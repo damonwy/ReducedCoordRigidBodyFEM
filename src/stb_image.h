@@ -29,7 +29,8 @@
 
       GIF (*comp always reports as 4-channel)
       HDR (radiance rgbE format)
-      PIC (Softimage PIC)
+      
+	  C (Softimage PIC)
       PNM (PPM and PGM binary only)
 
       Animated GIF still needs a proper API, but here's one way to do it:

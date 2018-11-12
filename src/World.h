@@ -23,6 +23,8 @@ class Constraint;
 class ConstraintJointLimit;
 class ConstraintNull;
 class Spring;
+class SpringNull;
+class SpringDamper;
 class Deformable;
 class DeformableSpring;
 class DeformableNull;
@@ -59,7 +61,8 @@ enum WorldType {
 	SPLINE_CURVE_JOINT,
 	SPLINE_SURFACE_JOINT,
 	SOFT_BODIES_INVERTIBLE,
-	SOFT_BODIES_INVERTIBLE2
+	SOFT_BODIES_INVERTIBLE2,
+	SPRING_DAMPER
 };
 
 
@@ -68,7 +71,7 @@ class World
 public:
 	World();
 	World(WorldType type);
-	virtual ~World();
+	virtual ~World() {}
 
 	std::shared_ptr<Body> addBody(
 		double density, 
@@ -128,6 +131,7 @@ public:
 	std::shared_ptr<JointNull> addJointNull();
 	std::shared_ptr<CompNull> addCompNull();
 	std::shared_ptr<WrapObst> addWrapNull();
+	std::shared_ptr<SpringNull> addSpringNull();
 
 	std::shared_ptr<CompSphere> addCompSphere(
 		double r, 
@@ -219,6 +223,7 @@ public:
 	std::shared_ptr<Deformable> getDeformable0() const { return m_deformables[0]; }
 	std::shared_ptr<SoftBody> getSoftBody0() const { return m_softbodies[0]; }
 	std::shared_ptr<Constraint> getConstraint0() const { return m_constraints[0]; }
+	std::shared_ptr<Spring> getSpring0() const { return m_springs[0]; }
 
 	Eigen::Vector2d getTspan() const { return m_tspan; }
 	int getNsteps();
@@ -237,6 +242,7 @@ public:
 	int m_nsoftbodies;
 	int m_njoints;
 	int m_ndeformables;
+	int m_nsprings;
 	int m_nconstraints;
 	int m_ncomps;
 	int m_nwraps;
@@ -261,6 +267,7 @@ private:
 	std::vector <std::shared_ptr<SoftBody>> m_softbodies;
 	std::vector<std::shared_ptr<Joint>> m_joints;
 	std::vector<std::shared_ptr<Deformable>> m_deformables;
+	std::vector<std::shared_ptr<Spring>> m_springs;
 	std::vector<std::shared_ptr<Constraint>> m_constraints;
 
 	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;

@@ -20,7 +20,6 @@
 
 enum Status { wrap, inside_radius, no_wrap, empty_status};
 enum Type { none, sphere, cylinder, double_cylinder };
-#define PI 3.141593
 
 class WrapObst
 {

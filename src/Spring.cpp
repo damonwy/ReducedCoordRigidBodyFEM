@@ -26,11 +26,18 @@ void Spring::init() {
 	}
 }
 
-void Spring::computeForceStiffnessDamping(Vector3d grav, VectorXd &f, MatrixXd K, MatrixXd D) {
-	computeForceStiffnessDamping_(grav, f, K, D);
+void Spring::update() {
+	update_();
+	if (next != nullptr) {
+		next->update();
+	}
+}
+
+void Spring::computeForceStiffnessDamping(VectorXd &f, MatrixXd &K, MatrixXd &D) {
+	computeForceStiffnessDamping_(f, K, D);
 
 	if (next != nullptr) {
-		next->computeForceStiffnessDamping(grav, f, K, D);
+		next->computeForceStiffnessDamping(f, K, D);
 	}
 
 }

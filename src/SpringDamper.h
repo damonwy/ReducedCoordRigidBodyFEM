@@ -21,19 +21,19 @@ public:
 	void setDamping(double damping) { m_damping = damping; }
 	void setRestLength(double L) { m_L = L; }
 
-	void init();
+	void init_();
 	void load(const std::string &RESOURCE_DIR);
 	void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
-
+	void update_();
 	void computeEnergies_(Eigen::Vector3d grav, Energy &ener);
 
 private:
 	void computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D);
 
 protected:
-	void computeForceStiffnessDamping_(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &K, Eigen::MatrixXd &D);
 	void computeStiffnessProd_(Eigen::VectorXd x, Eigen::VectorXd &y);
 	void computeDampingProd_(Eigen::VectorXd x, Eigen::VectorXd &y);
+	void computeForceStiffnessDamping_(Eigen::VectorXd &f, Eigen::MatrixXd &K, Eigen::MatrixXd &D);
 
 	double m_L;		// Rest Length
 	double m_l;		// Current Length

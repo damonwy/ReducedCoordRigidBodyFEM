@@ -100,7 +100,6 @@ void Joint::update() {
 		E_wp = m_parent->E_wj;
 	}
 	E_wj = E_wp * E_pj;
-
 	// Joint velocity
 	V = m_S * m_qdot;
 	if (m_parent != nullptr) {

@@ -4,12 +4,15 @@
 #include "Body.h"
 #include "SoftBody.h"
 #include "Joint.h"
+#include "Spring.h"
+#include "SpringDamper.h"
 #include "Deformable.h"
 #include "DeformableSpring.h"
 #include "ConstraintJointLimit.h"
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
+#include "ChronoTimer.h"
 
 #include <iostream>
 #include <fstream>
@@ -52,6 +55,8 @@ void Solver::reset() {
 
 Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 {
+	ChronoTimer timer("Test");
+
 	switch (m_integrator)
 	{
 	case REDMAX_EULER:
@@ -129,11 +134,15 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		gdot.setZero();
 		rhsG.setZero();
 
+		timer.tic();
+
+
 		auto body0 = m_world->getBody0();
 		auto joint0 = m_world->getJoint0();
 		auto deformable0 = m_world->getDeformable0();
 		auto softbody0 = m_world->getSoftBody0();
 		auto constraint0 = m_world->getConstraint0();
+		auto spring0 = m_world->getSpring0();
 
 		double t = m_world->getTspan()(0);
 		double h = m_world->getH();
@@ -195,26 +204,52 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 		// sceneFcn()
 		body0->computeMassGrav(grav, Mm, fm);
 		body0->computeForceDamping(tmp, Dm);
+		timer.toc();
+		timer.print();
 
 		deformable0->computeMass(grav, Mm, fm);
 		deformable0->computeForceDamping(grav, tmp, Dm);
+		timer.toc();
+		timer.print();
 
 		softbody0->computeMass(grav, Mm);
 		softbody0->computeForce(grav, fm);
 		softbody0->computeStiffness(K);
+		cout << fm << endl;
+		timer.toc();
+		timer.print();
 
 		joint0->computeForceStiffness(fr, Kr);
 		joint0->computeForceDamping(tmp, Dr);
 		joint0->computeJacobian(J, Jdot, nm, nr);
 
+		timer.toc();
+		timer.print();
+
 		deformable0->computeJacobian(J, Jdot);
 		softbody0->computeJacobian(J);
+		
+		timer.toc();
+		timer.print();
+		cout << "fm" << endl << fm << endl;
+		cout << "Dm" << endl << Dm << endl;
+		spring0->computeForceStiffnessDamping(fm, Km, Dm);
+
+		cout << "fm" << endl << fm << endl;
+		cout << "Km" << endl << Km << endl;
+		cout << "Dm" << endl << Dm << endl;
+
+		timer.toc();
+		timer.print();
 
 		q0 = y.segment(0, nr);
 		qdot0 = y.segment(nr, nr);
 
 		Mr = J.transpose() * (Mm - h * h * K) * J;
 		Mr = 0.5 * (Mr + Mr.transpose());
+
+		timer.toc();
+		timer.print();
 
 		fr_ = Mr * qdot0 + h * (J.transpose() * (fm - Mm * Jdot * qdot0) + fr);
 		MDKr_ = Mr + J.transpose() * (h * Dm - h * h * Km)*J + h * Dr - h * h * Kr;

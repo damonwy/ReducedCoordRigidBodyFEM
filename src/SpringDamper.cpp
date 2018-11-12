@@ -22,15 +22,52 @@ m_body0(body0), m_body1(body1),
 m_r0(r0), m_r1(r1),
 m_K(1.0), m_L(0.0), m_damping(1.0)
 {
+	for (int i = 0; i < 2; i++) {
+		auto node = make_shared<Node>();
+		node->r = 0.2;
+		node->x = Vector3d::Zero();
+		node->v = Vector3d::Zero();
+		node->a = Vector3d::Zero();
+		
+		m_nodes.push_back(node);
+	}
 
+	m_nodes[0]->setParent(body0);
+	m_nodes[1]->setParent(body1);
 }
 
-void SpringDamper::init() {
+void SpringDamper::init_() {
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		m_nodes[i]->init();
 	}
 
+	Matrix4d E0, E1;
+	if (m_body0 == nullptr) {
+		E0 = Matrix4d::Identity();
+	}
+	else {
+		E0 = m_body0->E_wi;
+	}
+
+	if (m_body1 == nullptr) {
+		E1 = Matrix4d::Identity();
+	}
+	else {
+		E1 = m_body1->E_wi;
+	}
+	Vector4d r0, r1;
+	r0.segment<3>(0) = m_r0;
+	r1.segment<3>(0) = m_r1;
+	r0(3) = 1.0;
+	r1(3) = 1.0;
+	Vector4d x0 = E0 * r0;
+	Vector4d x1 = E1 * r1;
+
+	// Set the nodal positions
+	m_nodes[0]->x0 = x0.segment<3>(0);
+	m_nodes[1]->x0 = x1.segment<3>(0);
+	
 }
 
 void SpringDamper::load(const string &RESOURCE_DIR) {
@@ -39,6 +76,13 @@ void SpringDamper::load(const string &RESOURCE_DIR) {
 		m_nodes[i]->load(RESOURCE_DIR);
 	}
 
+}
+
+void SpringDamper::update_() {
+	
+	m_nodes[0]->update();
+	m_nodes[1]->update();
+	
 }
 
 void SpringDamper::computeEnergies_(Vector3d grav, Energy &ener) {
@@ -124,10 +168,14 @@ void SpringDamper::computeDampingProd_(VectorXd x, VectorXd &y) {
 	}
 }
 
-void SpringDamper::computeForceStiffnessDamping_(Vector3d grav, VectorXd &f, MatrixXd &K, MatrixXd &D) {
+void SpringDamper::computeForceStiffnessDamping_(VectorXd &f, MatrixXd &K, MatrixXd &D) {
 	Vector12d f_;
 	Matrix12d K_, D_;
 	computeFKD(f_, K_, D_);
+	cout << f_ << endl;
+	cout << "K" << K_ << endl;
+	cout << "D" << D_ << endl;
+
 	int idxM0, idxM1;
 
 	if (m_body0 != nullptr) {
@@ -202,20 +250,25 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 	Matrix3d R0, R1;
 	R0 = E0.block<3, 3>(0, 0);
 	R1 = E1.block<3, 3>(0, 0);
-
+	
 	Matrix3x6d G0, G1;
 	G0 = SE3::gamma(m_r0);
 	G1 = SE3::gamma(m_r1);
+	
 
 	Vector3d v0_w, v1_w;
 	v0_w = R0 * G0 * phi0;
 	v1_w = R1 * G1 * phi1;
+	//cout << v0_w << endl;
+	//cout << v1_w << endl;
+
 	double v = (dx_w / m_l).transpose() * (v1_w - v0_w);
 
 	Vector6d fx_0, fx_1;
 	fx_0 = -G0.transpose() * R0.transpose() * dx_w;
-	fx_1 = -G1.transpose() * R1.transpose() * dx_w;
-
+	fx_1 = G1.transpose() * R1.transpose() * dx_w;
+	cout << fx_0 << endl;
+	cout << fx_1 << endl;
 	Vector12d fx, fn;
 	fx << fx_0, fx_1;
 
@@ -223,7 +276,8 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 	double fs = m_K * (m_l - m_L) / m_L - m_damping * v;
 
 	f = -fs * fn;
-
+	cout << f << endl;
+	cout << fs << endl;
 	// Kn0
 	Vector3d ddxinvdx0, ddxinvdx1;
 	ddxinvdx0 = dx_w / (pow(m_l, 3));
@@ -237,7 +291,7 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 
 	Matrix12d Kn0, Kn1, Kn;
 	Kn0 = fx * ddxinvdE.transpose();
-
+	cout << Kn0 << endl;
 	// Kn1
 	Kn1.setZero();
 	Vector3d p0, p1;
@@ -257,10 +311,10 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 
 	Kn1.block<3, 3>(3, 0) = SE3::bracket3(R0.transpose() * (p0 - x1_w));
 	Kn1.block<3, 3>(0, 0) = x0b * Kn1.block<3, 3>(3, 0);
-	Kn1.block<3, 3>(9, 0) = R1R0 * x0b;
-	Kn1.block<3, 3>(6, 0) = x1b * Kn1.block<3, 3>(9, 0);
+	Kn1.block<3, 3>(9, 0) = R1R0 * x0b;//
+	Kn1.block<3, 3>(6, 0) = x1b * Kn1.block<3, 3>(9, 0);//
 	Kn1.block<3, 3>(3, 3) = I3;
-	Kn1.block<3, 3>(0, 3) = x0b;
+	Kn1.block<3, 3>(0, 3) = x0b;//
 	Kn1.block<3, 3>(9, 3) = -R1R0;
 	Kn1.block<3, 3>(6, 3) = x1b * Kn1.block<3, 3>(9, 3);
 	Kn1.block<3, 3>(3, 6) = R0R1*x1b;
@@ -272,7 +326,7 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 	Kn1.block<3, 3>(9, 9) = I3;
 	Kn1.block<3, 3>(6, 9) = x1b;
 	Kn1 /= m_l;
-
+	cout << Kn1 << endl;
 	// Stiffness term for vector part
 	Kn = Kn0 + Kn1;
 

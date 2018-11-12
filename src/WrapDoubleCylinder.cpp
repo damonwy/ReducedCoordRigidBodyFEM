@@ -295,19 +295,19 @@ Eigen::MatrixXd WrapDoubleCylinder::getPoints(int num_points) const
 	theta_q = atan(m_point_q->x(1) / m_point_q->x(0));
 
 	if (m_point_q->x(0) < 0.0)
-		theta_q += PI;
+		theta_q += M_PI;
 
 	theta_g = atan(m_point_g->x(1) / m_point_g->x(0));
 	if (m_point_g->x(0) < 0.0)
-		theta_g += PI;
+		theta_g += M_PI;
 
 	theta_h = atan(m_point_h->x(1) / m_point_h->x(0));
 	if (m_point_h->x(0) < 0.0)
-		theta_h += PI;
+		theta_h += M_PI;
 
 	theta_t = atan(m_point_t->x(1) / m_point_t->x(0));
 	if (m_point_t->x(0) < 0.0)
-		theta_t += PI;
+		theta_t += M_PI;
 
 	// q to g
 	if (status_U == wrap)
@@ -324,9 +324,9 @@ Eigen::MatrixXd WrapDoubleCylinder::getPoints(int num_points) const
 			z_s = m_point_g->x(2); z_e = m_point_q->x(2);
 		}
 
-		if (theta_e - theta_s > theta_s + 2 * PI - theta_e)
+		if (theta_e - theta_s > theta_s + 2 * M_PI - theta_e)
 		{
-			double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2 * PI;
+			double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2 * M_PI;
 			tmp = z_s; z_s = z_e; z_e = tmp;
 		}
 
@@ -377,9 +377,9 @@ Eigen::MatrixXd WrapDoubleCylinder::getPoints(int num_points) const
 			z_s = m_point_t->x(2); z_e = m_point_h->x(2);
 		}
 
-		if (theta_e - theta_s > theta_s + 2 * PI - theta_e)
+		if (theta_e - theta_s > theta_s + 2 * M_PI - theta_e)
 		{
-			double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2 * PI;
+			double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2 * M_PI;
 			tmp = z_s; z_s = z_e; z_e = tmp;
 		}
 

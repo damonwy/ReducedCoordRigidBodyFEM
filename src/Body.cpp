@@ -155,13 +155,12 @@ void Body::computeMassGrav(Vector3d grav, MatrixXd &M, VectorXd &f) {
 
 	Vector6d fcor = SE3::ad(phi).transpose() * M_i * phi;
 	Matrix3d R_wi = E_wi.block<3, 3>(0, 0);
-	Matrix3d R_iw = R_wi.transpose();
 
+	Matrix3d R_iw = R_wi.transpose();
 	Vector6d fgrav;
 	fgrav.setZero();
 	fgrav.segment<3>(3) = M_i(3, 3) * R_iw * grav; // wrench in body space
 	f.segment<6>(idxM) = fcor + fgrav;
-
 	// External wrench: used only by recurse (not redmax) to accumulate the wrenches
 	// to be applied to the joint in rhdPas2(). For redmax, the array of wrenches is
 	// used to add wrenches to the bodies directly.

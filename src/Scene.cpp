@@ -51,7 +51,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(SOFT_BODIES_INVERTIBLE2);
+	m_world = make_shared<World>(SPRING_DAMPER);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
 	m_solver = make_shared<Solver>(m_world, REDMAX_EULER);

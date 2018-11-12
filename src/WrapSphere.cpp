@@ -97,13 +97,13 @@ Eigen::MatrixXd WrapSphere::getPoints(int num_points)
 {
 	double theta_q = atan(m_point_q->x(1) / m_point_q->x(0));
 	if (m_point_q->x(0) < 0.0) {
-		theta_q += PI;
+		theta_q += M_PI;
 	}
 		
 
 	double theta_t = atan(m_point_t->x(1) / m_point_t->x(0));
 	if (m_point_t->x(0) < 0.0) {
-		theta_t += PI;
+		theta_t += M_PI;
 	}
 		
 	Eigen::MatrixXd points(3, num_points + 1);
@@ -119,9 +119,9 @@ Eigen::MatrixXd WrapSphere::getPoints(int num_points)
 		theta_s = theta_t; theta_e = theta_q;
 	}
 
-	if (theta_e - theta_s > theta_s + 2 * PI - theta_e)
+	if (theta_e - theta_s > theta_s + 2 * M_PI - theta_e)
 	{
-		double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2 * PI;
+		double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2 * M_PI;
 	}
 
 	int col = 0;

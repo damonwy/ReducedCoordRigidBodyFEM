@@ -34,6 +34,10 @@
 #include "DeformableSpring.h"
 #include "DeformableNull.h"
 
+#include "Spring.h"
+#include "SpringNull.h"
+#include "SpringDamper.h"
+
 #include "Comp.h"
 #include "CompNull.h"
 #include "CompSphere.h"
@@ -52,7 +56,7 @@ using json = nlohmann::json;
 
 World::World() :
 	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_constraints(0), m_countS(0), m_countCM(0),
-	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0)
+	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0)
 {
 	m_energy.K = 0.0;
 	m_energy.V = 0.0;
@@ -61,13 +65,10 @@ World::World() :
 World::World(WorldType type) :
 	m_type(type),
 	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_nconstraints(0), m_countS(0), m_countCM(0),
-	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0)
+	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0)
 {
 	m_energy.K = 0.0;
 	m_energy.V = 0.0;
-}
-
-World::~World() {
 }
 
 void World::load(const std::string &RESOURCE_DIR) {
@@ -475,10 +476,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(0.0, -10.0, 0.0));
 		joint1->setJointTransform(E);
 		joint1->load(RESOURCE_DIR, "joint_spline_curve2.obj");
-		Matrix4d cf0 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI), Vector3d(-10.0, 0.0, 0.0));
-		Matrix4d cf1 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), PI / 2.0), Vector3d(0.0, 2.0, 0.0));
+		Matrix4d cf0 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI), Vector3d(-10.0, 0.0, 0.0));
+		Matrix4d cf1 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), Vector3d(0.0, 2.0, 0.0));
 		Matrix4d cf2 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), 0.0), Vector3d(10.0, 0.0, 0.0));
-		Matrix4d cf3 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -PI / 2.0), Vector3d(0.0, -2.0, 0.0));
+		Matrix4d cf3 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 2.0), Vector3d(0.0, -2.0, 0.0));
 
 		joint1->addControlFrame(cf0);
 		joint1->addControlFrame(cf1);
@@ -490,8 +491,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 		E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
 
 		joint2->setJointTransform(E);
-		joint1->m_q(0) = -PI/4.0;
-		joint2->m_q(0) = 15.0 * PI / 16.0;
+		joint1->m_q(0) = - M_PI/4.0;
+		joint2->m_q(0) = 15.0 * M_PI / 16.0;
 
 	}
 	break;
@@ -515,7 +516,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		joint1->setJointTransform(E);
 
 		double t0 = 15.0;
-		double r0 = PI * 0.25;
+		double r0 = M_PI * 0.25;
 		double x, y, z, a, b, c, s1, s2;
 		for (int i = 0; i < 4; ++i) {
 			s1 = i / 3.0;
@@ -537,10 +538,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 		auto joint2 = addJointRevolute(body2, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, joint1);
 		E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(0.0, -10.0, 0.0));
 		joint2->setJointTransform(E);
-		joint0->m_q(0) = PI / 8.0;
+		joint0->m_q(0) = M_PI / 8.0;
 		joint1->m_q(0) = 0.5;
 		joint1->m_q(1) = 0.5;
-		joint2->m_q(0) = PI / 4.0;
+		joint2->m_q(0) = M_PI / 4.0;
 
 	}
 	break;
@@ -617,6 +618,46 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
 		// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
+
+	}
+	break;
+
+	case SPRING_DAMPER:
+	{
+		m_h = 1.0e-1;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e2;
+		double possion = 0.40;
+
+		for (int i = 0; i < 3; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+
+			// Inits joints
+			if (i == 0) {
+				addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+		}
+
+		//m_joints[0]->m_qdot(0) = 10.0;
+		m_joints[1]->m_q(0) = - M_PI / 2.0;
+		m_joints[2]->m_q(0) = M_PI / 2.0;
+
+		auto spring = make_shared<SpringDamper>(m_bodies[0], Vector3d(-2.0, -0.5, 0.0), m_bodies[1], Vector3d(2.0, -0.5, 0.0));
+		m_springs.push_back(spring);
+		m_nsprings++;
+		spring->setStiffness(1.0e5);
+		spring->setDamping(1.0e3);
+		spring->load(RESOURCE_DIR);
 
 	}
 	break;
@@ -773,6 +814,13 @@ shared_ptr<WrapObst> World::addWrapNull() {
 
 }
 
+shared_ptr<SpringNull> World::addSpringNull() {
+	auto spring = make_shared<SpringNull>();
+	m_nsprings++;
+	m_springs.push_back(spring);
+	return spring;
+}
+
 shared_ptr<WrapSphere> World::addWrapSphere(shared_ptr<Body> b0, Vector3d r0, shared_ptr<Body> b1, Vector3d r1, shared_ptr<CompSphere> compSphere, int num_points, const string &RESOURCE_DIR) {
 	auto P = make_shared<Node>();
 	P->x0 = r0;
@@ -870,6 +918,13 @@ void World::init() {
 		}
 	}
 
+	for (int i = 0; i < m_nsprings; ++i) {
+		m_springs[i]->init();
+		if (i < m_nsprings - 1) {
+			m_springs[i]->next = m_springs[i + 1];
+		}
+	}
+
 	for (int i = 0; i < m_nwraps; ++i) {
 		m_wraps[i]->init();
 		if (i < m_nwraps - 1) {
@@ -889,10 +944,14 @@ void World::init() {
 		addWrapNull();
 	}
 
+	if (m_nsprings == 0) {
+		addSpringNull();
+	}
+
 	m_joints[0]->update();
 	m_comps[0]->update();//todo
 	m_wraps[0]->update();
-
+	m_springs[0]->update();
 	
 
 	for (int i = 0; i < m_ndeformables; i++) {
@@ -913,7 +972,7 @@ void World::init() {
 		addDeformableNull();
 	}
 
-	if (m_type == SOFT_BODIES | m_type == SOFT_BODIES_INVERTIBLE2) {
+	if (m_type == SOFT_BODIES | m_type == SOFT_BODIES_INVERTIBLE) {
 		//m_softbodies[0]->setAttachments(0, m_bodies[0]);
 		//m_softbodies[0]->setAttachments(3, m_bodies[0]);
 		//m_softbodies[0]->setAttachments(6, m_bodies[0]);
@@ -987,11 +1046,14 @@ void World::init() {
 
 
 		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
 
-		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+
+		//m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 
 		//m_softbodies[0]->setSlidingNodesByYZCircle(9.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 		//m_softbodies[0]->setSlidingNodesByYZCircle(6.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
@@ -1050,6 +1112,8 @@ void World::update() {
 
 	m_comps[0]->update();
 	m_wraps[0]->update();
+	m_springs[0]->update();
+
 }
 
 int World::getNsteps() {
@@ -1088,6 +1152,9 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	for (int i = 0; i < m_nwraps; ++i) {
 		m_wraps[i]->draw(MV, prog, progSimple, P);
 	}
+
+	// Draw springs
+	m_springs[0]->draw(MV, prog, progSimple, P);
 
 }
 

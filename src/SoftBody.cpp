@@ -483,7 +483,7 @@ void SoftBody::setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, 
 		x_axis.normalized();
 
 		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
-		if (abs(xi(0) - x) < 1.7 && diff < 0.01) {
+		if (abs(xi(0) - x) < 0.7 && diff < 0.01) {
 			setSlidingNodes(i, body, x_axis);//1.7
 
 			// Create Attached node to compare if they are really sliding

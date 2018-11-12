@@ -21,23 +21,25 @@ public:
 	virtual ~Spring() {}
 
 	void computeEnergies(Vector3d grav, Energy &ener);
-	void computeForceStiffnessDamping(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd K, Eigen::MatrixXd D);
+	void computeForceStiffnessDamping(Eigen::VectorXd &f, Eigen::MatrixXd &K, Eigen::MatrixXd &D);
 	void computeStiffnessProd(Eigen::VectorXd x, Eigen::VectorXd &y);
 	void computeDampingProd(Eigen::VectorXd x, Eigen::VectorXd &y);
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	void init();
+	void update();	
 
 	virtual void load(const std::string &RESOURCE_DIR) {}
 	virtual void init_() {}
+	virtual void update_() {}
 
 	std::shared_ptr<Spring> next;
 	std::vector<std::shared_ptr<Node>> m_nodes;
 
 protected:
+	virtual void computeForceStiffnessDamping_(Eigen::VectorXd &f, Eigen::MatrixXd &K, Eigen::MatrixXd &D) {}
 	virtual void computeStiffnessProd_(Eigen::VectorXd x, Eigen::VectorXd &y) {}
 	virtual void computeDampingProd_(Eigen::VectorXd x, Eigen::VectorXd &y) {}
 	virtual void computeEnergies_(Vector3d grav, Energy &ener) {}
-	virtual void computeForceStiffnessDamping_(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd K, Eigen::MatrixXd D) {}
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const {}
 
 };
