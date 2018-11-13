@@ -191,6 +191,32 @@ void Body::computeMassGrav(Vector3d grav, MatrixXd &M, VectorXd &f) {
 	}
 }
 
+void Body::computeMassGravSparse(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f) {
+	// Computes maximal mass matrix and force vector
+	Matrix6d M_i = Matrix6d(I_i.asDiagonal());
+
+	for (int i = 0; i < 6; ++i) {
+		M_.push_back(T(idxM + i, idxM + i, I_i(i)));
+	}
+
+	Vector6d fcor = SE3::ad(phi).transpose() * M_i * phi;
+	Matrix3d R_wi = E_wi.block<3, 3>(0, 0);
+
+	Matrix3d R_iw = R_wi.transpose();
+	Vector6d fgrav;
+	fgrav.setZero();
+	fgrav.segment<3>(3) = M_i(3, 3) * R_iw * grav; // wrench in body space
+	f.segment<6>(idxM) = fcor + fgrav;
+	
+	this->wext_i.setZero();
+	this->Kmdiag.setZero();
+	this->Dmdiag.setZero();
+
+	if (next != nullptr) {
+		next->computeMassGravSparse(grav, M_, f);
+	}
+}
+
 void Body::computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D) {
 	// Computes maximal damping force vector and matrix
 	if (m_damping > 0.0) {
@@ -205,5 +231,26 @@ void Body::computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D) {
 
 	if (next != nullptr) {
 		next->computeForceDamping(f, D);
+	}
+}
+
+void Body::computeForceDampingSparse(Eigen::VectorXd &f, std::vector<T> &D_) {
+	// Computes maximal damping force vector and matrix
+	if (m_damping > 0.0) {
+		Vector6d fi = -m_damping * phi;
+		Matrix6d Di = m_damping * Matrix6d::Identity();
+		f.segment<6>(this->idxM) += fi;
+
+		for (int i = 0; i < 6; ++i) {
+			D_.push_back(T(idxM + i, idxM + i, m_damping));
+		}
+
+		// Used by recursive algorithm
+		this->wext_i += fi;
+		this->Dmdiag += Di;
+	}
+
+	if (next != nullptr) {
+		next->computeForceDampingSparse(f, D_);
 	}
 }

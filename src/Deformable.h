@@ -7,12 +7,15 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "MLCommon.h"
 
 class MatrixStack;
 class Program;
 class Node;
 class Body;
+
+typedef Eigen::Triplet<double> T;
 
 class Deformable {
 
@@ -30,8 +33,12 @@ public:
 	void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
 	void computeJacobian(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
-	void computeMass(Eigen::Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
-	void computeForceDamping(Eigen::Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd D);
+	void computeJacobianSparse(std::vector<T> &J_, std::vector<T> &Jdot_);
+	void computeMass(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
+	void computeMassSparse(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f);
+	void computeForceDamping(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &D);
+	void computeForceDampingSparse(Vector3d grav, Eigen::VectorXd &f, std::vector<T> &D_);
+
 	void computeEnergies(Eigen::Vector3d grav, Energy &ener);
 
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
@@ -47,10 +54,13 @@ public:
 	virtual void scatterDofs_(Eigen::VectorXd &y, int nr) {}
 	virtual void scatterDDofs_(Eigen::VectorXd &ydot, int nr) {}
 
-	virtual void computeMass_(Eigen::Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f) {}
-	virtual void computeForceDamping_(Eigen::Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd D) {}
-	virtual void computeEnergies_(Eigen::Vector3d grav, Energy &ener) {}
+	virtual void computeMass_(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f) {}
+	virtual void computeMassSparse_(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f) {}
+	virtual void computeForceDamping_(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &D) {}
+	virtual void computeForceDampingSparse_(Vector3d grav, Eigen::VectorXd &f, std::vector<T> &D_) {}
+	virtual void computeEnergies_(Vector3d grav, Energy &ener) {}
 	virtual void computeJacobian_(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot) {}
+	virtual void computeJacobianSparse_(std::vector<T> &J_, std::vector<T> &Jdot_) {}
 	
 	std::shared_ptr<Deformable> next;
 	std::string m_name;

@@ -172,9 +172,6 @@ void SpringDamper::computeForceStiffnessDamping_(VectorXd &f, MatrixXd &K, Matri
 	Vector12d f_;
 	Matrix12d K_, D_;
 	computeFKD(f_, K_, D_);
-	cout << f_ << endl;
-	cout << "K" << K_ << endl;
-	cout << "D" << D_ << endl;
 
 	int idxM0, idxM1;
 
@@ -212,6 +209,7 @@ void SpringDamper::computeForceStiffnessDamping_(VectorXd &f, MatrixXd &K, Matri
 		D.block<6, 6>(idxM0, idxM1) += D01;
 		D.block<6, 6>(idxM1, idxM0) += D10;
 	}
+
 }
 
 void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
@@ -259,16 +257,13 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 	Vector3d v0_w, v1_w;
 	v0_w = R0 * G0 * phi0;
 	v1_w = R1 * G1 * phi1;
-	//cout << v0_w << endl;
-	//cout << v1_w << endl;
 
 	double v = (dx_w / m_l).transpose() * (v1_w - v0_w);
 
 	Vector6d fx_0, fx_1;
 	fx_0 = -G0.transpose() * R0.transpose() * dx_w;
 	fx_1 = G1.transpose() * R1.transpose() * dx_w;
-	cout << fx_0 << endl;
-	cout << fx_1 << endl;
+
 	Vector12d fx, fn;
 	fx << fx_0, fx_1;
 
@@ -276,8 +271,7 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 	double fs = m_K * (m_l - m_L) / m_L - m_damping * v;
 
 	f = -fs * fn;
-	cout << f << endl;
-	cout << fs << endl;
+
 	// Kn0
 	Vector3d ddxinvdx0, ddxinvdx1;
 	ddxinvdx0 = dx_w / (pow(m_l, 3));
@@ -326,7 +320,6 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 	Kn1.block<3, 3>(9, 9) = I3;
 	Kn1.block<3, 3>(6, 9) = x1b;
 	Kn1 /= m_l;
-	cout << Kn1 << endl;
 	// Stiffness term for vector part
 	Kn = Kn0 + Kn1;
 
@@ -338,8 +331,11 @@ void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 	Vector12d dfsdE;
 	dfsdE << dfsdE0, dfsdE1;
 	K = fn * dfsdE.transpose() + fs * Kn;
-	K = -0.5 * (K + K.transpose()); // symmetrize
 
+	Matrix12d K_sym = -0.5 * (K + K.transpose());
+
+	K = K_sym; // symmetrize
+	
 	// Damping scalar part
 	Vector3d dir_w = dx_w / m_l;
 	Vector6d dfmdphi0, dfmdphi1;

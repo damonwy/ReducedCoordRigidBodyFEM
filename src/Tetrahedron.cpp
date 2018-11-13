@@ -135,8 +135,6 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 	return f;
 }
 
-
-
 VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 	bool print = false;
 
@@ -265,6 +263,27 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 
 }
 
+void Tetrahedron::computeInvertibleForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_) {
+
+	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
+	}
+
+	this->dF = dDs * Bm;
+	this->dPhat = computePKStressDerivative(this->F, dF, m_mu, m_lambda);
+	this->dP = this->U * this->dPhat * this->V.transpose();
+
+	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+		Vector3d temp = this->dP * this->Nm.col(i);
+
+		for (int j = 0; j < 3; ++j) {
+			K_.push_back(T(row + 3 * m_nodes[i]->i + j, col, temp(j)));
+			K_.push_back(T(row + 3 * m_nodes[3]->i + j, col, -temp(j)));
+
+		}	
+	}
+}
+
 void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	this->F = computeDeformationGradient();
 
@@ -301,14 +320,6 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
 	this->dH = -W * dP * (Bm.transpose());
 
-	/*for (int i = 0; i < 3; i++) {
-	double force = this->dH.col(i).norm();
-
-	if (force > 1.0e3) {
-	this->dH *= 1.0e3 / force;
-	}
-	}*/
-
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);
@@ -340,6 +351,26 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	}*/
 }
 
+void Tetrahedron::computeForceDifferentialsSparse(VectorXd dx, int row, int col, std::vector<T> &K_) {
+	this->F = computeDeformationGradient();
+
+	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
+	}
+
+	this->dF = dDs * Bm;
+	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
+	this->dH = -W * dP * (Bm.transpose());
+
+	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+		Vector3d temp = this->dH.col(i);
+		for (int j = 0; j < 3; ++j) {
+			K_.push_back(T(row + 3 * m_nodes[i]->i + j, col, temp(j)));
+			K_.push_back(T(row + 3 * m_nodes[3]->i + j, col, -temp(j)));
+
+		}
+	}
+}
 
 Matrix3d Tetrahedron::computeInvertiblePKStress(Matrix3d F, double mu, double lambda) {
 	Vector3d invariants;

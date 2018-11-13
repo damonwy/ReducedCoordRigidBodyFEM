@@ -4,12 +4,14 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "MLCommon.h"
 
 class Node;
 class MatrixStack;
 class Program;
 
+typedef Eigen::Triplet<double> T;
 class Tetrahedron
 {
 public:
@@ -19,20 +21,22 @@ public:
 
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 
-	Eigen::Matrix3d computeDeformationGradient();
+	Matrix3d computeDeformationGradient();
 
-	Eigen::Matrix3d computePKStress(Eigen::Matrix3d F, double mu, double lambda);
-	Eigen::Matrix3d computePKStressDerivative(Eigen::Matrix3d F, Eigen::Matrix3d dF, double mu, double lambda);
+	Matrix3d computePKStress(Matrix3d F, double mu, double lambda);
+	Matrix3d computePKStressDerivative(Matrix3d F, Matrix3d dF, double mu, double lambda);
 	void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
-	// Vector12d computeForceDifferentials(Vector12d dx, Vector12d &df);
+	void computeForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
 	Eigen::VectorXd computeElasticForces(Eigen::VectorXd f);
 
 	// Functions for Invertible FEM 
 	Matrix3x4d computeAreaWeightedVertexNormals();
 	Eigen::VectorXd computeInvertibleElasticForces(Eigen::VectorXd f);
 	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
-	Eigen::Matrix3d computeInvertiblePKStress(Eigen::Matrix3d F, double mu, double lambda);
-	Eigen::Matrix3d computeInvertiblePKStressDerivative(Eigen::Matrix3d F, Eigen::Matrix3d dF, double mu, double lambda);
+	void computeInvertibleForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
+
+	Matrix3d computeInvertiblePKStress(Matrix3d F, double mu, double lambda);
+	Matrix3d computeInvertiblePKStressDerivative(Matrix3d F, Matrix3d dF, double mu, double lambda);
 	void compute_dPdF();
 	void compute_dGdF();
 	void compute_dFdU();
@@ -41,7 +45,7 @@ public:
 	double computeEnergy();
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
 	bool isInverted();
-	void diagDeformationGradient(Eigen::Matrix3d F);
+	void diagDeformationGradient(Matrix3d F);
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
 	bool isInvert;
 	int i;

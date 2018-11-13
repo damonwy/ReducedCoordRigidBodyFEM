@@ -7,6 +7,8 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
+
 #include "MLCommon.h"
 
 class MatrixStack;
@@ -16,7 +18,7 @@ class Body;
 class FaceTriangle;
 class Tetrahedron;
 class Vector;
-
+typedef Eigen::Triplet<double> T;
 class SoftBody {
 
 public:
@@ -31,10 +33,13 @@ public:
 
 	virtual void countDofs(int &nm, int &nr);
 	virtual void computeJacobian(Eigen::MatrixXd &J);
+	virtual void computeJacobianSparse(std::vector<T> J_);
 	virtual void computeMass(Eigen::Vector3d grav, Eigen::MatrixXd &M);
+	virtual void computeMassSparse(Vector3d grav, std::vector<T> &M_);
 	virtual Energy computeEnergies(Eigen::Vector3d grav, Energy ener);
 	virtual void computeForce(Eigen::Vector3d grav, Eigen::VectorXd &f);
 	virtual void computeStiffness(Eigen::MatrixXd &K);
+	virtual void computeStiffnessSparse(std::vector<T> &K_);
 	virtual Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
 	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);

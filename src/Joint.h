@@ -10,7 +10,7 @@
 #define EIGEN_DONT_ALIGN_STATICALLY
 
 #include <Eigen/Dense>
-#include <iostream>
+#include <Eigen/Sparse>
 #include "MLCommon.h"
 
 class SE3;
@@ -18,6 +18,7 @@ class Body;
 class MatrixStack;
 class Program;
 class Shape;
+typedef Eigen::Triplet<double> T;
 
 class Joint : public std::enable_shared_from_this<Joint> {
 public:
@@ -69,9 +70,12 @@ public:
 	std::string getName() const { return m_name; }
 
 	void computeJacobian(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot, int nm, int nr);
+	void computeJacobianSparse(std::vector<T> &J_, std::vector<T> &Jdot_, int nm, int nr);
 	Eigen::VectorXd computerJacTransProd(Eigen::VectorXd y, Eigen::VectorXd x, int nr);
 	void computeForceStiffness(Eigen::VectorXd &fr, Eigen::MatrixXd &Kr);
+	void computeForceStiffnessSparse(Eigen::VectorXd &fr, std::vector<T> &Kr_);
 	void computeForceDamping(Eigen::VectorXd &fr, Eigen::MatrixXd &Dr);
+	void computeForceDampingSparse(Eigen::VectorXd &fr, std::vector<T> &Dr_);
 	void computeInertia();
 
 	void computeEnergies(Vector3d grav, Energy &ener);

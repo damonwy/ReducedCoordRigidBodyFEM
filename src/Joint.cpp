@@ -151,6 +151,37 @@ void Joint::computeJacobian(MatrixXd &J, MatrixXd &Jdot, int nm, int nr) {
 	}
 }
 
+void Joint::computeJacobianSparse(vector<T> &J_, vector<T> &Jdot_, int nm, int nr) {
+	Matrix6d Ad_ij = m_body->Ad_ij;
+	MatrixXd Jtemp = Ad_ij * m_S;
+	MatrixXd Jdottemp = Ad_ij * m_Sdot;
+	for (int i = 0; i < 6; ++i) {
+		for (int j = 0; j < m_ndof; ++j) {
+			J_.push_back(T(m_body->idxM + i, idxR + j, Jtemp(i, j)));
+			Jdot_.push_back(T(m_body->idxM + i, idxR + j, Jdottemp(i, j)));
+		}
+	}
+
+	// Loop through all ancestors
+	auto jointA = m_parent;
+	while (jointA != nullptr) {
+		int idxM_P = m_parent->getBody()->idxM;
+		Matrix6d Ad_ip = m_body->Ad_ip;
+		Matrix6d Ad_iw = m_body->Ad_iw;
+		Matrix6d Ad_wp = m_parent->getBody()->Ad_wi;
+		Matrix6d Addot_wi = m_body->Addot_wi;
+		Matrix6d Addot_wp = m_parent->getBody()->Addot_wi;
+		Matrix6d Addot_ip = -Ad_iw * (Addot_wi * Ad_iw * Ad_wp - Addot_wp);
+		J.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
+		Jdot.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * Jdot.block(idxM_P, jointA->idxR, 6, jointA->m_ndof) + Addot_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
+		jointA = jointA->getParent();
+	}
+
+	if (next != nullptr) {
+		next->computeJacobianSparse(J_, Jdot_, nm, nr);
+	}
+}
+
 void Joint::computeInertia() {
 	double m = m_body->I_i(3);
 
@@ -183,6 +214,23 @@ void Joint::computeForceStiffness(VectorXd &fr, MatrixXd &Kr) {
 	}
 }
 
+void Joint::computeForceStiffnessSparse(VectorXd &fr, vector<T> &Kr_) {
+	// Computes joint stiffness force vector and matrix
+	if (presc == false) {
+		int row = this->idxR;
+		// Add the joint torque here rather than having a separate function
+		fr.segment(row, m_ndof) += m_tau - m_Kr * m_q;
+
+		for (int i = 0; i < m_ndof; ++i) {
+			Kr_.push_back(T(row + i, row + i, - m_Kr));
+		}
+	}
+
+	if (next != nullptr) {
+		next->computeForceStiffnessSparse(fr, Kr_);
+	}
+}
+
 void Joint::computeForceDamping(VectorXd &fr, MatrixXd &Dr) {
 	// Computes joint damping force vector and matrix
 	if (presc == false) {
@@ -195,6 +243,22 @@ void Joint::computeForceDamping(VectorXd &fr, MatrixXd &Dr) {
 
 	if (next != nullptr) {
 		next->computeForceDamping(fr, Dr);
+	}
+}
+
+void Joint::computeForceDampingSparse(VectorXd &fr, vector<T> &Dr_) {
+	if (presc == false) {
+		int row = this->idxR;
+		fr.segment(row, m_ndof) -= m_Dr * m_qdot;
+
+		for (int i = 0; i < m_ndof; ++i) {
+			Dr_.push_back(T(row + i, row + i, m_Dr));
+		}
+
+	}
+
+	if (next != nullptr) {
+		next->computeForceDampingSparse(fr, Dr_);
 	}
 }
 

@@ -8,12 +8,15 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <Eigen\src\Core\util\IndexedViewHelper.h>
 
 #include <json.hpp>
 #include "MLCommon.h"
 
 class World;
+
+typedef Eigen::Triplet<double> T;
 
 struct Solution {
 	Eigen::VectorXd t;
@@ -59,6 +62,8 @@ struct Solution {
 
 };
 
+
+
 class Solver 
 {
 public:
@@ -67,11 +72,13 @@ public:
 	virtual ~Solver() {}
 	std::shared_ptr<Solution> solve();
 	Eigen::VectorXd dynamics(Eigen::VectorXd y);
-
+	Eigen::VectorXd dynamics_sparse(Eigen::VectorXd y);
+	void initMatrix(int nm, int nr, int nem, int ner, int nim, int nir);
+	void initMatrixSparse(int nm, int nr, int nem, int ner, int nim, int nir);
 	void init();
 	void reset();
 	void load(const std::string &RESOURCE_DIR);
-	
+	bool isSparse;
 private:
 	int nr;
 	int nm;
@@ -81,12 +88,25 @@ private:
 	std::shared_ptr<Solution> m_solutions;
 
 	Eigen::MatrixXd Mm;
+	Eigen::SparseMatrix<double> Mm_sp;
+	std::vector<T> Mm_;
+
 	Eigen::MatrixXd MDKr_;
+	Eigen::SparseMatrix<double> MDKr_sp;
 	Eigen::MatrixXd K;
+	Eigen::SparseMatrix<double> K_sp;
+	std::vector<T> K_;
+
 	Eigen::MatrixXd Km;
+	Eigen::SparseMatrix<double> Km_sp;
+
 	Eigen::VectorXd fm;
 	Eigen::MatrixXd J;
+	Eigen::SparseMatrix<double> J_sp;
+	std::vector<T> J_;
 	Eigen::MatrixXd Jdot;
+	Eigen::SparseMatrix<double> Jdot_sp;
+	std::vector<T> Jdot_;
 	Eigen::VectorXd q0;
 	Eigen::VectorXd q1;
 	Eigen::VectorXd qdot0;
@@ -94,42 +114,56 @@ private:
 	Eigen::VectorXd qddot;
 
 	Eigen::MatrixXd Mr;
+	Eigen::SparseMatrix<double> Mr_sp;
 	Eigen::MatrixXd Dm; // nm x nm
+	Eigen::SparseMatrix<double> Dm_sp;
+	std::vector<T> Dm_;
 	Eigen::VectorXd tmp; // nm x 1
 	Eigen::MatrixXd Dr;
+	Eigen::SparseMatrix<double> Dr_sp;
+	std::vector<T> Dr_;
 
 	Eigen::MatrixXd Kr;
+	Eigen::SparseMatrix<double> Kr_sp;
+	std::vector<T> Kr_;
 	Eigen::VectorXd fr;
 	Eigen::VectorXd fr_;
 
-	//Eigen::VectorXd fsr;
-	Eigen::VectorXd fdr;
-
 	Eigen::MatrixXd Gm;
+	Eigen::SparseMatrix<double> Gm_sp;
+
 	Eigen::MatrixXd Gmdot;
+	Eigen::SparseMatrix<double> Gmdot_sp;
 	Eigen::VectorXd gm;
 	Eigen::VectorXd gmdot;
 	Eigen::VectorXd gmddot;
 
 	Eigen::MatrixXd Gr;
+	Eigen::SparseMatrix<double> Gr_sp;
 	Eigen::MatrixXd Grdot;
+	Eigen::SparseMatrix<double> Grdot_sp;
 	Eigen::VectorXd gr;
 	Eigen::VectorXd grdot;
 	Eigen::VectorXd grddot;
 
 	Eigen::MatrixXd G;
+	Eigen::SparseMatrix<double> G_sp;
 	Eigen::VectorXd g;
 	Eigen::VectorXd gdot;
 	Eigen::VectorXd rhsG;
 
 	Eigen::MatrixXd Cm;
+	Eigen::SparseMatrix<double> Cm_sp;
 	Eigen::MatrixXd Cmdot;
+	Eigen::SparseMatrix<double> Cmdot_sp;
 	Eigen::VectorXd cm;
 	Eigen::VectorXd cmdot;
 	Eigen::VectorXd cmddot;
 
 	Eigen::MatrixXd Cr;
+	Eigen::SparseMatrix<double> Cr_sp;
 	Eigen::MatrixXd Crdot;
+	Eigen::SparseMatrix<double> Crdot_sp;
 	Eigen::VectorXd cr;
 	Eigen::VectorXd crdot;
 	Eigen::VectorXd crddot;
@@ -137,6 +171,7 @@ private:
 	Eigen::VectorXd rhsC;
 
 	Eigen::MatrixXd C;
+	Eigen::SparseMatrix<double> C_sp;
 	Eigen::VectorXd c;
 
 	std::vector<int> rowsM;

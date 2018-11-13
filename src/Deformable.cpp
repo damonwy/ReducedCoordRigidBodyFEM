@@ -74,6 +74,13 @@ void Deformable::computeJacobian(MatrixXd &J, MatrixXd &Jdot) {
 	}
 }
 
+void Deformable::computeJacobianSparse(std::vector<T> &J_, std::vector<T> &Jdot_){
+	computeJacobianSparse_(J_, Jdot_);
+	if (next != nullptr) {
+		next->computeJacobianSparse(J_, Jdot_);
+	}
+}
+
 void Deformable::computeMass(Vector3d grav, MatrixXd &M, VectorXd &f) {
 	computeMass_(grav, M, f);
 	if (next != nullptr) {
@@ -81,11 +88,26 @@ void Deformable::computeMass(Vector3d grav, MatrixXd &M, VectorXd &f) {
 	}
 }
 
-void Deformable::computeForceDamping(Vector3d grav, VectorXd &f, MatrixXd D) {
+void Deformable::computeMassSparse(Vector3d grav, vector<T> &M_, VectorXd &f) {
+	computeMassSparse_(grav, M_, f);
+	if (next != nullptr) {
+		next->computeMassSparse(grav, M_, f);
+	}
+}
+
+void Deformable::computeForceDamping(Vector3d grav, VectorXd &f, MatrixXd &D) {
 	computeForceDamping_(grav, f, D);
 	if (next != nullptr) {
 		next->computeForceDamping(grav, f, D);
 	}
+}
+
+void Deformable::computeForceDampingSparse(Vector3d grav, VectorXd &f, vector<T> &D_) {
+	computeForceDampingSparse_(grav, f, D_);
+	if (next != nullptr) {
+		next->computeForceDampingSparse(grav, f, D_);
+	}
+
 }
 
 void Deformable::computeEnergies(Vector3d grav, Energy &ener) {

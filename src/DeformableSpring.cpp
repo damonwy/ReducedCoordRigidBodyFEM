@@ -212,6 +212,41 @@ void DeformableSpring::computeMass_(Vector3d grav, MatrixXd &M, VectorXd &f) {
 	}
 }
 
+void DeformableSpring::computeMassSparse_(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f) {
+	// Computes maximal mass matrix
+	int n_nodes = (int)m_nodes.size();
+	double m = m_mass / n_nodes;
+	// Computes force vector
+	Matrix3d I3 = Matrix3d::Identity();
+
+	for (int i = 0; i < n_nodes; i++) {
+		int idxM = m_nodes[i]->idxM;
+		for (int j = 0; j < 3; ++j) {
+			M_.push_back(T(idxM + j, idxM + j, m));
+		}
+
+		f.segment<3>(idxM) += m * grav;
+	}
+
+	for (int i = 0; i < n_nodes - 1; i++) {
+		int row0 = m_nodes[i]->idxM;
+		int row1 = m_nodes[i + 1]->idxM;
+		Vector3d x0 = m_nodes[i]->x;
+		Vector3d x1 = m_nodes[i + 1]->x;
+		Vector3d dx = x1 - x0;
+
+		double l = dx.norm();
+		double L = m_nodes[i]->L;
+		double e = (l - L) / L;
+
+		Vector3d fs = m_K * e * (1.0 / L) / l* dx;
+
+		f.segment<3>(row0) += fs;
+		f.segment<3>(row1) -= fs;
+	}
+
+}
+
 void DeformableSpring::computeForceDamping_(Vector3d grav, VectorXd &f, MatrixXd &D) {
 	// Computes maximal damping vector and matrix
 	int n_nodes = (int)m_nodes.size();
@@ -223,6 +258,21 @@ void DeformableSpring::computeForceDamping_(Vector3d grav, VectorXd &f, MatrixXd
 		f.segment<3>(idxM) -= m_damping * m_nodes[i]->v;
 	}
 
+}
+
+void DeformableSpring::computeForceDampingSparse_(Vector3d grav, VectorXd &f, vector<T> &D_) {
+	// Computes maximal damping vector and matrix
+	int n_nodes = (int)m_nodes.size();
+
+	for (int i = 0; i < n_nodes; i++) {
+		int idxM = m_nodes[i]->idxM;
+
+		for (int j = 0; j < 3; ++j) {
+			D_.push_back(T(idxM + j, idxM + j, m_damping));
+		}
+
+		f.segment<3>(idxM) -= m_damping * m_nodes[i]->v;
+	}
 }
 
 void DeformableSpring::computeEnergies_(Vector3d grav, Energy &ener) {
@@ -252,5 +302,13 @@ void DeformableSpring::computeEnergies_(Vector3d grav, Energy &ener) {
 void DeformableSpring::computeJacobian_(MatrixXd &J, MatrixXd &Jdot) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
+	}
+}
+
+void DeformableSpring::computeJacobianSparse_(vector<T> &J_, vector<T> &Jdot_) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		for (int j = 0; j < 3; ++j) {
+			J_.push_back(T(m_nodes[i]->idxM + j, m_nodes[i]->idxR + j, 1));
+		}
 	}
 }

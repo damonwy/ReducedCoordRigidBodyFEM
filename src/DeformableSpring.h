@@ -11,6 +11,7 @@
 class Body;
 class Node;
 
+
 class DeformableSpring : public Deformable
 {
 public:
@@ -34,9 +35,13 @@ protected:
 	void scatterDDofs_(Eigen::VectorXd &ydot, int nr);
 
 	void computeMass_(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
+	void computeMassSparse_(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f);
 	void computeForceDamping_(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &D);
+	void computeForceDampingSparse_(Vector3d grav, Eigen::VectorXd &f, std::vector<T> &D_);
+
 	void computeEnergies_(Vector3d grav, Energy &ener);
 	void computeJacobian_(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
+	void computeJacobianSparse_(std::vector<T> &J_, std::vector<T> &Jdot_);
 
 };
 

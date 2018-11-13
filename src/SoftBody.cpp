@@ -608,6 +608,22 @@ void SoftBody::computeMass(Vector3d grav, MatrixXd &M) {
 	}
 }
 
+void SoftBody::computeMassSparse(Vector3d grav, std::vector<T> &M_) {
+	Matrix3d I3 = Matrix3d::Identity();
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		int idxM = m_nodes[i]->idxM;
+		double m = m_nodes[i]->m;
+
+		for (int j = 0; j < 3; ++j) {
+			M_.push_back(T(idxM + j, idxM + j, m));
+		}
+	}
+
+	if (next != nullptr) {
+		next->computeMassSparse(grav, M_);
+	}
+}
+
 void SoftBody::computeForce(Vector3d grav, VectorXd &f) {
 	// Computes force vector
 
@@ -626,7 +642,6 @@ void SoftBody::computeForce(Vector3d grav, VectorXd &f) {
 			f = tet->computeElasticForces(f);
 		}
 	}
-
 
 	if (next != nullptr) {
 		next->computeForce(grav, f);
@@ -658,7 +673,34 @@ void SoftBody::computeStiffness(MatrixXd &K) {
 	if (next != nullptr) {
 		next->computeStiffness(K);
 	}
+}
 
+void SoftBody::computeStiffnessSparse(vector<T> &K_) {
+	VectorXd df(3 * m_nodes.size());
+	VectorXd Dx = df;
+
+	for (int i = 0; i < (int)m_tets.size(); i++) {
+		auto tet = m_tets[i];
+		for (int ii = 0; ii < 4; ii++) {
+			auto node = tet->m_nodes[ii];
+			int id = node->i;
+			int col = node->idxM;
+
+			for (int iii = 0; iii < 3; iii++) {
+				df.setZero();
+				Dx.setZero();
+				Dx(3 * id + iii) = 1.0;
+				tet->computeForceDifferentials(Dx, df);
+				int irow = col - 3 * id;
+				int icol = col + iii;
+				tet->computeForceDifferentialsSparse(Dx, irow, icol, K_);
+			}
+		}
+	}
+
+	if (next != nullptr) {
+		next->computeStiffnessSparse(K_);
+	}
 }
 
 void SoftBody::computeJacobian(MatrixXd &J) {
@@ -670,6 +712,18 @@ void SoftBody::computeJacobian(MatrixXd &J) {
 		next->computeJacobian(J);
 	}
 
+}
+
+void SoftBody::computeJacobianSparse(vector<T> J_) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		for (int j = 0; j < 3; ++j) {
+			J_.push_back(T(m_nodes[i]->idxM + j, m_nodes[i]->idxR + j, 1));
+		}
+	}
+
+	if (next != nullptr) {
+		next->computeJacobianSparse(J_);
+	}
 }
 
 Energy SoftBody::computeEnergies(Eigen::Vector3d grav, Energy ener) {

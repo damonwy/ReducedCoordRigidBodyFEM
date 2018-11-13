@@ -9,6 +9,7 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "MLCommon.h"
 
 class Shape;
@@ -16,6 +17,9 @@ class Wrench;
 class Joint;
 class Program;
 class MatrixStack;
+
+typedef Eigen::Triplet<double> T;
+
 
 class Body 
 {
@@ -36,7 +40,9 @@ public:
 	void countDofs(int &nm);
 	int countM(int &nm, int data);
 	void computeMassGrav(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
+	void computeMassGravSparse(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f);
 	void computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D);
+	void computeForceDampingSparse(Eigen::VectorXd &f, std::vector<T> &D_);
 	void computeEnergies(Vector3d grav, Energy &energies);
 
 	void load(const std::string &RESOURCE_DIR, std::string box_shape);

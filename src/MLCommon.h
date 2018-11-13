@@ -5,7 +5,8 @@
 #include <json.hpp>
 
 #define EIGEN_DONT_ALIGN_STATICALLY
-#include <Eigen/Dense>
+#include <Eigen\Dense>
+//#include <Eigen/Sparse>
 #include <Eigen/Eigenvalues> 
 
 #define GLM_FORCE_RADIANS
@@ -17,6 +18,8 @@
 #include <iostream>
 #include <complex>
 #include <unsupported/Eigen/CXX11/Tensor>
+
+//typedef Eigen::Triplet<double> T;
 
 typedef Eigen::Matrix<int, 6, 1> Vector6i;
 typedef Eigen::Matrix<float, 3, 1> Vector3f;
