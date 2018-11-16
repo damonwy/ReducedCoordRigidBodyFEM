@@ -20,24 +20,15 @@ CompCylinder::CompCylinder(shared_ptr<Body> parent, double r) : m_parent(parent)
 
 }
 
-
-CompCylinder::~CompCylinder() {
-
-}
-
 void CompCylinder::init() {
 	m_shape->init();
 }
 
-void CompCylinder::update() {
+void CompCylinder::update_() {
 	E_wi = m_parent->E_wi * E_ji;
 
 	m_Z->update(E_wi);
 	m_O->update(E_wi);
-
-	if (next != nullptr) {
-		this->next->update();
-	}
 
 }
 
@@ -52,7 +43,7 @@ void CompCylinder::load(const string &RESOURCE_DIR, string shape) {
 	m_shape->loadMesh(RESOURCE_DIR + shape);
 }
 
-void CompCylinder::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P)const {
+void CompCylinder::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P)const {
 	prog->bind();
 	if (m_shape) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));

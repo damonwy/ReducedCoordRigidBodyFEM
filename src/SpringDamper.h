@@ -10,6 +10,9 @@
 class Body;
 class Node;
 
+typedef Eigen::Triplet<double> T;
+
+
 class SpringDamper : public Spring
 {
 public:
@@ -25,7 +28,7 @@ public:
 	void load(const std::string &RESOURCE_DIR);
 	void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	void update_();
-	void computeEnergies_(Eigen::Vector3d grav, Energy &ener);
+	void computeEnergies_(Vector3d grav, Energy &ener);
 
 private:
 	void computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D);
@@ -34,6 +37,7 @@ protected:
 	void computeStiffnessProd_(Eigen::VectorXd x, Eigen::VectorXd &y);
 	void computeDampingProd_(Eigen::VectorXd x, Eigen::VectorXd &y);
 	void computeForceStiffnessDamping_(Eigen::VectorXd &f, Eigen::MatrixXd &K, Eigen::MatrixXd &D);
+	void computeForceStiffnessDampingSparse_(Eigen::VectorXd &f, std::vector<T> &K_, std::vector<T> &D_);
 
 	double m_L;		// Rest Length
 	double m_l;		// Current Length

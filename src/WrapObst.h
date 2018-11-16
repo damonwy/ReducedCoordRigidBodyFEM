@@ -38,7 +38,8 @@ protected:
 	double m_radius;			// Obstacle sphere radius
 	int m_num_points;					// Number of points
 	Eigen::MatrixXd m_arc_points;		// Each col stores the pos of a point 
-	
+	virtual void update_() {}
+	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P)const {}
 
 public:
 	std::shared_ptr<WrapObst> next;
@@ -84,7 +85,8 @@ public:
 		m_point_t = std::make_shared<Node>();
 		m_point_t->x.setZero();
 
-		M = Eigen::MatrixXd(3, 3);
+		M.resize(3, 3); 
+		M.setZero();
 		m_status = empty_status;
 		m_path_length = 0.0;
 		m_radius = 0.0;
@@ -96,26 +98,23 @@ public:
 	virtual void init() {}
 	virtual void load(const std::string &RESOURCE_DIR) {}
 
-	virtual void update() {}
-
-	virtual double getLength()
-	{
-		return this->m_path_length;
+	void update() {
+		update_();
+		if (next != nullptr) {
+			next->update();
+		}
 	}
 
-	virtual Status getStatus()
-	{
-		return this->m_status;
-	}
-
-	double getRadius()
-	{
-		return this->m_radius;
-	}
-
+	virtual double getLength() { return this->m_path_length; }
+	virtual Status getStatus() { return this->m_status; }
+	double getRadius() { return this->m_radius; }
 	virtual Eigen::MatrixXd getPoints() { return m_arc_points; }
-	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P)const {
 
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P)const {
+		draw_(MV, prog, progSimple, P);
+		if (next != nullptr) {
+			next->draw(MV, prog, progSimple, P);
+		}
 	}
 
 

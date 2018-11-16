@@ -6,6 +6,6 @@
 class CompNull : public Comp
 {
 public:
-	CompNull();
-	virtual ~CompNull();
+	CompNull() {}
+	virtual ~CompNull() {}
 };

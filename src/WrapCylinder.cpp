@@ -42,18 +42,18 @@ void WrapCylinder::init() {
 
 void WrapCylinder::compute()
 {
-	Eigen::Vector3d OP = m_point_P->x - m_point_O->x;
+	Vector3d OP = m_point_P->x - m_point_O->x;
 	OP = OP / OP.norm();
-	Eigen::Vector3d vec_Z = m_vec_z->dir / m_vec_z->dir.norm();
-	Eigen::Vector3d vec_X = vec_Z.cross(OP);
+	Vector3d vec_Z = m_vec_z->dir / m_vec_z->dir.norm();
+	Vector3d vec_X = vec_Z.cross(OP);
 	vec_X = vec_X / vec_X.norm();
-	Eigen::Vector3d vec_Y = vec_Z.cross(vec_X);
+	Vector3d vec_Y = vec_Z.cross(vec_X);
 	vec_Y = vec_Y / vec_Y.norm();
 
 	this->M << vec_X.transpose(), vec_Y.transpose(), vec_Z.transpose();
 
-	Eigen::Vector3d p = this->M * (m_point_P->x - m_point_O->x);
-	Eigen::Vector3d s = this->M * (m_point_S->x - m_point_O->x);
+	Vector3d p = this->M * (m_point_P->x - m_point_O->x);
+	Vector3d s = this->M * (m_point_S->x - m_point_O->x);
 
 	double denom_q = p(0)*p(0) + p(1)*p(1);
 	double denom_t = s(0)*s(0) + s(1)*s(1);
@@ -61,7 +61,7 @@ void WrapCylinder::compute()
 
 	m_status = wrap;
 
-	if ((denom_q - R*R < 0.0f) || (denom_t - R*R < 0.0))
+	if ((denom_q - R*R < 0.0) || (denom_t - R*R < 0.0))
 	{
 		m_status = inside_radius;
 	}
@@ -69,8 +69,8 @@ void WrapCylinder::compute()
 	double root_q = sqrt(denom_q - R*R);
 	double root_t = sqrt(denom_t - R*R);
 
-	Eigen::Vector3d q(0.0, 0.0, 0.0);
-	Eigen::Vector3d t(0.0, 0.0, 0.0);
+	Vector3d q(0.0, 0.0, 0.0);
+	Vector3d t(0.0, 0.0, 0.0);
 	q(0) = (p(0) * R*R + R * p(1) * root_q) / denom_q;
 	q(1) = (p(1) * R*R - R * p(0) * root_q) / denom_q;
 	t(0) = (s(0) * R*R - R * s(1) * root_t) / denom_t;
@@ -97,8 +97,8 @@ void WrapCylinder::compute()
 	m_point_q->x = q;
 	m_point_t->x = t;
 
-	Eigen::Vector3d Q = this->M.transpose() * q + m_point_O->x;
-	Eigen::Vector3d T = this->M.transpose() * t + m_point_O->x;
+	Vector3d Q = this->M.transpose() * q + m_point_O->x;
+	Vector3d T = this->M.transpose() * t + m_point_O->x;
 
 	// std::cout << Q.transpose() << std::endl << T.transpose() << std::endl;
 }
@@ -114,7 +114,7 @@ MatrixXd WrapCylinder::getPoints(int num_points) const
 		theta_t += M_PI;
 	}
 
-	Eigen::MatrixXd points(3, num_points + 1);
+	MatrixXd points(3, num_points + 1);
 
 	double z_s, z_e;
 	//theta_s, theta_e
@@ -156,23 +156,18 @@ MatrixXd WrapCylinder::getPoints(int num_points) const
 	return points;
 }
 
-void WrapCylinder::update() {
+void WrapCylinder::update_() {
 	m_point_P->update();
 	m_point_S->update();
 	m_compCylinder->update();
-
 	compute();
 	
 	if (m_status == wrap) {
 		m_arc_points = getPoints(m_num_points);
 	}
-
-	if (next != nullptr) {
-		next->update();
-	}
 }
 
-void WrapCylinder::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> prog2, shared_ptr<MatrixStack> P) const {
+void WrapCylinder::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> prog2, shared_ptr<MatrixStack> P) const {
 
 	prog->bind();
 	

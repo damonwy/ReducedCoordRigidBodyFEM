@@ -212,6 +212,61 @@ void SpringDamper::computeForceStiffnessDamping_(VectorXd &f, MatrixXd &K, Matri
 
 }
 
+void SpringDamper::computeForceStiffnessDampingSparse_(VectorXd &f, std::vector<T> &K, std::vector<T> &D) {
+	Vector12d f_;
+	Matrix12d K_, D_;
+	computeFKD(f_, K_, D_);
+
+	int idxM0, idxM1;
+
+	if (m_body0 != nullptr) {
+		idxM0 = m_body0->idxM;
+		Vector6d f0 = f_.segment<6>(0);
+		Matrix6d K00 = K_.block<6, 6>(0, 0);
+		Matrix6d D00 = D_.block<6, 6>(0, 0);
+		f.segment<6>(idxM0) += f0;
+
+		for (int i = 0; i < 6; i++) {
+			for (int j = 0; j < 6; j++) {
+				K.push_back(T(idxM0 + i, idxM0 + j, K00(i, j)));
+				D.push_back(T(idxM0 + i, idxM0 + j, D00(i, j)));
+			}
+		}
+	}
+
+	if (m_body1 != nullptr) {
+		idxM1 = m_body1->idxM;
+		Vector6d f1 = f_.segment<6>(6);
+		Matrix6d K11 = K_.block<6, 6>(6, 6);
+		Matrix6d D11 = D_.block<6, 6>(6, 6);
+		f.segment<6>(idxM1) += f1;
+
+		for (int i = 0; i < 6; i++) {
+			for (int j = 0; j < 6; j++) {
+				K.push_back(T(idxM1 + i, idxM1 + j, K11(i, j)));
+				D.push_back(T(idxM1 + i, idxM1 + j, D11(i, j)));
+			}
+		}
+	}
+
+	if (m_body0 != nullptr && m_body1 != nullptr) {
+		Matrix6d K01 = K_.block<6, 6>(0, 6);
+		Matrix6d K10 = K_.block<6, 6>(6, 0);
+
+		Matrix6d D01 = D_.block<6, 6>(0, 6);
+		Matrix6d D10 = D_.block<6, 6>(6, 0);
+
+		for (int i = 0; i < 6; i++) {
+			for (int j = 0; j < 6; j++) {
+				K.push_back(T(idxM0 + i, idxM1 + j, K01(i, j)));
+				D.push_back(T(idxM0 + i, idxM1 + j, D01(i, j)));
+				K.push_back(T(idxM1 + i, idxM0 + j, K10(i, j)));
+				D.push_back(T(idxM1 + i, idxM0 + j, D10(i, j)));
+			}
+		}
+	}
+}
+
 void SpringDamper::computeFKD(Vector12d &f, Matrix12d &K, Matrix12d &D) {
 	Matrix4d E0, E1;
 	E0.setIdentity();

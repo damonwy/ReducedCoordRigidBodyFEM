@@ -284,19 +284,19 @@ void JointSplineCurve::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Progra
 		glLineWidth(2);
 		glBegin(GL_LINES);
 		// X axis
-		glColor3f(1.0, 0.0, 0.0);
-		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(1.0, 0.0, 0.0);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f(0.0f, 0.0f, 0.0f);
+		glVertex3f(1.0f, 0.0f, 0.0f);
 
 		// Y axis
-		glColor3f(0.0, 1.0, 0.0);
-		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(0.0, 1.0, 0.0);
+		glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex3f(0.0f, 0.0f, 0.0f);
+		glVertex3f(0.0f, 1.0f, 0.0f);
 
 		// Z axis
-		glColor3f(0.0, 0.0, 1.0);
-		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(0.0, 0.0, 1.0);
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glVertex3f(0.0f, 0.0f, 0.0f);
+		glVertex3f(0.0f, 0.0f, 1.0f);
 
 		glEnd();
 		MV->popMatrix();
@@ -310,19 +310,19 @@ void JointSplineCurve::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Progra
 	glLineWidth(4);
 	glBegin(GL_LINES);
 	// X axis
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(3.0, 0.0, 0.0);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(3.0f, 0.0f, 0.0f);
 
 	// Y axis
-	glColor3f(0.0, 1.0, 0.0);
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 3.0, 0.0);
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 3.0f, 0.0f);
 
 	// Z axis
-	glColor3f(0.0, 0.0, 1.0);
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 0.0, 3.0);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 3.0f);
 
 	glEnd();
 	MV->popMatrix();

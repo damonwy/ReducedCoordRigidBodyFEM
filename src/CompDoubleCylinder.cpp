@@ -19,23 +19,27 @@ Comp(), m_rA(rA), m_rB(rB), m_parentA(parentA), m_parentB(parentB)
 
 }
 
-CompDoubleCylinder::~CompDoubleCylinder() {
-}
-
-void CompDoubleCylinder::load(const std::string &RESOURCE_DIR, std::string shapeA, std::string shapeB) {
+void CompDoubleCylinder::load(const string &RESOURCE_DIR, string shapeA, string shapeB) {
 	m_shapeA = make_shared<Shape>();
 	m_shapeA->loadMesh(RESOURCE_DIR + shapeA);
 
 	m_shapeB = make_shared<Shape>();
 	m_shapeB->loadMesh(RESOURCE_DIR + shapeB);
+
+	m_OA->r = 0.1;
+	m_OB->r = 0.1;
+	m_OA->load(RESOURCE_DIR);
+	m_OB->load(RESOURCE_DIR);
 }
 
 void CompDoubleCylinder::init() {
 	m_shapeA->init();
 	m_shapeB->init();
+	m_OA->init();
+	m_OB->init();
 }
 
-void CompDoubleCylinder::update() {
+void CompDoubleCylinder::update_() {
 	E_wiA = m_parentA->E_wi * E_jiA;
 	E_wiB = m_parentB->E_wi * E_jiB;
 	
@@ -43,10 +47,6 @@ void CompDoubleCylinder::update() {
 	m_OB->update(E_wiB);
 	m_ZA->update(E_wiA);
 	m_ZB->update(E_wiB);
-
-	if (next != nullptr) {
-		this->next->update();
-	}
 }
 
 void CompDoubleCylinder::setTransformA(Matrix4d E) {
@@ -58,7 +58,7 @@ void CompDoubleCylinder::setTransformB(Matrix4d E) {
 	E_jiB = E;
 }
 
-void CompDoubleCylinder::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const {
+void CompDoubleCylinder::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P)const {
 	prog->bind();
 	if (m_shapeA && m_shapeB) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
@@ -83,6 +83,9 @@ void CompDoubleCylinder::draw(std::shared_ptr<MatrixStack> MV, const std::shared
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		m_shapeB->draw(prog);
 		MV->popMatrix();
+
+		m_OA->draw(MV, prog);
+		m_OB->draw(MV, prog);
 
 	}
 	prog->unbind();

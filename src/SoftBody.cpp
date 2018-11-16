@@ -159,8 +159,14 @@ void SoftBody::init() {
 	assert(glGetError() == GL_NO_ERROR);
 }
 
-
 void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+	draw_(MV, prog, progSimple, P);
+	if (next != nullptr) {
+		next->draw(MV, prog, progSimple, P);
+	}
+}
+
+void SoftBody::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	// Draw mesh
 
 	prog->bind();
@@ -311,7 +317,6 @@ void SoftBody::updatePosNor() {
 			}
 		}
 	}
-
 }
 
 void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
@@ -328,7 +333,6 @@ void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 	Matrix4d E_is = body->E_iw * E_ws;
 	Vector3d r = E_is.block<3, 1>(0, 3);
 	m_r.push_back(r);
-
 }
 
 void SoftBody::setSlidingNodes(int id, std::shared_ptr<Body> body, Eigen::Vector3d init_dir) {
@@ -349,7 +353,6 @@ void SoftBody::setSlidingNodes(int id, std::shared_ptr<Body> body, Eigen::Vector
 	// add normals
 	auto vec = make_shared<Vector>(node, body, init_dir);
 	m_normals_sliding.push_back(vec);
-
 }
 
 
@@ -495,10 +498,8 @@ void SoftBody::setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, 
 			comp_node->sphere = m_nodes[i]->sphere;
 			comp_node->setParent(body);
 			m_compared_nodes.push_back(comp_node);
-
 		}
 	}
-
 }
 
 void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body) {
@@ -558,11 +559,6 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 		if (!m_nodes[i]->fixed) {
 			m_nodes[i]->x = y.segment<3>(idxR);
 			m_nodes[i]->v = y.segment<3>(nr + idxR);
-			/*if (y.segment<3>(idxR)(1) < -5.0) {
-				m_nodes[i]->x(1) = -4.9;
-				m_nodes[i]->v(1) = 0.0;
-
-			}*/	
 		}
 	}
 	updatePosNor();
@@ -717,7 +713,7 @@ void SoftBody::computeJacobian(MatrixXd &J) {
 void SoftBody::computeJacobianSparse(vector<T> J_) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		for (int j = 0; j < 3; ++j) {
-			J_.push_back(T(m_nodes[i]->idxM + j, m_nodes[i]->idxR + j, 1));
+			J_.push_back(T(m_nodes[i]->idxM + j, m_nodes[i]->idxR + j, 1.0));
 		}
 	}
 

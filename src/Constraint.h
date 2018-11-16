@@ -12,10 +12,13 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
-
+#include <Eigen/Sparse>
 #include "MLCommon.h"
 
 class Body;
+
+typedef Eigen::Triplet<double> T;
+
 
 class Constraint
 {
@@ -29,6 +32,12 @@ public:
 	void computeJacEqR(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr, Eigen::VectorXd &grdot, Eigen::VectorXd &grddot);
 	void computeJacIneqM(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm, Eigen::VectorXd &cmdot, Eigen::VectorXd &cmddot);
 	void computeJacIneqR(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr, Eigen::VectorXd &crdot, Eigen::VectorXd &crddot);
+
+	void computeJacEqMSparse(std::vector<T> &Gm, std::vector<T> &Gmdot, Eigen::VectorXd &gm, Eigen::VectorXd &gmdot, Eigen::VectorXd &gmddot);
+	void computeJacEqRSparse(std::vector<T> &Gr, std::vector<T> &Grdot, Eigen::VectorXd &gr, Eigen::VectorXd &grdot, Eigen::VectorXd &grddot);
+	void computeJacIneqMSparse(std::vector<T> &Cm, std::vector<T> &Cmdot, Eigen::VectorXd &cm, Eigen::VectorXd &cmdot, Eigen::VectorXd &cmddot);
+	void computeJacIneqRSparse(std::vector<T> &Cr, std::vector<T> &Crdot, Eigen::VectorXd &cr, Eigen::VectorXd &crdot, Eigen::VectorXd &crddot);
+
 
 	void countDofs(int &nem, int &ner, int &nim, int &nir);
 	void getActiveList(std::vector<int> &listM, std::vector<int> &listR);
@@ -66,6 +75,11 @@ protected:
 	virtual void computeJacEqR_(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr, Eigen::VectorXd &grdot, Eigen::VectorXd &grddot) {}
 	virtual	void computeJacIneqM_(Eigen::MatrixXd &Cm, Eigen::MatrixXd &Cmdot, Eigen::VectorXd &cm, Eigen::VectorXd &cmdot, Eigen::VectorXd &cmddot) {}
 	virtual void computeJacIneqR_(Eigen::MatrixXd &Cr, Eigen::MatrixXd &Crdot, Eigen::VectorXd &cr, Eigen::VectorXd &crdot, Eigen::VectorXd &crddot) {}
+
+	virtual void computeJacEqMSparse_(std::vector<T> &Gm, std::vector<T> &Gmdot, Eigen::VectorXd &gm, Eigen::VectorXd &gmdot, Eigen::VectorXd &gmddot) {}
+	virtual void computeJacEqRSparse_(std::vector<T> &Gr, std::vector<T> &Grdot, Eigen::VectorXd &gr, Eigen::VectorXd &grdot, Eigen::VectorXd &grddot) {}
+	virtual	void computeJacIneqMSparse_(std::vector<T> &Cm, std::vector<T> &Cmdot, Eigen::VectorXd &cm, Eigen::VectorXd &cmdot, Eigen::VectorXd &cmddot) {}
+	virtual void computeJacIneqRSparse_(std::vector<T> &Cr, std::vector<T> &Crdot, Eigen::VectorXd &cr, Eigen::VectorXd &crdot, Eigen::VectorXd &crddot) {}
 
 	virtual void ineqEventFcn_(std::vector<double> &value, std::vector<int> &isterminal, std::vector<int> &direction) {}
 	virtual void ineqProjPos_() {}

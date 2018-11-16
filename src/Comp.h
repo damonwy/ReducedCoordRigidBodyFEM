@@ -19,18 +19,30 @@ class MatrixStack;
 class Comp
 {
 public:
-	Comp();
-	virtual ~Comp();
+	Comp() {}
+	virtual ~Comp() {}
 
-	virtual void load(const std::string &RESOURCE_DIR, std::string shape);
-	virtual void init();
-	virtual void update();
-	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
+	virtual void load(const std::string &RESOURCE_DIR, std::string shape) {}
+	virtual void init() {}
+	virtual void update() {
+		update_();
+		if (next != nullptr) {
+			this->next->update();
+		}
+	}
+	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const {
+		draw_(MV, prog, P);
+		if (next != nullptr) {
+			next->draw(MV, prog, P);
+		}
+	}
 	
 	std::shared_ptr<Comp> next;				// Next component in traversal order
 
-private:
-	
+protected:
+	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const {}
+	virtual void update_() {}
+
 };
 
 #endif // MUSCLEMASS_SRC_COMP_H_

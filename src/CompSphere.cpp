@@ -36,28 +36,22 @@ CompSphere::CompSphere(std::shared_ptr<Body> parent, double r) :m_parent(parent)
 
 }
 
-CompSphere::~CompSphere() {
-}
-
 void CompSphere::init() {
 	m_shape->init();
 	m_O->init();
 }
 
-void CompSphere::load(const std::string &RESOURCE_DIR) {
+void CompSphere::load(const string &RESOURCE_DIR) {
 	m_shape = make_shared<Shape>();
 	m_shape->loadMesh(RESOURCE_DIR + "sphere2.obj");
 	m_O->load(RESOURCE_DIR);
 }
 
 
-void CompSphere::update() {
+void CompSphere::update_() {
 	E_wi = m_parent->E_wi * E_ji;
 	m_O->update(E_wi);
 
-	if (next != nullptr) {
-		this->next->update();
-	}
 }
 
 void CompSphere::setTransform(Eigen::Matrix4d E) {
@@ -66,7 +60,7 @@ void CompSphere::setTransform(Eigen::Matrix4d E) {
 
 }
 
-void CompSphere::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const {
+void CompSphere::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P)const {
 
 	prog->bind();
 	if (m_shape) {
@@ -87,8 +81,6 @@ void CompSphere::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Pro
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		m_shape->draw(prog);
 		MV->popMatrix();
-
-
 	}
 	prog->unbind();
 

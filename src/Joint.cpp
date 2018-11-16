@@ -126,7 +126,7 @@ int Joint::countR(int &nr, int data) {
 	return (nr - data);
 }
 
-void Joint::computeJacobian(MatrixXd &J, MatrixXd &Jdot, int nm, int nr) {
+void Joint::computeJacobian(MatrixXd &J, MatrixXd &Jdot) {
 	// Computes the redmax Jacobian
 	Matrix6d Ad_ij = m_body->Ad_ij;
 	J.block(m_body->idxM, idxR, 6, m_ndof) = Ad_ij * m_S;
@@ -147,38 +147,7 @@ void Joint::computeJacobian(MatrixXd &J, MatrixXd &Jdot, int nm, int nr) {
 		jointA = jointA->getParent();
 	}
 	if (next != nullptr) {
-		next->computeJacobian(J, Jdot, nm, nr);
-	}
-}
-
-void Joint::computeJacobianSparse(vector<T> &J_, vector<T> &Jdot_, int nm, int nr) {
-	Matrix6d Ad_ij = m_body->Ad_ij;
-	MatrixXd Jtemp = Ad_ij * m_S;
-	MatrixXd Jdottemp = Ad_ij * m_Sdot;
-	for (int i = 0; i < 6; ++i) {
-		for (int j = 0; j < m_ndof; ++j) {
-			J_.push_back(T(m_body->idxM + i, idxR + j, Jtemp(i, j)));
-			Jdot_.push_back(T(m_body->idxM + i, idxR + j, Jdottemp(i, j)));
-		}
-	}
-
-	// Loop through all ancestors
-	auto jointA = m_parent;
-	while (jointA != nullptr) {
-		int idxM_P = m_parent->getBody()->idxM;
-		Matrix6d Ad_ip = m_body->Ad_ip;
-		Matrix6d Ad_iw = m_body->Ad_iw;
-		Matrix6d Ad_wp = m_parent->getBody()->Ad_wi;
-		Matrix6d Addot_wi = m_body->Addot_wi;
-		Matrix6d Addot_wp = m_parent->getBody()->Addot_wi;
-		Matrix6d Addot_ip = -Ad_iw * (Addot_wi * Ad_iw * Ad_wp - Addot_wp);
-		J.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
-		Jdot.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * Jdot.block(idxM_P, jointA->idxR, 6, jointA->m_ndof) + Addot_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
-		jointA = jointA->getParent();
-	}
-
-	if (next != nullptr) {
-		next->computeJacobianSparse(J_, Jdot_, nm, nr);
+		next->computeJacobian(J, Jdot);
 	}
 }
 

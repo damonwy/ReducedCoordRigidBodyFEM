@@ -99,9 +99,13 @@ private:
 
 	Eigen::MatrixXd Km;
 	Eigen::SparseMatrix<double> Km_sp;
+	std::vector<T> Km_;
 
 	Eigen::VectorXd fm;
 	Eigen::MatrixXd J;
+	Eigen::MatrixXd J_dense;	// dense_nm x dense_nr
+	Eigen::MatrixXd Jdot_dense;
+
 	Eigen::SparseMatrix<double> J_sp;
 	std::vector<T> J_;
 	Eigen::MatrixXd Jdot;
@@ -131,17 +135,24 @@ private:
 
 	Eigen::MatrixXd Gm;
 	Eigen::SparseMatrix<double> Gm_sp;
+	std::vector<T> Gm_;
 
 	Eigen::MatrixXd Gmdot;
 	Eigen::SparseMatrix<double> Gmdot_sp;
+	std::vector<T> Gmdot_;
+
 	Eigen::VectorXd gm;
 	Eigen::VectorXd gmdot;
 	Eigen::VectorXd gmddot;
 
 	Eigen::MatrixXd Gr;
 	Eigen::SparseMatrix<double> Gr_sp;
+	std::vector<T> Gr_;
+
 	Eigen::MatrixXd Grdot;
 	Eigen::SparseMatrix<double> Grdot_sp;
+	std::vector<T> Grdot_;
+
 	Eigen::VectorXd gr;
 	Eigen::VectorXd grdot;
 	Eigen::VectorXd grddot;

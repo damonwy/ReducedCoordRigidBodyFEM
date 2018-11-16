@@ -8,12 +8,10 @@ class CompDoubleCylinder : public Comp
 public:
 	CompDoubleCylinder();
 	CompDoubleCylinder(std::shared_ptr<Body> parentA, double rA, std::shared_ptr<Body> parentB, double rB);
-	virtual ~CompDoubleCylinder();
+	virtual ~CompDoubleCylinder() {}
 
 	void init();
-	void update();
 	void load(const std::string &RESOURCE_DIR, std::string shapeA, std::string shapeB);
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 	void setTransformA(Eigen::Matrix4d E);
 	void setTransformB(Eigen::Matrix4d E);
 	double getRadiusA() { return m_rA; }
@@ -49,5 +47,8 @@ protected:
 	Eigen::Matrix4d E_jiB;	// Where the component is wrt body
 
 	std::shared_ptr<Shape> m_shapeA;
-	std::shared_ptr<Shape> m_shapeB;
+	std::shared_ptr<Shape> m_shapeB;	
+	void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
+	void update_();
+
 };

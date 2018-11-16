@@ -8,12 +8,10 @@ class CompSphere : public Comp
 public:
 	CompSphere();
 	CompSphere(std::shared_ptr<Body> parent, double r);
-	virtual ~CompSphere();
+	virtual ~CompSphere() {}
 
 	void load(const std::string &RESOURCE_DIR);
 	void init();
-	void update();
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 	void setTransform(Eigen::Matrix4d E);
 	double getRadius() { return m_r; }
 	std::shared_ptr<Node> getOrigin() { return m_O; }
@@ -25,5 +23,8 @@ protected:
 	Eigen::Matrix4d E_ji;	// Where the component is wrt body
 
 	std::shared_ptr<Shape> m_shape;
-	std::shared_ptr<Body> m_parent;
+	std::shared_ptr<Body> m_parent;	
+	void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
+	void update_();
+
 };

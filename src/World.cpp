@@ -360,10 +360,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 				joint->m_qdot(0) = -5.0;
 			}
 		}
+		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(3.0, 1.0, 0.0));
 
-		auto compSphere = addCompSphere(2.0, m_bodies[0], Matrix4d::Identity(), RESOURCE_DIR);
-		auto compCylinder = addCompCylinder(1.0, m_bodies[1], Matrix4d::Identity(), Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0), RESOURCE_DIR, "obstacle.obj");
-		auto compDoubleCylinder = addCompDoubleCylinder(0.5, m_bodies[0], Matrix4d::Identity(), 0.5, m_bodies[2], Matrix4d::Identity(), RESOURCE_DIR, "obstacle.obj", "obstacle.obj");
+		auto compSphere = addCompSphere(1.0, m_bodies[0], E, RESOURCE_DIR);
+		auto compCylinder = addCompCylinder(1.0, m_bodies[1], E, Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0), RESOURCE_DIR, "obstacle.obj");
+		auto compDoubleCylinder = addCompDoubleCylinder(
+			0.5, m_bodies[0], E, Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0),
+			0.5, m_bodies[2], E, Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0),
+			RESOURCE_DIR, "obstacle.obj", "obstacle.obj");
 	}
 	break;
 
@@ -446,7 +450,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 		}
 
 		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(3.0, 1.0, 0.0));
-		auto compDoubleCylinder = addCompDoubleCylinder(0.5, m_bodies[0], E, 0.5, m_bodies[2], E, RESOURCE_DIR, "obstacle.obj", "obstacle.obj");
+		auto compDoubleCylinder = addCompDoubleCylinder(
+			0.5, m_bodies[0], E, Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0),
+			0.5, m_bodies[2], E, Vector3d(0.0, 0.0, 1.0), Vector3d(0.0, 0.0, 0.0), 
+			RESOURCE_DIR, "obstacle.obj", "obstacle.obj");
 
 		auto wrapDoubleCylinder = addWrapDoubleCylinder(
 			m_bodies[0], Vector3d(-5.0, 0.5, 0.0), 
@@ -639,16 +646,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 			// Inits joints
 			if (i == 0) {
 				addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-
-				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
-
 			}
 		}
 
-		//m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_q(0) = - M_PI / 2.0;
 		m_joints[2]->m_q(0) = M_PI / 2.0;
 
@@ -765,11 +768,26 @@ shared_ptr<CompCylinder> World::addCompCylinder(double r, shared_ptr<Body> paren
 
 }
 
-shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(double rA, shared_ptr<Body> parentA, Matrix4d EA, double rB, shared_ptr<Body> parentB, Matrix4d EB, const string &RESOURCE_DIR, string shapeA, string shapeB) {
+shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(
+	double rA, shared_ptr<Body> parentA, Matrix4d EA, Vector3d z_a, Vector3d o_a,
+	double rB, shared_ptr<Body> parentB, Matrix4d EB, Vector3d z_b, Vector3d o_b,
+	const string &RESOURCE_DIR, string shapeA, string shapeB) {
 	auto comp = make_shared<CompDoubleCylinder>(parentA, rA, parentB, rB);
 	m_comps.push_back(comp);
 	comp->setTransformA(EA);
 	comp->setTransformB(EB);
+	auto  za = make_shared<Vector>();
+	za->dir0 = z_a;
+	comp->setZAxisA(za);
+	auto zb = make_shared<Vector>();
+	zb->dir0 = z_b;
+	comp->setZAxisB(zb);
+	auto originA = make_shared<Node>();
+	originA->x0 = o_a;
+	auto originB = make_shared<Node>();
+	originB->x0 = o_b;
+	comp->setOriginA(originA);
+	comp->setOriginB(originB);
 	comp->load(RESOURCE_DIR, shapeA, shapeB);
 	m_ncomps++;
 	return comp;
@@ -883,7 +901,6 @@ shared_ptr<WrapDoubleCylinder> World::addWrapDoubleCylinder(shared_ptr<Body> b0,
 
 void World::init() {
 	for (int i = 0; i < m_nbodies; i++) {
-
 		m_bodies[i]->init(nm);
 		if (i < m_nbodies - 1) {
 			m_bodies[i]->next = m_bodies[i + 1];
@@ -901,6 +918,12 @@ void World::init() {
 	for (int i = m_njoints - 1; i > -1; i--) {
 		m_joints[i]->init(nm, nr);
 	}
+
+	m_dense_nm = nm;
+	m_dense_nr = nr;
+	// Until now, save nm, nr for later Sparse Jacobian Computation, 
+	// only dense_nm, dense_nr 
+
 
 	for (int i = 0; i < m_njoints; i++) {
 		if (i < m_njoints - 1) {
@@ -949,11 +972,10 @@ void World::init() {
 	}
 
 	m_joints[0]->update();
-	m_comps[0]->update();//todo
+	m_comps[0]->update();
 	m_wraps[0]->update();
 	m_springs[0]->update();
 	
-
 	for (int i = 0; i < m_ndeformables; i++) {
 		m_deformables[i]->countDofs(nm, nr);
 
@@ -973,21 +995,6 @@ void World::init() {
 	}
 
 	if (m_type == SOFT_BODIES | m_type == SOFT_BODIES_INVERTIBLE) {
-		//m_softbodies[0]->setAttachments(0, m_bodies[0]);
-		//m_softbodies[0]->setAttachments(3, m_bodies[0]);
-		//m_softbodies[0]->setAttachments(6, m_bodies[0]);
-		//m_softbodies[0]->setAttachments(9, m_bodies[0]);
-		//m_softbodies[0]->setAttachments(12, m_bodies[0]);
-		//m_softbodies[0]->setAttachments(19, m_bodies[0]);
-		//m_softbodies[0]->setAttachments(25, m_bodies[0]);
-		////m_softbodies[0]->setAttachments(30, m_bodies[0]);
-
-		//m_softbodies[0]->setAttachments(60, m_bodies[1]);
-		//m_softbodies[0]->setAttachments(63, m_bodies[1]);
-		//m_softbodies[0]->setAttachments(67, m_bodies[1]);
-		//m_softbodies[0]->setAttachments(69, m_bodies[1]);
-		//m_softbodies[0]->setAttachments(72, m_bodies[1]);
-
 
 		/*Vector3d direction, origin;
 		direction = m_softbodies[0]->m_trifaces[0]->m_normal;
@@ -995,18 +1002,6 @@ void World::init() {
 		m_softbodies[0]->setAttachmentsByLine(direction, origin, m_bodies[0]);
 		origin << 10.0, 0.0, 0.0;
 		m_softbodies[0]->setAttachmentsByLine(-direction, origin, m_bodies[1]);*/
-
-		/*m_softbodies[1]->setAttachments(0, m_bodies[1]);
-		m_softbodies[1]->setAttachments(3, m_bodies[1]);
-		m_softbodies[1]->setAttachments(6, m_bodies[1]);
-		m_softbodies[1]->setAttachments(9, m_bodies[1]);
-		m_softbodies[1]->setAttachments(12, m_bodies[1]);
-		m_softbodies[1]->setAttachments(19, m_bodies[1]);
-		m_softbodies[1]->setAttachments(60, m_bodies[2]);
-		m_softbodies[1]->setAttachments(63, m_bodies[2]);
-		m_softbodies[1]->setAttachments(67, m_bodies[2]);
-		m_softbodies[1]->setAttachments(69, m_bodies[2]);
-		m_softbodies[1]->setAttachments(72, m_bodies[2]);*/
 
 		//m_softbodies[1]->setAttachments(0, m_bodies[1]);
 		//	m_softbodies[1]->setAttachments(3, m_bodies[1]);
@@ -1106,14 +1101,10 @@ void World::init() {
 }
 
 void World::update() {
-	for (int i = 0; i < m_nbodies; i++) {
-		//m_bodies[i]->update();
-	}
 
 	m_comps[0]->update();
 	m_wraps[0]->update();
 	m_springs[0]->update();
-
 }
 
 int World::getNsteps() {
@@ -1123,39 +1114,13 @@ int World::getNsteps() {
 }
 
 void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, const shared_ptr<Program> progSoft, shared_ptr<MatrixStack> P) {
-	// Draw rigid bodies
-	for (int i = 0; i < m_nbodies; i++) {
-		m_bodies[i]->draw(MV, prog, P);
-	}
-
-	// Draw joints
-	for (int i = 0; i < m_njoints; i++) {
-		m_joints[i]->draw(MV, prog, progSimple, P);
-	}
-
-	// Draw springs
-	for (int i = 0; i < m_ndeformables; i++) {
-		m_deformables[i]->draw(MV, prog, progSimple, P);
-	}
-
-	// Draw soft bodies
-	for (int i = 0; i < m_nsoftbodies; i++) {
-		m_softbodies[i]->draw(MV, prog, progSimple, P);
-	}
-
-	// Draw components
-	for (int i = 0; i < m_ncomps; i++) {
-		m_comps[i]->draw(MV, prog, P);
-	}
-
-	// Draw wrappings
-	for (int i = 0; i < m_nwraps; ++i) {
-		m_wraps[i]->draw(MV, prog, progSimple, P);
-	}
-
-	// Draw springs
+	m_bodies[0]->draw(MV, prog, P);
+	m_joints[0]->draw(MV, prog, progSimple, P);
+	m_deformables[0]->draw(MV, prog, progSimple, P);
+	m_comps[0]->draw(MV, prog, P);
+	m_wraps[0]->draw(MV, prog, progSimple, P);
 	m_springs[0]->draw(MV, prog, progSimple, P);
-
+	m_softbodies[0]->draw(MV, prog, progSimple, P);
 }
 
 Energy World::computeEnergy() {

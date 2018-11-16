@@ -308,7 +308,7 @@ void DeformableSpring::computeJacobian_(MatrixXd &J, MatrixXd &Jdot) {
 void DeformableSpring::computeJacobianSparse_(vector<T> &J_, vector<T> &Jdot_) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		for (int j = 0; j < 3; ++j) {
-			J_.push_back(T(m_nodes[i]->idxM + j, m_nodes[i]->idxR + j, 1));
+			J_.push_back(T(m_nodes[i]->idxM + j, m_nodes[i]->idxR + j, 1.0));
 		}
 	}
 }

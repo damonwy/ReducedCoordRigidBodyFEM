@@ -69,8 +69,7 @@ public:
 	Vector6d getAlpha() const { return m_alpha; }
 	std::string getName() const { return m_name; }
 
-	void computeJacobian(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot, int nm, int nr);
-	void computeJacobianSparse(std::vector<T> &J_, std::vector<T> &Jdot_, int nm, int nr);
+	void computeJacobian(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
 	Eigen::VectorXd computerJacTransProd(Eigen::VectorXd y, Eigen::VectorXd x, int nr);
 	void computeForceStiffness(Eigen::VectorXd &fr, Eigen::MatrixXd &Kr);
 	void computeForceStiffnessSparse(Eigen::VectorXd &fr, std::vector<T> &Kr_);

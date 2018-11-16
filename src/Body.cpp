@@ -57,7 +57,6 @@ void Body::load(const string &RESOURCE_DIR, string box_shape) {
 
 void Body::init(int &nm) {
 	bodyShape->init();
-	
 	countDofs(nm);
 }
 
@@ -144,7 +143,6 @@ void Body::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 
 	}
 	prog->unbind();
-
 }
 
 void Body::computeMassGrav(Vector3d grav, MatrixXd &M, VectorXd &f) {

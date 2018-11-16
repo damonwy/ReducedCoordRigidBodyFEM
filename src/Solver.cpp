@@ -75,6 +75,8 @@ void Solver::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir) {
 	Dr.resize(nr, nr);
 	Kr.setZero();
 	Dr.setZero();
+	Dm.resize(nm, nm);
+	Dm.setZero();
 
 	K.resize(nm, nm);
 	K.setZero();
@@ -161,8 +163,15 @@ void Solver::initMatrixSparse(int nm, int nr, int nem, int ner, int nim, int nir
 	Kr_sp.resize(nr, nr);
 	Dr_sp.resize(nr, nr);
 
+	Dm_sp.resize(nm, nm);
+
 	K_sp.resize(nm, nm);
 	Km_sp.resize(nm, nm);
+
+	J_dense.resize(m_world->m_dense_nm, m_world->m_dense_nr);
+	J_dense.setZero();
+	Jdot_dense.resize(m_world->m_dense_nm, m_world->m_dense_nr);
+	Jdot_dense.setZero();
 
 	J_sp.resize(nm, nr);
 	Jdot_sp.resize(nm, nr);
@@ -269,7 +278,7 @@ Eigen::VectorXd Solver::dynamics(Eigen::VectorXd y)
 
 		joint0->computeForceStiffness(fr, Kr);
 		joint0->computeForceDamping(tmp, Dr);
-		joint0->computeJacobian(J, Jdot, nm, nr);
+		joint0->computeJacobian(J, Jdot);
 
 		timer.toc();
 		timer.print();
@@ -511,28 +520,62 @@ Eigen::VectorXd Solver::dynamics_sparse(Eigen::VectorXd y)
 
 		joint0->computeForceStiffnessSparse(fr, Kr_);
 		joint0->computeForceDampingSparse(tmp, Dr_);
-		joint0->computeJacobianSparse(J_, Jdot_, nm, nr);
+
+		// First get dense jacobian (only a small part of the matrix)
+		joint0->computeJacobian(J_dense, Jdot_dense);
+
+		// Push back the dense part
+		for (int i = 0; i < J_dense.rows(); ++i) {
+			for (int j = 0; j < J_dense.cols(); ++j) {
+
+				J_.push_back(T(i, j, J_dense(i,j)));
+				Jdot_.push_back(T(i, j, Jdot_dense(i, j)));
+			}
+		}
 
 		deformable0->computeJacobianSparse(J_, Jdot_);
 		softbody0->computeJacobianSparse(J_);
+		// Push back the Identity part
+		//for (int i = J_dense.rows(); i < nm; ++i) {
+		//	for (int j = J_dense.cols(); j < nr; ++j) {
+		//		J_.push_back(T(i, j, 1.0));
+		//		Jdot_.push_back(T(i, j, 1.0));
+		//	}
+		//}
 
-
-		spring0->computeForceStiffnessDamping(fm, Km, Dm);
+		spring0->computeForceStiffnessDampingSparse(fm, Km_, Dm_);
+		Mm_sp.setFromTriplets(Mm_.begin(), Mm_.end());
+		Km_sp.setFromTriplets(Km_.begin(), Km_.end());
+		Dm_sp.setFromTriplets(Dm_.begin(), Dm_.end());
+		Kr_sp.setFromTriplets(Kr_.begin(), Kr_.end());
+		J_sp.setFromTriplets(J_.begin(), J_.end());
+		Jdot_sp.setFromTriplets(Jdot_.begin(), Jdot_.end());
 
 		q0 = y.segment(0, nr);
 		qdot0 = y.segment(nr, nr);
 
-		Mr = J.transpose() * (Mm - h * h * K) * J;
-		Mr = 0.5 * (Mr + Mr.transpose());
+		Mr_sp = J_sp.transpose() * (Mm_sp - h * h * K_sp) * J_sp;
+		Mr_sp = 0.5 * (Mr_sp + Mr_sp.transpose());
 
-		fr_ = Mr * qdot0 + h * (J.transpose() * (fm - Mm * Jdot * qdot0) + fr);
-		MDKr_ = Mr + J.transpose() * (h * Dm - h * h * Km)*J + h * Dr - h * h * Kr;
+		fr_ = Mr_sp * qdot0 + h * (J_sp.transpose() * (fm - Mm_sp * Jdot_sp * qdot0) + fr);
+		MDKr_sp = Mr_sp + J_sp.transpose() * (h * Dm_sp - h * h * Km_sp)*J_sp + h * Dr_sp - h * h * Kr_sp;
 
 		if (ne > 0) {
-			constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
-			constraint0->computeJacEqR(Gr, Grdot, gr, grdot, grddot);
-			G.block(0, 0, nem, nr) = Gm * J;
-			G.block(nem, 0, ner, nr) = Gr;
+			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
+			constraint0->computeJacEqRSparse(Gr_, Grdot_, gr, grdot, grddot);
+
+			//constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
+			//constraint0->computeJacEqR(Gr, Grdot, gr, grdot, grddot);
+			Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
+			Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
+			Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
+			Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
+
+			G_sp.topRows(nem) = Gm_sp * J_sp;
+			G_sp.bottomRows(ner) = Gr_sp;
+			
+			//G.block(0, 0, nem, nr) = ;
+			//G.block(nem, 0, ner, nr) = Gr;
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
 			rhsG = -gdot - 100.0 * g;// todo!!!!!
@@ -573,30 +616,40 @@ Eigen::VectorXd Solver::dynamics_sparse(Eigen::VectorXd y)
 			}
 		}
 
-		if (ne == 0 && ni == 0) {	// No constraints	
-			qdot1 = MDKr_.ldlt().solve(fr_);
+		if (ne == 0 && ni == 0) {	// No constraints
+			ConjugateGradient< SparseMatrix<double> > cg;
+			cg.setMaxIterations(25);
+			cg.setTolerance(1e-3);
+			cg.compute(MDKr_sp);
+			qdot1 = cg.solveWithGuess(qdot0, fr_);
+
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
-			int rows = MDKr_.rows() + G.rows();
-			int cols = MDKr_.cols() + G.rows();
-			MatrixXd LHS(rows, cols);
-			VectorXd rhs(rows);
-			LHS.setZero();
-			rhs.setZero();
-			LHS.block(0, 0, MDKr_.rows(), MDKr_.cols()) = MDKr_;
-			LHS.block(0, MDKr_.cols(), MDKr_.rows(), G.rows()) = G.transpose();
-			LHS.block(MDKr_.rows(), 0, G.rows(), G.cols()) = G;
-			rhs.segment(0, fr_.rows()) = fr_;
-			rhs.segment(fr_.rows(), g.rows()) = rhsG;
+			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
+			program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
+			program_->setParamInt(MSK_IPAR_LOG, 10);
+			program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
+			program_->setNumberOfVariables(nr);
 
-			VectorXd sol = LHS.ldlt().solve(rhs);
+			program_->setObjectiveMatrix(MDKr_sp);
+			program_->setObjectiveVector(-fr_);
+			program_->setNumberOfEqualities(ne);
+
+			program_->setEqualityMatrix(G_sp);
+
+			VectorXd gvec(ne);
+			gvec.setZero();
+			program_->setEqualityVector(rhsG);
+
+			bool success = program_->solve();
+			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
-
-			VectorXd l = sol.segment(nr, sol.rows() - nr);
-
-			constraint0->scatterForceEqM(Gm.transpose(), l.segment(0, nem) / h);
-			constraint0->scatterForceEqR(Gr.transpose(), l.segment(nem, l.rows() - nem) / h);
-
 		}
 		else if (ne == 0 && ni > 0) {  // Just inequality
 			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
@@ -611,7 +664,7 @@ Eigen::VectorXd Solver::dynamics_sparse(Eigen::VectorXd y)
 			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
 
 			program_->setNumberOfVariables(nr);
-			program_->setObjectiveMatrix(MDKr_.sparseView());
+			program_->setObjectiveMatrix(MDKr_sp);
 			program_->setObjectiveVector(-fr_);
 			program_->setNumberOfInequalities(ni);
 			program_->setInequalityMatrix(C.sparseView());
@@ -637,7 +690,7 @@ Eigen::VectorXd Solver::dynamics_sparse(Eigen::VectorXd y)
 			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
 			program_->setNumberOfVariables(nr);
 
-			program_->setObjectiveMatrix(MDKr_.sparseView());
+			program_->setObjectiveMatrix(MDKr_sp);
 			program_->setObjectiveVector(-fr_);
 			program_->setNumberOfInequalities(ni);
 			program_->setInequalityMatrix(C.sparseView());
@@ -646,7 +699,7 @@ Eigen::VectorXd Solver::dynamics_sparse(Eigen::VectorXd y)
 			cvec.setZero();
 
 			program_->setInequalityVector(cvec);
-			program_->setEqualityMatrix(G.sparseView());
+			program_->setEqualityMatrix(G_sp);
 
 			VectorXd gvec(ne);
 			gvec.setZero();
@@ -749,7 +802,7 @@ shared_ptr<Solution> Solver::solve() {
 			joint0->computeForceStiffness(fr, Kr);
 			joint0->computeForceDamping(tmp, Dr);
 
-			joint0->computeJacobian(J, Jdot, nm, nr);
+			joint0->computeJacobian(J, Jdot);
 			//Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 			// spring jacobian todo
 			deformable0->computeJacobian(J, Jdot);

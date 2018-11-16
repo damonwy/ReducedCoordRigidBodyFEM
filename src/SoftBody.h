@@ -28,7 +28,7 @@ public:
 
 	virtual void load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME);
 	virtual void init();
-	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
+	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	void updatePosNor();
 
 	virtual void countDofs(int &nm, int &nr);
@@ -108,6 +108,9 @@ protected:
 	double m_poisson;
 	double m_density;
 	double m_mass;
+
+	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
+
 };
 
 

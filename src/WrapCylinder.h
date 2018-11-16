@@ -36,9 +36,10 @@ public:
 	Eigen::MatrixXd getPoints(int num_points) const;
 	void init();
 	void load(const std::string &RESOURCE_DIR);
-	void update();
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
-
+	
+protected:
+	void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
+	void update_();
 };
 
 #endif // MUSCLEMASS_SRC_WRAPCYLINDER_H_

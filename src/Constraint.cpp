@@ -77,8 +77,34 @@ void Constraint::computeJacIneqR(MatrixXd &Cr, MatrixXd &Crdot, VectorXd &cr, Ve
 	if (next != nullptr) {
 		next->computeJacIneqR(Cr, Crdot, cr, crdot, crddot);
 	}
-
 }
+
+void Constraint::computeJacEqMSparse(vector<T> &Gm, vector<T> &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
+	computeJacEqMSparse_(Gm, Gmdot, gm, gmdot, gmddot);
+	if (next != nullptr) {
+		next->computeJacEqMSparse(Gm, Gmdot, gm, gmdot, gmddot);
+	}
+}
+void Constraint::computeJacEqRSparse(vector<T> &Gr, vector<T> &Grdot, VectorXd &gr, VectorXd &grdot, VectorXd &grddot) {
+	computeJacEqRSparse_(Gr, Grdot, gr, grdot, grddot);
+	if (next != nullptr) {
+		next->computeJacEqRSparse(Gr, Grdot, gr, grdot, grddot);
+	}
+}
+
+void Constraint::computeJacIneqMSparse(vector<T> &Cm, vector<T> &Cmdot, VectorXd &cm, VectorXd &cmdot, VectorXd &cmddot) {
+	computeJacIneqMSparse_(Cm, Cmdot, cm, cmdot, cmddot);
+	if (next != nullptr) {
+		next->computeJacIneqMSparse(Cm, Cmdot, cm, cmdot, cmddot);
+	}
+}
+void Constraint::computeJacIneqRSparse(vector<T> &Cr, vector<T> &Crdot, VectorXd &cr, VectorXd &crdot, VectorXd &crddot) {
+	computeJacIneqRSparse_(Cr, Crdot, cr, crdot, crddot);
+	if (next != nullptr) {
+		next->computeJacIneqRSparse(Cr, Crdot, cr, crdot, crddot);
+	}
+}
+
 
 void Constraint::scatterForceEqM(Eigen::MatrixXd Gmt, Eigen::VectorXd lm) {
 	if (nconEM > 0) {

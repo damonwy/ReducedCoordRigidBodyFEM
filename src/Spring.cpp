@@ -42,6 +42,13 @@ void Spring::computeForceStiffnessDamping(VectorXd &f, MatrixXd &K, MatrixXd &D)
 
 }
 
+void Spring::computeForceStiffnessDampingSparse(Eigen::VectorXd &f, std::vector<T> &K_, std::vector<T> &D_) {
+	computeForceStiffnessDampingSparse_(f, K_, D_);
+	if (next != nullptr) {
+		next->computeForceStiffnessDampingSparse(f, K_, D_);
+	}
+}
+
 void Spring::computeStiffnessProd(VectorXd x, VectorXd &y) {
 	// Computes y=K*x
 	computeStiffnessProd_(x, y);

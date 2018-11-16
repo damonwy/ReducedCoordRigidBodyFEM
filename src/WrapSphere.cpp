@@ -140,7 +140,7 @@ Eigen::MatrixXd WrapSphere::getPoints(int num_points)
 	return points;
 }
 
-void WrapSphere::update() {
+void WrapSphere::update_() {
 	m_point_P->update();
 	m_point_S->update();
 	m_compSphere->update();
@@ -150,13 +150,9 @@ void WrapSphere::update() {
 	if (m_status == wrap) {
 		m_arc_points = getPoints(m_num_points);
 	}
-
-	if (next!=nullptr) {
-		next->update();
-	}
 }
 
-void WrapSphere::draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const {
+void WrapSphere::draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const {
 
 	prog->bind();
 

@@ -65,9 +65,10 @@ public:
 
 	void init();
 	void load(const std::string &RESOURCE_DIR);
-	void update();
-	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
-
+	
+protected:
+	void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
+	void update_();
 
 };
 

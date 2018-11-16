@@ -75,25 +75,25 @@ public:
 
 	std::shared_ptr<Body> addBody(
 		double density, 
-		Eigen::Vector3d sides, 
-		Eigen::Vector3d p, 
-		Eigen::Matrix3d R, 
+		Vector3d sides, 
+		Vector3d p, 
+		Matrix3d R, 
 		const std::string &RESOURCE_DIR, 
 		std::string file_name);
 
 	std::shared_ptr<JointRevolute> addJointRevolute(
 		std::shared_ptr<Body> body, 
-		Eigen::Vector3d axis, 
-		Eigen::Vector3d p, 
-		Eigen::Matrix3d R, 
+		Vector3d axis, 
+		Vector3d p, 
+		Matrix3d R, 
 		double q, 
 		const std::string &RESOURCE_DIR,
 		std::shared_ptr<Joint> parent=nullptr);
 	
 	std::shared_ptr<JointFixed> addJointFixed(
 		std::shared_ptr<Body> body, 
-		Eigen::Vector3d p, 
-		Eigen::Matrix3d R, 
+		Vector3d p, 
+		Matrix3d R, 
 		double q, 
 		std::shared_ptr<Joint> parent = nullptr);
 	
@@ -106,9 +106,9 @@ public:
 		double mass, 
 		int n_points, 
 		std::shared_ptr<Body> body0, 
-		Eigen::Vector3d r0, 
+		Vector3d r0, 
 		std::shared_ptr<Body> body1, 
-		Eigen::Vector3d r1);
+		Vector3d r1);
 	
 	std::shared_ptr<SoftBody> addSoftBody(
 		double density, 
@@ -136,56 +136,60 @@ public:
 	std::shared_ptr<CompSphere> addCompSphere(
 		double r, 
 		std::shared_ptr<Body> parent, 
-		Eigen::Matrix4d E, 
+		Matrix4d E, 
 		const std::string &RESOURCE_DIR);
 	
 	std::shared_ptr<CompCylinder> addCompCylinder(
 		double r, 
 		std::shared_ptr<Body> parent, 
-		Eigen::Matrix4d E, 
-		Eigen::Vector3d z, 
-		Eigen::Vector3d o, 
+		Matrix4d E, 
+		Vector3d z, 
+		Vector3d o, 
 		const std::string &RESOURCE_DIR, 
 		std::string shape);
 	
 	std::shared_ptr<CompDoubleCylinder> addCompDoubleCylinder(
 		double rA, 
 		std::shared_ptr<Body> parentA, 
-		Eigen::Matrix4d EA, 
+		Matrix4d EA, 
+		Vector3d z_a, 
+		Vector3d o_a,
 		double rB, 
 		std::shared_ptr<Body> parentB, 
-		Eigen::Matrix4d EB,
+		Matrix4d EB,
+		Vector3d z_b, 
+		Vector3d o_b,
 		const std::string &RESOURCE_DIR, 
 		std::string shapeA, 
 		std::string shapeB);
 	
 	std::shared_ptr<WrapSphere> addWrapSphere(
 		std::shared_ptr<Body> b0, 
-		Eigen::Vector3d r0, 
+		Vector3d r0, 
 		std::shared_ptr<Body> b1, 
-		Eigen::Vector3d r1, 
+		Vector3d r1, 
 		std::shared_ptr<CompSphere> compSphere, 
 		int num_points, 
 		const std::string &RESOURCE_DIR);
 
 	std::shared_ptr<WrapCylinder> addWrapCylinder(
 		std::shared_ptr<Body> b0, 
-		Eigen::Vector3d r0, 
+		Vector3d r0, 
 		std::shared_ptr<Body> b1, 
-		Eigen::Vector3d r1, 
+		Vector3d r1, 
 		std::shared_ptr<CompCylinder> compCylinder, 
 		int num_points, 
 		const std::string &RESOURCE_DIR);
 
 	std::shared_ptr<WrapDoubleCylinder> addWrapDoubleCylinder(
 		std::shared_ptr<Body> b0,
-		Eigen::Vector3d r0,
+		Vector3d r0,
 		std::shared_ptr<Body> b1,
-		Eigen::Vector3d r1,
-		Eigen::Vector3d u,
-		Eigen::Vector3d v,
-		Eigen::Vector3d z_u,
-		Eigen::Vector3d z_v,
+		Vector3d r1,
+		Vector3d u,
+		Vector3d v,
+		Vector3d z_u,
+		Vector3d z_v,
 		std::shared_ptr<CompDoubleCylinder> compDoubleCylinder,
 		int num_points,
 		const std::string &RESOURCE_DIR);
@@ -210,7 +214,7 @@ public:
 	void incrementTime() { m_t += m_h; }
 
 	void setGrav(Eigen::Vector3d grav) { m_grav = grav; }
-	Eigen::Vector3d getGrav() const { return m_grav; }
+	Vector3d getGrav() const { return m_grav; }
 
 	std::shared_ptr<Body> getBody(int uid);
 	std::shared_ptr<Body> getBody(const std::string &name);
@@ -225,7 +229,7 @@ public:
 	std::shared_ptr<Constraint> getConstraint0() const { return m_constraints[0]; }
 	std::shared_ptr<Spring> getSpring0() const { return m_springs[0]; }
 
-	Eigen::Vector2d getTspan() const { return m_tspan; }
+	Vector2d getTspan() const { return m_tspan; }
 	int getNsteps();
 
 	int nm;
@@ -246,6 +250,9 @@ public:
 	int m_nconstraints;
 	int m_ncomps;
 	int m_nwraps;
+	
+	int m_dense_nm;
+	int m_dense_nr;
 
 private:
 	Energy m_energy;		// the energy in current state
