@@ -36,7 +36,23 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	}
 
 	computeAreaWeightedVertexNormals();
+
+	// set the renumbering indices for conversion from Teran's order to row-major order
+	rowMajorMatrixToTeran[0] = 0;
+	rowMajorMatrixToTeran[1] = 3;
+	rowMajorMatrixToTeran[2] = 5;
+	rowMajorMatrixToTeran[3] = 4;
+	rowMajorMatrixToTeran[4] = 1;
+	rowMajorMatrixToTeran[5] = 7;
+	rowMajorMatrixToTeran[6] = 6;
+	rowMajorMatrixToTeran[7] = 8;
+	rowMajorMatrixToTeran[8] = 2;
+
+	for (int i = 0; i<9; i++)
+		teranToRowMajorMatrix[rowMajorMatrixToTeran[i]] = i;
 }
+
+
 
 Eigen::Matrix3d Tetrahedron::computeDeformationGradient() {
 
@@ -157,12 +173,11 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 
 	// SVD on the deformation gradient
 	int modifiedSVD = 1;
-	Vector3d Fhat_vec;
 
-	if (!SVD(this->F, this->U, Fhat_vec, this->V, 1e-8, modifiedSVD)) {
+	if (!SVD(this->F, this->U, Fhats, this->V, 1e-8, modifiedSVD)) {
 		//cout << "error in svd " << endl;
 	}
-	this->Fhat = Fhat_vec.asDiagonal();
+	this->Fhat = Fhats.asDiagonal();
 	if (print) {
 		cout << "Fhat" << this->Fhat << endl;
 	}
@@ -181,7 +196,7 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 		}
 	}
 	if (print) {
-cout << "Fhat" << this->Fhat << endl;
+		cout << "Fhat" << this->Fhat << endl;
 	}
 	
 
@@ -216,6 +231,424 @@ cout << "Fhat" << this->Fhat << endl;
 	return f;
 }
 
+void Tetrahedron::Compute_dGdF(Vec3d * b0, Vec3d * b1, Vec3d * b2,
+	double dPdF[81], double dGdF[81])
+{
+	//Both G and F are 3x3 matrices, so dGdF has 81 entries
+	memset(dGdF, 0, sizeof(double) * 81);
+
+	/*
+	| ga_x gb_x gc_x |   | 0 1 2 |
+	if G = | ga_y gb_y gc_y | = | 3 4 5 |
+	| ga_z gb_z gc_z |   | 6 7 8 |
+	where ga, gb, gc are the nodal forces at vertex a,b,c
+	| ba_0 bb_0 bc_0 |   | 0 1 2 |
+	and B = | ba_1 bb_1 bc_1 | = | 3 4 5 |
+	| ba_2 bb_2 bc_2 |   | 6 7 8 |
+	| dga_x/dF_00 dga_x/dF_01 dga_x/dF_02 dga_x/dF_10 ... dga_x/dF_22 |
+	| dga_y/dF_00 dga_y/dF_01 dga_y/dF_02 dga_y/dF_10 ... dga_y/dF_22 |
+	| dga_z/dF_00 dga_z/dF_01 dga_z/dF_02 dga_z/dF_10 ... dga_z/dF_22 |
+	dGdF = | dgb_x/dF_00 dgb_x/dF_01 dgb_x/dF_02 dgb_x/dF_10 ... dgb_x/dF_22 |
+	|                                 ...                             |
+	| dgc_z/dF_00 dgc_z/dF_01 dgc_z/dF_02 dgc_z/dF_10 ... dgc_z/dF_22 |
+	*/
+
+	Vec3d * bVec[3] = { b0, b1, b2 };
+
+	//dga_x/dF, dga_y/dF, dga_z/dF
+	//dgb_x/dF, dgb_y/dF, dgb_z/dF
+	//dgc_x/dF, dgc_y/dF, dgc_z/dF
+	memset(dGdF, 0, sizeof(double) * 81);
+	for (int abc = 0; abc<3; abc++)
+		for (int i = 0; i<3; i++)
+			for (int column = 0; column<9; column++)
+				for (int k = 0; k<3; k++)
+					dGdF[27 * abc + 9 * i + column] += dPdF[(3 * i + k) * 9 + column] * (*(bVec[abc]))[k];
+
+	/*
+	printf("---- printing dGdF ----\n");
+	for (int i=0; i<9; i++)
+	{
+	for (int j=0; j<9; j++)
+	printf("%G ", dGdF[i*9+j]);
+	printf("\n");
+	}
+	*/
+}
+
+void Tetrahedron::ComputeTetK(int el, double K[144], int clamped)
+{
+	/*
+	dP/dF is a column major matrix, but is stored as a 1D vector
+
+	| dP_11/dF_11  dP_11/dF_12  dP_11/dF_13  dP_11/dF_21 ... dP_11/dF_33 |
+	| dP_12/dF_11  dP_12/dF_12  dP_12/dF_13  dP_12/dF_21 ... dP_12/dF_33 |
+	|                              ...                                   |
+	| dP_33/dF_11  dP_33/dF_12  dP_33/dF_13  dP_33/dF_21 ... dP_33/dF_33 |
+	*/
+	double dPdF[81]; //in 9x9 matrix format
+	double dGdF[81]; //in 9x9 matrix format
+
+	Compute_dPdF(el, dPdF, clamped);
+	Vec3d areaWeightedVertexNormals0(Nm.col(0)(0), Nm.col(0)(1), Nm.col(0)(2));
+	Vec3d areaWeightedVertexNormals1(Nm.col(1)(0), Nm.col(1)(1), Nm.col(1)(2));
+	Vec3d areaWeightedVertexNormals2(Nm.col(2)(0), Nm.col(2)(1), Nm.col(2)(2));
+
+	Compute_dGdF(&(areaWeightedVertexNormals0), &(areaWeightedVertexNormals1),
+		&(areaWeightedVertexNormals2), dPdF, dGdF);
+	//dF_dU was already computed by the constructor before calling this function
+	double * dFdU; //= &dFdUs[108 * el];
+
+	// K is stored column-major (however, it doesn't matter because K is symmetric)
+	for (int row = 0; row<9; row++)
+	{
+		for (int column = 0; column<12; column++)
+		{
+			double result = 0;
+			for (int inner = 0; inner<9; inner++)
+			{
+				//dGdF is 9x9, and dFdU is 9x12
+				result += dGdF[9 * row + inner] * dFdU[12 * inner + column];
+			}
+			K[12 * column + row] = result;
+		}
+	}
+
+	//The last three columns are combinations of the first nine columns.
+	//The reason is that the nodal force of the 4th vertex equals to 
+	//the minus of the sum of the 1st, 2nd, and 3rd vertices (see p3 
+	//section 4 of [Irving 04]
+	for (int row = 0; row < 12; row++)
+	{
+		//10th column
+		K[12 * row + 9] = -K[12 * row + 0] - K[12 * row + 3] - K[12 * row + 6];
+		//11th column
+		K[12 * row + 10] = -K[12 * row + 1] - K[12 * row + 4] - K[12 * row + 7];
+		//12th column
+		K[12 * row + 11] = -K[12 * row + 2] - K[12 * row + 5] - K[12 * row + 8];
+	}
+}
+
+void Compute_dFdU()
+{
+	
+	//double * dFdU = &dFdUs[108 * el];
+	//Mat3d & dmInv = dmInverses[el];
+
+	for (int index = 0; index<108; index++)
+	{
+		int n = index % 3;
+		int m = (int)(index / 3) % 4;
+		int j = (int)(index / 12) % 3;
+		int i = (int)(index / 36) % 3;
+		double result = 0.0;
+		//for (int k = 0; k<3; k++)
+		//result += dDSdU[tensor9x12Index(i, k, m, n)] * dmInv[k][j];
+		//dFdU[tensor9x12Index(i, j, m, n)] = result;
+	}
+}
+
+void ComputeEnergyGradient(int elementIndex, double * invariants, double * gradient, double mu, double lambda) // invariants and gradient are 3-vectors
+{
+	double IIIC = invariants[2];
+
+	gradient[0] = 0.5 * mu;
+	gradient[1] = 0.0;
+	gradient[2] = (-0.5 * mu + 0.25 * lambda * log(IIIC)) / IIIC;
+
+}
+
+void ComputeEnergyHessian(int elementIndex, double * invariants, double * hessian, double mu, double lambda) // invariants is a 3-vector, hessian is a 3x3 symmetric matrix, unrolled into a 6-vector, in the following order: (11, 12, 13, 22, 23, 33).
+{
+	double IIIC = invariants[2];
+	// 11
+	hessian[0] = 0.0;
+	// 12
+	hessian[1] = 0.0;
+	// 13
+	hessian[2] = 0.0;
+	// 22
+	hessian[3] = 0.0;
+	// 23
+	hessian[4] = 0.0;
+	// 33
+	hessian[5] = (0.25 * lambda + 0.5 * mu - 0.25 * lambda * log(IIIC)) / (IIIC * IIIC);
+}
+
+// gradient of P with respect to F(9x9 matrix, row - major)
+// see [Teran 05]
+void Tetrahedron::Compute_dPdF(int el, double dPdF[81], int clamped)
+{
+	double sigma[3] = { Fhats[0], Fhats[1], Fhats[2] };
+
+	double sigma1square = sigma[0] * sigma[0];
+	double sigma2square = sigma[1] * sigma[1];
+	double sigma3square = sigma[2] * sigma[2];
+
+	double invariants[3];
+	invariants[0] = sigma1square + sigma2square + sigma3square;
+	invariants[1] = (sigma1square * sigma1square +
+		sigma2square * sigma2square +
+		sigma3square * sigma3square);
+	invariants[2] = sigma1square * sigma2square * sigma3square;
+
+	//double E[3];
+	//E[0] = 0.5 * (Fhats[el][0] * Fhats[el][0] - 1);
+	//E[1] = 0.5 * (Fhats[el][1] * Fhats[el][1] - 1);
+	//E[2] = 0.5 * (Fhats[el][2] * Fhats[el][2] - 1);
+
+	double gradient[3];
+	ComputeEnergyGradient(el, invariants, gradient, m_mu, m_lambda);
+
+	/*
+	in order (11,12,13,22,23,33)
+	| 11 12 13 |   | 0 1 2 |
+	| 21 22 23 | = | 1 3 4 |
+	| 31 32 33 |   | 2 4 5 |
+	*/
+	double hessian[6];
+	ComputeEnergyHessian(el, invariants, hessian, m_mu, m_lambda);
+
+	// modify hessian to compute correct values if in the inversion handling regime
+	if (clamped & 1) // first lambda was clamped (in inversion handling)
+	{
+		hessian[0] = hessian[1] = hessian[2] = 0.0;
+	}
+
+	if (clamped & 2) // second lambda was clamped (in inversion handling)
+	{
+		hessian[1] = hessian[3] = hessian[4] = 0.0;
+	}
+
+	if (clamped & 4) // third lambda was clamped (in inversion handling)
+	{
+		hessian[0] = hessian[1] = hessian[2] = hessian[4] = hessian[5] = 0.0;
+	}
+
+	double alpha11 = 2.0 * gradient[0] + 8.0 * sigma1square * gradient[1];
+	double alpha22 = 2.0 * gradient[0] + 8.0 * sigma2square * gradient[1];
+	double alpha33 = 2.0 * gradient[0] + 8.0 * sigma3square * gradient[1];
+	double alpha12 = 2.0 * gradient[0] + 4.0 * (sigma1square + sigma2square) * gradient[1];
+	double alpha13 = 2.0 * gradient[0] + 4.0 * (sigma1square + sigma3square) * gradient[1];
+	double alpha23 = 2.0 * gradient[0] + 4.0 * (sigma2square + sigma3square) * gradient[1];
+
+	double beta11 = 4.0 * sigma1square * gradient[1] - (2.0 * invariants[2] * gradient[2]) / sigma1square;
+	double beta22 = 4.0 * sigma2square * gradient[1] - (2.0 * invariants[2] * gradient[2]) / sigma2square;
+	double beta33 = 4.0 * sigma3square * gradient[1] - (2.0 * invariants[2] * gradient[2]) / sigma3square;
+	double beta12 = 4.0 * sigma[0] * sigma[1] * gradient[1] - (2.0 * invariants[2] * gradient[2]) / (sigma[0] * sigma[1]);
+	double beta13 = 4.0 * sigma[0] * sigma[2] * gradient[1] - (2.0 * invariants[2] * gradient[2]) / (sigma[0] * sigma[2]);
+	double beta23 = 4.0 * sigma[1] * sigma[2] * gradient[1] - (2.0 * invariants[2] * gradient[2]) / (sigma[1] * sigma[2]);
+
+	double gamma11 = gammaValue(0, 0, sigma, invariants, gradient, hessian);
+	double gamma22 = gammaValue(1, 1, sigma, invariants, gradient, hessian);
+	double gamma33 = gammaValue(2, 2, sigma, invariants, gradient, hessian);
+	double gamma12 = gammaValue(0, 1, sigma, invariants, gradient, hessian);
+	double gamma13 = gammaValue(0, 2, sigma, invariants, gradient, hessian);
+	double gamma23 = gammaValue(1, 2, sigma, invariants, gradient, hessian);
+
+	double x1111, x2222, x3333;
+	double x2211, x3311, x3322;
+	double x2121, x3131, x3232;
+	double x2112, x3113, x3223;
+
+	x1111 = alpha11 + beta11 + gamma11;
+	x2222 = alpha22 + beta22 + gamma22;
+	x3333 = alpha33 + beta33 + gamma33;
+
+	x2211 = gamma12;
+	x3311 = gamma13;
+	x3322 = gamma23;
+
+	x2121 = alpha12;
+	x3131 = alpha13;
+	x3232 = alpha23;
+
+	x2112 = beta12;
+	x3113 = beta13;
+	x3223 = beta23;
+
+	/*if (enforceSPD)
+	{
+		FixPositiveIndefiniteness(x1111, x2211, x3311, x2222, x3322, x3333);
+		FixPositiveIndefiniteness(x2121, x2112);
+		FixPositiveIndefiniteness(x3131, x3113);
+		FixPositiveIndefiniteness(x3232, x3223);
+	}*/
+
+	double dPdF_atFhat[81];
+	memset(dPdF_atFhat, 0, sizeof(double) * 81);
+	dPdF_atFhat[tensor9x9Index(0, 0, 0, 0)] = x1111;
+	dPdF_atFhat[tensor9x9Index(0, 0, 1, 1)] = x2211;
+	dPdF_atFhat[tensor9x9Index(0, 0, 2, 2)] = x3311;
+
+	dPdF_atFhat[tensor9x9Index(1, 1, 0, 0)] = x2211;
+	dPdF_atFhat[tensor9x9Index(1, 1, 1, 1)] = x2222;
+	dPdF_atFhat[tensor9x9Index(1, 1, 2, 2)] = x3322;
+
+	dPdF_atFhat[tensor9x9Index(2, 2, 0, 0)] = x3311;
+	dPdF_atFhat[tensor9x9Index(2, 2, 1, 1)] = x3322;
+	dPdF_atFhat[tensor9x9Index(2, 2, 2, 2)] = x3333;
+
+	dPdF_atFhat[tensor9x9Index(0, 1, 0, 1)] = x2121;
+	dPdF_atFhat[tensor9x9Index(0, 1, 1, 0)] = x2112;
+
+	dPdF_atFhat[tensor9x9Index(1, 0, 0, 1)] = x2112;
+	dPdF_atFhat[tensor9x9Index(1, 0, 1, 0)] = x2121;
+
+	dPdF_atFhat[tensor9x9Index(0, 2, 0, 2)] = x3131;
+	dPdF_atFhat[tensor9x9Index(0, 2, 2, 0)] = x3113;
+
+	dPdF_atFhat[tensor9x9Index(2, 0, 0, 2)] = x3113;
+	dPdF_atFhat[tensor9x9Index(2, 0, 2, 0)] = x3131;
+
+	dPdF_atFhat[tensor9x9Index(1, 2, 1, 2)] = x3232;
+	dPdF_atFhat[tensor9x9Index(1, 2, 2, 1)] = x3223;
+
+	dPdF_atFhat[tensor9x9Index(2, 1, 1, 2)] = x3223;
+	dPdF_atFhat[tensor9x9Index(2, 1, 2, 1)] = x3232;
+
+	/*
+	| P_00 P_01 P_02 |        | F_00 F_01 F_02 |
+	if P= | P_10 P_11 P_12 | and F= | F_10 F_11 F_12 |
+	| P_20 P_21 P_22 |        | F_20 F_21 F_22 |
+	| dP_00/dF_00  dP_00/dF_01 dP_00/dF_02 dP_00/dF_10 ... dP00/dF_22 |
+	| dP_01/dF_00  dP_01/dF_01 dP_01/dF_02 dP_01/dF_10 ... dP01/dF_22 |
+	| dP_02/dF_00  dP_02/dF_01 dP_02/dF_02 dP_02/dF_10 ... dP02/dF_22 |
+	| dP_10/dF_00  dP_10/dF_01 dP_10/dF_02 dP_10/dF_10 ... dP10/dF_22 |
+	|                               ...                               |
+	| dP_22/dF_00  dP_22/dF_01 dP_22/dF_02 dP_22/dF_10 ... dP22/dF_22 |
+	*/
+
+	
+	//Mat3d UT = trans(Us[el]); // trans(*U);
+	//Mat3d VT = trans(Vs[el]); // trans(*V);
+
+							  /*
+							  U->print();
+							  V->print();
+							  UT.print();
+							  VT.print();
+							  */
+
+	double eiejVector[9];
+	memset(eiejVector, 0, sizeof(double) * 9);
+	memset(dPdF, 0, sizeof(double) * 81);
+	Matrix3d eiejMatrix;
+	eiejMatrix.setZero();
+
+	double ut[9];
+	memset(ut, 0, sizeof(double) * 9);
+	for (int i = 0; i < 9; ++i) {
+		ut[i] = U.transpose()(i);
+	}
+
+	Mat3d UT(ut);
+
+	double v[9];
+	memset(v, 0, sizeof(double) * 9);
+	for (int i = 0; i < 9; ++i) {
+		v[i] = V(i);
+	}
+
+	Mat3d V(v);
+
+	for (int column = 0; column<9; column++)
+	{
+		eiejVector[column] = 1.0;
+
+
+		Mat3d ei_ej(eiejVector);
+		Mat3d ut_eiej_v = UT * ei_ej * V;
+		double ut_eiej_v_TeranVector[9]; //in Teran order
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[0]] = ut_eiej_v[0][0];
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[1]] = ut_eiej_v[0][1];
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[2]] = ut_eiej_v[0][2];
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[3]] = ut_eiej_v[1][0];
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[4]] = ut_eiej_v[1][1];
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[5]] = ut_eiej_v[1][2];
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[6]] = ut_eiej_v[2][0];
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[7]] = ut_eiej_v[2][1];
+		ut_eiej_v_TeranVector[rowMajorMatrixToTeran[8]] = ut_eiej_v[2][2];
+		double dPdF_resultVector[9]; // not in Teran order
+		for (int innerRow = 0; innerRow<9; innerRow++)
+		{
+			double tempResult = 0.0;
+			for (int innerColumn = 0; innerColumn<9; innerColumn++)
+			{
+				tempResult += dPdF_atFhat[innerRow * 9 + innerColumn] *
+					ut_eiej_v_TeranVector[innerColumn];
+			}
+			dPdF_resultVector[teranToRowMajorMatrix[innerRow]] = tempResult;
+		}
+		Mat3d dPdF_resultMatrix(dPdF_resultVector);
+		Mat3d u_dpdf_vt = (UT)*dPdF_resultMatrix*V;
+		dPdF[column + 0] = u_dpdf_vt[0][0];
+		dPdF[column + 9] = u_dpdf_vt[0][1];
+		dPdF[column + 18] = u_dpdf_vt[0][2];
+		dPdF[column + 27] = u_dpdf_vt[1][0];
+		dPdF[column + 36] = u_dpdf_vt[1][1];
+		dPdF[column + 45] = u_dpdf_vt[1][2];
+		dPdF[column + 54] = u_dpdf_vt[2][0];
+		dPdF[column + 63] = u_dpdf_vt[2][1];
+		dPdF[column + 72] = u_dpdf_vt[2][2];
+		// reset
+		eiejVector[column] = 0.0;
+	}
+
+	/*
+	printf("---- full dPdF ----\n");
+	for (int i=0; i<9; i++)
+	{
+	for (int j=0; j<9; j++)
+	printf("%G ", dPdF[i*9+j]);
+	printf(";\n");
+	}
+	*/
+}
+
+
+double Tetrahedron::gammaValue(int i, int j, double sigma[3], double invariants[3], double gradient[3], double hessian[6])
+{
+	/*
+	The hessian is in order (11,12,13,22,23,33)
+	| 11 12 13 |   | 0 1 2 |
+	| 21 22 23 | = | 1 3 4 |
+	| 31 32 33 |   | 2 4 5 |
+	*/
+
+	double tempGammaVec1[3];
+	tempGammaVec1[0] = 2.0 * sigma[i];
+	tempGammaVec1[1] = 4.0 * sigma[i] * sigma[i] * sigma[i];
+	tempGammaVec1[2] = 2.0 * invariants[2] / sigma[i];
+	double tempGammaVec2[3];
+	tempGammaVec2[0] = 2.0 * sigma[j];
+	tempGammaVec2[1] = 4.0 * sigma[j] * sigma[j] * sigma[j];
+	tempGammaVec2[2] = 2.0 * invariants[2] / sigma[j];
+	double productResult[3];
+	productResult[0] = (tempGammaVec2[0] * hessian[0] + tempGammaVec2[1] * hessian[1] +
+		tempGammaVec2[2] * hessian[2]);
+	productResult[1] = (tempGammaVec2[0] * hessian[1] + tempGammaVec2[1] * hessian[3] +
+		tempGammaVec2[2] * hessian[4]);
+	productResult[2] = (tempGammaVec2[0] * hessian[2] + tempGammaVec2[1] * hessian[4] +
+		tempGammaVec2[2] * hessian[5]);
+	return (tempGammaVec1[0] * productResult[0] + tempGammaVec1[1] * productResult[1] +
+		tempGammaVec1[2] * productResult[2] + 4.0 * invariants[2] * gradient[2] / (sigma[i] * sigma[j]));
+}
+
+int Tetrahedron::tensor9x9Index(int i, int j, int m, int n)
+{
+	/*
+	|  dP_0/dF_0  dP_0/dF_4  dP_0/dF_8  ...  dP_0/dF_5  |
+	|  dP_4/dF_0  dP_4/dF_4  dP_4/dF_8  ...  dP_4/dF_5  |
+	|                         ...                       |
+	|  dP_5/dF_0  dP_5/dF_4  dP_5/dF_8  ...  dP_5/dF_5  |
+	*/
+	int rowIndex_in9x9Matrix = rowMajorMatrixToTeran[3 * i + j];
+	int columnIndex_in9x9Matrix = rowMajorMatrixToTeran[3 * m + n];
+	return (9 * rowIndex_in9x9Matrix + columnIndex_in9x9Matrix);
+}
+
+
 void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df) {
 	//this->F = computeDeformationGradient();
 
@@ -249,16 +682,16 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 	}
 
 	this->dF = dDs * Bm;
-	this->dPhat = computePKStressDerivative(this->F, dF, m_mu, m_lambda);
+	this->dPhat = computePKStressDerivative(this->Fhat, dF, m_mu, m_lambda);
 	this->dP = this->U * this->dPhat * this->V.transpose();
 	//this->dH = -W * dP * (Bm.transpose());
-
+	cout << "dP_INVERT" << this->dP << endl;
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		//df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		//df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);
 
-		df.segment<3>(3 * m_nodes[i]->i) += this->dP * this->Nm.col(i);
-		df.segment<3>(3 * m_nodes[3]->i) -= this->dP * this->Nm.col(i);
+		//df.segment<3>(3 * m_nodes[i]->i) += this->dP * this->Nm.col(i);
+		//df.segment<3>(3 * m_nodes[3]->i) -= this->dP * this->Nm.col(i);
 	}
 
 }
@@ -498,7 +931,15 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 	}
 
 	case NEO_HOOKEAN:
-	{
+	{	
+		/*double I1 = (F.transpose() * F).trace();
+		double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
+		double I3 = (F.transpose() * F).determinant();
+		double J = sqrt(I3);
+		psi = 1.0 / 2.0 * mu *(I1 - 3.0) - mu * log(J) + 1.0 / 2.0 * lambda * log(J)*log(J);
+		P = mu * (F - F.inverse().transpose()) + lambda * log(J)*(F.inverse().transpose());
+*/
+
 		//double I1 = (F.norm()) * (F.norm());
 		//double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
 		MatrixXd FT = F.transpose();

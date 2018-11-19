@@ -10,16 +10,6 @@ SoftBodyNull::SoftBodyNull():SoftBody() {
 
 }
 
-SoftBodyNull::~SoftBodyNull() {
-
-
-
-}
-
-void SoftBodyNull::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
-
-}
-
 Eigen::MatrixXd SoftBodyNull::computeJacobian(Eigen::MatrixXd J) {
 
 	return J;

@@ -6,7 +6,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "MLCommon.h"
-
+#include "mat3d.h"
 class Node;
 class MatrixStack;
 class Program;
@@ -41,7 +41,6 @@ public:
 	void compute_dGdF();
 	void compute_dFdU();
 
-
 	double computeEnergy();
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
 	bool isInverted();
@@ -49,6 +48,16 @@ public:
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
 	bool isInvert;
 	int i;
+
+	int rowMajorMatrixToTeran[9];
+	int teranToRowMajorMatrix[9];
+
+	int tensor9x9Index(int i, int j, int m, int n);
+	void ComputeTetK(int el, double K[144], int clamped);
+	void Compute_dPdF(int el, double dPdF[81], int clamped);
+	double gammaValue(int i, int j, double sigma[3], double invariants[3], double gradient[3], double hessian[6]);
+	void Compute_dGdF(Vec3d * b0, Vec3d * b1, Vec3d * b2, double dPdF[81], double dGdF[81]);
+
 
 	Matrix9d dPdF;
 	Matrix9d dGdF;
@@ -85,6 +94,7 @@ private:
 	Eigen::Matrix3d U;
 	Eigen::Matrix3d V;
 	Eigen::Matrix3d Fhat;	// diagonalized deformation gradient
+	Eigen::Vector3d Fhats;
 	Eigen::Matrix3d Phat;	
 							// for force differentials
 	Eigen::Matrix3d dDs;

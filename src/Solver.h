@@ -119,6 +119,9 @@ private:
 
 	Eigen::MatrixXd Mr;
 	Eigen::SparseMatrix<double> Mr_sp;
+	Eigen::MatrixXd Mr_temp;
+	Eigen::SparseMatrix<double> Mr_sp_temp;
+
 	Eigen::MatrixXd Dm; // nm x nm
 	Eigen::SparseMatrix<double> Dm_sp;
 	std::vector<T> Dm_;
@@ -158,7 +161,8 @@ private:
 	Eigen::VectorXd grddot;
 
 	Eigen::MatrixXd G;
-	Eigen::SparseMatrix<double> G_sp;
+	//Eigen::SparseMatrix<double> G_sp;
+	
 	Eigen::VectorXd g;
 	Eigen::VectorXd gdot;
 	Eigen::VectorXd rhsG;

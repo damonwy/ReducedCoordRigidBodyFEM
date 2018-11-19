@@ -6,8 +6,7 @@ class SoftBodyNull : public SoftBody {
 public:
 
 	SoftBodyNull();
-	virtual ~SoftBodyNull();
-	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
+	virtual ~SoftBodyNull() {}
 
 	virtual Eigen::MatrixXd computeJacobian(Eigen::MatrixXd J);
 	virtual Eigen::MatrixXd computeMass(Eigen::Vector3d grav, Eigen::MatrixXd M);
@@ -18,5 +17,6 @@ public:
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
 	virtual void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
-
+protected:
+	void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const {}
 };
