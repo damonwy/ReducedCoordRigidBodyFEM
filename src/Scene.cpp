@@ -13,6 +13,8 @@
 #include "JsonEigen.h"
 #include "World.h"
 #include "Solver.h"
+#include "SolverDense.h"
+#include "SolverSparse.h"
 //#include "Spring.h"
 #include "Deformable.h"
 #include "DeformableSpring.h"
@@ -40,7 +42,6 @@ Scene::~Scene()
 
 void Scene::load(const string &RESOURCE_DIR)
 {	
-
 	//read a JSON file
 	ifstream i(RESOURCE_DIR + "input.json");
 	i >> js;
@@ -51,25 +52,20 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(SPRINGS);//_INVERTIBLE
+	m_world = make_shared<World>(SOFT_BODIES_CUBE_INVERTIBLE);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
-	m_solver = make_shared<Solver>(m_world, REDMAX_EULER);
-	m_solver->load(RESOURCE_DIR);
-
+	m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
 }
 
 
 void Scene::init()
 {
 	m_world->init();
-	m_solver->init();
 	VectorXd y0, y1;
 	y0.resize(2 * m_world->nr);
 	y0.setZero();
 	
-
-
 	//y1 = m_solver->dynamics(y0);
 	y.resize(2 * m_world->nr);
 	y.setZero();
@@ -78,10 +74,8 @@ void Scene::init()
 	y = m_world->getSoftBody0()->gatherDofs(y, m_world->nr);
 	//m_solution = m_solver->solve();
 
-
 	//vec_to_file(m_solution->t, "t");
 	//mat_to_file(m_solution->y, "y");
-
 
 	//tk = m_solution->t(0);
 	drawH = 1.0 / drawHz;
@@ -106,13 +100,10 @@ void Scene::step()
 	//double s;
 	VectorXd ys;
 
-
-	//y = m_solver->dynamics(y);
-	y = m_solver->dynamics_sparse(y);
+	y = m_solver->dynamics(y);
 	m_world->update();
 	m_world->incrementTime();
 	
-
 	//if(tk < m_solution->t(n_steps-1)) {
 	//	m_solution->searchTime(tk, search_idx, output_idx, s);
 	//	search_idx = output_idx;
@@ -126,10 +117,7 @@ void Scene::step()
 	//else {
 	//	// reset
 	//	tk = m_solution->t(0);
-	//}
-
-	
-	
+	//}	
 }
 
 void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, const shared_ptr<Program> progSoft, shared_ptr<MatrixStack> P) const

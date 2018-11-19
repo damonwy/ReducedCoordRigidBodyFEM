@@ -552,7 +552,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
-	case SOFT_BODIES_INVERTIBLE:
+	case SOFT_BODIES_CUBE_INVERTIBLE:
 	{
 		m_h = 1.0e-4;
 		m_tspan << 0.0, 50.0;
@@ -590,7 +590,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
-	case SOFT_BODIES_INVERTIBLE2:
+	case SOFT_BODIES_CYLINDER_INVERTIBLE:
 	{
 		m_h = 1.0e-4;
 		m_tspan << 0.0, 50.0;
@@ -994,51 +994,7 @@ void World::init() {
 		addDeformableNull();
 	}
 
-	if (m_type == SOFT_BODIES | m_type == SOFT_BODIES_INVERTIBLE) {
-
-		/*Vector3d direction, origin;
-		direction = m_softbodies[0]->m_trifaces[0]->m_normal;
-		origin << 9.0, 0.0, 0.0;
-		m_softbodies[0]->setAttachmentsByLine(direction, origin, m_bodies[0]);
-		origin << 10.0, 0.0, 0.0;
-		m_softbodies[0]->setAttachmentsByLine(-direction, origin, m_bodies[1]);*/
-
-		//m_softbodies[1]->setAttachments(0, m_bodies[1]);
-		//	m_softbodies[1]->setAttachments(3, m_bodies[1]);
-		//m_softbodies[1]->setAttachments(6, m_bodies[2]);
-
-		//m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
-		//m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(5.0, 7.0), Vector2d(-0.5, 0.5), m_bodies[0]);
-
-		//m_softbodies[0]->setAttachmentsByXYSurface(0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
-		//m_softbodies[0]->setAttachmentsByXYSurface(-0.5, Vector2d(13.0, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
-		
-		//m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(5.0, 9.5), Vector2d(-0.5, 0.5), m_bodies[0]);
-		//m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(5.0, 9.5), Vector2d(-0.5, 0.5), m_bodies[0]);
-
-		//m_softbodies[0]->setAttachmentsByXZSurface(0.5, Vector2d(10.5, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
-		//m_softbodies[0]->setAttachmentsByXZSurface(-0.5, Vector2d(10.5, 15.0), Vector2d(-0.5, 0.5), m_bodies[1]);
-
-		//m_softbodies[0]->setSlidingNodes(0, m_bodies[0], Vector3d(0.0, 1.0, 0.0));
-		//m_softbodies[0]->setSlidingNodes(4, m_bodies[0], Vector3d(0.0, 1.0, 0.0));
-		//m_softbodies[0]->setSlidingNodes(7, m_bodies[0], Vector3d(0.0, 1.0, 0.0));
-		//m_softbodies[0]->setAttachments(6, m_bodies[0]);
-		//m_softbodies[0]->setAttachments(3, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByXZSurface(0.5, Vector2d(3.0, 8.0), Vector2d(-0.5, 0.5), -1.0, m_bodies[0]);
-		
-		//m_softbodies[0]->setSlidingNodesByXZSurface(-0.5, Vector2d(8.0, 9.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByXZSurface(-0.5, Vector2d(10.5, 12.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[1]);
-
-		//m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), -1.0, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(0.0, 10.0), Vector2d(-0.5, 0.5), 1.0, m_bodies[0]);
-
-		//m_softbodies[0]->setSlidingNodesByXYSurface(0.5, Vector2d(10.5, 12.5), Vector2d(-0.5, 0.5), -1.0, m_bodies[1]);
-		//m_softbodies[0]->setSlidingNodesByXYSurface(-0.5, Vector2d(10.50, 12.5), Vector2d(-0.5, 0.5), 1.0, m_bodies[1]);
-		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.7, m_bodies[0]);
-		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.8, m_bodies[0]);
-		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.9, m_bodies[0]);
-		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.6, m_bodies[0]);
-
+	if (m_type == SOFT_BODIES) {
 
 		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 		//m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
@@ -1046,22 +1002,26 @@ void World::init() {
 
 		m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
 		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+
+	}
+
+	if (m_type == SOFT_BODIES_CUBE_INVERTIBLE) {
+		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+
+		m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
 		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+	}
 
-		//m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+	if (m_type == SOFT_BODIES_CYLINDER_INVERTIBLE) {
+		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 
-		//m_softbodies[0]->setSlidingNodesByYZCircle(9.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(6.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(7.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(10.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
 
-		//m_softbodies[0]->setSlidingNodesByYZCircle(8.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(11.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
-
-		//m_softbodies[0]->setSlidingNodesByYZCircle(14.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(12.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(13.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
-		//m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
 
 	}
 

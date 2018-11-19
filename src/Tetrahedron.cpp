@@ -155,7 +155,7 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 	bool print = false;
 
 	this->F = computeDeformationGradient();
-	if (abs(this->F(0, 1) > 30000)) {
+	if (abs(this->F(0, 1) > 0.3)) {
 		print = true;
 	}
 	if (print) {
@@ -219,6 +219,13 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 
 	}
 
+	Matrix3d ttemp = computePKStress(F, m_mu, m_lambda);
+	this->H = -W * ttemp * (Bm.transpose());
+	if (print) {
+		cout << "H" << this->H << endl;
+		cout << "PNm" << this->P * this->Nm.block<3, 3>(0, 0) << endl;
+	}
+	
 	// Computes the nodal forces by G=PBm=PNm
 
 	for (int i = 0; i < (int)m_nodes.size()-1; i++) {
@@ -685,7 +692,9 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 	this->dPhat = computePKStressDerivative(this->Fhat, dF, m_mu, m_lambda);
 	this->dP = this->U * this->dPhat * this->V.transpose();
 	//this->dH = -W * dP * (Bm.transpose());
-	cout << "dP_INVERT" << this->dP << endl;
+	//cout << "dP_INVERT" << this->dP << endl;
+	//cout << "df" << this->dP * Nm.block<3, 3>(0, 0) << endl;
+
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		//df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		//df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);
@@ -751,8 +760,11 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 
 	this->dF = dDs * Bm;
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
+	Matrix3d temp = computePKStressDerivative(Fhat, dF, m_mu, m_lambda);
+	//cout << "dP" << dP << endl;
+	//cout << "dP_hat" << temp << endl;
 	this->dH = -W * dP * (Bm.transpose());
-
+	//cout << "dH " <<this->dH << endl;
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);

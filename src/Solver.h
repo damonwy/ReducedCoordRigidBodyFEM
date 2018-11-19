@@ -62,136 +62,23 @@ struct Solution {
 
 };
 
-
-
 class Solver 
 {
 public:
 	Solver();
 	Solver(std::shared_ptr<World> world, Integrator integrator);
 	virtual ~Solver() {}
-	std::shared_ptr<Solution> solve();
-	Eigen::VectorXd dynamics(Eigen::VectorXd y);
-	Eigen::VectorXd dynamics_sparse(Eigen::VectorXd y);
-	void initMatrix(int nm, int nr, int nem, int ner, int nim, int nir);
-	void initMatrixSparse(int nm, int nr, int nem, int ner, int nim, int nir);
-	void init();
-	void reset();
-	void load(const std::string &RESOURCE_DIR);
-	bool isSparse;
-private:
-	int nr;
-	int nm;
+	virtual std::shared_ptr<Solution> solve() { return m_solutions; }
+	virtual Eigen::VectorXd dynamics(Eigen::VectorXd y) { Eigen::Vector3d z; z.setZero(); return z; }
+	virtual void initMatrix(int nm, int nr, int nem, int ner, int nim, int nir) {}
+	virtual void reset();
 
+protected:
+	std::shared_ptr<Solution> m_solutions;
 	std::shared_ptr<World> m_world;
 	Integrator m_integrator;
-	std::shared_ptr<Solution> m_solutions;
-
-	Eigen::MatrixXd Mm;
-	Eigen::SparseMatrix<double> Mm_sp;
-	std::vector<T> Mm_;
-
-	Eigen::MatrixXd MDKr_;
-	Eigen::SparseMatrix<double> MDKr_sp;
-	Eigen::MatrixXd K;
-	Eigen::SparseMatrix<double> K_sp;
-	std::vector<T> K_;
-
-	Eigen::MatrixXd Km;
-	Eigen::SparseMatrix<double> Km_sp;
-	std::vector<T> Km_;
-
-	Eigen::VectorXd fm;
-	Eigen::MatrixXd J;
-	Eigen::MatrixXd J_dense;	// dense_nm x dense_nr
-	Eigen::MatrixXd Jdot_dense;
-
-	Eigen::SparseMatrix<double> J_sp;
-	std::vector<T> J_;
-	Eigen::MatrixXd Jdot;
-	Eigen::SparseMatrix<double> Jdot_sp;
-	std::vector<T> Jdot_;
-	Eigen::VectorXd q0;
-	Eigen::VectorXd q1;
-	Eigen::VectorXd qdot0;
-	Eigen::VectorXd qdot1;
-	Eigen::VectorXd qddot;
-
-	Eigen::MatrixXd Mr;
-	Eigen::SparseMatrix<double> Mr_sp;
-	Eigen::MatrixXd Mr_temp;
-	Eigen::SparseMatrix<double> Mr_sp_temp;
-
-	Eigen::MatrixXd Dm; // nm x nm
-	Eigen::SparseMatrix<double> Dm_sp;
-	std::vector<T> Dm_;
-	Eigen::VectorXd tmp; // nm x 1
-	Eigen::MatrixXd Dr;
-	Eigen::SparseMatrix<double> Dr_sp;
-	std::vector<T> Dr_;
-
-	Eigen::MatrixXd Kr;
-	Eigen::SparseMatrix<double> Kr_sp;
-	std::vector<T> Kr_;
-	Eigen::VectorXd fr;
-	Eigen::VectorXd fr_;
-
-	Eigen::MatrixXd Gm;
-	Eigen::SparseMatrix<double> Gm_sp;
-	std::vector<T> Gm_;
-
-	Eigen::MatrixXd Gmdot;
-	Eigen::SparseMatrix<double> Gmdot_sp;
-	std::vector<T> Gmdot_;
-
-	Eigen::VectorXd gm;
-	Eigen::VectorXd gmdot;
-	Eigen::VectorXd gmddot;
-
-	Eigen::MatrixXd Gr;
-	Eigen::SparseMatrix<double> Gr_sp;
-	std::vector<T> Gr_;
-
-	Eigen::MatrixXd Grdot;
-	Eigen::SparseMatrix<double> Grdot_sp;
-	std::vector<T> Grdot_;
-
-	Eigen::VectorXd gr;
-	Eigen::VectorXd grdot;
-	Eigen::VectorXd grddot;
-
-	Eigen::MatrixXd G;
-	//Eigen::SparseMatrix<double> G_sp;
-	
-	Eigen::VectorXd g;
-	Eigen::VectorXd gdot;
-	Eigen::VectorXd rhsG;
-
-	Eigen::MatrixXd Cm;
-	Eigen::SparseMatrix<double> Cm_sp;
-	Eigen::MatrixXd Cmdot;
-	Eigen::SparseMatrix<double> Cmdot_sp;
-	Eigen::VectorXd cm;
-	Eigen::VectorXd cmdot;
-	Eigen::VectorXd cmddot;
-
-	Eigen::MatrixXd Cr;
-	Eigen::SparseMatrix<double> Cr_sp;
-	Eigen::MatrixXd Crdot;
-	Eigen::SparseMatrix<double> Crdot_sp;
-	Eigen::VectorXd cr;
-	Eigen::VectorXd crdot;
-	Eigen::VectorXd crddot;
-
-	Eigen::VectorXd rhsC;
-
-	Eigen::MatrixXd C;
-	Eigen::SparseMatrix<double> C_sp;
-	Eigen::VectorXd c;
-
-	std::vector<int> rowsM;
-	std::vector<int> rowsR;
-
+	int nr;
+	int nm;
 };
 
 #endif // MUSCLEMASS_SRC_SOLVER_H_
