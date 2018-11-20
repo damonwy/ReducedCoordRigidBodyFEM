@@ -554,7 +554,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	break;
 	case SOFT_BODIES_CUBE_INVERTIBLE:
 	{
-		m_h = 1.0e-4;
+		m_h = 1.0e-3;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
@@ -565,7 +565,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		for (int i = 0; i < 2; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
-
 			// Inits joints
 			if (i == 0) {
 				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
@@ -574,7 +573,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 			else {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
-
 			}
 		}
 
@@ -587,12 +585,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		// auto softbody1 = addSoftBody(0.01 * density, young, possion, RESOURCE_DIR, "cylinder");
 		// softbody1->transform(Vector3d(20.0, 0.0, 0.0));
-
 	}
 	break;
 	case SOFT_BODIES_CYLINDER_INVERTIBLE:
 	{
-		m_h = 1.0e-4;
+		m_h = 1.0e-2;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
@@ -996,33 +993,28 @@ void World::init() {
 
 	if (m_type == SOFT_BODIES) {
 
-		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, 0.0001, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 		//m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
 
-		m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(10, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
 
 	}
 
 	if (m_type == SOFT_BODIES_CUBE_INVERTIBLE) {
-		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByYZCircle(5.0, 0.0001, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, 0.7,Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
 
-		m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(10, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
 	}
 
 	if (m_type == SOFT_BODIES_CYLINDER_INVERTIBLE) {
-		m_softbodies[0]->setAttachmentsByYZCircle(5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-
-		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
-
-		m_softbodies[0]->setSlidingNodesByYZCircle(10, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
-
+		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, 0.0001, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, 1.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, 1.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 	}
 
 	for (int i = 0; i < m_nsoftbodies; i++) {
@@ -1045,7 +1037,6 @@ void World::init() {
 		m_softbodies.push_back(softbody);
 		m_nsoftbodies++;
 	}
-
 	// init constraints
 
 	for (int i = 0; i < m_nconstraints; i++) {

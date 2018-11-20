@@ -34,10 +34,10 @@ public:
 	virtual void countDofs(int &nm, int &nr);
 	virtual void computeJacobian(Eigen::MatrixXd &J);
 	virtual void computeJacobianSparse(std::vector<T> J_);
-	virtual void computeMass(Eigen::Vector3d grav, Eigen::MatrixXd &M);
+	virtual void computeMass(Vector3d grav, Eigen::MatrixXd &M);
 	virtual void computeMassSparse(Vector3d grav, std::vector<T> &M_);
-	virtual Energy computeEnergies(Eigen::Vector3d grav, Energy ener);
-	virtual void computeForce(Eigen::Vector3d grav, Eigen::VectorXd &f);
+	virtual Energy computeEnergies(Vector3d grav, Energy ener);
+	virtual void computeForce(Vector3d grav, Eigen::VectorXd &f);
 	virtual void computeStiffness(Eigen::MatrixXd &K);
 	virtual void computeStiffnessSparse(std::vector<T> &K_);
 	virtual Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
@@ -45,20 +45,20 @@ public:
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
 	virtual void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
-	void setColor(Eigen::Vector3f color) { m_color = color; }
+	void setColor(Vector3f color) { m_color = color; }
 	void setAttachments(int id, std::shared_ptr<Body> body);
-	void setAttachmentsByLine(Eigen::Vector3d dir, Eigen::Vector3d orig, std::shared_ptr<Body> body);
-	void setAttachmentsByXYSurface(double z, Eigen::Vector2d xrange, Eigen::Vector2d yrange, std::shared_ptr<Body> body);
-	void setAttachmentsByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, std::shared_ptr<Body> body);
-	void setAttachmentsByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, std::shared_ptr<Body> body);
+	void setAttachmentsByLine(Vector3d dir, Vector3d orig, std::shared_ptr<Body> body);
+	void setAttachmentsByXYSurface(double z, double range, Vector2d xrange, Vector2d yrange, std::shared_ptr<Body> body);
+	void setAttachmentsByYZSurface(double x, double range, Vector2d yrange, Vector2d zrange, std::shared_ptr<Body> body);
+	void setAttachmentsByXZSurface(double y, double range, Vector2d xrange, Vector2d zrange, std::shared_ptr<Body> body);
 
-	void setAttachmentsByYZCircle(double x, Eigen::Vector2d O, double r, std::shared_ptr<Body> body);
+	void setAttachmentsByYZCircle(double x, double range, Eigen::Vector2d O, double r, std::shared_ptr<Body> body);
 
-	void setSlidingNodes(int id, std::shared_ptr<Body> body, Eigen::Vector3d init_dir);
-	void setSlidingNodesByXYSurface(double z, Eigen::Vector2d xrange, Eigen::Vector2d yrange, double dir, std::shared_ptr<Body> body);
-	void setSlidingNodesByYZSurface(double x, Eigen::Vector2d yrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body);
-	void setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, double dir, std::shared_ptr<Body> body);
-	void setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, std::shared_ptr<Body> body);
+	void setSlidingNodes(int id, std::shared_ptr<Body> body, Vector3d init_dir);
+	void setSlidingNodesByXYSurface(double z, Vector2d xrange, Vector2d yrange, double dir, std::shared_ptr<Body> body);
+	void setSlidingNodesByYZSurface(double x, Vector2d yrange, Vector2d zrange, double dir, std::shared_ptr<Body> body);
+	void setSlidingNodesByXZSurface(double y, Vector2d xrange, Vector2d zrange, double dir, std::shared_ptr<Body> body);
+	void setSlidingNodesByYZCircle(double x, double range_x, Vector2d O, double r, std::shared_ptr<Body> body);
 
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
 	bool getInvertiblity() { return m_isInvertible; }
@@ -68,12 +68,12 @@ public:
 	// attached 
 	std::vector<std::shared_ptr<Node> > m_attach_nodes;
 	std::vector<std::shared_ptr<Body> > m_attach_bodies;
-	std::vector<Eigen::Vector3d> m_r;
+	std::vector<Vector3d> m_r;
 
 	// sliding
 	std::vector<std::shared_ptr<Node> > m_sliding_nodes;
 	std::vector<std::shared_ptr<Body> > m_sliding_bodies;
-	std::vector<Eigen::Vector3d> m_r_sliding;
+	std::vector<Vector3d> m_r_sliding;
 	std::vector<std::shared_ptr<Vector>> m_normals_sliding;
 
 	// nodes for comparing to sliding
@@ -89,7 +89,7 @@ protected:
 	bool m_isElasticForce;
 
 	Material m_material;
-	Eigen::Vector3f m_color;
+	Vector3f m_color;
 
 	std::vector<std::shared_ptr<Node> > m_nodes;	
 	std::vector<std::shared_ptr<Tetrahedron> > m_tets;
@@ -110,7 +110,6 @@ protected:
 	double m_mass;
 
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
-
 };
 
 

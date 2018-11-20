@@ -25,7 +25,6 @@ SoftBody(density, young, poisson, material)
 
 void SoftBodyInvertibleFEM::computeForce(Vector3d grav, VectorXd &f) {
 	// Computes force vector
-
 	if (m_isGravity) {
 		for (int i = 0; i < (int)m_nodes.size(); i++) {
 			int idxM = m_nodes[i]->idxM;
@@ -33,25 +32,23 @@ void SoftBodyInvertibleFEM::computeForce(Vector3d grav, VectorXd &f) {
 			f.segment<3>(idxM) += m * grav;
 		}
 	}
-	//m_isInvert = false;
+	m_isInvert = false;
 	// Elastic Forces
 	if (m_isElasticForce) {
 		for (int i = 0; i < (int)m_tets.size(); i++) {
 			auto tet = m_tets[i];
 			f = tet->computeInvertibleElasticForces(f);
 			if (tet->isInvert) {
-				//m_isInvert = true;
-				cout << "inverted!" << endl;
+				m_isInvert = true;
+				cout << "tet " << i << " is inverted!" << endl;
 			}
 		}
 	}
-
 
 	if (next != nullptr) {
 		next->computeForce(grav, f);
 	}
 }
-
 
 void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 	VectorXd df(3 * m_nodes.size());
@@ -60,6 +57,10 @@ void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
+		if (tet->isInvert) {
+			cout << "tet " << i << " is inverted!" << endl;
+		}
+
 		for (int ii = 0; ii < 4; ii++) {
 			auto node = tet->m_nodes[ii];
 			int id = node->i;
@@ -70,20 +71,12 @@ void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 				temp.setZero();
 				Dx.setZero();
 				Dx(3 * id + iii) = 1.0;
-
-				tet->computeForceDifferentials(Dx, df);
-				tet->computeInvertibleForceDifferentials(Dx, temp);
-				//cout << "diff" << df - temp << endl;
+				tet->computeInvertibleForceDifferentials(Dx, df);
+				//tet->computeForceDifferentials(Dx, temp);
+				//tet->computeInvertibleForceDifferentials(Dx, temp);
+				//cout << "diff" << (df - temp).norm() << endl;
 				K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
-				//tet->computeInvertibleForceDifferentials(Dx, df);
-				if (!tet->isInvert) {
 
-					//
-				}
-				else {
-					cout << "inverted!" << endl;
-				}
-				
 			}
 		}
 	}
@@ -91,6 +84,4 @@ void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 	if (next != nullptr) {
 		next->computeStiffness(K);
 	}
-
 }
-

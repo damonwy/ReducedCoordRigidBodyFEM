@@ -399,47 +399,47 @@ void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_pt
 	}
 }
 
-void SoftBody::setAttachmentsByXYSurface(double z, Vector2d xrange, Vector2d yrange, shared_ptr<Body> body) {
+void SoftBody::setAttachmentsByXYSurface(double z, double range, Vector2d xrange, Vector2d yrange, shared_ptr<Body> body) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
-		if (abs(xi(2) - z) < 0.0001 && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
+		if (abs(xi(2) - z) < range && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
 			setAttachments(i, body);
 		}
 	}
 }
 
-void SoftBody::setAttachmentsByYZSurface(double x, Vector2d yrange, Vector2d zrange, shared_ptr<Body> body) {
+void SoftBody::setAttachmentsByYZSurface(double x, double range, Vector2d yrange, Vector2d zrange, shared_ptr<Body> body) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
-		if (abs(xi(0) - x) < 0.0001 && xi(2) <= zrange(1) && xi(2) >= zrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
+		if (abs(xi(0) - x) < range && xi(2) <= zrange(1) && xi(2) >= zrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
 			setAttachments(i, body);
 		}
 	}
 
 }
 
-void SoftBody::setAttachmentsByYZCircle(double x, Vector2d O, double r, shared_ptr<Body> body) {
+void SoftBody::setAttachmentsByYZCircle(double x, double range, Vector2d O, double r, shared_ptr<Body> body) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
 
-		if (abs(xi(0) - x) < 0.3 && diff < 4.3) {
+		if (abs(xi(0) - x) < range && diff < 0.3) {
 			setAttachments(i, body);
 		}
 	}
 }
 
-void SoftBody::setAttachmentsByXZSurface(double y, Eigen::Vector2d xrange, Eigen::Vector2d zrange, shared_ptr<Body> body) {
+void SoftBody::setAttachmentsByXZSurface(double y, double range, Eigen::Vector2d xrange, Eigen::Vector2d zrange, shared_ptr<Body> body) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
-		if (abs(xi(1) - y) < 0.0001 && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(2) <= zrange(1) && xi(2) >= zrange(0)) {
+		if (abs(xi(1) - y) < range && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(2) <= zrange(1) && xi(2) >= zrange(0)) {
 			setAttachments(i, body);
 		}
 	}
@@ -476,7 +476,7 @@ void SoftBody::setSlidingNodesByYZSurface(double x, Eigen::Vector2d yrange, Eige
 	}
 }
 
-void SoftBody::setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, std::shared_ptr<Body> body) {
+void SoftBody::setSlidingNodesByYZCircle(double x, double range_x, Eigen::Vector2d O, double r, std::shared_ptr<Body> body) {
 	Vector3d x_axis;
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
@@ -486,7 +486,7 @@ void SoftBody::setSlidingNodesByYZCircle(double x, Eigen::Vector2d O, double r, 
 		x_axis.normalized();
 
 		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
-		if (abs(xi(0) - x) < 0.7 && diff < 0.01) {
+		if (abs(xi(0) - x) < range_x && diff < 0.01) {
 			setSlidingNodes(i, body, x_axis);//1.7
 
 			// Create Attached node to compare if they are really sliding
