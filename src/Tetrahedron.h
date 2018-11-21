@@ -21,6 +21,7 @@ public:
 
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	Matrix3d computeDeformationGradient();
+	Matrix3d computeDeformationGradientDifferential(Eigen::VectorXd dx);
 
 	Matrix3d computePKStress(Matrix3d F, double mu, double lambda);
 	Matrix3d computePKStressDerivative(Matrix3d F, Matrix3d dF, double mu, double lambda);
@@ -35,8 +36,7 @@ public:
 	void computeInvertibleForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
 
 	Matrix3d computeInvertiblePKStress(Matrix3d F, double mu, double lambda);
-	Matrix3d computeInvertiblePKStressDerivative(Matrix3d F, Matrix3d dF, double mu, double lambda);
-
+	Matrix3d clampHessian(Matrix3d &hessian, int clamped);
 	double computeEnergy();
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
 	void diagDeformationGradient(Matrix3d F);

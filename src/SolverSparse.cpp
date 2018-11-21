@@ -11,6 +11,7 @@
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
+#include "MatlabDebug.h"
 #include "ChronoTimer.h"
 #include <iostream>
 #include <fstream>
@@ -54,8 +55,11 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 
 	K_sp.resize(nm, nm);
 	K_sp.setZero();
+	K_.clear();
+
 	Km_sp.resize(nm, nm);
 	Km_sp.setZero();
+	Km_.clear();
 
 	J_dense.resize(m_world->m_dense_nm, m_world->m_dense_nr);
 	J_dense.setZero();
@@ -164,7 +168,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		VectorXd yk(2 * nr);
 		VectorXd ydotk(2 * nr);
 
-		// sceneFcn()
 		body0->computeMassGravSparse(grav, Mm_, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);
 
@@ -199,21 +202,26 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		Km_sp.setFromTriplets(Km_.begin(), Km_.end());
 		Dm_sp.setFromTriplets(Dm_.begin(), Dm_.end());
 		Dr_sp.setFromTriplets(Dr_.begin(), Dr_.end());
+		K_sp.setFromTriplets(K_.begin(), K_.end()); // check
 		Kr_sp.setFromTriplets(Kr_.begin(), Kr_.end());
-		J_sp.setFromTriplets(J_.begin(), J_.end());
+		J_sp.setFromTriplets(J_.begin(), J_.end()); // check
 		Jdot_sp.setFromTriplets(Jdot_.begin(), Jdot_.end());
 
 		q0 = y.segment(0, nr);
 		qdot0 = y.segment(nr, nr);
 
 		Mr_sp = J_sp.transpose() * (Mm_sp - h * h * K_sp) * J_sp;
-		//Mr_sp = 0.5 * (Mr_sp_temp + Mr_sp_temp.transpose());
+		sparse_to_file_as_dense(K_sp, "K_sp");
 
-		//Mr_sp = 0.5 * (Mr_sp + Mr_sp.transpose());
+		//Mr_sp_temp = Mr_sp.transpose();
+		//Mr_sp += Mr_sp_temp;
+		//Mr_sp *= 0.5;
+		//cout << MatrixXd(Mr_sp) << endl;
 
-		fr_ = Mr_sp * qdot0 + h * (J_sp.transpose() * (fm - Mm_sp * Jdot_sp * qdot0) + fr);
-		MDKr_sp = Mr_sp + J_sp.transpose() * (h * Dm_sp - h * h * Km_sp)*J_sp + h * Dr_sp - h * h * Kr_sp;
-
+		fr_ = Mr_sp * qdot0 + h * (J_sp.transpose() * (fm - Mm_sp * Jdot_sp * qdot0) + fr); // check
+		MDKr_sp = Mr_sp + J_sp.transpose() * (h * Dm_sp - h * h * Km_sp) * J_sp + h * Dr_sp - h * h * Kr_sp;
+		
+		
 		if (ne > 0) {
 			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
 			constraint0->computeJacEqRSparse(Gr_, Grdot_, gr, grdot, grddot);
@@ -226,6 +234,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			//sparse_to_file_as_dense(Gm_sp * J_sp, "Gm_sp * J_sp");
 			G_sp.topRows(nem) = Gm_sp * J_sp;
 			G_sp.bottomRows(ner) = Gr_sp;
+			
 			//sparse_to_file_as_dense(G_sp, "G_sp");
 
 			g.segment(0, nem) = gm;
@@ -273,10 +282,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			cg.setMaxIterations(25);
 			cg.setTolerance(1e-3);
 			cg.compute(MDKr_sp);
-			//sparse_to_file_as_dense(MDKr_sp, "MDKr_sp");
-			cout << "fr_" << fr_ << endl;
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
-			cout << "qdot1" << qdot1 << endl;
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
 			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
@@ -290,13 +296,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
 			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
 			program_->setNumberOfVariables(nr);
-
 			program_->setObjectiveMatrix(MDKr_sp);
-			//sparse_to_file_as_dense(MDKr_sp, "MDKr_sp");
-
 			program_->setObjectiveVector(-fr_);
 			program_->setNumberOfEqualities(ne);
-			//sparse_to_file_as_dense(G_sp, "G_sp");
 			program_->setEqualityMatrix(G_sp);
 
 			VectorXd gvec(ne);
@@ -306,6 +308,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			bool success = program_->solve();
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
+			
+			VectorXd l = program_->getDualEquality();
+			
+			constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
+			constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
+
 		}
 		else if (ne == 0 && ni > 0) {  // Just inequality
 			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
@@ -368,8 +376,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
-		cout << "ddot" << qddot << endl;
-		////cout << "qdot1" << qdot1 << endl;
+		//cout << "ddot" << qddot << endl;
+		cout << "qdot1" << qdot1 << endl;
 
 		yk.segment(0, nr) = q1;
 		yk.segment(nr, nr) = qdot1;

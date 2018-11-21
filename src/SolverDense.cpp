@@ -12,6 +12,7 @@
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
 #include "ChronoTimer.h"
+#include "MatlabDebug.h"
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
@@ -165,19 +166,20 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		softbody0->computeMass(grav, Mm);
 		softbody0->computeForce(grav, fm);
 		softbody0->computeStiffness(K);
+		
 		//timer.toc();
 		//timer.print();
 
 		joint0->computeForceStiffness(fr, Kr);
 		joint0->computeForceDamping(tmp, Dr);
 		joint0->computeJacobian(J, Jdot);
-
+		
 		//timer.toc();
 		//timer.print();
 
 		deformable0->computeJacobian(J, Jdot);
 		softbody0->computeJacobian(J);
-
+		
 		//timer.toc();
 		//timer.print();
 
@@ -190,22 +192,29 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		qdot0 = y.segment(nr, nr);
 
 		Mr = J.transpose() * (Mm - h * h * K) * J;
-		Mr = 0.5 * (Mr + Mr.transpose());
+		mat_to_file(K, "DenseK");
 
+
+		Mr = 0.5 * (Mr + Mr.transpose());		
+		
+
+		//cout << "Mr" << endl << Mr << endl;
 		//timer.toc();
 		//timer.print();
 
 		fr_ = Mr * qdot0 + h * (J.transpose() * (fm - Mm * Jdot * qdot0) + fr);
 		MDKr_ = Mr + J.transpose() * (h * Dm - h * h * Km)*J + h * Dr - h * h * Kr;
-
+		//cout << fr_ << endl;
 		if (ne > 0) {
 			constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
 			constraint0->computeJacEqR(Gr, Grdot, gr, grdot, grddot);
 			G.block(0, 0, nem, nr) = Gm * J;
 			G.block(nem, 0, ner, nr) = Gr;
+
+			//cout << "G" << G << endl;
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
-			rhsG = -gdot - 5.0 * g;// todo!!!!!
+			rhsG = -gdot - 100.0 * g;// todo!!!!!
 		}
 
 		if (ni > 0) {
@@ -330,7 +339,7 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		//cout << "ddot" << qddot << endl;
-		//cout << "qdot1" << qdot1 << endl;
+		cout << "qdot1" << qdot1 << endl;
 
 		yk.segment(0, nr) = q1;
 		yk.segment(nr, nr) = qdot1;

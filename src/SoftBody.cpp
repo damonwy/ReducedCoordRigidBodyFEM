@@ -604,12 +604,11 @@ void SoftBody::computeMass(Vector3d grav, MatrixXd &M) {
 	}
 }
 
-void SoftBody::computeMassSparse(Vector3d grav, std::vector<T> &M_) {
+void SoftBody::computeMassSparse(Vector3d grav, vector<T> &M_) {
 	Matrix3d I3 = Matrix3d::Identity();
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxM = m_nodes[i]->idxM;
-		double m = m_nodes[i]->m;
-
+		double m = m_nodes[i]->m;		 
 		for (int j = 0; j < 3; ++j) {
 			M_.push_back(T(idxM + j, idxM + j, m));
 		}
@@ -710,7 +709,7 @@ void SoftBody::computeJacobian(MatrixXd &J) {
 
 }
 
-void SoftBody::computeJacobianSparse(vector<T> J_) {
+void SoftBody::computeJacobianSparse(vector<T> &J_) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		for (int j = 0; j < 3; ++j) {
 			J_.push_back(T(m_nodes[i]->idxM + j, m_nodes[i]->idxR + j, 1.0));

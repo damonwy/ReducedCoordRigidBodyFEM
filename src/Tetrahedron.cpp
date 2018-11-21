@@ -38,13 +38,20 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 }
 
 Matrix3d Tetrahedron::computeDeformationGradient() {
-
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
 	}
 
 	this->F = Ds * Bm;
 	return this->F;
+}
+
+Matrix3d Tetrahedron::computeDeformationGradientDifferential(VectorXd dx) {
+	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
+	}
+	this->dF = dDs * Bm;
+	return this->dF;
 }
 
 Matrix3x4d Tetrahedron::computeAreaWeightedVertexNormals() {
@@ -144,7 +151,6 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 	if (print) {
 		cout << "Fhat" << this->Fhat << endl;
 	}
-	
 
 	// SVD result is available in this->U, this->V, Fhat_vec, this->Fhat
 
@@ -229,53 +235,10 @@ void ComputeEnergyHessian(int elementIndex, double * invariants, double * hessia
 	hessian[5] = (0.25 * lambda + 0.5 * mu - 0.25 * lambda * log(IIIC)) / (IIIC * IIIC);
 }
 
-void Tetrahedron::computeInvertibleForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_) {
-
-	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
-		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
-	}
-
-	this->dF = dDs * Bm;
-	this->dPhat = computePKStressDerivative(this->F, dF, m_mu, m_lambda);
-	this->dP = this->U * this->dPhat * this->V.transpose();
-
-	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
-		Vector3d temp = this->dP * this->Nm.col(i);
-
-		for (int j = 0; j < 3; ++j) {
-			K_.push_back(T(row + 3 * m_nodes[i]->i + j, col, temp(j)));
-			K_.push_back(T(row + 3 * m_nodes[3]->i + j, col, -temp(j)));
-
-		}	
-	}
-}
 
 void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	this->F = computeDeformationGradient();
-	//// clamp if below the principal stretch threshold
-	//int clamped = 0;
-	//for (int i = 0; i < 3; i++)
-	//{
-	//	if (abs(this->F(i, i)) < Fthreshold)
-	//	{
-	//		//dropBelowThreshold = true;
-	//		cout << this->F(i, i) << endl;
-	//		if (this->F(i, i) < 0.0) {
-	//			this->F(i, i) = -Fthreshold;
-	//		}
-	//		else {
-	//			this->F(i, i) = Fthreshold;
-	//		}
-
-	//		clamped |= (1 << i);
-	//	}
-	//}
-
-	//clamped = 0; // disable clamping
-	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
-		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
-	}
-	this->dF = dDs * Bm;	
+	this->dF = computeDeformationGradientDifferential(dx);	
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
 	//cout << "dP" << endl << this->dP << endl;
 	//cout << "df " << endl << this->dP * Nm.block<3, 3>(0, 0) << endl;
@@ -283,59 +246,21 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);
-
-		//if (df.segment<3>(3 * m_nodes[i]->i).norm() > 20.0) { cout << df.segment<3>(3 * m_nodes[i]->i) << endl; }
 	}
 }
 
 void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df) {
-	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
-		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
-	}
-	this->dF = dDs * Bm;
+
+	this->dF = computeDeformationGradientDifferential(dx);
 	Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
 
 	this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);	
 	//cout << "inv:dPhat" << endl << this->dPhat << endl;
 	this->dP = this->U * this->dPhat * this->V.transpose();
 	Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
-
+	cout << hessian << endl;
 	// modify hessian to compute correct values if in the inversion handling regime
-	//if (clamped & 1) // first lambda was clamped (in inversion handling)
-	//{
-	//	hessian(0, 0) = 0.0;
-	//	hessian(0, 1) = 0.0;
-	//	hessian(1, 0) = 0.0;
-	//	hessian(2, 0) = 0.0;
-	//	hessian(0, 2) = 0.0;
-	//	cout << "clamped 1" << endl;
-	//}
-
-	//if (clamped & 2) // second lambda was clamped (in inversion handling)
-	//{
-	//	hessian(0, 1) = 0.0;
-	//	hessian(1, 0) = 0.0;
-	//	hessian(1, 1) = 0.0;
-	//	hessian(1, 2) = 0.0;
-	//	hessian(2, 1) = 0.0;
-	//	cout << "clamped 2" << endl;
-
-	//}
-
-	//if (clamped & 4) // third lambda was clamped (in inversion handling)
-	//{
-
-	//	hessian(0, 0) = 0.0;
-	//	hessian(0, 1) = 0.0;
-	//	hessian(1, 0) = 0.0;
-	//	hessian(2, 0) = 0.0;
-	//	hessian(0, 2) = 0.0;
-	//	hessian(1, 2) = 0.0;
-	//	hessian(2, 1) = 0.0;
-	//	hessian(2, 2) = 0.0;
-	//	cout << "clamped 3" << endl;
-
-	//}
+	//hessian = clampHessian(hessian, clamped);
 
 	//cout << "inv:dP" << endl << this->dP << endl;
 	//cout << "inv:df " << endl << this->dP * Nm.block<3, 3>(0, 0) << endl;
@@ -345,23 +270,34 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 		
 		//df.segment<3>(3 * m_nodes[i]->i) += this->dP * this->Nm.col(i);
 		//df.segment<3>(3 * m_nodes[3]->i) -= this->dP * this->Nm.col(i);
-		if (isInvert) {
-			
+		if (isInvert) {		
 			cout << "df:"<< endl<< hessian.col(i) << endl;
 		}
 	}
-
-
 }
 
-void Tetrahedron::computeForceDifferentialsSparse(VectorXd dx, int row, int col, std::vector<T> &K_) {
-	this->F = computeDeformationGradient();
+void Tetrahedron::computeInvertibleForceDifferentialsSparse(VectorXd dx, int row, int col, vector<T> &K_) {
+
+	this->dF = computeDeformationGradientDifferential(dx);
+	Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
+	this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
+	this->dP = this->U * this->dPhat * this->V.transpose();
+	Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
+	cout << hessian << endl;
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
-		this->dDs.col(i) = dx.segment<3>(3 * m_nodes[i]->i) - dx.segment<3>(3 * m_nodes[3]->i);
-	}
+		Vector3d temp = hessian.col(i);
 
-	this->dF = dDs * Bm;
+		for (int j = 0; j < 3; ++j) {
+			K_.push_back(T(row + 3 * m_nodes[i]->i + j, col, temp(j)));
+			K_.push_back(T(row + 3 * m_nodes[3]->i + j, col, -temp(j)));
+		}
+	}
+}
+
+void Tetrahedron::computeForceDifferentialsSparse(VectorXd dx, int row, int col, vector<T> &K_) {
+	this->F = computeDeformationGradient();
+	this->dF = computeDeformationGradientDifferential(dx);
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
 	this->dH = -W * dP * (Bm.transpose());
 
@@ -370,7 +306,6 @@ void Tetrahedron::computeForceDifferentialsSparse(VectorXd dx, int row, int col,
 		for (int j = 0; j < 3; ++j) {
 			K_.push_back(T(row + 3 * m_nodes[i]->i + j, col, temp(j)));
 			K_.push_back(T(row + 3 * m_nodes[3]->i + j, col, -temp(j)));
-
 		}
 	}
 }
@@ -400,13 +335,6 @@ Matrix3d Tetrahedron::computeInvertiblePKStress(Matrix3d F, double mu, double la
 	result = matM.transpose() * dPsidIV;
 	this->Phat = result.asDiagonal();
 	return this->Phat;
-
-}
-
-Matrix3d Tetrahedron::computeInvertiblePKStressDerivative(Matrix3d F, Matrix3d dF, double mu, double lambda) {
-
-
-	return F;
 
 }
 
@@ -517,36 +445,6 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 		double J = sqrt(I3);
 		P = mu * (F - FIT) + lambda * log(J) * FIT;
 		dP = mu * dF + (mu - lambda * log(J)) * FIT * (dF.transpose()) * FIT + lambda * ((F.inverse() * dF)).trace() * FIT;
-		// modify hessian to compute correct values if in the inversion handling regime
-		//if (clamped & 1) // first lambda was clamped (in inversion handling)
-		//{
-		//	dP(0, 0) = 0.0;
-		//	dP(1, 0) = 0.0;
-		//	dP(0, 1) = 0.0;
-		//	//hessian[0] = hessian[1] = hessian[2] = 0.0;
-		//}
-
-		//if (clamped & 2) // second lambda was clamped (in inversion handling)
-		//{
-		//	dP(2, 1) = 0.0;
-		//	dP(1, 2) = 0.0;
-		//	dP(1, 0) = 0.0;
-		//	dP(0, 1) = 0.0;
-		//	dP(1, 1) = 0.0;
-		//	//hessian[1] = hessian[3] = hessian[4] = 0.0;
-		//}
-
-		//if (clamped & 4) // third lambda was clamped (in inversion handling)
-		//{
-		//	dP(0, 0) = 0.0;
-		//	dP(1, 0) = 0.0;
-		//	dP(0, 1) = 0.0;
-		//	dP(2, 1) = 0.0;
-		//	dP(1, 2) = 0.0;
-		//	dP(2, 2) = 0.0;
-		//	//hessian[0] = hessian[1] = hessian[2] = hessian[4] = hessian[5] = 0.0;
-		//}
-
 		//P = mu * (F - (F.inverse().transpose())) + lambda * log(J) * (F.inverse().transpose());
 		//dP = mu * dF + (mu - lambda * log(J)) * (F.inverse().transpose()) * (dF.transpose()) * (F.inverse().transpose()) + lambda * ((F.inverse() * dF)).trace() * (F.inverse().transpose());
 		break;
@@ -566,7 +464,7 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 	return dP;
 }
 
-void Tetrahedron::diagDeformationGradient(Eigen::Matrix3d F_) {
+void Tetrahedron::diagDeformationGradient(Matrix3d F_) {
 	Matrix3f F = F_.cast<float>();
 	float a11, a12, a13, a21, a22, a23, a31, a32, a33;
 
@@ -611,6 +509,46 @@ double Tetrahedron::computeEnergy() {
 	this->P = computePKStress(F, m_mu, m_lambda);
 	this->m_energy = W * psi;
 	return this->m_energy;
+}
+
+Matrix3d Tetrahedron::clampHessian(Matrix3d &hessian, int clamped) {
+	if (clamped & 1) // first lambda was clamped (in inversion handling)
+	{
+		hessian(0, 0) = 0.0;
+		hessian(0, 1) = 0.0;
+		hessian(1, 0) = 0.0;
+		hessian(2, 0) = 0.0;
+		hessian(0, 2) = 0.0;
+		//cout << "clamped 1" << endl;
+	}
+
+	if (clamped & 2) // second lambda was clamped (in inversion handling)
+	{
+		hessian(0, 1) = 0.0;
+		hessian(1, 0) = 0.0;
+		hessian(1, 1) = 0.0;
+		hessian(1, 2) = 0.0;
+		hessian(2, 1) = 0.0;
+		//cout << "clamped 2" << endl;
+	}
+
+	if (clamped & 4) // third lambda was clamped (in inversion handling)
+	{
+		Matrix3d new_hessian = hessian;
+		hessian.setZero();
+		hessian(1, 1) = new_hessian(1, 1);
+		
+		/*hessian(0, 0) = 0.0;
+		hessian(0, 1) = 0.0;
+		hessian(1, 0) = 0.0;
+		hessian(2, 0) = 0.0;
+		hessian(0, 2) = 0.0;
+		hessian(1, 2) = 0.0;
+		hessian(2, 1) = 0.0;
+		hessian(2, 2) = 0.0;*/
+		//cout << "clamped 3" << endl;
+	}
+	return hessian;
 }
 
 void Tetrahedron::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {

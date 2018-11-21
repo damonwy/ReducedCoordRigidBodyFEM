@@ -554,7 +554,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	break;
 	case SOFT_BODIES_CUBE_INVERTIBLE:
 	{
-		m_h = 1.0e-3;
+		m_h = 1.0e-2;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
@@ -616,7 +616,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc");
+		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, LINEAR, RESOURCE_DIR, "muscle_cyc_cyc");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -710,7 +710,7 @@ shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body,
 	return joint;
 }
 
-shared_ptr<JointFixed> World::addJointFixed(shared_ptr<Body> body, Vector3d p, Matrix3d R, double q, std::shared_ptr<Joint> parent) {
+shared_ptr<JointFixed> World::addJointFixed(shared_ptr<Body> body, Vector3d p, Matrix3d R, double q, shared_ptr<Joint> parent) {
 	auto joint = make_shared<JointFixed>(body, parent);
 	Matrix4d E = SE3::RpToE(R, p);
 	joint->setJointTransform(E);
@@ -1004,11 +1004,15 @@ void World::init() {
 
 	if (m_type == SOFT_BODIES_CUBE_INVERTIBLE) {
 		m_softbodies[0]->setAttachmentsByYZCircle(5.0, 0.0001, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, 0.7,Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
+
+		m_softbodies[0]->setAttachmentsByYZCircle(7.5, 1.4, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByYZCircle(13.5, 2.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+
+		/*m_softbodies[0]->setSlidingNodesByYZCircle(7.5, 0.7,Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
 
 		m_softbodies[0]->setSlidingNodesByYZCircle(10, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[0]);
 		m_softbodies[0]->setSlidingNodesByYZCircle(15.0, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);
+		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, 0.7, Vector2d(0.0, 0.0), 0.705, m_bodies[1]);*/
 	}
 
 	if (m_type == SOFT_BODIES_CYLINDER_INVERTIBLE) {
