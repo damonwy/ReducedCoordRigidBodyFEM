@@ -205,7 +205,7 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 			G.block(nem, 0, ner, nr) = Gr;
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
-			rhsG = -gdot - 100.0 * g;// todo!!!!!
+			rhsG = -gdot - 5.0 * g;// todo!!!!!
 		}
 
 		if (ni > 0) {
@@ -239,7 +239,7 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 				c << m_cm, m_cr;
 				VectorXd cdot(C.rows());
 				cdot << m_cmdot, m_crdot;
-				rhsC = -cdot - 105.0 * c;
+				rhsC = -cdot - 5.0 * c;
 			}
 		}
 

@@ -9,7 +9,7 @@
 using namespace Eigen;
 using namespace std;
 
-#define Fthreshold 0.4
+#define Fthreshold 0.45
 
 Tetrahedron::Tetrahedron()
 {
@@ -37,7 +37,7 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	computeAreaWeightedVertexNormals();
 }
 
-Eigen::Matrix3d Tetrahedron::computeDeformationGradient() {
+Matrix3d Tetrahedron::computeDeformationGradient() {
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
@@ -301,41 +301,41 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 	Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
 
 	// modify hessian to compute correct values if in the inversion handling regime
-	if (clamped & 1) // first lambda was clamped (in inversion handling)
-	{
-		hessian(0, 0) = 0.0;
-		hessian(0, 1) = 0.0;
-		hessian(1, 0) = 0.0;
-		hessian(2, 0) = 0.0;
-		hessian(0, 2) = 0.0;
-		cout << "clamped 1" << endl;
-	}
+	//if (clamped & 1) // first lambda was clamped (in inversion handling)
+	//{
+	//	hessian(0, 0) = 0.0;
+	//	hessian(0, 1) = 0.0;
+	//	hessian(1, 0) = 0.0;
+	//	hessian(2, 0) = 0.0;
+	//	hessian(0, 2) = 0.0;
+	//	cout << "clamped 1" << endl;
+	//}
 
-	if (clamped & 2) // second lambda was clamped (in inversion handling)
-	{
-		hessian(0, 1) = 0.0;
-		hessian(1, 0) = 0.0;
-		hessian(1, 1) = 0.0;
-		hessian(1, 2) = 0.0;
-		hessian(2, 1) = 0.0;
-		cout << "clamped 2" << endl;
+	//if (clamped & 2) // second lambda was clamped (in inversion handling)
+	//{
+	//	hessian(0, 1) = 0.0;
+	//	hessian(1, 0) = 0.0;
+	//	hessian(1, 1) = 0.0;
+	//	hessian(1, 2) = 0.0;
+	//	hessian(2, 1) = 0.0;
+	//	cout << "clamped 2" << endl;
 
-	}
+	//}
 
-	if (clamped & 4) // third lambda was clamped (in inversion handling)
-	{
+	//if (clamped & 4) // third lambda was clamped (in inversion handling)
+	//{
 
-		hessian(0, 0) = 0.0;
-		hessian(0, 1) = 0.0;
-		hessian(1, 0) = 0.0;
-		hessian(2, 0) = 0.0;
-		hessian(0, 2) = 0.0;
-		hessian(1, 2) = 0.0;
-		hessian(2, 1) = 0.0;
-		hessian(2, 2) = 0.0;
-		cout << "clamped 3" << endl;
+	//	hessian(0, 0) = 0.0;
+	//	hessian(0, 1) = 0.0;
+	//	hessian(1, 0) = 0.0;
+	//	hessian(2, 0) = 0.0;
+	//	hessian(0, 2) = 0.0;
+	//	hessian(1, 2) = 0.0;
+	//	hessian(2, 1) = 0.0;
+	//	hessian(2, 2) = 0.0;
+	//	cout << "clamped 3" << endl;
 
-	}
+	//}
 
 	//cout << "inv:dP" << endl << this->dP << endl;
 	//cout << "inv:df " << endl << this->dP * Nm.block<3, 3>(0, 0) << endl;
@@ -486,6 +486,7 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 		Matrix3d R = F * S.inverse();
 		E = S - I3;
 		P = 2.0 * mu *(F - R) + lambda * (R.transpose()*F - I3).trace() * R;
+		dP = 2.0 * mu * dF + lambda * (R.transpose()*dF).trace() * R;
 		break;
 	}
 
@@ -517,34 +518,34 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 		P = mu * (F - FIT) + lambda * log(J) * FIT;
 		dP = mu * dF + (mu - lambda * log(J)) * FIT * (dF.transpose()) * FIT + lambda * ((F.inverse() * dF)).trace() * FIT;
 		// modify hessian to compute correct values if in the inversion handling regime
-		if (clamped & 1) // first lambda was clamped (in inversion handling)
-		{
-			dP(0, 0) = 0.0;
-			dP(1, 0) = 0.0;
-			dP(0, 1) = 0.0;
-			//hessian[0] = hessian[1] = hessian[2] = 0.0;
-		}
+		//if (clamped & 1) // first lambda was clamped (in inversion handling)
+		//{
+		//	dP(0, 0) = 0.0;
+		//	dP(1, 0) = 0.0;
+		//	dP(0, 1) = 0.0;
+		//	//hessian[0] = hessian[1] = hessian[2] = 0.0;
+		//}
 
-		if (clamped & 2) // second lambda was clamped (in inversion handling)
-		{
-			dP(2, 1) = 0.0;
-			dP(1, 2) = 0.0;
-			dP(1, 0) = 0.0;
-			dP(0, 1) = 0.0;
-			dP(1, 1) = 0.0;
-			//hessian[1] = hessian[3] = hessian[4] = 0.0;
-		}
+		//if (clamped & 2) // second lambda was clamped (in inversion handling)
+		//{
+		//	dP(2, 1) = 0.0;
+		//	dP(1, 2) = 0.0;
+		//	dP(1, 0) = 0.0;
+		//	dP(0, 1) = 0.0;
+		//	dP(1, 1) = 0.0;
+		//	//hessian[1] = hessian[3] = hessian[4] = 0.0;
+		//}
 
-		if (clamped & 4) // third lambda was clamped (in inversion handling)
-		{
-			dP(0, 0) = 0.0;
-			dP(1, 0) = 0.0;
-			dP(0, 1) = 0.0;
-			dP(2, 1) = 0.0;
-			dP(1, 2) = 0.0;
-			dP(2, 2) = 0.0;
-			//hessian[0] = hessian[1] = hessian[2] = hessian[4] = hessian[5] = 0.0;
-		}
+		//if (clamped & 4) // third lambda was clamped (in inversion handling)
+		//{
+		//	dP(0, 0) = 0.0;
+		//	dP(1, 0) = 0.0;
+		//	dP(0, 1) = 0.0;
+		//	dP(2, 1) = 0.0;
+		//	dP(1, 2) = 0.0;
+		//	dP(2, 2) = 0.0;
+		//	//hessian[0] = hessian[1] = hessian[2] = hessian[4] = hessian[5] = 0.0;
+		//}
 
 		//P = mu * (F - (F.inverse().transpose())) + lambda * log(J) * (F.inverse().transpose());
 		//dP = mu * dF + (mu - lambda * log(J)) * (F.inverse().transpose()) * (dF.transpose()) * (F.inverse().transpose()) + lambda * ((F.inverse() * dF)).trace() * (F.inverse().transpose());

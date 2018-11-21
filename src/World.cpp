@@ -595,8 +595,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 		density = 1.0;
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e2;
-		double possion = 0.40;
+		double young = 1e3;
+		double possion = 0.30;
 
 		for (int i = 0; i < 2; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
@@ -616,7 +616,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "muscle_cyc_cyc");
+		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -1013,8 +1013,10 @@ void World::init() {
 
 	if (m_type == SOFT_BODIES_CYLINDER_INVERTIBLE) {
 		//m_softbodies[0]->setAttachmentsByYZCircle(5.0, 0.0001, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(7.5, 1.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
-		m_softbodies[0]->setSlidingNodesByYZCircle(12.5, 1.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_softbodies[0]->setAttachmentsByYZCircle(7.5, 1.4, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_softbodies[0]->setAttachmentsByYZCircle(13.5, 2.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(7.5, 1.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		//m_softbodies[0]->setSlidingNodesByYZCircle(12.5, 1.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 	}
 
 	for (int i = 0; i < m_nsoftbodies; i++) {
