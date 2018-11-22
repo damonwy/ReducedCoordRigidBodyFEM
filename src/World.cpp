@@ -613,8 +613,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 
-		//m_joints[0]->m_qdot(0) = 10.0;
-		//m_joints[1]->m_qdot(0) = -40.0;
+		m_joints[0]->m_qdot(0) = 10.0;
+		m_joints[1]->m_qdot(0) = -40.0;
 
 		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc"); //
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
