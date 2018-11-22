@@ -554,7 +554,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	break;
 	case SOFT_BODIES_CUBE_INVERTIBLE:
 	{
-		m_h = 1.0e-2;
+		m_h = 1.0e-3;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
@@ -596,7 +596,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
 		double young = 1e3;
-		double possion = 0.30;
+		double possion = 0.35;
 
 		for (int i = 0; i < 2; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
@@ -613,10 +613,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 
-		m_joints[0]->m_qdot(0) = 10.0;
-		m_joints[1]->m_qdot(0) = -40.0;
+		//m_joints[0]->m_qdot(0) = 10.0;
+		//m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, LINEAR, RESOURCE_DIR, "muscle_cyc_cyc");
+		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc"); //
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 

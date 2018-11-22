@@ -575,12 +575,6 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 		if (!m_nodes[i]->fixed) {
 			m_nodes[i]->v = ydot.segment<3>(idxR);
 			m_nodes[i]->a = ydot.segment<3>(nr + idxR);
-
-			/*if (m_nodes[i]->x(1) <= -4.9) {
-				m_nodes[i]->v(1) = 0.0;
-				m_nodes[i]->a(1) = 0.0;
-
-			}*/
 		}
 	}
 

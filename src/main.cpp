@@ -261,7 +261,7 @@ void stepperFunc()
 		
 		if(keyToggles[(unsigned)' ']) {
 			
-			//scene->step();
+			scene->step();
 			steps += 1;
 
 		}
@@ -331,10 +331,10 @@ int main(int argc, char **argv)
 	// Initialize scene.
 	init();
 	// Start simulation thread.
-	//thread stepperThread(stepperFunc);
+	thread stepperThread(stepperFunc);
 	// Loop until the user closes the window.
 	while(!glfwWindowShouldClose(window)) {
-		stepWorld();
+		//stepWorld();
 		// Render scene.
 		render();
 
@@ -344,7 +344,7 @@ int main(int argc, char **argv)
 		glfwPollEvents();
 	}
 	// Quit program.
-	//stepperThread.detach();
+	stepperThread.detach();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

@@ -33,6 +33,7 @@ public:
 	Matrix3x4d computeAreaWeightedVertexNormals();
 	Eigen::VectorXd computeInvertibleElasticForces(Eigen::VectorXd f);
 	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
+	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, int row, int col, Eigen::MatrixXd &K);
 	void computeInvertibleForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
 
 	Matrix3d computeInvertiblePKStress(Matrix3d F, double mu, double lambda);

@@ -119,7 +119,7 @@ void SolverDense::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir)
 Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 {
 	ChronoTimer timer("Test");
-
+	
 	switch (m_integrator)
 	{
 	case REDMAX_EULER:
@@ -136,7 +136,7 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		int ni = nim + nir;
 
 		initMatrix(nm, nr, nem, ner, nim, nir);
-
+		
 		auto body0 = m_world->getBody0();
 		auto joint0 = m_world->getJoint0();
 		auto deformable0 = m_world->getDeformable0();
@@ -155,55 +155,52 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		body0->computeMassGrav(grav, Mm, fm);
 		body0->computeForceDamping(tmp, Dm);
 
-		//timer.toc();
-		//timer.print();
+		
 
 		deformable0->computeMass(grav, Mm, fm);
 		deformable0->computeForceDamping(grav, tmp, Dm);
-		//timer.toc();
-		//timer.print();
-
+		
 		softbody0->computeMass(grav, Mm);
 		softbody0->computeForce(grav, fm);
 		softbody0->computeStiffness(K);
 		
-		//timer.toc();
-		//timer.print();
-
+		
 		joint0->computeForceStiffness(fr, Kr);
 		joint0->computeForceDamping(tmp, Dr);
 		joint0->computeJacobian(J, Jdot);
-		
-		//timer.toc();
-		//timer.print();
+	
 
 		deformable0->computeJacobian(J, Jdot);
 		softbody0->computeJacobian(J);
 		
-		//timer.toc();
-		//timer.print();
+
 
 		spring0->computeForceStiffnessDamping(fm, Km, Dm);
 
-		timer.toc();
-		timer.print();
-
+	
 		q0 = y.segment(0, nr);
 		qdot0 = y.segment(nr, nr);
 
 		Mr = J.transpose() * (Mm - h * h * K) * J;
-		mat_to_file(K, "DenseK");
+		//mat_to_file(K, "DenseK");
 
 
 		Mr = 0.5 * (Mr + Mr.transpose());		
 		
 
 		//cout << "Mr" << endl << Mr << endl;
-		//timer.toc();
-		//timer.print();
+		
 
 		fr_ = Mr * qdot0 + h * (J.transpose() * (fm - Mm * Jdot * qdot0) + fr);
 		MDKr_ = Mr + J.transpose() * (h * Dm - h * h * Km)*J + h * Dr - h * h * Kr;
+		//mat_to_file(Mr, "Mr");
+		//mat_to_file(J, "J");
+		//mat_to_file(Km, "Km");
+		//mat_to_file(Kr, "Kr");
+		//mat_to_file(Mm, "Mm");
+		//mat_to_file(J, "J");
+
+		//mat_to_file(K, "K");
 		//cout << fr_ << endl;
 		if (ne > 0) {
 			constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
@@ -272,7 +269,12 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 			qdot1 = sol.segment(0, nr);
 
 			VectorXd l = sol.segment(nr, sol.rows() - nr);
-
+		/*	vec_to_file(fr_, "fr");
+			vec_to_file(rhsG, "rhsG");
+			vec_to_file(qdot1, "qdot1");
+			mat_to_file(MDKr_, "MDKr_");
+			mat_to_file(G, "G");*/
+			//vec_to_file(l, "l");
 			constraint0->scatterForceEqM(Gm.transpose(), l.segment(0, nem) / h);
 			constraint0->scatterForceEqR(Gr.transpose(), l.segment(nem, l.rows() - nem) / h);
 
@@ -339,7 +341,7 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		//cout << "ddot" << qddot << endl;
-		cout << "qdot1" << qdot1 << endl;
+		//cout << "qdot1" << qdot1 << endl;
 
 		yk.segment(0, nr) = q1;
 		yk.segment(nr, nr) = qdot1;
@@ -360,6 +362,10 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		/*cout << "V" << ener.V << endl;
 		cout << "K" << ener.K << endl;
 		cout << " sum " << ener.V + ener.K << endl;*/
+		timer.toc();
+		timer.print();
+
+
 		return yk;
 	}
 	break;

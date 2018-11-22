@@ -201,7 +201,7 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 		//cout << "f" << endl << this->P * this->Nm.col(i) << endl;
 
 		if (isInvert) {
-			cout <<"f"<< endl<< this->P * this->Nm.col(i) << endl;
+			//cout <<"f"<< endl<< this->P * this->Nm.col(i) << endl;
 		}
 		 
 	}
@@ -258,7 +258,7 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 	//cout << "inv:dPhat" << endl << this->dPhat << endl;
 	this->dP = this->U * this->dPhat * this->V.transpose();
 	Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
-	cout << hessian << endl;
+	//cout << hessian << endl;
 	// modify hessian to compute correct values if in the inversion handling regime
 	//hessian = clampHessian(hessian, clamped);
 
@@ -271,10 +271,30 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 		//df.segment<3>(3 * m_nodes[i]->i) += this->dP * this->Nm.col(i);
 		//df.segment<3>(3 * m_nodes[3]->i) -= this->dP * this->Nm.col(i);
 		if (isInvert) {		
-			cout << "df:"<< endl<< hessian.col(i) << endl;
+			//cout << "df:"<< endl<< hessian.col(i) << endl;
 		}
 	}
 }
+
+void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, int row, int col, MatrixXd &K) {
+
+	this->dF = computeDeformationGradientDifferential(dx);
+	Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
+	this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
+	
+	this->dP = this->U * this->dPhat * this->V.transpose();
+	Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
+
+	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+		Vector3d temp = hessian.col(i);
+		for (int j = 0; j < 3; ++j) {
+
+			K(row + 3 * m_nodes[i]->i + j, col) += temp(j);
+			K(row + 3 * m_nodes[3]->i + j, col) += -temp(j);
+		}
+	}
+}
+
 
 void Tetrahedron::computeInvertibleForceDifferentialsSparse(VectorXd dx, int row, int col, vector<T> &K_) {
 
@@ -283,13 +303,15 @@ void Tetrahedron::computeInvertibleForceDifferentialsSparse(VectorXd dx, int row
 	this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
 	this->dP = this->U * this->dPhat * this->V.transpose();
 	Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
-	cout << hessian << endl;
+	//
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		Vector3d temp = hessian.col(i);
 
 		for (int j = 0; j < 3; ++j) {
+			//cout << j << endl;
 			K_.push_back(T(row + 3 * m_nodes[i]->i + j, col, temp(j)));
+			//cout << temp(j) << endl;
 			K_.push_back(T(row + 3 * m_nodes[3]->i + j, col, -temp(j)));
 		}
 	}

@@ -71,11 +71,17 @@ void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 				temp.setZero();
 				Dx.setZero();
 				Dx(3 * id + iii) = 1.0;
-				tet->computeInvertibleForceDifferentials(Dx, df);
+				//tet->computeInvertibleForceDifferentials(Dx, df);
+				int irow = col - 3 * id;
+				int icol = col + iii;
+
+				tet->computeInvertibleForceDifferentials(Dx, irow, icol, K);
+
 				//tet->computeForceDifferentials(Dx, temp);
 				//tet->computeInvertibleForceDifferentials(Dx, temp);
 				//cout << "diff" << (df - temp).norm() << endl;
-				K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
+
+				//K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
 
 			}
 		}
@@ -100,13 +106,16 @@ void SoftBodyInvertibleFEM::computeStiffnessSparse(vector<T> &K_) {
 				df.setZero();
 				Dx.setZero();
 				Dx(3 * id + iii) = 1.0;
-		
+				
+
 				//tet->computeForceDifferentials(Dx, df);
 				int irow = col - 3 * id;
 				int icol = col + iii;
+				
 				tet->computeInvertibleForceDifferentialsSparse(Dx, irow, icol, K_);
+
 				tet->computeInvertibleForceDifferentials(Dx, df);
-				cout << df << endl;
+				//cout << df << endl;
 			}
 		}
 	}

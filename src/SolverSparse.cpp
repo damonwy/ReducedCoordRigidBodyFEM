@@ -54,6 +54,7 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	Dm_.clear();
 
 	K_sp.resize(nm, nm);
+	K_sp.data().squeeze();
 	K_sp.setZero();
 	K_.clear();
 
@@ -74,6 +75,7 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	Jdot_.clear();
 
 	Gm_sp.resize(nem, nm);
+	Gm_sp.data().squeeze();
 	Gm_sp.setZero();
 	Gmdot_sp.resize(nem, nm);
 	Gmdot_sp.setZero();
@@ -88,6 +90,7 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	gmddot.setZero();
 
 	Gr_sp.resize(ner, nr);
+	Gr_sp.data().squeeze();
 	Gr_sp.setZero();
 	Grdot_sp.resize(ner, nr);
 	Grdot_sp.setZero();
@@ -176,6 +179,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		softbody0->computeMassSparse(grav, Mm_);
 		softbody0->computeForce(grav, fm);
+
 		softbody0->computeStiffnessSparse(K_);
 
 		joint0->computeForceStiffnessSparse(fr, Kr_);
@@ -211,16 +215,23 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		qdot0 = y.segment(nr, nr);
 
 		Mr_sp = J_sp.transpose() * (Mm_sp - h * h * K_sp) * J_sp;
-		sparse_to_file_as_dense(K_sp, "K_sp");
+		//sparse_to_file_as_dense(K_sp, "K_sp");
 
 		//Mr_sp_temp = Mr_sp.transpose();
 		//Mr_sp += Mr_sp_temp;
 		//Mr_sp *= 0.5;
-		//cout << MatrixXd(Mr_sp) << endl;
 
 		fr_ = Mr_sp * qdot0 + h * (J_sp.transpose() * (fm - Mm_sp * Jdot_sp * qdot0) + fr); // check
 		MDKr_sp = Mr_sp + J_sp.transpose() * (h * Dm_sp - h * h * Km_sp) * J_sp + h * Dr_sp - h * h * Kr_sp;
-		
+		/*sparse_to_file_as_dense(Mr_sp, "Mr_sp");
+		sparse_to_file_as_dense(J_sp, "J_sp");
+		sparse_to_file_as_dense(Jdot_sp, "Jdot_sp");
+		sparse_to_file_as_dense(Km_sp, "Km_sp");
+		sparse_to_file_as_dense(Dr_sp, "Dr_sp");
+		sparse_to_file_as_dense(Kr_sp, "Kr_sp");
+		sparse_to_file_as_dense(K_sp, "K_sp");
+		sparse_to_file_as_dense(Mm_sp, "Mm_sp");
+*/
 		
 		if (ne > 0) {
 			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
@@ -239,13 +250,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
-			rhsG = -gdot - 100.0 * g;// todo!!!!!
+			rhsG = -gdot - 10.0 * g;// todo!!!!!
 		}
 
 		//if (ni > 0) {
 		//	// Check for active inequality constraint
-		//	constraint0->computeJacIneqM(Cm, Cmdot, cm, cmdot, cmddot);
-		//	constraint0->computeJacIneqR(Cr, Crdot, cr, crdot, crddot);
+		//	constraint0->computeJacIneqMSparse(Cm, Cmdot, cm, cmdot, cmddot);
+		//	constraint0->computeJacIneqRSparse(Cr, Crdot, cr, crdot, crddot);
 		//	rowsR.clear();
 		//	rowsM.clear();
 
@@ -297,20 +308,25 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
 			program_->setNumberOfVariables(nr);
 			program_->setObjectiveMatrix(MDKr_sp);
+			//sparse_to_file_as_dense(MDKr_sp, "MDKr_s");
+
 			program_->setObjectiveVector(-fr_);
+			//vec_to_file(fr_, "fr_s");
+
 			program_->setNumberOfEqualities(ne);
 			program_->setEqualityMatrix(G_sp);
+			//sparse_to_file_as_dense(G_sp, "G_s");
 
-			VectorXd gvec(ne);
-			gvec.setZero();
 			program_->setEqualityVector(rhsG);
+
+			//vec_to_file(rhsG, "rhsG_s");
 
 			bool success = program_->solve();
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
-			
+			//vec_to_file(qdot1, "qdot1_s");
 			VectorXd l = program_->getDualEquality();
-			
+			//vec_to_file(l, "l_s");
 			constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
 			constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
 
@@ -377,7 +393,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		//cout << "ddot" << qddot << endl;
-		cout << "qdot1" << qdot1 << endl;
+		//cout << "qdot1" << qdot1 << endl;
 
 		yk.segment(0, nr) = q1;
 		yk.segment(nr, nr) = qdot1;
