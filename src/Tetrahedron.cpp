@@ -35,6 +35,9 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	}
 
 	computeAreaWeightedVertexNormals();
+
+	m_delta_L = 0.0;
+	m_delta_U = 10.0;
 }
 
 Matrix3d Tetrahedron::computeDeformationGradient() {
@@ -121,6 +124,86 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 	return f;
 }
 
+bool Tetrahedron::checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F) {
+	Matrix3d C = F.transpose() * F;
+	// C = |c1 c2 c3|
+	//     |c2 c4 c5|
+	//     |c3 c5 c6|
+
+	// f(lambda) = lambda^3 + a * lambda^2 + b * lambda + c
+	// a = -(c1 + c4 + c6)
+	// b = (c1*c4 + c4*c6 + c1*c6 - c2^2 - c3^2 - c5^2)
+	// c = (c1*c5^2 + c4*c3^2 +c6*c2^2 - c1*c4*c6-2*c2*c3*c5) 
+	// 
+	// alpha, beta are the solutions of f'(lambda) = 0 (alpha < beta)
+	// f'(lambda) = 3*lambda^2 + 2a*lambda + b = 0
+
+	double c1, c2, c3, c4, c5, c6;
+
+	c1 = F.col(0).transpose() * F.col(0);
+	c2 = F.col(0).transpose() * F.col(1);
+	c3 = F.col(0).transpose() * F.col(2);
+	c4 = F.col(1).transpose() * F.col(1);
+	c5 = F.col(1).transpose() * F.col(2);
+	c6 = F.col(2).transpose() * F.col(2);
+
+	double a, b, c;
+	a = -(c1 + c4 + c6);
+
+	double c14, c46, c16, c22, c33, c55;
+	c14 = c1 * c4;
+	c46 = c4 * c6;
+	c16 = c1 * c6;
+
+	c22 = c2 * c2;
+	c33 = c3 * c3;
+	c55 = c5 * c5;
+
+	b = (c14 + c46 + c16 - c22 - c33 - c55);
+	c = c1 * c55 + c4 * c33 + c6 * c22 - c14 * c6 - 2 * c2 * c3 * c5;//13
+
+	double alpha, beta, same;
+	same = sqrt(a * a - 3 * b);
+	alpha = (-a - same) / 3.0;
+	beta = (-a + same) / 3.0;
+
+	// If the element has a small deformation, it should satisfy these four conditions:
+	// f(deltaL) < 0, 
+	// f(deltaU) > 0, 
+	// deltaL < alpha, 
+	// beta < deltaU
+
+	double f_deltaL = pow(deltaL, 3) + a * pow(deltaL, 2) + b * deltaL + c;
+	double f_deltaU = pow(deltaU, 3) + a * pow(deltaU, 2) + b * deltaU + c;
+
+	if ((f_deltaL < 0) && (f_deltaU > 0) && (deltaL < alpha) && (beta < deltaU)) {
+		// This element has a small deformation, no need to do SVD
+		m_isSVD = false;
+		/*cout << "No svd! " << endl;
+		cout << "fdeltaL: " << f_deltaL << endl;
+		cout << "fdeltaU: " << f_deltaU << endl;
+		cout << "alpha: " << alpha << endl;
+		cout << "beta: " << beta << endl;*/
+
+	}
+	else {
+		// large deformation, need to do SVD
+		m_isSVD = true;
+		cout << "Do svd! " << endl;
+		cout << "F" << this->F << endl;
+		cout << "same" << same << endl;
+		cout << "a" << a << endl;
+		cout << "b " << b << endl;
+		//cout << "fdeltaL: " << f_deltaL << endl;
+		//cout << "fdeltaU: " << f_deltaU << endl;
+		cout << "alpha: " << alpha << endl;
+		cout << "beta: " << beta << endl;
+
+	}
+
+	return m_isSVD;
+}
+
 VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 	bool print = false;
 
@@ -134,60 +217,71 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 	}
 	
 	// The deformation gradient is available in this->F
-	if (this->F.determinant() < 0.0) {
-		isInvert = true;
+	if (this->F.determinant() <= 0.0) {
+		m_isInverted = true;
+		m_isSVD = true;
 	}
 	else {
-		isInvert = false;
+		// We need an additional step to decide whether the element undergoes large deformation
+		m_isInverted = false;
+		checkNecessityForSVD(m_delta_L, m_delta_U, this->F);
+		// The necessity of SVD is available in m_isSVD
 	}
 
-	// SVD on the deformation gradient
-	int modifiedSVD = 1;
+	if (m_isSVD) {
+		// SVD on the deformation gradient
+		int modifiedSVD = 1;
 
-	if (!SVD(this->F, this->U, Fhats, this->V, 1e-8, modifiedSVD)) {
-		//cout << "error in svd " << endl;
-	}
-	this->Fhat = Fhats.asDiagonal();
-	if (print) {
-		cout << "Fhat" << this->Fhat << endl;
-	}
-
-	// SVD result is available in this->U, this->V, Fhat_vec, this->Fhat
-
-	// clamp if below the principal stretch threshold
-	clamped = 0;
-	for (int i = 0; i < 3; i++)
-	{
-		if (this->Fhat(i, i) < Fthreshold)
-		{
-			this->Fhat(i, i) = Fthreshold;
-			clamped |= (1 << i);
+		if (!SVD(this->F, this->U, Fhats, this->V, 1e-8, modifiedSVD)) {
+			//cout << "error in svd " << endl;
 		}
+		this->Fhat = Fhats.asDiagonal();
+		if (print) {
+			cout << "Fhat" << this->Fhat << endl;
+		}
+
+		// SVD result is available in this->U, this->V, Fhat_vec, this->Fhat
+		// clamp if below the principal stretch threshold
+		clamped = 0;
+		for (int i = 0; i < 3; i++)
+		{
+			if (this->Fhat(i, i) < Fthreshold)
+			{
+				this->Fhat(i, i) = Fthreshold;
+				clamped |= (1 << i);
+			}
+		}
+		if (print) {
+			cout << "Fhat" << this->Fhat << endl;
+		}
+		//clamped = 0; // disable clamping
+
+		// Computes the internal forces
+		// Computes P first and computes the nodal forces G=PBm in section 4 of [Irving 04]
+
+		// Computes the diagonal P tensor
+		this->Phat = computeInvertiblePKStress(this->Fhat, m_mu, m_lambda);
+
+		if (print) {
+			cout << "Phat" << this->Phat << endl;
+		}
+		// P = U * diag(Phat) * V'
+		this->P = this->U * this->Phat * this->V.transpose();
+
+		if (print) {
+			cout << "P" << this->P << endl;
+			Matrix3d ttemp = computePKStress(F, m_mu, m_lambda);
+			this->H = -W * ttemp * (Bm.transpose());
+			cout << "H" << this->H << endl;
+			cout << "PNm" << this->P * this->Nm.block<3, 3>(0, 0) << endl;
+		}
+		
+
 	}
-	if (print) {
-		cout << "Fhat" << this->Fhat << endl;
-	}
-	//clamped = 0; // disable clamping
-
-	// Computes the internal forces
-	// Computes P first and computes the nodal forces G=PBm in section 4 of [Irving 04]
-
-	// Computes the diagonal P tensor
-	this->Phat = computeInvertiblePKStress(this->Fhat, m_mu, m_lambda);
-
-	if (print) {
-		cout << "Phat" << this->Phat << endl;
-	}
-
-	// P = U * diag(Phat) * V'
-	this->P = this->U * this->Phat * this->V.transpose();
-
-	if (print) {
-		cout << "P" << this->P << endl;
-		Matrix3d ttemp = computePKStress(F, m_mu, m_lambda);
-		this->H = -W * ttemp * (Bm.transpose());
-		cout << "H" << this->H << endl;
-		cout << "PNm" << this->P * this->Nm.block<3, 3>(0, 0) << endl;
+	else {
+		// Don't do SVD
+		this->P = computePKStress(this->F, m_mu, m_lambda);
+		
 	}
 	
 	// Computes the nodal forces by G=PBm=PNm
@@ -200,7 +294,7 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 		//cout << "Nm" << this->Nm.col(i) << endl;
 		//cout << "f" << endl << this->P * this->Nm.col(i) << endl;
 
-		if (isInvert) {
+		if (m_isInverted) {
 			//cout <<"f"<< endl<< this->P * this->Nm.col(i) << endl;
 		}
 		 
@@ -270,7 +364,7 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 		
 		//df.segment<3>(3 * m_nodes[i]->i) += this->dP * this->Nm.col(i);
 		//df.segment<3>(3 * m_nodes[3]->i) -= this->dP * this->Nm.col(i);
-		if (isInvert) {		
+		if (m_isInverted) {
 			//cout << "df:"<< endl<< hessian.col(i) << endl;
 		}
 	}
@@ -297,11 +391,20 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, int row, int 
 
 
 void Tetrahedron::computeInvertibleForceDifferentialsSparse(VectorXd dx, int row, int col, vector<T> &K_) {
-
+	
 	this->dF = computeDeformationGradientDifferential(dx);
-	Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
-	this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
-	this->dP = this->U * this->dPhat * this->V.transpose();
+	if (m_isSVD) {
+		Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
+		this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
+		this->dP = this->U * this->dPhat * this->V.transpose();
+
+	}
+	else
+	{
+		this->dP = computePKStressDerivative(this->F, this->dF, m_mu, m_lambda);
+
+	}
+		
 	Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
 	//
 
@@ -574,7 +677,7 @@ Matrix3d Tetrahedron::clampHessian(Matrix3d &hessian, int clamped) {
 }
 
 void Tetrahedron::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
-	if (isInvert) {
+	if (m_isInverted) {
 		prog->bind();
 		for (int i = 0; i < 4; i++) {
 			auto node = m_nodes[i];

@@ -30,6 +30,7 @@ public:
 	Eigen::VectorXd computeElasticForces(Eigen::VectorXd f);
 
 	// Functions for Invertible FEM 
+	bool checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F);
 	Matrix3x4d computeAreaWeightedVertexNormals();
 	Eigen::VectorXd computeInvertibleElasticForces(Eigen::VectorXd f);
 	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
@@ -42,7 +43,7 @@ public:
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
 	void diagDeformationGradient(Matrix3d F);
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
-	bool isInvert;
+	bool m_isInverted;
 	int i;
 	int clamped;
 
@@ -57,6 +58,11 @@ private:
 	double m_lambda;
 	double m_mass;
 	double m_density;
+
+	// a given small deformation range where we do not need the diagonalization process
+	double m_delta_L;
+	double m_delta_U;
+	bool m_isSVD;
 	
 	// precomputed
 	double W;	// undeformed volume of Te

@@ -38,7 +38,7 @@ void SoftBodyInvertibleFEM::computeForce(Vector3d grav, VectorXd &f) {
 		for (int i = 0; i < (int)m_tets.size(); i++) {
 			auto tet = m_tets[i];
 			f = tet->computeInvertibleElasticForces(f);
-			if (tet->isInvert) {
+			if (tet->m_isInverted) {
 				m_isInvert = true;
 				cout << "tet " << i << " is inverted!" << endl;
 			}
@@ -57,7 +57,7 @@ void SoftBodyInvertibleFEM::computeStiffness(MatrixXd &K) {
 
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
-		if (tet->isInvert) {
+		if (tet->m_isInverted) {
 			cout << "tet " << i << " is inverted!" << endl;
 		}
 
