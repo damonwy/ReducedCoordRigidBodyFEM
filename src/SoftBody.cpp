@@ -28,7 +28,7 @@ using json = nlohmann::json;
 
 SoftBody::SoftBody(): m_isInvertible(true), m_isGravity(false), m_isElasticForce(true){
 	m_color << 1.0f, 1.0f, 0.0f;
-	m_isInvert = false;
+	m_isInverted = false;
 }
 
 SoftBody::SoftBody(double density, double young, double poisson, Material material) :
@@ -36,7 +36,7 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 	m_isInvertible(true), m_isGravity(false), m_isElasticForce(true)
 {
 	m_color << 1.0f, 1.0f, 0.0f;
-	m_isInvert= false;
+	m_isInverted = false;
 	//m_isGravity = true;
 }
 
@@ -614,6 +614,14 @@ void SoftBody::computeMassSparse(Vector3d grav, vector<T> &M_) {
 }
 
 void SoftBody::computeForce(Vector3d grav, VectorXd &f) {
+
+	computeForce_(grav, f);
+	if (next != nullptr) {
+		next->computeForce(grav, f);
+	}
+}
+
+void SoftBody::computeForce_(Vector3d grav, VectorXd &f) {
 	// Computes force vector
 
 	if (m_isGravity) {
@@ -631,13 +639,17 @@ void SoftBody::computeForce(Vector3d grav, VectorXd &f) {
 			f = tet->computeElasticForces(f);
 		}
 	}
-
-	if (next != nullptr) {
-		next->computeForce(grav, f);
-	}
 }
 
 void SoftBody::computeStiffness(MatrixXd &K) {
+	computeStiffness_(K);
+
+	if (next != nullptr) {
+		next->computeStiffness(K);
+	}
+}
+
+void SoftBody::computeStiffness_(MatrixXd &K) {
 	VectorXd df(3 * m_nodes.size());
 	VectorXd Dx = df;
 
@@ -658,13 +670,17 @@ void SoftBody::computeStiffness(MatrixXd &K) {
 			}
 		}
 	}
-
-	if (next != nullptr) {
-		next->computeStiffness(K);
-	}
 }
 
 void SoftBody::computeStiffnessSparse(vector<T> &K_) {
+	computeStiffnessSparse_(K_);
+
+	if (next != nullptr) {
+		next->computeStiffnessSparse(K_);
+	}
+}
+
+void SoftBody::computeStiffnessSparse_(vector<T> &K_) {
 	VectorXd df(3 * m_nodes.size());
 	VectorXd Dx = df;
 
@@ -685,10 +701,6 @@ void SoftBody::computeStiffnessSparse(vector<T> &K_) {
 				tet->computeForceDifferentialsSparse(Dx, irow, icol, K_);
 			}
 		}
-	}
-
-	if (next != nullptr) {
-		next->computeStiffnessSparse(K_);
 	}
 }
 
@@ -736,10 +748,4 @@ Energy SoftBody::computeEnergies(Eigen::Vector3d grav, Energy ener) {
 	}
 
 	return ener;
-}
-
-SoftBody:: ~SoftBody() {
-
-
-
 }

@@ -10,13 +10,11 @@ public:
 	SoftBodyInvertibleFEM();
 	SoftBodyInvertibleFEM(double density, double young, double poisson, Material material);
 	virtual ~SoftBodyInvertibleFEM() {};
-	void computeStiffness(Eigen::MatrixXd &K);
-	void computeForce(Eigen::Vector3d grav, Eigen::VectorXd &f);
-	void computeStiffnessSparse(std::vector<T> &K_);
+
 protected:
-
-
-
+	void computeForce_(Vector3d grav, Eigen::VectorXd &f);
+	void computeStiffnessSparse_(std::vector<T> &K_);
+	void computeStiffness_(Eigen::MatrixXd &K);
 private:
 
 };

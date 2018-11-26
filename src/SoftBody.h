@@ -24,7 +24,7 @@ class SoftBody {
 public:
 	SoftBody();
 	SoftBody(double density, double young, double poisson, Material material);
-	virtual ~SoftBody();
+	virtual ~SoftBody() {}
 
 	virtual void load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME);
 	virtual void init();
@@ -37,9 +37,11 @@ public:
 	virtual void computeMass(Vector3d grav, Eigen::MatrixXd &M);
 	virtual void computeMassSparse(Vector3d grav, std::vector<T> &M_);
 	virtual Energy computeEnergies(Vector3d grav, Energy ener);
-	virtual void computeForce(Vector3d grav, Eigen::VectorXd &f);
-	virtual void computeStiffness(Eigen::MatrixXd &K);
-	virtual void computeStiffnessSparse(std::vector<T> &K_);
+
+	void computeForce(Vector3d grav, Eigen::VectorXd &f);
+	void computeStiffness(Eigen::MatrixXd &K);
+	void computeStiffnessSparse(std::vector<T> &K_);
+
 	virtual Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
 	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
@@ -81,7 +83,7 @@ public:
 
 	std::shared_ptr<SoftBody> next;
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
-	bool m_isInvert;
+	bool m_isInverted;
 
 protected:
 	bool m_isInvertible;
@@ -110,6 +112,9 @@ protected:
 	double m_mass;
 
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
+	virtual void computeStiffnessSparse_(std::vector<T> &K_);
+	virtual void computeStiffness_(Eigen::MatrixXd &K);
+	virtual void computeForce_(Vector3d grav, Eigen::VectorXd &f);
 };
 
 

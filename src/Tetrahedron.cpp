@@ -2,6 +2,7 @@
 #include "Node.h"
 #include <iostream>
 #include "svd3.h"
+#include <cmath>
 
 #include "MatrixStack.h"
 #include "Program.h"
@@ -10,6 +11,9 @@ using namespace Eigen;
 using namespace std;
 
 #define Fthreshold 0.45
+// 0.45 corotated
+// 0.65 neo
+
 
 Tetrahedron::Tetrahedron()
 {
@@ -36,8 +40,11 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 
 	computeAreaWeightedVertexNormals();
 
+	m_delta_L = 0.25;
+	m_delta_U = 5.0;
+
 	m_delta_L = 0.0;
-	m_delta_U = 10.0;
+	m_delta_U = 1005.0;
 }
 
 Matrix3d Tetrahedron::computeDeformationGradient() {
@@ -163,43 +170,51 @@ bool Tetrahedron::checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F)
 	c = c1 * c55 + c4 * c33 + c6 * c22 - c14 * c6 - 2 * c2 * c3 * c5;//13
 
 	double alpha, beta, same;
-	same = sqrt(a * a - 3 * b);
-	alpha = (-a - same) / 3.0;
-	beta = (-a + same) / 3.0;
+	
+	same = a * a - 3.0 * b;
+	if (same >= -0.00000001) {
+		same = abs(same);
+		// f'(lambda) = 0 has one or two solutions
+		same = sqrt(same);
+		alpha = (-a - same) / 3.0;
+		beta = (-a + same) / 3.0;
+		// If the element has a small deformation, it should satisfy these four conditions:
+		// f(deltaL) < 0, 
+		// f(deltaU) > 0, 
+		// deltaL < alpha, 
+		// beta < deltaU
 
-	// If the element has a small deformation, it should satisfy these four conditions:
-	// f(deltaL) < 0, 
-	// f(deltaU) > 0, 
-	// deltaL < alpha, 
-	// beta < deltaU
+		double f_deltaL = pow(deltaL, 3) + a * pow(deltaL, 2) + b * deltaL + c;
+		double f_deltaU = pow(deltaU, 3) + a * pow(deltaU, 2) + b * deltaU + c;
 
-	double f_deltaL = pow(deltaL, 3) + a * pow(deltaL, 2) + b * deltaL + c;
-	double f_deltaU = pow(deltaU, 3) + a * pow(deltaU, 2) + b * deltaU + c;
-
-	if ((f_deltaL < 0) && (f_deltaU > 0) && (deltaL < alpha) && (beta < deltaU)) {
-		// This element has a small deformation, no need to do SVD
-		m_isSVD = false;
-		/*cout << "No svd! " << endl;
-		cout << "fdeltaL: " << f_deltaL << endl;
-		cout << "fdeltaU: " << f_deltaU << endl;
-		cout << "alpha: " << alpha << endl;
-		cout << "beta: " << beta << endl;*/
-
+		if ((f_deltaL < 0) && (f_deltaU > 0) && (deltaL < alpha) && (beta < deltaU)) {
+			// This element has a small deformation, no need to do SVD
+			m_isSVD = false;
+			//cout << "no no " << endl;
+		}
+		else {
+			// large deformation, need to do SVD
+			m_isSVD = true;
+			//cout << "Do svd! " << endl;
+			//cout << "F" << this->F << endl;
+			//cout << "same" << same << endl;
+			//cout << "a" << a << endl;
+			//cout << "b " << b << endl;
+			//cout << "tem" << a * a - 3.0 *b << endl;
+			//cout << "fdeltaL: " << f_deltaL << endl;
+			//cout << "fdeltaU: " << f_deltaU << endl;
+			//cout << "alpha: " << alpha << endl;
+			//cout << "beta: " << beta << endl;
+		}
 	}
 	else {
-		// large deformation, need to do SVD
+		// no solutions
 		m_isSVD = true;
-		cout << "Do svd! " << endl;
-		cout << "F" << this->F << endl;
-		cout << "same" << same << endl;
-		cout << "a" << a << endl;
-		cout << "b " << b << endl;
-		//cout << "fdeltaL: " << f_deltaL << endl;
-		//cout << "fdeltaU: " << f_deltaU << endl;
-		cout << "alpha: " << alpha << endl;
-		cout << "beta: " << beta << endl;
+		//cout << "Do svd!no sol " << endl;
 
 	}
+	//m_isSVD = true;
+	m_isSVD = false;
 
 	return m_isSVD;
 }

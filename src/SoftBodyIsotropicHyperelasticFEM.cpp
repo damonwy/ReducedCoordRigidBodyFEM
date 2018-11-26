@@ -1,4 +1,4 @@
-#include "SoftBodyInvertibleFEM.h"
+#include "SoftBodyIsotropicHyperelasticFEM.h"
 
 #include <iostream>
 
@@ -12,18 +12,18 @@
 using namespace std;
 using namespace Eigen;
 
-SoftBodyInvertibleFEM::SoftBodyInvertibleFEM() {
+SoftBodyIsotropicHyperelasticFEM::SoftBodyIsotropicHyperelasticFEM() {
 	m_isInverted = false;
 }
 
-SoftBodyInvertibleFEM::SoftBodyInvertibleFEM(double density, double young, double poisson, Material material):
-SoftBody(density, young, poisson, material)
+SoftBodyIsotropicHyperelasticFEM::SoftBodyIsotropicHyperelasticFEM(double density, double young, double poisson, Material material) :
+	SoftBody(density, young, poisson, material)
 {
 	m_isInverted = false;
 	m_isGravity = true;
 }
 
-void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
+void SoftBodyIsotropicHyperelasticFEM::computeForce_(Vector3d grav, VectorXd &f) {
 	// Computes force vector
 	if (m_isGravity) {
 		for (int i = 0; i < (int)m_nodes.size(); i++) {
@@ -46,7 +46,7 @@ void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 	}
 }
 
-void SoftBodyInvertibleFEM::computeStiffness_(MatrixXd &K) {
+void SoftBodyIsotropicHyperelasticFEM::computeStiffness_(MatrixXd &K) {
 	VectorXd df(3 * m_nodes.size());
 	VectorXd temp = df;
 	VectorXd Dx = df;
@@ -84,7 +84,7 @@ void SoftBodyInvertibleFEM::computeStiffness_(MatrixXd &K) {
 
 }
 
-void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {
+void SoftBodyIsotropicHyperelasticFEM::computeStiffnessSparse_(vector<T> &K_) {
 	VectorXd df(3 * m_nodes.size());
 	VectorXd Dx = df;
 	for (int i = 0; i < (int)m_tets.size(); i++) {
@@ -98,12 +98,12 @@ void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {
 				df.setZero();
 				Dx.setZero();
 				Dx(3 * id + iii) = 1.0;
-				
+
 
 				//tet->computeForceDifferentials(Dx, df);
 				int irow = col - 3 * id;
 				int icol = col + iii;
-				
+
 				tet->computeInvertibleForceDifferentialsSparse(Dx, irow, icol, K_);
 
 				//tet->computeInvertibleForceDifferentials(Dx, df);
@@ -111,5 +111,4 @@ void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {
 			}
 		}
 	}
-
 }
