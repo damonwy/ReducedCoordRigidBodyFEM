@@ -341,7 +341,7 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		//cout << "ddot" << qddot << endl;
-		cout << "qdot1" << qdot1 << endl;
+		//cout << "qdot1" << qdot1 << endl;
 
 		yk.segment(0, nr) = q1;
 		yk.segment(nr, nr) = qdot1;
@@ -575,8 +575,8 @@ shared_ptr<Solution> SolverDense::solve() {
 
 			}
 			qddot = (qdot1 - qdot0) / h;
-			cout << "ddot" << qddot << endl;
-			cout << "qdot1" << qdot1 << endl;
+			//cout << "ddot" << qddot << endl;
+			//cout << "qdot1" << qdot1 << endl;
 			q1 = q0 + h * qdot1;
 			yk.segment(0, nr) = q1;
 			yk.segment(nr, nr) = qdot1;

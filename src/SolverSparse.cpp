@@ -296,58 +296,61 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
-			//int rows = MDKr_sp.rows() + G_sp.rows();
-			//int cols = MDKr_sp.cols() + G_sp.rows();
-			//MatrixXd LHS(rows, cols);
-			//VectorXd rhs(rows);
-			//LHS.setZero();
-			//rhs.setZero();
+			int rows = MDKr_sp.rows() + G_sp.rows();
+			int cols = MDKr_sp.cols() + G_sp.rows();
+			MatrixXd LHS(rows, cols);
+			VectorXd rhs(rows);
+			LHS.setZero();
+			rhs.setZero();
 
-			//MatrixXd MDKr_ = MatrixXd(MDKr_sp);
-			//MatrixXd G = MatrixXd(G_sp);
+			MatrixXd MDKr_ = MatrixXd(MDKr_sp);
+			MatrixXd G = MatrixXd(G_sp);
 
-			//LHS.block(0, 0, MDKr_.rows(), MDKr_.cols()) = MDKr_;
-			//LHS.block(0, MDKr_.cols(), MDKr_.rows(), G.rows()) = G.transpose();
-			//LHS.block(MDKr_.rows(), 0, G.rows(), G.cols()) = G;
-			//rhs.segment(0, fr_.rows()) = fr_;
-			//rhs.segment(fr_.rows(), g.rows()) = rhsG;
+			LHS.block(0, 0, MDKr_.rows(), MDKr_.cols()) = MDKr_;
+			LHS.block(0, MDKr_.cols(), MDKr_.rows(), G.rows()) = G.transpose();
+			LHS.block(MDKr_.rows(), 0, G.rows(), G.cols()) = G;
+			rhs.segment(0, fr_.rows()) = fr_;
+			rhs.segment(fr_.rows(), g.rows()) = rhsG;
 
-			//VectorXd sol = LHS.ldlt().solve(rhs);
-			//qdot1 = sol.segment(0, nr);
-			//VectorXd l = sol.segment(nr, sol.rows() - nr);
-			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
-			program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
-			program_->setParamInt(MSK_IPAR_LOG, 10);
-			program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
-			program_->setNumberOfVariables(nr);
-			program_->setObjectiveMatrix(MDKr_sp);
-			//sparse_to_file_as_dense(MDKr_sp, "MDKr_s");
-
-			program_->setObjectiveVector(-fr_);
-			////vec_to_file(fr_, "fr_s");
-
-			program_->setNumberOfEqualities(ne);
-			program_->setEqualityMatrix(G_sp);
-			//sparse_to_file_as_dense(G_sp, "G_s");
-
-			program_->setEqualityVector(rhsG);
-
-			////vec_to_file(rhsG, "rhsG_s");
-
-			bool success = program_->solve();
-			VectorXd sol = program_->getPrimalSolution();
+			VectorXd sol = LHS.ldlt().solve(rhs);
 			qdot1 = sol.segment(0, nr);
-			////vec_to_file(qdot1, "qdot1_s");
-			VectorXd l = program_->getDualEquality();
+			VectorXd l = sol.segment(nr, sol.rows() - nr);
+
+
+
+			//shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
+			//program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
+			//program_->setParamInt(MSK_IPAR_LOG, 10);
+			//program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
+			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
+			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
+			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
+			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
+			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
+			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
+			//program_->setNumberOfVariables(nr);
+			//program_->setObjectiveMatrix(MDKr_sp);
+			////sparse_to_file_as_dense(MDKr_sp, "MDKr_s");
+
+			//program_->setObjectiveVector(-fr_);
+			//////vec_to_file(fr_, "fr_s");
+
+			//program_->setNumberOfEqualities(ne);
+			//program_->setEqualityMatrix(G_sp);
+			////sparse_to_file_as_dense(G_sp, "G_s");
+
+			//program_->setEqualityVector(rhsG);
+
+			//////vec_to_file(rhsG, "rhsG_s");
+
+			//bool success = program_->solve();
+			//VectorXd sol = program_->getPrimalSolution();
+			//qdot1 = sol.segment(0, nr);
+			//////vec_to_file(qdot1, "qdot1_s");
+			//VectorXd l = program_->getDualEquality();
 			//vec_to_file(l, "l_s");
-			constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
-			constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
+			//constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
+			//constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
 
 		}
 		else if (ne == 0 && ni > 0) {  // Just inequality
@@ -408,7 +411,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		//	VectorXd sol = program_->getPrimalSolution();
 		//	qdot1 = sol.segment(0, nr);
 		//}
-
+		
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		//cout << "ddot" << qddot << endl;

@@ -84,10 +84,7 @@ public:
 	std::shared_ptr<SoftBody> next;
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
 	bool m_isInverted;
-	Matrix9x12d dDsdU;	// the derivative of the Ds matrix w.r.t the displacement vector u, Ds has 9 entries
-						// and the u vector has 12 entries
-						// constant (does not change during simulation)
-	Vector108d dDsdU_vec;
+
 protected:
 	bool m_isInvertible;
 	bool m_isGravity;
