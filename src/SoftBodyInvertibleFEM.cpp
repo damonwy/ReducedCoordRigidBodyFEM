@@ -8,6 +8,7 @@
 #include "Body.h"
 #include "MatrixStack.h"
 #include "Tetrahedron.h"
+#include "MatlabDebug.h"
 
 using namespace std;
 using namespace Eigen;
@@ -47,6 +48,14 @@ void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 }
 
 void SoftBodyInvertibleFEM::computeStiffness_(MatrixXd &K) {
+	for (int i = 0; i < (int)m_tets.size(); i++) {
+		auto tet = m_tets[i];
+		tet->computeInvertibleForceDifferentials(K);
+
+	}
+	
+
+	/*
 	VectorXd df(3 * m_nodes.size());
 	VectorXd temp = df;
 	VectorXd Dx = df;
@@ -81,7 +90,7 @@ void SoftBodyInvertibleFEM::computeStiffness_(MatrixXd &K) {
 			}
 		}
 	}
-
+*/
 }
 
 void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {

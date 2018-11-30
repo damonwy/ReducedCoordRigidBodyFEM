@@ -9,7 +9,7 @@ public:
 	SoftBodyIsotropicHyperelasticFEM();
 	SoftBodyIsotropicHyperelasticFEM(double density, double young, double poisson, Material material);
 	virtual ~SoftBodyIsotropicHyperelasticFEM() {};
-
+	
 
 protected:
 	void computeForce_(Vector3d grav, Eigen::VectorXd &f);

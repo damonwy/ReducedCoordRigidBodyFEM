@@ -16,7 +16,7 @@ class Tetrahedron
 {
 public:
 	Tetrahedron();
-	Tetrahedron(double young, double poisson, double density, Material material, const std::vector<std::shared_ptr<Node>> &nodes);
+	Tetrahedron(double young, double poisson, double density, Material material, const std::vector<std::shared_ptr<Node>> &nodes, const Vector108d &dDsdU_vec);
 	virtual ~Tetrahedron() {}
 
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
@@ -25,6 +25,7 @@ public:
 
 	Matrix3d computePKStress(Matrix3d F, double mu, double lambda);
 	Matrix3d computePKStressDerivative(Matrix3d F, Matrix3d dF, double mu, double lambda);
+	void computeForceDifferentials(Eigen::MatrixXd &K_global);
 	void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
 	void computeForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
 	Eigen::VectorXd computeElasticForces(Eigen::VectorXd f);
@@ -33,6 +34,9 @@ public:
 	bool checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F);
 	Matrix3x4d computeAreaWeightedVertexNormals();
 	Eigen::VectorXd computeInvertibleElasticForces(Eigen::VectorXd f);
+
+
+	void computeInvertibleForceDifferentials(Eigen::MatrixXd &K);
 	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
 	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, int row, int col, Eigen::MatrixXd &K);
 	void computeInvertibleForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
@@ -46,6 +50,20 @@ public:
 	bool m_isInverted;
 	int i;
 	int clamped;
+
+	// IsotropicHyperelasticFEM
+	void compute_dFdU(const Vector108d &dDsdU_vec);
+	void compute_dPdF(Vector81d &dPdF, int clamped);
+	void compute_dGdF(const Vector3d &b0, const Vector3d &b1, const Vector3d &b2, const Vector81d &dPdF, Vector81d &dGdF);
+	void computeTetK(Eigen::MatrixXd &K);
+	void computeEnergyGradient(Vector3d invariants, Vector3d &gradient);
+	void computeEnergyHessian(Vector3d invariants, Vector6d &hessian);
+	int tensor9x9Index(int i, int j, int m, int n);
+	double gammaValue(int i, int j, Vector3d sigma, Vector3d invariants, Vector3d gradient, Vector6d hessian);
+
+	Vector9i rowMajorMatrixToTeran;
+	Vector9i teranToRowMajorMatrix;
+
 
 private:
 	bool m_isInvertible;
@@ -93,4 +111,10 @@ private:
 	Matrix3d dPhat;
 	Matrix3d dH;		// the nodal force differential of the first three vertices
 	Matrix12d K;			// 12x12 stiffness matrix	
+
+	
+
+	Vector108d dFdU;	// the derivative of the deformation gradient w.r.t the displacement vector u,
+						// stored as a vector
+	
 };

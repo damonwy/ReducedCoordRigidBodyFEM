@@ -28,7 +28,11 @@ typedef Eigen::Matrix<double, 2, 1> Vector2d;
 typedef Eigen::Matrix<double, 3, 1> Vector3d;
 typedef Eigen::Matrix<double, 4, 1> Vector4d;
 typedef Eigen::Matrix<double, 6, 1> Vector6d;
+typedef Eigen::Matrix<int, 9, 1> Vector9i;
+typedef Eigen::Matrix<double, 9, 1> Vector9d;
 typedef Eigen::Matrix<double, 12, 1> Vector12d;
+typedef Eigen::Matrix<double, 81, 1> Vector81d;
+typedef Eigen::Matrix<double, 108, 1> Vector108d;
 
 typedef Eigen::Matrix<double, 3, 3> Matrix3d;
 typedef Eigen::Matrix<double, 4, 4> Matrix4d;
@@ -48,8 +52,11 @@ typedef Eigen::Matrix<double, 5, 6> Matrix5x6d;
 typedef Eigen::Matrix<double, 6, 2> Matrix6x2d;
 typedef Eigen::Matrix<double, 6, 3> Matrix6x3d;
 
+typedef Eigen::Matrix<double, 9, 12> Matrix9x12d;
+
 typedef Eigen::TensorFixedSize<double, Eigen::Sizes<4, 4, 6>> Tensor4x4x6d;
 typedef Eigen::TensorFixedSize<double, Eigen::Sizes<6, 2, 2>> Tensor6x2x2d;
+
 
 enum Integrator { REDMAX_EULER, REDUCED_ODE45, REDMAX_ODE45 };
 enum Material {LINEAR, CO_ROTATED, STVK, NEO_HOOKEAN, MOONEY_RIVLIN};
@@ -97,4 +104,7 @@ int SVD(Eigen::Matrix3d &F,
 
 void eigen_sym(Eigen::Matrix3d &a, Eigen::Vector3d &eig_val, Eigen::Matrix3d &eig_vec);
 Eigen::Vector3d findOrthonormalVector(Eigen::Vector3d input);
+int tensor9x12Index(int i, int j, int m, int n);
+
+
 #endif // MUSCLEMASS_SRC_MLCOMMON_H_

@@ -16,6 +16,8 @@
 #include "BodyCuboid.h"
 #include "SoftBodyNull.h"
 #include "SoftBodyInvertibleFEM.h"
+#include "SoftBodyIsotropicHyperelasticFEM.h"
+
 #include "SoftBody.h"
 #include "FaceTriangle.h"
 
@@ -579,7 +581,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "box10_1_1");
+	/*	auto softbody = make_shared<SoftBodyIsotropicHyperelasticFEM>(0.001 * density, young, possion, NEO_HOOKEAN);
+		softbody->load(RESOURCE_DIR, "box10_1_1");
+		m_softbodies.push_back(softbody);
+		m_nsoftbodies++;*/
+
+		auto softbody = addSoftBody(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "box10_1_1");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -616,7 +623,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc"); //
+		auto softbody = make_shared<SoftBodyIsotropicHyperelasticFEM>(0.001 * density, young, possion, STVK);
+		softbody->load(RESOURCE_DIR, "muscle_cyc_cyc");
+		m_softbodies.push_back(softbody);
+		m_nsoftbodies++;
+
+		//auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc"); //
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 

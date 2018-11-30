@@ -38,6 +38,33 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 	m_color << 1.0f, 1.0f, 0.0f;
 	m_isInverted = false;
 	//m_isGravity = true;
+	// Compute dDsdU = d Ds / d U
+	// constant
+	this->dDsdU.block<9, 9>(0, 0).setIdentity();
+	this->dDsdU.block<3, 3>(0, 9) = Matrix3d::Identity()*-1.0;
+	this->dDsdU.block<3, 3>(3, 9) = Matrix3d::Identity()*-1.0;
+	this->dDsdU.block<3, 3>(6, 9) = Matrix3d::Identity()*-1.0;
+	dDsdU.setZero();
+	dDsdU_vec.setZero();
+	dDsdU_vec[tensor9x12Index(0, 0, 0, 0)] = 1.0;
+	dDsdU_vec[tensor9x12Index(1, 0, 0, 1)] = 1.0;
+	dDsdU_vec[tensor9x12Index(2, 0, 0, 2)] = 1.0;
+	dDsdU_vec[tensor9x12Index(0, 1, 1, 0)] = 1.0;
+	dDsdU_vec[tensor9x12Index(1, 1, 1, 1)] = 1.0;
+	dDsdU_vec[tensor9x12Index(2, 1, 1, 2)] = 1.0;
+	dDsdU_vec[tensor9x12Index(0, 2, 2, 0)] = 1.0;
+	dDsdU_vec[tensor9x12Index(1, 2, 2, 1)] = 1.0;
+	dDsdU_vec[tensor9x12Index(2, 2, 2, 2)] = 1.0;
+	dDsdU_vec[tensor9x12Index(0, 0, 3, 0)] = -1.0;
+	dDsdU_vec[tensor9x12Index(0, 1, 3, 0)] = -1.0;
+	dDsdU_vec[tensor9x12Index(0, 2, 3, 0)] = -1.0;
+	dDsdU_vec[tensor9x12Index(1, 0, 3, 1)] = -1.0;
+	dDsdU_vec[tensor9x12Index(1, 1, 3, 1)] = -1.0;
+	dDsdU_vec[tensor9x12Index(1, 2, 3, 1)] = -1.0;
+	dDsdU_vec[tensor9x12Index(2, 0, 3, 2)] = -1.0;
+	dDsdU_vec[tensor9x12Index(2, 1, 3, 2)] = -1.0;
+	dDsdU_vec[tensor9x12Index(2, 2, 3, 2)] = -1.0;
+
 }
 
 void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
@@ -86,7 +113,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		for (int ii = 0; ii < 4; ii++) {
 			tet_nodes.push_back(m_nodes[output_mesh.tetrahedronlist[4 * i + ii]]);
 		}
-		auto tet = make_shared<Tetrahedron>(m_young, m_poisson, m_density, m_material, tet_nodes);
+		auto tet = make_shared<Tetrahedron>(m_young, m_poisson, m_density, m_material, tet_nodes, this->dDsdU_vec);
 		tet->i = i;
 		tet->setInvertiblity(m_isInvertible);
 		m_tets.push_back(tet);
@@ -650,26 +677,31 @@ void SoftBody::computeStiffness(MatrixXd &K) {
 }
 
 void SoftBody::computeStiffness_(MatrixXd &K) {
-	VectorXd df(3 * m_nodes.size());
-	VectorXd Dx = df;
-
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
-		for (int ii = 0; ii < 4; ii++) {
-			auto node = tet->m_nodes[ii];
-			int id = node->i;
-			int col = node->idxM;
-
-			for (int iii = 0; iii < 3; iii++) {
-				df.setZero();
-				Dx.setZero();
-				Dx(3 * id + iii) = 1.0;
-				tet->computeForceDifferentials(Dx, df);
-				//K.col(col + iii) += df;
-				K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
-			}
-		}
+		tet->computeForceDifferentials(K);
 	}
+
+	//VectorXd df(3 * m_nodes.size());
+	//VectorXd Dx = df;
+
+	//for (int i = 0; i < (int)m_tets.size(); i++) {
+	//	auto tet = m_tets[i];
+	//	for (int ii = 0; ii < 4; ii++) {
+	//		auto node = tet->m_nodes[ii];
+	//		int id = node->i;
+	//		int col = node->idxM;
+
+	//		for (int iii = 0; iii < 3; iii++) {
+	//			df.setZero();
+	//			Dx.setZero();
+	//			Dx(3 * id + iii) = 1.0;
+	//			tet->computeForceDifferentials(Dx, df);
+	//			//K.col(col + iii) += df;
+	//			K.block(col - 3 * id, col + iii, 3 * m_nodes.size(), 1) += df;
+	//		}
+	//	}
+	//}
 }
 
 void SoftBody::computeStiffnessSparse(vector<T> &K_) {

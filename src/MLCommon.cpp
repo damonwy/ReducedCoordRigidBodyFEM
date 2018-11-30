@@ -84,6 +84,39 @@ void eigen_sym(Eigen::Matrix3d &a, Eigen::Vector3d &eig_val, Eigen::Matrix3d &ei
 
 }
 
+/*
+Converts a 3x3x3x4 tensor index to 9x12 matrix index
+i goes from [0, 2] inclusively
+j goes from [0, 2] inclusively
+m goes from [0, 3] inclusively
+n goes from [0, 2] inclusively
+*/
+
+int tensor9x12Index(int i, int j, int m, int n)
+{
+	/*
+	|  dF_00/du_v0x  dF_00/du_v0y  dF_00/du_v0z dF_00/du_v1x ...  dF_00/du_v3z  |
+	|  dF_01/du_v0x  dF_01/du_v0y  dF_01/du_v0z dF_01/du_v1x ...  dF_01/du_v3z  |
+	|  dF_02/du_v0x  dF_02/du_v0y  dF_02/du_v0z dF_02/du_v1x ...  dF_02/du_v3z  |
+	|  dF_10/du_v0x  dF_10/du_v0y  dF_10/du_v0z dF_10/du_v1x ...  dF_10/du_v3z  |
+	|                                      ...                                  |
+	|  dF_22/du_v0x  dF_22/du_v0y  dF_22/du_v0z dF_22/du_v1x ...  dF_22/du_v3z  |
+	| u_00 u_01 u_02 |   | v0x v0y v0z |
+	where u is = | u_10 u_11 u_12 | = | v1x v1y v1z |
+	| u_20 u_21 u_22 |   | v2x v2y v2z |
+	| u_30 u_31 u_32 |   | v3x v3y v3z |
+	*/
+	int rowIndex_in9x12Matrix = 3 * i + j;
+	int columnIndex_in9x12Matrix = 3 * m + n;
+	/*
+	the resulting index is row major
+	e.g.,
+	| e[0]  e[1]  e[2] ...  e[9] |
+	| e[10] e[11]      ...       |
+	*/
+	return (12 * rowIndex_in9x12Matrix + columnIndex_in9x12Matrix);
+}
+
 int SVD(Eigen::Matrix3d &F,
 	Eigen::Matrix3d &U,
 	Eigen::Vector3d &Sigma,
