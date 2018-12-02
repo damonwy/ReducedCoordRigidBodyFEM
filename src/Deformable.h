@@ -34,8 +34,10 @@ public:
 
 	void computeJacobian(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
 	void computeJacobianSparse(std::vector<T> &J_, std::vector<T> &Jdot_);
-	void computeMass(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
-	void computeMassSparse(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f);
+	void computeMass(Eigen::MatrixXd &M);
+	void computeForce(Vector3d grav, Eigen::VectorXd &f);
+	void computeMassSparse(std::vector<T> &M_);
+
 	void computeForceDamping(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &D);
 	void computeForceDampingSparse(Vector3d grav, Eigen::VectorXd &f, std::vector<T> &D_);
 
@@ -54,8 +56,9 @@ public:
 	virtual void scatterDofs_(Eigen::VectorXd &y, int nr) {}
 	virtual void scatterDDofs_(Eigen::VectorXd &ydot, int nr) {}
 
-	virtual void computeMass_(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f) {}
-	virtual void computeMassSparse_(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f) {}
+	virtual void computeMass_(Eigen::MatrixXd &M) {}
+	virtual void computeMassSparse_(std::vector<T> &M_) {}
+	virtual void computeForce_(Vector3d grav, Eigen::VectorXd &f) {}
 	virtual void computeForceDamping_(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &D) {}
 	virtual void computeForceDampingSparse_(Vector3d grav, Eigen::VectorXd &f, std::vector<T> &D_) {}
 	virtual void computeEnergies_(Vector3d grav, Energy &ener) {}

@@ -15,8 +15,9 @@ DeformableSpring::DeformableSpring() {
 
 
 DeformableSpring::DeformableSpring(int n_nodes, int &countS, int &countCM):
-Deformable(countS, countCM)
+Deformable(countS, countCM), m_n_nodes(n_nodes)
 {
+
 	for (int i = 0; i < n_nodes; i++) {
 		auto node = make_shared<Node>();
 		node->r = 0.2;
@@ -181,55 +182,40 @@ void DeformableSpring::scatterDDofs_(VectorXd &ydot, int nr) {
 	}
 }
 
-void DeformableSpring::computeMass_(Vector3d grav, MatrixXd &M, VectorXd &f) {
+void DeformableSpring::computeMass_(MatrixXd &M) {
 	// Computes maximal mass matrix
-	int n_nodes = (int)m_nodes.size();
-	double m = m_mass / n_nodes;
+	double m = m_mass / m_n_nodes;
 	// Computes force vector
 	Matrix3d I3 = Matrix3d::Identity();
 
-	for (int i = 0; i < n_nodes; i++) {
+	for (int i = 0; i < m_n_nodes; i++) {
 		int idxM = m_nodes[i]->idxM;
 		M.block<3, 3>(idxM, idxM) = m * I3;
-		f.segment<3>(idxM) += m * grav;
 	}
 
-	for (int i = 0; i < n_nodes - 1; i++) {
-		int row0 = m_nodes[i]->idxM;
-		int row1 = m_nodes[i + 1]->idxM;
-		Vector3d x0 = m_nodes[i]->x;
-		Vector3d x1 = m_nodes[i + 1]->x;
-		Vector3d dx = x1 - x0;
-
-		double l = dx.norm();
-		double L = m_nodes[i]->L;
-		double e = (l - L) / L;
-
-		Vector3d fs = m_K * e * (1.0 / L) / l* dx;
-
-		f.segment<3>(row0) += fs;
-		f.segment<3>(row1) -= fs;
-	}
 }
 
-void DeformableSpring::computeMassSparse_(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f) {
+void DeformableSpring::computeMassSparse_(std::vector<T> &M_) {
 	// Computes maximal mass matrix
-	int n_nodes = (int)m_nodes.size();
-	double m = m_mass / n_nodes;
-	// Computes force vector
-	Matrix3d I3 = Matrix3d::Identity();
+	double m = m_mass / m_n_nodes;
 
-	for (int i = 0; i < n_nodes; i++) {
+	for (int i = 0; i < m_n_nodes; i++) {
 		int idxM = m_nodes[i]->idxM;
 		for (int j = 0; j < 3; ++j) {
 			M_.push_back(T(idxM + j, idxM + j, m));
 		}
-
-		f.segment<3>(idxM) += m * grav;
 	}
+}
 
-	for (int i = 0; i < n_nodes - 1; i++) {
+void DeformableSpring::computeForce_(Vector3d grav, VectorXd &f) {
+	// Computes maximal mass matrix
+	double m = m_mass / m_n_nodes;
+	// Computes force vector
+
+	for (int i = 0; i < m_n_nodes - 1; i++) {
 		int row0 = m_nodes[i]->idxM;
+		f.segment<3>(row0) += m * grav;
+
 		int row1 = m_nodes[i + 1]->idxM;
 		Vector3d x0 = m_nodes[i]->x;
 		Vector3d x1 = m_nodes[i + 1]->x;
@@ -245,7 +231,10 @@ void DeformableSpring::computeMassSparse_(Vector3d grav, std::vector<T> &M_, Eig
 		f.segment<3>(row1) -= fs;
 	}
 
+	f.segment<3>(m_nodes[m_n_nodes - 1]->idxM) += m * grav;
 }
+
+
 
 void DeformableSpring::computeForceDamping_(Vector3d grav, VectorXd &f, MatrixXd &D) {
 	// Computes maximal damping vector and matrix

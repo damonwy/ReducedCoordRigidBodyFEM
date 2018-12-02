@@ -12,7 +12,6 @@
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
 #include "MatlabDebug.h"
-#include "ChronoTimer.h"
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
@@ -21,100 +20,88 @@ using namespace std;
 using namespace Eigen;
 
 void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir) {
-	int ne = ner + nem;
-	int ni = nim + nir;
-	Mm_sp.resize(nm, nm);
-	Mm_sp.setZero();
-	Mr_sp.resize(nr, nr);
-	Mr_sp.setZero();
-	Mm_.clear();
-
-	Mr_sp_temp.resize(nr, nr);
-	Mr_sp_temp.setZero();
-	MDKr_sp.resize(nr, nr);
-	MDKr_sp.setZero();
-
-	fm.resize(nm);
-	fr.resize(nr);
-	fr_.resize(nr);
+	ni = nim + nir;
 	fm.setZero();
 	fr.setZero();
 	fr_.setZero();
-	tmp.resize(nm);
 	tmp.setZero();
+	
+	Mr_sp.resize(nr, nr);
+	Mr_sp.data().squeeze();
+
+	Mr_sp_temp.resize(nr, nr);
+	Mr_sp_temp.data().squeeze();
+
+	MDKr_sp.resize(nr, nr);
+	MDKr_sp.data().squeeze();
 
 	Kr_sp.resize(nr, nr);
-	Kr_sp.setZero();
+	Kr_sp.data().squeeze();
 	Kr_.clear();
+
 	Dr_sp.resize(nr, nr);
-	Dr_sp.setZero();
+	Dr_sp.data().squeeze();
 	Dr_.clear();
+	
 	Dm_sp.resize(nm, nm);
-	Dm_sp.setZero();
+	Dm_sp.data().squeeze();
 	Dm_.clear();
 
 	K_sp.resize(nm, nm);
 	K_sp.data().squeeze();
-	K_sp.setZero();
 	K_.clear();
 
 	Km_sp.resize(nm, nm);
-	Km_sp.setZero();
+	Km_sp.data().squeeze();
 	Km_.clear();
 
-	J_dense.resize(m_world->m_dense_nm, m_world->m_dense_nr);
 	J_dense.setZero();
-	Jdot_dense.resize(m_world->m_dense_nm, m_world->m_dense_nr);
 	Jdot_dense.setZero();
 
 	J_sp.resize(nm, nr);
-	J_sp.setZero();
+	J_sp.data().squeeze();
 	J_.clear();
-	Jdot_sp.resize(nm, nr);
-	Jdot_sp.setZero();
-	Jdot_.clear();
 
+	Jdot_sp.resize(nm, nr);
+	Jdot_sp.data().squeeze();
+	Jdot_.clear();
+	
 	Gm_sp.resize(nem, nm);
 	Gm_sp.data().squeeze();
-	Gm_sp.setZero();
-	Gmdot_sp.resize(nem, nm);
-	Gmdot_sp.setZero();
 	Gm_.clear();
+
+	Gmdot_sp.resize(nem, nm);
+	Gmdot_sp.data().squeeze();
 	Gmdot_.clear();
 
-	gm.resize(nem);
 	gm.setZero();
-	gmdot.resize(nem);
 	gmdot.setZero();
-	gmddot.resize(nem);
 	gmddot.setZero();
 
 	Gr_sp.resize(ner, nr);
 	Gr_sp.data().squeeze();
-	Gr_sp.setZero();
-	Grdot_sp.resize(ner, nr);
-	Grdot_sp.setZero();
 	Gr_.clear();
+
+	Grdot_sp.resize(ner, nr);
+	Grdot_sp.data().squeeze();
 	Grdot_.clear();
 
-	gr.resize(ner);
 	gr.setZero();
-	grdot.resize(ner);
 	grdot.setZero();
-	grddot.resize(ner);
 	grddot.setZero();
 
-	g.resize(ne);
-	rhsG.resize(ne);
-	gdot.resize(ne);
 	g.setZero();
 	gdot.setZero();
 	rhsG.setZero();
 
 	Cm_sp.resize(nim, nm);
-	Cm_sp.setZero();
+	Cm_sp.data().squeeze();
+	Cm_.clear();
+
 	Cmdot_sp.resize(nim, nm);
-	Cmdot_sp.setZero();
+	Cmdot_sp.data().squeeze();
+	Cmdot_.clear();
+
 	cm.resize(nim);
 	cm.setZero();
 	cmdot.resize(nim);
@@ -123,63 +110,110 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	cmddot.setZero();
 
 	Cr_sp.resize(nir, nr);
-	Cr_sp.setZero();
+	Cr_sp.data().squeeze();
+	Cr_.clear();
+
 	Crdot_sp.resize(nir, nr);
-	Crdot_sp.setZero();
+	Crdot_sp.data().squeeze();
+	Crdot_.clear();
+
 	cr.resize(nir);
 	cr.setZero();
 	crdot.resize(nir);
 	crdot.setZero();
 	crddot.resize(nir);
 	crddot.setZero();
+
+	G_sp.resize(ne, nr);
+	G_sp.data().squeeze();
+
 }
 
 VectorXd SolverSparse::dynamics(VectorXd y)
 {
-	ChronoTimer timer("Test");
-	SparseMatrix<double, RowMajor> G_sp;
-
+	//SparseMatrix<double, RowMajor> G_sp;
 	switch (m_integrator)
 	{
 	case REDMAX_EULER:
 	{
-		int nr = m_world->nr;
-		int nm = m_world->nm;
+		if (step == 0) {
+			// constant during simulation
+			nr = m_world->nr;
+			nm = m_world->nm;
+			nem = m_world->nem;
+			ner = m_world->ner;
+			ne = ner + nem;
 
-		int nem = m_world->nem;
-		int ner = m_world->ner;
-		int ne = nem + ner;
+			nim = m_world->nim;
+			nir = m_world->nir;
+			ni = nim + nir;
 
-		int nim = m_world->nim;
-		int nir = m_world->nir;
-		int ni = nim + nir;
-		G_sp.resize(ne, nr);
+			Mm_sp.resize(nm, nm);
+			Mm_sp.data().squeeze();
+			Mm_.clear();
+
+			m_dense_nm = m_world->m_dense_nm;
+			m_dense_nr = m_world->m_dense_nr;
+
+			yk.resize(2 * nr);
+			ydotk.resize(2 * nr);
+
+			fm.resize(nm);
+			fr.resize(nr);
+			fr_.resize(nr);
+
+			tmp.resize(nm);
+
+			J_dense.resize(m_dense_nm, m_dense_nr);
+			Jdot_dense.resize(m_dense_nm, m_dense_nr);
+
+			gr.resize(ner);
+			grdot.resize(ner);
+			grddot.resize(ner);
+			g.resize(ne);
+			rhsG.resize(ne);
+			gdot.resize(ne);
+			gm.resize(nem);
+			gmdot.resize(nem);
+			gmddot.resize(nem);
+
+			body0 = m_world->getBody0();
+			joint0 = m_world->getJoint0();
+			deformable0 = m_world->getDeformable0();
+			softbody0 = m_world->getSoftBody0();
+			constraint0 = m_world->getConstraint0();
+			spring0 = m_world->getSpring0();
+
+			t = m_world->getTspan()(0);
+			h = m_world->getH();
+			hsquare = h * h;
+			this->grav = m_world->getGrav();
+
+		}
+
+		nim = m_world->nim;
+		nir = m_world->nir;
+		ni = nim + nir;	
+
+		q0 = y.segment(0, nr);
+		qdot0 = y.segment(nr, nr);
 
 		initMatrix(nm, nr, nem, ner, nim, nir);
 
-		auto body0 = m_world->getBody0();
-		auto joint0 = m_world->getJoint0();
-		auto deformable0 = m_world->getDeformable0();
-		auto softbody0 = m_world->getSoftBody0();
-		auto constraint0 = m_world->getConstraint0();
-		auto spring0 = m_world->getSpring0();
+		if (step == 0) {
+			body0->computeMassSparse(Mm_);
+			deformable0->computeMassSparse(Mm_);
+			softbody0->computeMassSparse(Mm_);
+			Mm_sp.setFromTriplets(Mm_.begin(), Mm_.end());
+		}
 
-		double t = m_world->getTspan()(0);
-		double h = m_world->getH();
-		Vector3d grav = m_world->getGrav();
-
-		VectorXd yk(2 * nr);
-		VectorXd ydotk(2 * nr);
-
-		body0->computeMassGravSparse(grav, Mm_, fm);
+		body0->computeGrav(grav, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);
 
-		deformable0->computeMassSparse(grav, Mm_, fm);
+		deformable0->computeForce(grav, fm);
 		deformable0->computeForceDampingSparse(grav, tmp, Dm_);
 
-		softbody0->computeMassSparse(grav, Mm_);
 		softbody0->computeForce(grav, fm);
-
 		softbody0->computeStiffnessSparse(K_);
 
 		joint0->computeForceStiffnessSparse(fr, Kr_);
@@ -199,10 +233,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		deformable0->computeJacobianSparse(J_, Jdot_);
 		softbody0->computeJacobianSparse(J_);
-
 		spring0->computeForceStiffnessDampingSparse(fm, Km_, Dm_);
 
-		Mm_sp.setFromTriplets(Mm_.begin(), Mm_.end());
 		Km_sp.setFromTriplets(Km_.begin(), Km_.end());
 		Dm_sp.setFromTriplets(Dm_.begin(), Dm_.end());
 		Dr_sp.setFromTriplets(Dr_.begin(), Dr_.end());
@@ -211,18 +243,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		J_sp.setFromTriplets(J_.begin(), J_.end()); // check
 		Jdot_sp.setFromTriplets(Jdot_.begin(), Jdot_.end());
 
-		q0 = y.segment(0, nr);
-		qdot0 = y.segment(nr, nr);
-
-		Mr_sp = J_sp.transpose() * (Mm_sp - h * h * K_sp) * J_sp;
-		//sparse_to_file_as_dense(K_sp, "K_sp");
-
+		Mr_sp = J_sp.transpose() * (Mm_sp - hsquare * K_sp) * J_sp;
 		//Mr_sp_temp = Mr_sp.transpose();
 		//Mr_sp += Mr_sp_temp;
 		//Mr_sp *= 0.5;
 
 		fr_ = Mr_sp * qdot0 + h * (J_sp.transpose() * (fm - Mm_sp * Jdot_sp * qdot0) + fr); // check
-		MDKr_sp = Mr_sp + J_sp.transpose() * (h * Dm_sp - h * h * Km_sp) * J_sp + h * Dr_sp - h * h * Kr_sp;
+		MDKr_sp = Mr_sp + J_sp.transpose() * (h * Dm_sp - hsquare * Km_sp) * J_sp + h * Dr_sp - hsquare * Kr_sp;
 		/*sparse_to_file_as_dense(Mr_sp, "Mr_sp");
 		sparse_to_file_as_dense(J_sp, "J_sp");
 		sparse_to_file_as_dense(Jdot_sp, "Jdot_sp");
@@ -296,27 +323,36 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
-			int rows = MDKr_sp.rows() + G_sp.rows();
-			int cols = MDKr_sp.cols() + G_sp.rows();
+			int rows = nr + ne;
+			int cols = rows;
+
 			MatrixXd LHS(rows, cols);
 			VectorXd rhs(rows);
 			LHS.setZero();
 			rhs.setZero();
+			VectorXd guess = rhs;
+			guess.segment<0>(nr) = qdot0;
 
 			MatrixXd MDKr_ = MatrixXd(MDKr_sp);
 			MatrixXd G = MatrixXd(G_sp);
 
-			LHS.block(0, 0, MDKr_.rows(), MDKr_.cols()) = MDKr_;
-			LHS.block(0, MDKr_.cols(), MDKr_.rows(), G.rows()) = G.transpose();
-			LHS.block(MDKr_.rows(), 0, G.rows(), G.cols()) = G;
-			rhs.segment(0, fr_.rows()) = fr_;
-			rhs.segment(fr_.rows(), g.rows()) = rhsG;
+			LHS.block(0, 0, nr, nr) = MDKr_;
+			LHS.block(0, nr, nr, ne) = G.transpose();
+			LHS.block(nr, 0, ne, nr) = G;
+			SparseMatrix<double> LHS_sp(rows, cols);
+			LHS_sp = LHS.sparseView(1e-8);
 
-			VectorXd sol = LHS.ldlt().solve(rhs);
-			qdot1 = sol.segment(0, nr);
-			VectorXd l = sol.segment(nr, sol.rows() - nr);
+			rhs.segment(0, nr) = fr_;
+			rhs.segment(nr, ne) = rhsG;
 
-
+			//VectorXd sol = LHS.ldlt().solve(rhs);
+			//qdot1 = sol.segment(0, nr);
+			//VectorXd l = sol.segment(nr, sol.rows() - nr);
+			ConjugateGradient< SparseMatrix<double> > cg;
+			cg.setMaxIterations(100);
+			cg.setTolerance(1e-6);
+			cg.compute(LHS_sp);
+			qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
 
 			//shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
 			//program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
@@ -330,25 +366,19 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
 			//program_->setNumberOfVariables(nr);
 			//program_->setObjectiveMatrix(MDKr_sp);
-			////sparse_to_file_as_dense(MDKr_sp, "MDKr_s");
 
 			//program_->setObjectiveVector(-fr_);
-			//////vec_to_file(fr_, "fr_s");
 
 			//program_->setNumberOfEqualities(ne);
 			//program_->setEqualityMatrix(G_sp);
-			////sparse_to_file_as_dense(G_sp, "G_s");
 
 			//program_->setEqualityVector(rhsG);
 
-			//////vec_to_file(rhsG, "rhsG_s");
 
 			//bool success = program_->solve();
 			//VectorXd sol = program_->getPrimalSolution();
 			//qdot1 = sol.segment(0, nr);
-			//////vec_to_file(qdot1, "qdot1_s");
 			//VectorXd l = program_->getDualEquality();
-			//vec_to_file(l, "l_s");
 			//constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
 			//constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
 
@@ -414,8 +444,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
-		//cout << "ddot" << qddot << endl;
-		//cout << "qdot1" << qdot1 << endl;
 
 		yk.segment(0, nr) = q1;
 		yk.segment(nr, nr) = qdot1;
@@ -436,6 +464,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		/*cout << "V" << ener.V << endl;
 		cout << "K" << ener.K << endl;
 		cout << " sum " << ener.V + ener.K << endl;*/
+		step++;
 		return yk;
 	}
 	break;

@@ -34,8 +34,8 @@ public:
 	virtual void countDofs(int &nm, int &nr);
 	virtual void computeJacobian(Eigen::MatrixXd &J);
 	virtual void computeJacobianSparse(std::vector<T> &J_);
-	virtual void computeMass(Vector3d grav, Eigen::MatrixXd &M);
-	virtual void computeMassSparse(Vector3d grav, std::vector<T> &M_);
+	virtual void computeMass(Eigen::MatrixXd &M);
+	virtual void computeMassSparse(std::vector<T> &M_);
 	virtual Energy computeEnergies(Vector3d grav, Energy ener);
 
 	void computeForce(Vector3d grav, Eigen::VectorXd &f);

@@ -15,6 +15,12 @@
 #include "MLCommon.h"
 
 class World;
+class Body;
+class Joint;
+class Deformable;
+class SoftBody;
+class Spring;
+class Constraint;
 
 typedef Eigen::Triplet<double> T;
 
@@ -79,6 +85,26 @@ protected:
 	Integrator m_integrator;
 	int nr;
 	int nm;
+	int ne;
+	int ni;
+	int ner;
+	int nem;
+	int nim;
+	int nir;
+	Eigen::Vector3d grav;
+	Eigen::VectorXd yk;
+	Eigen::VectorXd ydotk;
+	std::shared_ptr<Body> body0;
+	std::shared_ptr<Joint> joint0;
+	std::shared_ptr<Deformable> deformable0;
+	std::shared_ptr<SoftBody> softbody0;
+	std::shared_ptr<Constraint> constraint0;
+	std::shared_ptr<Spring> spring0;
+
+	double t;
+	double h;
+	double hsquare;
+	int step;
 };
 
 #endif // MUSCLEMASS_SRC_SOLVER_H_

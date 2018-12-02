@@ -584,7 +584,7 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 	}
 }
 
-void SoftBody::computeMass(Vector3d grav, MatrixXd &M) {
+void SoftBody::computeMass(MatrixXd &M) {
 	// Computes maximal mass matrix
 
 	Matrix3d I3 = Matrix3d::Identity();
@@ -596,11 +596,11 @@ void SoftBody::computeMass(Vector3d grav, MatrixXd &M) {
 	}
 
 	if (next != nullptr) {
-		next->computeMass(grav, M);
+		next->computeMass(M);
 	}
 }
 
-void SoftBody::computeMassSparse(Vector3d grav, vector<T> &M_) {
+void SoftBody::computeMassSparse(vector<T> &M_) {
 	Matrix3d I3 = Matrix3d::Identity();
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxM = m_nodes[i]->idxM;
@@ -611,7 +611,7 @@ void SoftBody::computeMassSparse(Vector3d grav, vector<T> &M_) {
 	}
 
 	if (next != nullptr) {
-		next->computeMassSparse(grav, M_);
+		next->computeMassSparse(M_);
 	}
 }
 

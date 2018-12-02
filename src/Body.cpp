@@ -26,7 +26,9 @@ m_density(density)
 	E_ji.setIdentity();
 	E_ij.setIdentity();
 	E_wi.setIdentity();
+	R_wi.setIdentity();
 	E_iw.setIdentity();
+	R_iw.setIdentity();
 	E_ip.setIdentity();
 	Ad_ji.setIdentity();
 	Ad_ij.setIdentity();
@@ -37,6 +39,8 @@ m_density(density)
 	phi.setZero();
 	phidot.setZero();
 	wext_i.setZero();
+	fgrav.setZero();
+	fcor.setZero();
 
 	m_attached_color << (float)(rand() % 255)/255.0f,(float)(rand() % 255)/255.0f,(float)(rand() % 255)/255.0f;
 	m_sliding_color << (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f;
@@ -145,17 +149,23 @@ void Body::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 	prog->unbind();
 }
 
-void Body::computeMassGrav(Vector3d grav, MatrixXd &M, VectorXd &f) {
-	// Computes maximal mass matrix and force vector
-	Matrix6d M_i = Matrix6d(I_i.asDiagonal());
-	
+void Body::computeMass(MatrixXd &M) {
+	// Computes maximal mass matrix and force vector	
 	M.block<6, 6>(idxM, idxM) = M_i;
 
-	Vector6d fcor = SE3::ad(phi).transpose() * M_i * phi;
-	Matrix3d R_wi = E_wi.block<3, 3>(0, 0);
+	if (next != nullptr) {
+		next->computeMass(M);
+	}
+}
 
-	Matrix3d R_iw = R_wi.transpose();
-	Vector6d fgrav;
+void Body::computeMassGrav(Vector3d grav, MatrixXd &M, VectorXd &f) {
+	// Computes maximal mass matrix and force vector	
+	M.block<6, 6>(idxM, idxM) = M_i;
+
+	fcor = SE3::ad(phi).transpose() * M_i * phi;
+	R_wi = E_wi.block<3, 3>(0, 0);
+	R_iw = R_wi.transpose();
+
 	fgrav.setZero();
 	fgrav.segment<3>(3) = M_i(3, 3) * R_iw * grav; // wrench in body space
 	f.segment<6>(idxM) = fcor + fgrav;
@@ -189,31 +199,36 @@ void Body::computeMassGrav(Vector3d grav, MatrixXd &M, VectorXd &f) {
 	}
 }
 
-void Body::computeMassGravSparse(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f) {
-	// Computes maximal mass matrix and force vector
-	Matrix6d M_i = Matrix6d(I_i.asDiagonal());
-
+void Body::computeMassSparse(vector<T> &M_) {
+	// Computes maximal mass matrix (just once)
 	for (int i = 0; i < 6; ++i) {
 		M_.push_back(T(idxM + i, idxM + i, I_i(i)));
 	}
 
-	Vector6d fcor = SE3::ad(phi).transpose() * M_i * phi;
-	Matrix3d R_wi = E_wi.block<3, 3>(0, 0);
+	if (next != nullptr) {
+		next->computeMassSparse(M_);
+	}
+}
 
-	Matrix3d R_iw = R_wi.transpose();
-	Vector6d fgrav;
+void Body::computeGrav(Vector3d grav, Eigen::VectorXd &f) {
+	fcor = SE3::ad(phi).transpose() * M_i * phi;
+	R_wi = E_wi.block<3, 3>(0, 0);
+	R_iw = R_wi.transpose();
+
 	fgrav.setZero();
 	fgrav.segment<3>(3) = M_i(3, 3) * R_iw * grav; // wrench in body space
+
 	f.segment<6>(idxM) = fcor + fgrav;
-	
+
 	this->wext_i.setZero();
 	this->Kmdiag.setZero();
 	this->Dmdiag.setZero();
 
 	if (next != nullptr) {
-		next->computeMassGravSparse(grav, M_, f);
+		next->computeGrav(grav, f);
 	}
 }
+
 
 void Body::computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D) {
 	// Computes maximal damping force vector and matrix

@@ -24,70 +24,41 @@ SolverDense::SolverDense(std::shared_ptr<World> world, Integrator integrator) : 
 }
 
 void SolverDense::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir) {
-	int ne = ner + nem;
-	int ni = nim + nir;
-
-	Mm.resize(nm, nm);
-	Mm.setZero();
-	Mr.resize(nr, nr);
+	ni = nim + nir;
+	
+	
 	Mr.setZero();
-	MDKr_.resize(nr, nr);
 	MDKr_.setZero();
 
-	fm.resize(nm);
-	fr.resize(nr);
-	fr_.resize(nr);
 	fm.setZero();
 	fr.setZero();
 	fr_.setZero();
-	tmp.resize(nm);
 	tmp.setZero();
 
-	Kr.resize(nr, nr);
-	Dr.resize(nr, nr);
 	Kr.setZero();
 	Dr.setZero();
-	Dm.resize(nm, nm);
 	Dm.setZero();
 
-	K.resize(nm, nm);
 	K.setZero();
-	Km.resize(nm, nm);
 	Km.setZero();
 
-	J.resize(nm, nr);
-	Jdot.resize(nm, nr);
 	J.setZero();
 	Jdot.setZero();
 
-	Gm.resize(nem, nm);
 	Gm.setZero();
-	Gmdot.resize(nem, nm);
 	Gmdot.setZero();
 
-	gm.resize(nem);
 	gm.setZero();
-	gmdot.resize(nem);
 	gmdot.setZero();
-	gmddot.resize(nem);
 	gmddot.setZero();
 
-	Gr.resize(ner, nr);
 	Gr.setZero();
-	Grdot.resize(ner, nr);
 	Grdot.setZero();
 
-	gr.resize(ner);
 	gr.setZero();
-	grdot.resize(ner);
 	grdot.setZero();
-	grddot.resize(ner);
 	grddot.setZero();
 
-	G.resize(ne, nr);
-	g.resize(ne);
-	rhsG.resize(ne);
-	gdot.resize(ne);
 	G.setZero();
 	g.setZero();
 	gdot.setZero();
@@ -118,65 +89,106 @@ void SolverDense::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir)
 
 Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 {
-	ChronoTimer timer("Test");
-	
 	switch (m_integrator)
 	{
 	case REDMAX_EULER:
 	{
-		int nr = m_world->nr;
-		int nm = m_world->nm;
+		if (step == 0) {
+			// constant during simulation
+			nr = m_world->nr;
+			nm = m_world->nm;
+			nem = m_world->nem;
+			ner = m_world->ner;
+			ne = ner + nem;
 
-		int nem = m_world->nem;
-		int ner = m_world->ner;
-		int ne = nem + ner;
+			nim = m_world->nim;
+			nir = m_world->nir;
+			ni = nim + nir;
 
-		int nim = m_world->nim;
-		int nir = m_world->nir;
-		int ni = nim + nir;
+			yk.resize(2 * nr);
+			ydotk.resize(2 * nr);
+
+			Mm.resize(nm, nm);
+			Mm.setZero();
+			Mr.resize(nr, nr);
+			MDKr_.resize(nr, nr);
+			Kr.resize(nr, nr);
+			Dr.resize(nr, nr);
+			Dm.resize(nm, nm);
+			K.resize(nm, nm);
+			Km.resize(nm, nm);
+			J.resize(nm, nr);
+			Jdot.resize(nm, nr);
+			Gm.resize(nem, nm);
+			Gmdot.resize(nem, nm);
+
+			gm.resize(nem);
+			gmdot.resize(nem);
+			gmddot.resize(nem);
+
+			Gr.resize(ner, nr);
+			Grdot.resize(ner, nr);
+			G.resize(ne, nr);
+
+			fm.resize(nm);
+			fr.resize(nr);
+			fr_.resize(nr);
+			tmp.resize(nm);
+
+			gr.resize(ner);
+			grdot.resize(ner);
+			grddot.resize(ner);
+
+			g.resize(ne);
+			gdot.resize(ne);
+			rhsG.resize(ne);
+
+			gm.resize(nem);
+			gmdot.resize(nem);
+			gmddot.resize(nem);
+
+			body0 = m_world->getBody0();
+			joint0 = m_world->getJoint0();
+			deformable0 = m_world->getDeformable0();
+			softbody0 = m_world->getSoftBody0();
+			constraint0 = m_world->getConstraint0();
+			spring0 = m_world->getSpring0();
+
+			t = m_world->getTspan()(0);
+			h = m_world->getH();
+			hsquare = h * h;
+			this->grav = m_world->getGrav();
+		}
+
+		nim = m_world->nim;
+		nir = m_world->nir;
+		ni = nim + nir;
 
 		initMatrix(nm, nr, nem, ner, nim, nir);
 		
-		auto body0 = m_world->getBody0();
-		auto joint0 = m_world->getJoint0();
-		auto deformable0 = m_world->getDeformable0();
-		auto softbody0 = m_world->getSoftBody0();
-		auto constraint0 = m_world->getConstraint0();
-		auto spring0 = m_world->getSpring0();
+		if (step == 0) {
+			body0->computeMass(Mm);
+			deformable0->computeMass(Mm);
+			softbody0->computeMass(Mm);
+		}
 
-		double t = m_world->getTspan()(0);
-		double h = m_world->getH();
-		Vector3d grav = m_world->getGrav();
-
-		VectorXd yk(2 * nr);
-		VectorXd ydotk(2 * nr);
-
-		// sceneFcn()
-		body0->computeMassGrav(grav, Mm, fm);
+		body0->computeGrav(grav, fm);
 		body0->computeForceDamping(tmp, Dm);
 
-		
-
-		deformable0->computeMass(grav, Mm, fm);
+		deformable0->computeForce(grav, fm);
 		deformable0->computeForceDamping(grav, tmp, Dm);
 		
-		softbody0->computeMass(grav, Mm);
 		softbody0->computeForce(grav, fm);
 		softbody0->computeStiffness(K);
-		
-		
+			
 		joint0->computeForceStiffness(fr, Kr);
 		joint0->computeForceDamping(tmp, Dr);
 		joint0->computeJacobian(J, Jdot);
 	
-
 		deformable0->computeJacobian(J, Jdot);
 		softbody0->computeJacobian(J);
 		
-
-
 		spring0->computeForceStiffnessDamping(fm, Km, Dm);
-
 	
 		q0 = y.segment(0, nr);
 		qdot0 = y.segment(nr, nr);
@@ -184,24 +196,19 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		Mr = J.transpose() * (Mm - h * h * K) * J;
 		//mat_to_file(K, "DenseK");
 
-
-		Mr = 0.5 * (Mr + Mr.transpose());		
-		
-
-		//cout << "Mr" << endl << Mr << endl;
-		
+		Mr = 0.5 * (Mr + Mr.transpose());			
+		//cout << "Mr" << endl << Mr << endl;		
 
 		fr_ = Mr * qdot0 + h * (J.transpose() * (fm - Mm * Jdot * qdot0) + fr);
-		MDKr_ = Mr + J.transpose() * (h * Dm - h * h * Km)*J + h * Dr - h * h * Kr;
+		MDKr_ = Mr + J.transpose() * (h * Dm - hsquare * Km)*J + h * Dr - hsquare * Kr;
 		//mat_to_file(Mr, "Mr");
 		//mat_to_file(J, "J");
 		//mat_to_file(Km, "Km");
 		//mat_to_file(Kr, "Kr");
 		//mat_to_file(Mm, "Mm");
 		//mat_to_file(J, "J");
-
 		//mat_to_file(K, "K");
-		//cout << fr_ << endl;
+
 		if (ne > 0) {
 			constraint0->computeJacEqM(Gm, Gmdot, gm, gmdot, gmddot);
 			constraint0->computeJacEqR(Gr, Grdot, gr, grdot, grddot);
@@ -274,10 +281,9 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 			vec_to_file(qdot1, "qdot1");
 			mat_to_file(MDKr_, "MDKr_");
 			mat_to_file(G, "G");*/
-			//vec_to_file(l, "l");
+
 			constraint0->scatterForceEqM(Gm.transpose(), l.segment(0, nem) / h);
 			constraint0->scatterForceEqR(Gr.transpose(), l.segment(nem, l.rows() - nem) / h);
-
 		}
 		else if (ne == 0 && ni > 0) {  // Just inequality
 			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
@@ -362,10 +368,6 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		/*cout << "V" << ener.V << endl;
 		cout << "K" << ener.K << endl;
 		cout << " sum " << ener.V + ener.K << endl;*/
-		timer.toc();
-		timer.print();
-
-
 		return yk;
 	}
 	break;
@@ -384,18 +386,18 @@ shared_ptr<Solution> SolverDense::solve() {
 	{
 	case REDMAX_EULER:
 	{
-		int nr = m_world->nr;
-		int nm = m_world->nm;
+		nr = m_world->nr;
+		nm = m_world->nm;
 
-		int nem = m_world->nem;
-		int ner = m_world->ner;
-		int ne = nem + ner;
+		nem = m_world->nem;
+		ner = m_world->ner;
+		ne = nem + ner;
 
-		auto body0 = m_world->getBody0();
-		auto joint0 = m_world->getJoint0();
-		auto deformable0 = m_world->getDeformable0();
-		auto softbody0 = m_world->getSoftBody0();
-		auto constraint0 = m_world->getConstraint0();
+		body0 = m_world->getBody0();
+		joint0 = m_world->getJoint0();
+		deformable0 = m_world->getDeformable0();
+		softbody0 = m_world->getSoftBody0();
+		constraint0 = m_world->getConstraint0();
 
 		int nsteps = m_world->getNsteps();
 		m_solutions->t.resize(nsteps);
@@ -410,23 +412,22 @@ shared_ptr<Solution> SolverDense::solve() {
 		m_solutions->y.row(0) = sol_y;
 		m_solutions->y.row(0) = softbody0->gatherDofs(m_solutions->y.row(0), nr);
 
-		double t = m_world->getTspan()(0);
-		double h = m_world->getH();
-		Vector3d grav = m_world->getGrav();
+		t = m_world->getTspan()(0);
+		h = m_world->getH();
+		grav = m_world->getGrav();
 
 		VectorXd yk(2 * nr);
 		VectorXd ydotk(2 * nr);
 
 		for (int k = 1; k < nsteps; k++) {
-			int nim = m_world->nim;
-			int nir = m_world->nir;
-			int ni = nim + nir;
+			nim = m_world->nim;
+			nir = m_world->nir;
+			ni = nim + nir;
 			initMatrix(nm, nr, nem, ner, nim, nir);
-			// sceneFcn()
 			body0->computeMassGrav(grav, Mm, fm);
-			deformable0->computeMass(grav, Mm, fm);
-
-			softbody0->computeMass(grav, Mm);
+			deformable0->computeMass(Mm);
+			deformable0->computeForce(grav, fm);
+			softbody0->computeMass(Mm);
 			softbody0->computeForce(grav, fm);
 			softbody0->computeStiffness(K);
 

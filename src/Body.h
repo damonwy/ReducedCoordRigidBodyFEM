@@ -39,8 +39,10 @@ public:
 	void computeInertia();
 	void countDofs(int &nm);
 	int countM(int &nm, int data);
+	void computeMass(Eigen::MatrixXd &M);
+	void computeMassSparse(std::vector<T> &M_);
+	void computeGrav(Vector3d grav, Eigen::VectorXd &f);
 	void computeMassGrav(Vector3d grav, Eigen::MatrixXd &M, Eigen::VectorXd &f);
-	void computeMassGravSparse(Vector3d grav, std::vector<T> &M_, Eigen::VectorXd &f);
 	void computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D);
 	void computeForceDampingSparse(Eigen::VectorXd &f, std::vector<T> &D_);
 	void computeEnergies(Vector3d grav, Energy &energies);
@@ -52,6 +54,7 @@ public:
 
 	double m_density;					// Mass/volume
 	Vector6d I_i;						// Inertia at body center
+	Matrix6d M_i;						// Inertia Matrix at body center
 	Matrix4d E_ji;						// Where the body is wrt joint
 	Matrix4d E_ij;						// Where the joint is wrt body
 	Matrix4d E_wi;						// Where the body is wrt world
@@ -68,6 +71,12 @@ public:
 	Vector6d wext_i;					// External wrench in body space (not used by redmax)
 	Matrix6d Kmdiag;					// Maximal stiffness block diagonal term
 	Matrix6d Dmdiag;					// Maximal damping block diagonal term
+
+	Vector6d fcor;
+	Vector6d fgrav;
+	Matrix3d R_wi;
+	Matrix3d R_iw;
+
 	double m_damping;					// Viscous damping
 	std::shared_ptr<Joint> m_joint;		// Joint to parent
 	int idxM;							// Maximal indices

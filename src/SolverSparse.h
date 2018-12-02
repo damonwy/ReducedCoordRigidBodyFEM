@@ -1,6 +1,8 @@
 #pragma once
 #include "Solver.h"
 
+
+
 class SolverSparse : public Solver {
 public:
 	SolverSparse() {}
@@ -35,7 +37,6 @@ private:
 
 	Eigen::SparseMatrix<double> Mr_sp;
 	Eigen::SparseMatrix<double> Mr_sp_temp;
-
 	Eigen::SparseMatrix<double> Dm_sp;
 	std::vector<T> Dm_;
 	Eigen::VectorXd tmp; // nm x 1
@@ -72,13 +73,19 @@ private:
 	Eigen::VectorXd rhsG;
 
 	Eigen::SparseMatrix<double> Cm_sp;
+	std::vector<T> Cm_;
 	Eigen::SparseMatrix<double> Cmdot_sp;
+	std::vector<T> Cmdot_;
+
 	Eigen::VectorXd cm;
 	Eigen::VectorXd cmdot;
 	Eigen::VectorXd cmddot;
 
 	Eigen::SparseMatrix<double> Cr_sp;
+	std::vector<T> Cr_;
 	Eigen::SparseMatrix<double> Crdot_sp;
+	std::vector<T> Crdot_;
+
 	Eigen::VectorXd cr;
 	Eigen::VectorXd crdot;
 	Eigen::VectorXd crddot;
@@ -87,8 +94,16 @@ private:
 
 	Eigen::MatrixXd C;
 	Eigen::SparseMatrix<double> C_sp;
+	std::vector<T> C_;
 	Eigen::VectorXd c;
 
 	std::vector<int> rowsM;
 	std::vector<int> rowsR;
+
+	Eigen::SparseMatrix<double, Eigen::RowMajor> G_sp;
+
+
+	int m_dense_nm;
+	int m_dense_nr;
+
 };

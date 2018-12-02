@@ -11,16 +11,17 @@ Solver::Solver()
 
 Solver::Solver(shared_ptr<World> world, Integrator integrator) :
 	m_world(world),
-	m_integrator(integrator)
+	m_integrator(integrator), step(0)
 {
 	m_solutions = make_shared<Solution>();
 }
 
 void Solver::reset() {
-	int nr = m_world->nr;
-	int nm = m_world->nm;
+	nr = m_world->nr;
+	nm = m_world->nm;
 	// constraints
-	int nem = m_world->nem;
-	int ner = m_world->ner;
-	int ne = nem + ner;
+	nem = m_world->nem;
+	ner = m_world->ner;
+	ne = nem + ner;
+	step = 0;
 }

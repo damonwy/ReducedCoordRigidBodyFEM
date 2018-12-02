@@ -33,10 +33,10 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 		this->Dm.col(i) = m_nodes[i]->x0 - m_nodes[3]->x0;
 	}
 	this->Bm = this->Dm.inverse();
-	
+	this->BmT = this->Bm.transpose();
 	// Compute volume
-	this->W = (1.0 / 6.0 * Dm.determinant());
-	m_mass = (this->W * this->m_density);
+	this->W = 1.0 / 6.0 * Dm.determinant();
+	m_mass = this->W * this->m_density;
 
 	// Distribute 1/4 mass to each node
 	for (int i = 0; i < (int)nodes.size(); i++) {
@@ -48,8 +48,6 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	m_delta_L = 0.001;
 	m_delta_U = 2.0;
 
-	//m_delta_L = 0.0;
-	//m_delta_U = 1005.0;
 }
 
 Matrix3d Tetrahedron::computeDeformationGradient() {
@@ -119,10 +117,10 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 	// The deformation gradient is available in this->F
 
 	this->P = computePKStress(F, m_mu, m_lambda);
-	this->H = -W * P * (Bm.transpose());
+	this->H = -W * P * this->BmT;
 
 	/*if (isInvert && m_isInvertible) {
-		this->H = -W * U * P * V.transpose() * (Bm.transpose());
+		this->H = -W * U * P * V.transpose() * this->BmT);
 	}*/
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
@@ -137,7 +135,8 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 }
 
 bool Tetrahedron::checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F) {
-	Matrix3d C = F.transpose() * F;
+	//Matrix3d C;
+	//C.noalias() = F.transpose() * F;
 	// C = |c1 c2 c3|
 	//     |c2 c4 c5|
 	//     |c3 c5 c6|
@@ -152,12 +151,12 @@ bool Tetrahedron::checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F)
 
 	double c1, c2, c3, c4, c5, c6;
 
-	c1 = F.col(0).transpose() * F.col(0);
-	c2 = F.col(0).transpose() * F.col(1);
-	c3 = F.col(0).transpose() * F.col(2);
-	c4 = F.col(1).transpose() * F.col(1);
-	c5 = F.col(1).transpose() * F.col(2);
-	c6 = F.col(2).transpose() * F.col(2);
+	c1 = F.col(0).dot(F.col(0));
+	c2 = F.col(0).dot(F.col(1));
+	c3 = F.col(0).dot(F.col(2));
+	c4 = F.col(1).dot(F.col(1));
+	c5 = F.col(1).dot(F.col(2));
+	c6 = F.col(2).dot(F.col(2));
 
 	double a, b, c;
 	a = -(c1 + c4 + c6);
@@ -189,8 +188,8 @@ bool Tetrahedron::checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F)
 		// deltaL < alpha, 
 		// beta < deltaU
 
-		double f_deltaL = pow(deltaL, 3) + a * pow(deltaL, 2) + b * deltaL + c;
-		double f_deltaU = pow(deltaU, 3) + a * pow(deltaU, 2) + b * deltaU + c;
+		double f_deltaL = deltaL*deltaL*(deltaL + a) + b * deltaL + c;
+		double f_deltaU = deltaU*deltaU*(deltaU + a) + b * deltaU + c;
 
 		if ((f_deltaL < 0) && (f_deltaU > 0) && (deltaL < alpha) && (beta < deltaU)) {
 			// This element has a small deformation, no need to do SVD
@@ -200,23 +199,12 @@ bool Tetrahedron::checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F)
 		else {
 			// large deformation, need to do SVD
 			m_isSVD = true;
-			//cout << "Do svd! " << endl;
-			//cout << "F" << this->F << endl;
-			//cout << "same" << same << endl;
-			//cout << "a" << a << endl;
-			//cout << "b " << b << endl;
-			//cout << "tem" << a * a - 3.0 *b << endl;
-			//cout << "fdeltaL: " << f_deltaL << endl;
-			//cout << "fdeltaU: " << f_deltaU << endl;
-			//cout << "alpha: " << alpha << endl;
-			//cout << "beta: " << beta << endl;
 		}
 	}
 	else {
 		// no solutions
 		m_isSVD = true;
 		//cout << "Do svd!no sol " << endl;
-
 	}
 
 	return m_isSVD;
@@ -226,14 +214,8 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 	bool print = false;
 
 	this->F = computeDeformationGradient();
-	if (abs(this->F(0, 1) > 3000)) {
-		print = true;
-	}
-	if (print) {
-		cout << "F" << this->F << endl;
-			cout << "P suppose: " << endl<<computePKStress(F, m_mu, m_lambda);
-	}
-	
+	this->FTF.noalias() = F.transpose() * F;
+
 	// The deformation gradient is available in this->F
 	if (this->F.determinant() <= 0.0) {
 		m_isInverted = true;
@@ -250,28 +232,25 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 		// SVD on the deformation gradient
 		int modifiedSVD = 1;
 
-		if (!SVD(this->F, this->U, Fhats, this->V, 1e-8, modifiedSVD)) {
+		if (!SVD(this->F, this->U, this->Fhats, this->V, 1e-8, modifiedSVD)) {
 			//cout << "error in svd " << endl;
 		}
+		this->UT = this->U.transpose();
+		this->VT = this->V.transpose();
 		this->Fhat = Fhats.asDiagonal();
-		if (print) {
-			cout << "Fhat" << this->Fhat << endl;
-		}
-
+		
 		// SVD result is available in this->U, this->V, Fhat_vec, this->Fhat
 		// clamp if below the principal stretch threshold
 		clamped = 0;
 		for (int i = 0; i < 3; i++)
 		{
-			if (this->Fhat(i, i) < Fthreshold)
+			if (this->Fhats(i) < Fthreshold)
 			{
 				this->Fhat(i, i) = Fthreshold;
 				clamped |= (1 << i);
 			}
 		}
-		if (print) {
-			cout << "Fhat" << this->Fhat << endl;
-		}
+	
 		//clamped = 0; // disable clamping
 
 		// Computes the internal forces
@@ -280,24 +259,15 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 		// Computes the diagonal P tensor
 		this->Phat = computePKStress(this->Fhat, m_mu, m_lambda);
 
-		if (print) {
-			cout << "Phat" << this->Phat << endl;
-		}
 		// P = U * diag(Phat) * V'
-		this->P = this->U * this->Phat * this->V.transpose();
-
-		if (print) {
-			Matrix3d ttemp = computePKStress(F, m_mu, m_lambda);
-			this->H = -W * ttemp * (Bm.transpose());
-
-		}
+		this->P.noalias() = this->U * this->Phat * this->VT;
 	}
 	else {
 		// Don't do SVD
 		this->P = computePKStress(this->F, m_mu, m_lambda);
 	}
 	
-	this->H = -W * this->P * (Bm.transpose());
+	this->H.noalias() = -W * this->P * this->BmT;
 
 	// Computes the nodal forces by G=PBm=PNm
 	for (int i = 0; i < (int)m_nodes.size()-1; i++) {
@@ -306,9 +276,6 @@ VectorXd Tetrahedron::computeInvertibleElasticForces(VectorXd f) {
 		int row3 = m_nodes[3]->idxM;
 		f.segment<3>(row3) -= this->H.col(i);
 
-		if (m_isInverted) {
-			//cout <<"f"<< endl<< this->P * this->Nm.col(i) << endl;
-		}	 
 	}
 	return f;
 }
@@ -318,7 +285,7 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	this->dF = computeDeformationGradientDifferential(dx);	
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
 
-	this->dH = -W * dP * (Bm.transpose());
+	this->dH = -W * dP * this->BmT;
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		df.segment<3>(3 * m_nodes[i]->i) += this->dH.col(i);
 		df.segment<3>(3 * m_nodes[3]->i) -= this->dH.col(i);
@@ -335,7 +302,7 @@ void Tetrahedron::computeForceDifferentials(MatrixXd &K_global) {
 			this->dDs(j, i) = 1.0;
 			this->dF = this->dDs * this->Bm;			
 			this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
-			this->dH = -W * dP * (Bm.transpose());
+			this->dH = -W * dP * this->BmT;
 			for (int t = 0; t < 3; t++) {
 				Vector3d temp = this->dH.col(t);
 				this->K.block<3, 1>(t * 3, i * 3 + j) = temp;
@@ -379,11 +346,12 @@ void Tetrahedron::computeForceDifferentials(MatrixXd &K_global) {
 void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df) {
 
 	this->dF = computeDeformationGradientDifferential(dx);
-	Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
+	Matrix3d UTdFV;
+	UTdFV.noalias() = this->UT * this->dF * this->V;
 
 	this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);	
-	this->dP = this->U * this->dPhat * this->V.transpose();
-	this->dH = -W * dP * (Bm.transpose());
+	this->dP.noalias() = this->U * this->dPhat * this->VT;
+	this->dH.noalias() = -W * dP * this->BmT;
 
 	//modify hessian to compute correct values if in the inversion handling regime
 	//hessian = clampHessian(hessian, clamped);
@@ -401,11 +369,12 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, int row, int col, MatrixXd &K) {
 
 	this->dF = computeDeformationGradientDifferential(dx);
-	Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
+	Matrix3d UTdFV;
+	UTdFV.noalias() = this->UT * this->dF * this->V;
 	this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
 	
-	this->dP = this->U * this->dPhat * this->V.transpose();
-	this->dH = -W * dP * (Bm.transpose());
+	this->dP.noalias() = this->U * this->dPhat * this->VT;
+	this->dH.noalias() = -W * dP * this->BmT;
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		Vector3d temp = dH.col(i);
@@ -418,16 +387,17 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, int row, int 
 
 void Tetrahedron::computeInvertibleForceDifferentials(MatrixXd &K_global) {
 	this->K.setZero();
+	Matrix3d UTdFV;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
 			this->dDs.setZero();
 			this->dDs(j, i) = 1.0;
-			this->dF = this->dDs * this->Bm;
-			Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
+			this->dF.noalias() = this->dDs * this->Bm;
+			UTdFV.noalias() = this->UT * this->dF * this->V;
 			this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
 
-			this->dP = this->U * this->dPhat * this->V.transpose();
-			this->dH = -W * dP * (Bm.transpose());
+			this->dP.noalias() = this->U * this->dPhat * this->VT;
+			this->dH.noalias() = -W * dP * this->BmT;
 
 			//Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
 			for (int t = 0; t < 3; t++) {
@@ -474,18 +444,17 @@ void Tetrahedron::computeInvertibleForceDifferentialsSparse(VectorXd dx, int row
 	
 	this->dF = computeDeformationGradientDifferential(dx);
 	if (m_isSVD) {
-		Matrix3d UTdFV = this->U.transpose() * this->dF * this->V;
+		Matrix3d UTdFV = this->UT * this->dF * this->V;
 		this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
-		this->dP = this->U * this->dPhat * this->V.transpose();
+		this->dP = this->U * this->dPhat * this->VT;
 	}
 	else
 	{
 		this->dP = computePKStressDerivative(this->F, this->dF, m_mu, m_lambda);
 	}
-	this->dH = -W * dP * (Bm.transpose());
+	this->dH.noalias() = -W * dP * this->BmT;
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
-		//Vector3d temp = dH.col(i);
 
 		for (int j = 0; j < 3; ++j) {
 			K_.push_back(T(row + 3 * m_nodes[i]->i + j, col, dH(j, i)));
@@ -498,7 +467,7 @@ void Tetrahedron::computeForceDifferentialsSparse(VectorXd dx, int row, int col,
 	this->F = computeDeformationGradient();
 	this->dF = computeDeformationGradientDifferential(dx);
 	this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);	
-	this->dH = -W * dP * (Bm.transpose());
+	this->dH.noalias() = -W * dP * this->BmT;
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		//Vector3d temp = this->dH.col(i);
@@ -514,14 +483,23 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 	Matrix3d E = Matrix3d::Zero();
 	Matrix3d P = Matrix3d::Zero();
 	Matrix3d I = Matrix3d::Identity();
+	Matrix3d R, A, S, FIT, FT;
+
+	if (m_isSVD) {
+		m_material = CO_ROTATED;
+	}
+	else {
+		//m_material = STVK;
+
+	}
 
 	switch (m_material)
 	{
 	case LINEAR:
 	{
-		E = 0.5 * (F + F.transpose()) - I;
+		E.noalias() = 0.5 * (F + F.transpose()) - I;
 		//psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
-		P = 2.0 * mu * E + lambda * E.trace() * I;
+		P.noalias() = 2.0 * mu * E + lambda * E.trace() * I;
 		break;
 	}
 
@@ -529,33 +507,37 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 	{
 		//double I1 = (F.transpose() * F).trace();
 		//double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
-		double I3 = (F.transpose() * F).determinant();
+		FT = F.transpose();
+		FIT = F.inverse().transpose();
+
+		double I3 = (FT * F).determinant();
 		double J = sqrt(I3);
 		//psi = 1.0 / 2.0 * mu *(I1 - 3.0) - mu * log(J) + 1.0 / 2.0 * lambda * log(J)*log(J);
-		P = mu * (F - F.inverse().transpose()) + lambda * log(J)*(F.inverse().transpose());
+		P.noalias() = mu * (F - FIT) + lambda * log(J)*FIT;
 		break;
 	}
 
 	case STVK:
 	{
-		E = 0.5 * (F.transpose() * F - I);
+		//E.noalias() = 0.5 * (F.transpose() * F - I);
+		E.noalias() = 0.5 * (this->FTF - I);
 		//psi = mu * E.norm()*E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
-		P = F * (2.0 * mu * E + lambda * E.trace() * I);
+		P.noalias() = F * (2.0 * mu * E + lambda * E.trace() * I);
 		break;
 	}
 
 	case CO_ROTATED:
 	{
 		// Polar decomposition
-		Matrix3d A = F.adjoint() * F;
+		A.noalias() = F.adjoint() * F;
 		SelfAdjointEigenSolver<Matrix3d> es(A);
-		Matrix3d S = es.operatorSqrt();
-		Matrix3d R = F * S.inverse();
+		S.noalias() = es.operatorSqrt();
+		R.noalias() = F * S.inverse();
 
 		//E = S - I;
 		//psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
 		//P = R * (2.0 * mu * E + lambda * E.trace() * I);
-		P = 2.0 * mu * (F - R) + lambda * (R.transpose() * F - I).trace() * R;
+		P.noalias() = 2.0 * mu * (F - R) + lambda * (R.transpose() * F - I).trace() * R;
 		break;
 	}
 
@@ -574,25 +556,35 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 	Matrix3d dE = Matrix3d::Zero();
 	Matrix3d dP = Matrix3d::Zero();
 	Matrix3d I3 = Matrix3d::Identity();
+	Matrix3d R, A, S, FIT, FT;
+
+	if (m_isSVD) {
+		m_material = CO_ROTATED;
+	}
+	else {
+		//m_material = STVK;
+	}
+
 	switch (m_material) {
 	case CO_ROTATED:
 	{
-		Matrix3d A = F.adjoint() * F;
+		A.noalias() = F.adjoint() * F;
 		SelfAdjointEigenSolver<Matrix3d> es(A);
-		Matrix3d S = es.operatorSqrt();
-		Matrix3d R = F * S.inverse();
+		S = es.operatorSqrt();
+		R.noalias() = F * S.inverse();
 		//E = S - I3;
 		//P = 2.0 * mu *(F - R) + lambda * (R.transpose()*F - I3).trace() * R;
-		dP = 2.0 * mu * dF + lambda * (R.transpose()*dF).trace() * R;
+		dP.noalias() = 2.0 * mu * dF + lambda * (R.transpose()*dF).trace() * R;
 		break;
 	}
 
 	case STVK:
 	{
-		E = 1.0 / 2.0 * (F.transpose() * F - I3);
-		dE = 1.0 / 2.0 * (dF.transpose() * F + F.transpose() * dF);
+		E.noalias() = 0.5 * (this->FTF - I3);
+		//E.noalias() = 1.0 / 2.0 * (F.transpose() * F - I3);
+		dE.noalias() = 0.5 * (dF.transpose() * F + F.transpose() * dF);
 		//P = F * (2.0 * mu * E + lambda * E.trace() * I3);
-		dP = dF * (2.0 * mu * E + lambda * E.trace() * I3) + F * (2.0 * mu * dE + lambda * dE.trace() * I3);
+		dP.noalias() = dF * (2.0 * mu * E + lambda * E.trace() * I3) + F * (2.0 * mu * dE + lambda * dE.trace() * I3);
 		break;
 	}
 
@@ -607,23 +599,23 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 */
 		//double I1 = (F.norm()) * (F.norm());
 		//double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
-		MatrixXd FT = F.transpose();
-		MatrixXd FIT = F.inverse().transpose();
+		FT = F.transpose();
+		FIT = F.inverse().transpose();
 		//double I3 = (F.transpose() * F).determinant();
 		double I3 = (FT * F).determinant();
 		double J = sqrt(I3);
 		//P = mu * (F - FIT) + lambda * log(J) * FIT;
-		dP = mu * dF + (mu - lambda * log(J)) * FIT * (dF.transpose()) * FIT + lambda * ((F.inverse() * dF)).trace() * FIT;
+		dP.noalias() = mu * dF + (mu - lambda * log(J)) * FIT * (dF.transpose()) * FIT + lambda * ((F.inverse() * dF)).trace() * FIT;
 		//P = mu * (F - (F.inverse().transpose())) + lambda * log(J) * (F.inverse().transpose());
 		//dP = mu * dF + (mu - lambda * log(J)) * (F.inverse().transpose()) * (dF.transpose()) * (F.inverse().transpose()) + lambda * ((F.inverse() * dF)).trace() * (F.inverse().transpose());
 		break;
 	}
 	case LINEAR:
 	{
-		E = 1.0 / 2.0 * (F + F.transpose()) - I3;
-		dE = 1.0 / 2.0 * (dF + dF.transpose());
+		E.noalias() = 1.0 / 2.0 * (F + F.transpose()) - I3;
+		dE.noalias() = 1.0 / 2.0 * (dF + dF.transpose());
 		//P = 2.0 * mu * E + lambda * E.trace() * I3;
-		dP = 2.0 * mu * dE + lambda * dE.trace() * I3;
+		dP.noalias() = 2.0 * mu * dE + lambda * dE.trace() * I3;
 		break;
 	}
 	default:

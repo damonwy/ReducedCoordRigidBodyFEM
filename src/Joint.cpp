@@ -53,8 +53,6 @@ m_ndof(ndof)
 	V.setZero();
 	Vdot.setZero();
 
-	
-
 	presc = false;
 }
 
@@ -86,7 +84,7 @@ void Joint::update() {
 	// Updates this joint and the attached body
 	update_();
 	// Transforms and adjoints
-	E_pj = E_pj0 * m_Q;
+	E_pj.noalias() = E_pj0 * m_Q;
 
 	E_jp = SE3::inverse(E_pj);
 	Ad_jp = SE3::adjoint(E_jp);
@@ -99,12 +97,14 @@ void Joint::update() {
 	else {
 		E_wp = m_parent->E_wj;
 	}
-	E_wj = E_wp * E_pj;
+
+	E_wj.noalias() = E_wp * E_pj;
 	// Joint velocity
-	V = m_S * m_qdot;
+	V.noalias() = m_S * m_qdot;
+
 	if (m_parent != nullptr) {
 		// Add parent velocity
-		V += Ad_jp * m_parent->V;
+		V.noalias() += Ad_jp * m_parent->V;
 	}
 
 	// Update attached body
@@ -129,8 +129,8 @@ int Joint::countR(int &nr, int data) {
 void Joint::computeJacobian(MatrixXd &J, MatrixXd &Jdot) {
 	// Computes the redmax Jacobian
 	Matrix6d Ad_ij = m_body->Ad_ij;
-	J.block(m_body->idxM, idxR, 6, m_ndof) = Ad_ij * m_S;
-	Jdot.block(m_body->idxM, idxR, 6, m_ndof) = Ad_ij * m_Sdot;
+	J.block(m_body->idxM, idxR, 6, m_ndof).noalias() = Ad_ij * m_S;
+	Jdot.block(m_body->idxM, idxR, 6, m_ndof).noalias() = Ad_ij * m_Sdot;
 
 	// Loop through all ancestors
 	auto jointA = m_parent;
@@ -161,9 +161,9 @@ void Joint::computeInertia() {
 	pBrac = SE3::bracket3(p);
 	Ic = (m_body->I_i.segment<3>(0)).asDiagonal();
 
-	m_I_j.block<3, 3>(0, 0) = R * Ic *R.transpose() + m *(pBrac.transpose()*pBrac);
+	m_I_j.block<3, 3>(0, 0).noalias() = R * Ic *R.transpose() + m *(pBrac.transpose()*pBrac);
 	m_I_j.block<3, 3>(0, 3) = m * pBrac;
-	m_I_j.block<3, 3>(3, 0) = m * pBrac.transpose();
+	m_I_j.block<3, 3>(3, 0).noalias() = m * pBrac.transpose();
 	m_I_j.block<3, 3>(3, 3) = m * Matrix3d::Identity();
 }
 
@@ -172,7 +172,7 @@ void Joint::computeForceStiffness(VectorXd &fr, MatrixXd &Kr) {
 	if (presc == false) {
 		int row = this->idxR;
 		// Add the joint torque here rather than having a separate function
-		fr.segment(row, m_ndof) += m_tau - m_Kr * m_q;
+		fr.segment(row, m_ndof).noalias() += m_tau - m_Kr * m_q;
 		MatrixXd I(m_ndof, m_ndof);
 		I.setIdentity();
 		Kr.block(row, row, m_ndof, m_ndof) -= m_Kr * I;
@@ -204,7 +204,7 @@ void Joint::computeForceDamping(VectorXd &fr, MatrixXd &Dr) {
 	// Computes joint damping force vector and matrix
 	if (presc == false) {
 		int row = this->idxR;
-		fr.segment(row, m_ndof) -= m_Dr * m_qdot;
+		fr.segment(row, m_ndof).noalias() -= m_Dr * m_qdot;
 		MatrixXd I(m_ndof, m_ndof);
 		I.setIdentity();
 		Dr.block(row, row, m_ndof, m_ndof) += m_Dr * I;
@@ -223,7 +223,6 @@ void Joint::computeForceDampingSparse(VectorXd &fr, vector<T> &Dr_) {
 		for (int i = 0; i < m_ndof; ++i) {
 			Dr_.push_back(T(row + i, row + i, m_Dr));
 		}
-
 	}
 
 	if (next != nullptr) {

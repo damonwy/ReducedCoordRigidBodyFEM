@@ -77,6 +77,7 @@ private:
 	Matrix3d Dm;		// reference shape matrix ("material-space" shape matrix) is constant 
 							// The Dm is a 3x3 matrix where the columns are the edge vectors of a tet in rest configuration
 	Matrix3d Bm;		// Dm.inv()
+	Matrix3d BmT;
 	Matrix3x4d Nm;		// area-weighted vertex normals [Irving 04]	(Bm in paper)					
 	
 	// updated each step
@@ -91,6 +92,9 @@ private:
 	// SVD 
 	Matrix3d U;
 	Matrix3d V;
+	Matrix3d UT;
+	Matrix3d VT;
+
 	Matrix3d Fhat;	// diagonalized deformation gradient
 	Vector3d Fhats;
 	Matrix3d Phat;	
@@ -102,9 +106,6 @@ private:
 	Matrix3d dH;		// the nodal force differential of the first three vertices
 	Matrix12d K;			// 12x12 stiffness matrix	
 
-	
-
-	Vector108d dFdU;	// the derivative of the deformation gradient w.r.t the displacement vector u,
-						// stored as a vector
+	Matrix3d FTF;
 	
 };
