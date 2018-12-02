@@ -105,6 +105,8 @@ int SVD(Eigen::Matrix3d &F,
 void eigen_sym(Eigen::Matrix3d &a, Eigen::Vector3d &eig_val, Eigen::Matrix3d &eig_vec);
 Eigen::Vector3d findOrthonormalVector(Eigen::Vector3d input);
 int tensor9x12Index(int i, int j, int m, int n);
+Eigen::Matrix3d gs3(Eigen::Matrix3d A);
 
+Matrix6d hooke(double young, double poisson);
 
 #endif // MUSCLEMASS_SRC_MLCOMMON_H_

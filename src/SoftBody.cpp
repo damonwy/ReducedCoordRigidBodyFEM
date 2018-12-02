@@ -169,7 +169,6 @@ void SoftBody::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, 
 
 void SoftBody::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	// Draw mesh
-
 	prog->bind();
 	glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
@@ -203,7 +202,6 @@ void SoftBody::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog,
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-
 	for (int i = 0; i < (int)m_attach_nodes.size(); i++) {
 		auto node = m_attach_nodes[i];
 		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
@@ -227,13 +225,6 @@ void SoftBody::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog,
 		tet->draw(MV, prog, progSimple, P);
 	}
 	prog->unbind();
-
-	progSimple->bind();
-	/*for (int i = 0; i < 65; i++) {
-	auto node = m_nodes[i];
-	node->drawNormal(MV, P, progSimple);
-	}*/
-	progSimple->unbind();
 
 	// Draw the normals of the sliding nodes
 	for (int i = 0; i < (int)m_normals_sliding.size(); ++i) {
@@ -355,7 +346,6 @@ void SoftBody::setSlidingNodes(int id, std::shared_ptr<Body> body, Eigen::Vector
 	auto vec = make_shared<Vector>(node, body, init_dir);
 	m_normals_sliding.push_back(vec);
 }
-
 
 void SoftBody::setAttachmentsByLine(Vector3d direction, Vector3d orig, shared_ptr<Body> body) {
 	double t, u, v;
@@ -699,7 +689,6 @@ void SoftBody::computeJacobian(MatrixXd &J) {
 	if (next != nullptr) {
 		next->computeJacobian(J);
 	}
-
 }
 
 void SoftBody::computeJacobianSparse(vector<T> &J_) {

@@ -29,7 +29,7 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	// Compute the inverse of the Dm matrix
 	// Dm is a 3x3 matrix where the columns are the edge vectors of a tet in rest configuration
 
-	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
+	for (int i = 0; i < 3; i++) {
 		this->Dm.col(i) = m_nodes[i]->x0 - m_nodes[3]->x0;
 	}
 	this->Bm = this->Dm.inverse();
@@ -39,11 +39,68 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	m_mass = this->W * this->m_density;
 
 	// Distribute 1/4 mass to each node
+	// Initialize the undeformed position vector
 	for (int i = 0; i < (int)nodes.size(); i++) {
 		nodes[i]->m += this->m_mass * 0.25;
+		this->xx.segment<3>(3 * i) = nodes[i]->x0;
 	}
 
-	//computeAreaWeightedVertexNormals();
+
+
+	// Compute stiffness matrix
+	Matrix6d E = hooke(young, poisson);
+	Matrix3d E1, E2;
+	E1 = E.block<3, 3>(0, 0);
+	E2 = E.block<3, 3>(3, 3);
+	Ke.setZero();
+
+	MatrixXd ys(4, 3); // Four auxiliary vectors y0, y1, y2, y3 
+	ys.block<3, 3>(0, 0) = this->Bm;
+	ys.row(3) = -ys.row(0) - ys.row(1) - ys.row(2);
+
+	Matrix3d Ni, Nj, NiEn, Si, Sj, SiEs, Kij; // Diagonal Matrix
+	Vector3d yi, yj;
+
+	for (int i = 0; i < 4; i++) {
+
+		// Compute vertex i 
+		int ii = 3 * i; // Local starting index into the 12x12 Ke matrix
+		yi = ys.row(i);
+		Ni.setZero();
+		for (int idx = 0; idx < 3; idx++) {
+			Ni(idx, idx) = yi(idx);
+		}
+
+		NiEn = Ni * E1;
+		Si << yi(1), 0, yi(2),
+			yi(0), yi(2), 0,
+			0, yi(1), yi(0);
+
+		SiEs = Si * E2;
+
+		for (int j = i; j < 4; j++) {
+			//Compute vertex j
+			int jj = 3 * j; // Local starting index into the 12x12 Ke matrix
+			yj = ys.row(j);
+			Nj.setZero();
+			for (int idx = 0; idx < 3; idx++) {
+				Nj(idx, idx) = yj(idx);
+			}
+
+			Sj << yj(1), 0, yj(2),
+				yj(0), yj(2), 0,
+				0, yj(1), yj(0);
+
+			Kij = NiEn * Nj + SiEs * (Sj.transpose());
+
+			Ke.block<3, 3>(ii, jj) -= Kij;
+			if (i != j) {
+				Ke.block<3, 3>(jj, ii) -= Kij.transpose();
+			}
+		}
+	}
+
+	this->Kexx = this->Ke * this->xx;
 
 	m_delta_L = 0.001;
 	m_delta_U = 2.0;
@@ -150,13 +207,14 @@ bool Tetrahedron::checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F)
 	// f'(lambda) = 3*lambda^2 + 2a*lambda + b = 0
 
 	double c1, c2, c3, c4, c5, c6;
+	
 
-	c1 = F.col(0).dot(F.col(0));
-	c2 = F.col(0).dot(F.col(1));
-	c3 = F.col(0).dot(F.col(2));
-	c4 = F.col(1).dot(F.col(1));
-	c5 = F.col(1).dot(F.col(2));
-	c6 = F.col(2).dot(F.col(2));
+	c1 = F(0, 0) * F(0, 0) + F(1, 0) * F(1, 0) + F(2, 0) * F(2, 0);
+	c2 = F(0, 0) * F(0, 1) + F(1, 0) * F(1, 1) + F(2, 0) * F(2, 1);
+	c3 = F(0, 0) * F(0, 2) + F(1, 0) * F(1, 2) + F(2, 0) * F(2, 2);
+	c4 = F(0, 1) * F(0, 1) + F(1, 1) * F(1, 1) + F(2, 1) * F(2, 1);
+	c5 = F(0, 1) * F(0, 2) + F(1, 1) * F(1, 2) + F(2, 1) * F(2, 2);
+	c6 = F(0, 2) * F(0, 2) + F(1, 2) * F(1, 2) + F(2, 2) * F(2, 2);
 
 	double a, b, c;
 	a = -(c1 + c4 + c6);
@@ -359,10 +417,6 @@ void Tetrahedron::computeInvertibleForceDifferentials(VectorXd dx, VectorXd &df)
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		df.segment<3>(3 * m_nodes[i]->i) += dH.col(i);
 		df.segment<3>(3 * m_nodes[3]->i) -= dH.col(i);
-		
-		if (m_isInverted) {
-			//cout << "df:"<< endl<< hessian.col(i) << endl;
-		}
 	}
 }
 

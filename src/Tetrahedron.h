@@ -41,6 +41,10 @@ public:
 	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, int row, int col, Eigen::MatrixXd &K);
 	void computeInvertibleForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
 
+	void computeCorotationalForceDifferentials(Eigen::MatrixXd &K);
+	void computeCorotationalForceDifferentialsSparse(std::vector<T> &K_);
+
+
 	Matrix3d clampHessian(Matrix3d &hessian, int clamped);
 	double computeEnergy();
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
@@ -105,7 +109,8 @@ private:
 	Matrix3d dPhat;
 	Matrix3d dH;		// the nodal force differential of the first three vertices
 	Matrix12d K;			// 12x12 stiffness matrix	
-
+	Matrix12d Ke;		// precomputed stiffness matrix for coratational linear material
 	Matrix3d FTF;
-	
+	Vector12d xx;		// undeformed position vector
+	Vector12d Kexx;		// undeformed force
 };

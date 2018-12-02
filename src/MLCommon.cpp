@@ -292,3 +292,35 @@ Eigen::Vector3d findOrthonormalVector(Eigen::Vector3d input) {
 	return result;
 
 }
+
+Eigen::Matrix3d gs3(Eigen::Matrix3d A) {
+	Eigen::Matrix3d R;
+	Eigen::Vector3d a0 = A.col(0);
+	Eigen::Vector3d a1 = A.col(1);
+	Eigen::Vector3d r0 = a0 / a0.norm();
+	Eigen::Vector3d r1 = a1 - r0.dot(a1) * r0;
+	r1 = r1 / r1.norm();
+	R.col(0) = r0;
+	R.col(1) = r1;
+	R.col(2) = r0.cross(r1);
+	return R;
+}
+
+Matrix6d hooke(double young, double poisson) {
+	double v = poisson;
+	double v1 = 1 - v;
+	double v2 = 1 - 2 * v;
+	double s = young / ((1 + v)*(1 - 2 * v));
+
+	Matrix6d E;
+	E <<
+		v1, v, v, 0, 0, 0,
+		v, v1, v, 0, 0, 0,
+		v, v, v1, 0, 0, 0,
+		0, 0, 0, v2, 0, 0,
+		0, 0, 0, 0, v2, 0,
+		0, 0, 0, 0, 0, v2;
+
+	E = s * E;
+	return E;
+}
