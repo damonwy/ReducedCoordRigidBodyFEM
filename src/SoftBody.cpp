@@ -21,6 +21,8 @@
 #include "Tetrahedron.h"
 #include "Body.h"
 #include "Vector.h"
+#include "TetrahedronCorotational.h"
+#include "TetrahedronInvertible.h"
 
 using namespace std;
 using namespace Eigen;
@@ -38,7 +40,7 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 	m_color << 1.0f, 1.0f, 0.0f;
 	m_isInverted = false;
 	//m_isGravity = true;
-
+	m_type = 0;
 }
 
 void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
@@ -87,9 +89,22 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		for (int ii = 0; ii < 4; ii++) {
 			tet_nodes.push_back(m_nodes[output_mesh.tetrahedronlist[4 * i + ii]]);
 		}
-		auto tet = make_shared<Tetrahedron>(m_young, m_poisson, m_density, m_material, tet_nodes);
+
+		shared_ptr<Tetrahedron> tet;
+		if (m_type == 0) {
+			tet = make_shared<Tetrahedron>(m_young, m_poisson, m_density, m_material, tet_nodes);
+		}
+		else if (m_type == 1) {
+			tet = make_shared<TetrahedronInvertible>(m_young, m_poisson, m_density, m_material, tet_nodes);
+		}
+		else
+		{
+			tet = make_shared<TetrahedronCorotational>(m_young, m_poisson, m_density, m_material, tet_nodes);
+		}
+
 		tet->i = i;
-		tet->setInvertiblity(m_isInvertible);
+		tet->precompute();
+		//tet->setInvertiblity(m_isInvertible);
 		m_tets.push_back(tet);
 	}
 

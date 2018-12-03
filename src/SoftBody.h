@@ -86,6 +86,7 @@ public:
 	bool m_isInverted;
 
 protected:
+	int m_type;
 	bool m_isInvertible;
 	bool m_isGravity;
 	bool m_isElasticForce;

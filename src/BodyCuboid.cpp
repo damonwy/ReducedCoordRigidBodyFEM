@@ -8,7 +8,6 @@ using namespace Eigen;
 BodyCuboid::BodyCuboid(double density, Vector3d sides):
 Body(density), m_sides(sides)
 {
-
 }
 
 void BodyCuboid::computeInertia_() {

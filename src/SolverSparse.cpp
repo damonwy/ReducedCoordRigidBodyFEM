@@ -209,7 +209,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		body0->computeGrav(grav, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);
-
 		deformable0->computeForce(grav, fm);
 		deformable0->computeForceDampingSparse(grav, tmp, Dm_);
 
@@ -242,7 +241,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		Kr_sp.setFromTriplets(Kr_.begin(), Kr_.end());
 		J_sp.setFromTriplets(J_.begin(), J_.end()); // check
 		Jdot_sp.setFromTriplets(Jdot_.begin(), Jdot_.end());
-
+		
 		Mr_sp = J_sp.transpose() * (Mm_sp - hsquare * K_sp) * J_sp;
 		//Mr_sp_temp = Mr_sp.transpose();
 		//Mr_sp += Mr_sp_temp;
@@ -324,14 +323,16 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
 			int rows = nr + ne;
-			int cols = rows;
+			int cols = nr + ne;
+			//cout << rows << endl;
+			//cout << cols << endl;
 
 			MatrixXd LHS(rows, cols);
 			VectorXd rhs(rows);
 			LHS.setZero();
 			rhs.setZero();
 			VectorXd guess = rhs;
-			guess.segment<0>(nr) = qdot0;
+			guess.segment(0, nr) = qdot0;
 
 			MatrixXd MDKr_ = MatrixXd(MDKr_sp);
 			MatrixXd G = MatrixXd(G_sp);
@@ -345,11 +346,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			rhs.segment(0, nr) = fr_;
 			rhs.segment(nr, ne) = rhsG;
 
-			//VectorXd sol = LHS.ldlt().solve(rhs);
-			//qdot1 = sol.segment(0, nr);
-			//VectorXd l = sol.segment(nr, sol.rows() - nr);
+		/*	VectorXd sol = LHS.ldlt().solve(rhs);
+			qdot1 = sol.segment(0, nr);
+			VectorXd l = sol.segment(nr, sol.rows() - nr);*/
+			//cout << qdot1.segment<2>(0) << endl << endl;
+
 			ConjugateGradient< SparseMatrix<double> > cg;
-			cg.setMaxIterations(100);
+			cg.setMaxIterations(200);
 			cg.setTolerance(1e-6);
 			cg.compute(LHS_sp);
 			qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);

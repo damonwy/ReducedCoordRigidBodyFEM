@@ -52,7 +52,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(SOFT_BODIES_CUBE_COROTATIONAL_LINEAR);//_INVERTIBLE
+	m_world = make_shared<World>(SOFT_BODIES_CYLINDER_INVERTIBLE);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);

@@ -22,6 +22,7 @@ SoftBody(density, young, poisson, material)
 {
 	m_isInverted = false;
 	m_isGravity = true;
+	m_type = 1;
 }
 
 void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
@@ -38,7 +39,7 @@ void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 	if (m_isElasticForce) {
 		for (int i = 0; i < (int)m_tets.size(); i++) {
 			auto tet = m_tets[i];
-			f = tet->computeInvertibleElasticForces(f);
+			f = tet->computeElasticForces(f);
 			if (tet->m_isInverted) {
 				m_isInverted = true;
 				cout << "tet " << i << " is inverted!" << endl;
@@ -50,7 +51,7 @@ void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 void SoftBodyInvertibleFEM::computeStiffness_(MatrixXd &K) {
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
-		tet->computeInvertibleForceDifferentials(K);
+		tet->computeForceDifferentials(K);
 	}
 
 }
@@ -74,7 +75,7 @@ void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {
 				int irow = col - 3 * id;
 				int icol = col + iii;
 				
-				tet->computeInvertibleForceDifferentialsSparse(Dx, irow, icol, K_);
+				tet->computeForceDifferentialsSparse(Dx, irow, icol, K_);
 
 				//tet->computeInvertibleForceDifferentials(Dx, df);
 				//cout << df << endl;
