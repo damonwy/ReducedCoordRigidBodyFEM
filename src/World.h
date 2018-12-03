@@ -17,6 +17,7 @@ class JointRevolute;
 class Body;
 class SoftBody;
 class SoftBodyInvertibleFEM;
+class SoftBodyCorotationalLinear;
 class MatrixStack;
 class Program;
 class Constraint;
@@ -62,6 +63,8 @@ enum WorldType {
 	SPLINE_SURFACE_JOINT,
 	SOFT_BODIES_CUBE_INVERTIBLE,
 	SOFT_BODIES_CYLINDER_INVERTIBLE,
+	SOFT_BODIES_CUBE_COROTATIONAL_LINEAR,
+	SOFT_BODIES_CYLINDER_COROTATIONAL_LINEAR,
 	SPRING_DAMPER
 };
 
@@ -119,6 +122,14 @@ public:
 		std::string file_name);
 
 	std::shared_ptr<SoftBodyInvertibleFEM> addSoftBodyInvertibleFEM(
+		double density,
+		double young,
+		double possion,
+		Material material,
+		const std::string &RESOURCE_DIR,
+		std::string file_name);
+
+	std::shared_ptr<SoftBodyCorotationalLinear> addSoftBodyCorotationalLinearFEM(
 		double density,
 		double young,
 		double possion,

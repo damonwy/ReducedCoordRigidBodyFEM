@@ -19,7 +19,7 @@ SoftBodyCorotationalLinear::SoftBodyCorotationalLinear() {
 SoftBodyCorotationalLinear::SoftBodyCorotationalLinear(double density, double young, double poisson, Material material) :
 	SoftBody(density, young, poisson, material)
 {
-	m_isGravity = true;
+	m_isGravity = false;
 }
 
 void SoftBodyCorotationalLinear::computeForce_(Vector3d grav, VectorXd &f) {
@@ -29,6 +29,14 @@ void SoftBodyCorotationalLinear::computeForce_(Vector3d grav, VectorXd &f) {
 			int idxM = m_nodes[i]->idxM;
 			double m = m_nodes[i]->m;
 			f.segment<3>(idxM) += m * grav;
+		}
+	}
+
+	// Elastic Forces
+	if (m_isElasticForce) {
+		for (int i = 0; i < (int)m_tets.size(); i++) {
+			auto tet = m_tets[i];
+			f = tet->computeCorotationalElasticForces(f);
 		}
 	}
 }

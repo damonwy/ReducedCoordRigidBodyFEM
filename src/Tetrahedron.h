@@ -41,9 +41,9 @@ public:
 	void computeInvertibleForceDifferentials(Eigen::VectorXd dx, int row, int col, Eigen::MatrixXd &K);
 	void computeInvertibleForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
 
+	Eigen::VectorXd computeCorotationalElasticForces(Eigen::VectorXd f);
 	void computeCorotationalForceDifferentials(Eigen::MatrixXd &K);
 	void computeCorotationalForceDifferentialsSparse(std::vector<T> &K_);
-
 
 	Matrix3d clampHessian(Matrix3d &hessian, int clamped);
 	double computeEnergy();
@@ -54,9 +54,6 @@ public:
 	int clamped;
 
 	// IsotropicHyperelasticFEM
-
-	Vector9i rowMajorMatrixToTeran;
-	Vector9i teranToRowMajorMatrix;
 
 
 private:
@@ -111,6 +108,14 @@ private:
 	Matrix12d K;			// 12x12 stiffness matrix	
 	Matrix12d Ke;		// precomputed stiffness matrix for coratational linear material
 	Matrix3d FTF;
+
+	// Corotational
+	Matrix3d R;
+	Matrix12d Re;
 	Vector12d xx;		// undeformed position vector
 	Vector12d Kexx;		// undeformed force
+	Matrix12d RKR;
+	Vector12d RKxx;
+	Vector12d Kx;		// deformed force
+	Vector12d x_vec;
 };
