@@ -17,6 +17,7 @@
 #include "SoftBodyNull.h"
 #include "SoftBodyInvertibleFEM.h"
 #include "SoftBodyCorotationalLinear.h"
+#include "MeshEmbedding.h"
 
 #include "SoftBody.h"
 #include "FaceTriangle.h"
@@ -724,6 +725,40 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
+
+	case MESH_EMBEDDING:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e3;
+		double possion = 0.35;
+
+		for (int i = 0; i < 2; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+
+			if (i == 0) {
+				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+		}
+		//m_joints[0]->m_qdot(0) = 10.0;
+		//m_joints[1]->m_qdot(0) = -40.0;
+
+		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc", "muscle_cyc_cyc"); //
+		mesh_embedding->transformDenseMesh(Vector3d(10.0, 0.0, 0.0));
+
+	}
+	break;
+
 	default:
 		break;
 	}
@@ -834,7 +869,6 @@ shared_ptr<CompCylinder> World::addCompCylinder(double r, shared_ptr<Body> paren
 
 	m_ncomps++;
 	return comp;
-
 }
 
 shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(
@@ -860,6 +894,25 @@ shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(
 	comp->load(RESOURCE_DIR, shapeA, shapeB);
 	m_ncomps++;
 	return comp;
+}
+
+shared_ptr<MeshEmbedding> addMeshEmbedding(
+	double density,
+	double young,
+	double possion,
+	Material material,
+	const string &RESOURCE_DIR,
+	string dense_mesh,
+	string coarse_mesh) 
+{
+	auto dense_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
+	//dense_body->load(RESOURCE_DIR, dense_mesh);
+	auto coarse_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
+
+	auto mesh_embedding = make_shared<MeshEmbedding>(coarse_body, dense_body);
+	mesh_embedding->load(RESOURCE_DIR, coarse_mesh, dense_mesh);
+
+
 }
 
 shared_ptr<ConstraintNull> World::addConstraintNull() {

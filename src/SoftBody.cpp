@@ -263,13 +263,19 @@ void SoftBody::countDofs(int &nm, int &nr) {
 	}
 }
 
-void SoftBody::transform(Eigen::Vector3d dx) {
+void SoftBody::transform(Vector3d dx) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		node->x = node->x + dx;
 	}
 }
 
+void SoftBody::transform(Matrix4d E) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		node->update(E);
+	}
+}
 
 void SoftBody::updatePosNor() {
 	// update normals

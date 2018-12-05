@@ -319,8 +319,6 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 	return dP;
 }
 
-
-
 double Tetrahedron::computeEnergy() {
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 		this->Ds.col(i) = m_nodes[i]->x - m_nodes[3]->x;
@@ -332,6 +330,54 @@ double Tetrahedron::computeEnergy() {
 	return this->m_energy;
 }
 
+bool Tetrahedron::checkSameSide(const shared_ptr<Node> &v0, const shared_ptr<Node> &v1, const shared_ptr<Node> &v2, const shared_ptr<Node> &v3, const shared_ptr<Node> &p) {
+	Vector3d normal = (v1->x - v0->x).cross(v2->x - v0->x);
+	double dotV3 = normal.dot(v3->x - v0->x);
+	double dotP = normal.dot(p->x - v0->x);
+
+	if (dotV3 * dotP >= 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool Tetrahedron::checkPointInside(const shared_ptr<Node>& p) {
+	return checkSameSide(m_nodes[0], m_nodes[1], m_nodes[2], m_nodes[3], p) &&
+		checkSameSide(m_nodes[1], m_nodes[2], m_nodes[3], m_nodes[0], p) &&
+		checkSameSide(m_nodes[2], m_nodes[3], m_nodes[0], m_nodes[1], p) &&
+		checkSameSide(m_nodes[3], m_nodes[0], m_nodes[1], m_nodes[2], p);
+}
+
+Vector4d Tetrahedron::computeBarycentricWeightAndSave(const shared_ptr<Node>& p) {
+	Vector4d weight;
+	Vector3d vap = p->x - m_nodes[0]->x;
+	Vector3d vbp = p->x - m_nodes[1]->x;
+	Vector3d vcp = p->x - m_nodes[2]->x;
+	Vector3d vdp = p->x - m_nodes[3]->x;
+
+	Vector3d vab = m_nodes[1]->x - m_nodes[0]->x;
+	Vector3d vac = m_nodes[2]->x - m_nodes[0]->x;
+	Vector3d vad = m_nodes[3]->x - m_nodes[0]->x;
+
+	Vector3d vbc = m_nodes[2]->x - m_nodes[1]->x;
+	Vector3d vbd = m_nodes[3]->x - m_nodes[1]->x;
+
+	double va = ScalarTripleProduct(vbp, vbd, vbc) * 1.0 / 6.0;
+	double vb = ScalarTripleProduct(vap, vac, vad) * 1.0 / 6.0;
+	double vc = ScalarTripleProduct(vap, vad, vab) * 1.0 / 6.0;
+	double vd = ScalarTripleProduct(vap, vab, vac) * 1.0 / 6.0;
+
+	double v = 1.0 / ScalarTripleProduct(vab, vac, vad) * 1.0 / 6.0;
+	weight << va * v, vb * v, vc * v, vd * v;
+	m_barycentric_weights.push_back(weight);
+	return weight;
+}
+
+double Tetrahedron::ScalarTripleProduct(const Vector3d &a, const Vector3d &b, const Vector3d &c) {
+	return a.dot(b.cross(c));
+}
 
 
 void Tetrahedron::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {

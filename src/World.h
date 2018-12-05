@@ -40,20 +40,21 @@ class WrapObst;
 class WrapSphere;
 class WrapCylinder;
 class WrapDoubleCylinder;
+class MeshEmbedding;
 
-enum WorldType { 
-	SERIAL_CHAIN, 
-	DIFF_REVOLUTE_AXES, 
-	BRANCHING, 
-	SHPERICAL_JOINT, 
-	LOOP, 
-	JOINT_TORQUE, 
-	JOINT_LIMITS, 
-	EQUALITY_CONSTRAINED_ANGLES, 
-	EQUALITY_AND_LOOP, HYBRID_DYNAMICS, 
-	EXTERNAL_WORLD_FORCE, 
-	JOINT_STIFFNESS, 
-	SPRINGS, 
+enum WorldType {
+	SERIAL_CHAIN,
+	DIFF_REVOLUTE_AXES,
+	BRANCHING,
+	SHPERICAL_JOINT,
+	LOOP,
+	JOINT_TORQUE,
+	JOINT_LIMITS,
+	EQUALITY_CONSTRAINED_ANGLES,
+	EQUALITY_AND_LOOP, HYBRID_DYNAMICS,
+	EXTERNAL_WORLD_FORCE,
+	JOINT_STIFFNESS,
+	SPRINGS,
 	SOFT_BODIES,
 	COMPONENT,
 	WRAP_SPHERE,
@@ -65,7 +66,8 @@ enum WorldType {
 	SOFT_BODIES_CYLINDER_INVERTIBLE,
 	SOFT_BODIES_CUBE_COROTATIONAL_LINEAR,
 	SOFT_BODIES_CYLINDER_COROTATIONAL_LINEAR,
-	SPRING_DAMPER
+	SPRING_DAMPER,
+	MESH_EMBEDDING
 };
 
 
@@ -136,6 +138,16 @@ public:
 		Material material,
 		const std::string &RESOURCE_DIR,
 		std::string file_name);
+
+	std::shared_ptr<MeshEmbedding> addMeshEmbedding(
+		double density,
+		double young,
+		double possion,
+		Material material, 
+		const std::string &RESOURCE_DIR,
+		std::string dense_mesh,
+		std::string coarse_mesh
+	);
 
 	std::shared_ptr<ConstraintNull> addConstraintNull();
 	std::shared_ptr<DeformableNull> addDeformableNull();

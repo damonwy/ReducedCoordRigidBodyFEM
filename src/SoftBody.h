@@ -64,9 +64,10 @@ public:
 
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
 	bool getInvertiblity() { return m_isInvertible; }
-
-	void transform(Eigen::Vector3d dx);
-	
+	const std::vector<std::shared_ptr<Node> > & getNodes() const { return m_nodes; }
+	const std::vector<std::shared_ptr<Tetrahedron> > & getTets() const { return m_tets; }
+	void transform(Vector3d dx);
+	void transform(Matrix4d E);
 	// attached 
 	std::vector<std::shared_ptr<Node> > m_attach_nodes;
 	std::vector<std::shared_ptr<Body> > m_attach_bodies;
