@@ -60,7 +60,7 @@ using json = nlohmann::json;
 
 World::World() :
 	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_constraints(0), m_countS(0), m_countCM(0),
-	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0)
+	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0), m_nmeshembeddings(0)
 {
 	m_energy.K = 0.0;
 	m_energy.V = 0.0;
@@ -69,7 +69,7 @@ World::World() :
 World::World(WorldType type) :
 	m_type(type),
 	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_nconstraints(0), m_countS(0), m_countCM(0),
-	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0)
+	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0), m_nmeshembeddings(0)
 {
 	m_energy.K = 0.0;
 	m_energy.V = 0.0;
@@ -753,9 +753,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 		//m_joints[0]->m_qdot(0) = 10.0;
-		//m_joints[1]->m_qdot(0) = -40.0;
+		//m_joints[1]->m_qdot(0) = -10.0;
 
-		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc", "muscle_cyc_cyc"); //
+		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "embedded", "muscle_cyc_cyc"); //
 		mesh_embedding->transformDenseMesh(E);
 		mesh_embedding->transformCoarseMesh(E);
 		mesh_embedding->precomputeWeights();
@@ -906,11 +906,10 @@ shared_ptr<MeshEmbedding> World::addMeshEmbedding(
 	double possion,
 	Material material,
 	const string &RESOURCE_DIR,
-	string dense_mesh,
-	string coarse_mesh) 
+	string coarse_mesh,
+	string dense_mesh) 
 {
 	auto dense_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
-	//dense_body->load(RESOURCE_DIR, dense_mesh);
 	auto coarse_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
 
 	auto mesh_embedding = make_shared<MeshEmbedding>(coarse_body, dense_body);
@@ -1088,9 +1087,6 @@ void World::init() {
 		}
 	}
 
-
-
-
 	if (m_njoints == 0) {
 		addJointNull();
 	}
@@ -1164,6 +1160,10 @@ void World::init() {
 
 	if (m_type == MESH_EMBEDDING) {
 		m_meshembeddings[0]->setAttachmentsByYZCircle(7.5, 1.4, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(7.5, 1.4, Vector2d(0.0, 0.0), 0.8, m_bodies[0]);
+
+		m_meshembeddings[0]->setAttachmentsByYZCircle(13.5, 2.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(13.5, 2.5, Vector2d(0.0, 0.0), 0.8, m_bodies[1]);
 
 	}
 

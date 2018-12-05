@@ -328,7 +328,6 @@ void TetrahedronInvertible::computeForceDifferentialsSparse(VectorXd dx, int row
 		this->dP = computePKStressDerivative(this->F, this->dF, m_mu, m_lambda);
 	}
 	this->dH.noalias() = -W * dP * this->BmT;
-
 	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
 
 		for (int j = 0; j < 3; ++j) {

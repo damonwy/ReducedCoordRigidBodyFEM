@@ -48,7 +48,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pqzR", &input_mesh, &output_mesh);
+	tetrahedralize("pqzRa1.0", &input_mesh, &output_mesh);
 
 	double r = 0.01;
 
@@ -440,7 +440,7 @@ void SoftBody::setAttachmentsByYZCircle(double x, double range, Vector2d O, doub
 		Vector3d xi = node->x;
 		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
 
-		if (abs(xi(0) - x) < range && diff < 0.3) {
+		if (abs(xi(0) - x) < range && diff < 2.3) {
 			setAttachments(i, body);
 		}
 	}
@@ -529,7 +529,7 @@ void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eige
 	}
 }
 
-VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
+void SoftBody::gatherDofs(VectorXd &y, int nr) {
 	// Gathers qdot and qddot into y
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
@@ -538,9 +538,8 @@ VectorXd SoftBody::gatherDofs(VectorXd y, int nr) {
 	}
 
 	if (next != nullptr) {
-		y = next->gatherDofs(y, nr);
+		next->gatherDofs(y, nr);
 	}
-	return y;
 }
 
 VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {

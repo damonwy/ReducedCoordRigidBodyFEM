@@ -255,24 +255,22 @@ void Joint::computeEnergies(Vector3d grav, Energy &ener) {
 	}
 }
 
-Eigen::VectorXd Joint::gatherDofs(VectorXd y, int nr) {
+void Joint::gatherDofs(VectorXd &y, int nr) {
 	// Gathers q and qdot into y
 	y.segment(idxR, m_ndof) = m_q;
 	y.segment(nr + idxR, m_ndof) = m_qdot;
 	if (next != nullptr) {
-		y = next->gatherDofs(y, nr);
+		next->gatherDofs(y, nr);
 	}
-	return y;
 }
 
-Eigen::VectorXd Joint::gatherDDofs(VectorXd ydot, int nr) {
+void Joint::gatherDDofs(VectorXd &ydot, int nr) {
 	// Gathers qdot and qddot into ydot
 	ydot.segment(idxR, m_ndof) = m_qdot;
 	ydot.segment(nr + idxR, m_ndof) = m_qddot;
 	if (next != nullptr) {
-		ydot = next->gatherDDofs(ydot, nr);
+		next->gatherDDofs(ydot, nr);
 	}
-	return ydot;
 }
 
 void Joint::scatterDofs(VectorXd y, int nr) {

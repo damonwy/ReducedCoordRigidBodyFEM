@@ -20,6 +20,7 @@
 #include "DeformableSpring.h"
 
 #include "SoftBody.h"
+#include "MeshEmbedding.h"
 
 using namespace std;
 using namespace Eigen;
@@ -52,7 +53,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(SOFT_BODIES_CYLINDER_INVERTIBLE);//_INVERTIBLE
+	m_world = make_shared<World>(MESH_EMBEDDING);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
@@ -70,11 +71,11 @@ void Scene::init()
 	//y1 = m_solver->dynamics(y0);
 	y.resize(2 * m_world->nr);
 	y.setZero();
-	y = m_world->getJoint0()->gatherDofs(y, m_world->nr);
+	m_world->getJoint0()->gatherDofs(y, m_world->nr);
 	m_world->getDeformable0()->gatherDofs(y, m_world->nr);
-	y = m_world->getSoftBody0()->gatherDofs(y, m_world->nr);
+	m_world->getSoftBody0()->gatherDofs(y, m_world->nr);
+	m_world->getMeshEmbedding0()->gatherDofs(y, m_world->nr);
 	//m_solution = m_solver->solve();
-
 	//vec_to_file(m_solution->t, "t");
 	//mat_to_file(m_solution->y, "y");
 

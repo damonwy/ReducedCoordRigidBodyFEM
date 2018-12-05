@@ -78,8 +78,8 @@ public:
 	void computeInertia();
 
 	void computeEnergies(Vector3d grav, Energy &ener);
-	Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
-	Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
+	void gatherDofs(Eigen::VectorXd &y, int nr);
+	void gatherDDofs(Eigen::VectorXd &ydot, int nr);
 	void scatterDofs(Eigen::VectorXd y, int nr);
 	void scatterDDofs(Eigen::VectorXd ydot, int nr);
 	void scatterTauCon(Eigen::VectorXd tauc);

@@ -406,11 +406,11 @@ shared_ptr<Solution> SolverDense::solve() {
 
 		// initial state
 		m_solutions->t(0) = m_world->getTspan()(0);
-		m_solutions->y.row(0) = joint0->gatherDofs(m_solutions->y.row(0), nr);
+		//m_solutions->y.row(0) = joint0->gatherDofs(m_solutions->y.row(0), nr);
 		VectorXd sol_y = m_solutions->y.row(0);
 		deformable0->gatherDofs(sol_y, nr);
 		m_solutions->y.row(0) = sol_y;
-		m_solutions->y.row(0) = softbody0->gatherDofs(m_solutions->y.row(0), nr);
+		//m_solutions->y.row(0) = softbody0->gatherDofs(m_solutions->y.row(0), nr);
 
 		t = m_world->getTspan()(0);
 		h = m_world->getH();

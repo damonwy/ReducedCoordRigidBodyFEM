@@ -42,7 +42,7 @@ public:
 	void computeStiffness(Eigen::MatrixXd &K);
 	void computeStiffnessSparse(std::vector<T> &K_);
 
-	virtual Eigen::VectorXd gatherDofs(Eigen::VectorXd y, int nr);
+	virtual void gatherDofs(Eigen::VectorXd &y, int nr);
 	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
 	virtual void scatterDDofs(Eigen::VectorXd &ydot, int nr);

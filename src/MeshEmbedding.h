@@ -8,6 +8,7 @@
 #include <Eigen/Sparse>
 #include "MLCommon.h"
 
+class Body;
 class SoftBody;
 class Program;
 class MatrixStack;
@@ -20,8 +21,8 @@ public:
 
 	virtual ~MeshEmbedding() {}
 
-	virtual void load(const std::string &RESOURCE_DIR, const std::string &COARSE_MESH_NAME, const std::string &DENSE_MESH_NAME);
-	virtual void init();
+	void load(const std::string &RESOURCE_DIR, const std::string &COARSE_MESH_NAME, const std::string &DENSE_MESH_NAME);
+	void init();
 	void precomputeWeights();
 	void updatePosNor();
 	void countDofs(int &nm, int &nr);
@@ -36,6 +37,7 @@ public:
 	void computeStiffnessSparse(std::vector<T> &K_);
 	void scatterDofs(Eigen::VectorXd &y, int nr);
 	void scatterDDofs(Eigen::VectorXd &ydot, int nr);
+	void gatherDofs(Eigen::VectorXd &y, int nr);
 
 
 	std::shared_ptr<SoftBody> getDenseMesh() { return m_dense_mesh; }

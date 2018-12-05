@@ -364,12 +364,12 @@ Vector4d Tetrahedron::computeBarycentricWeightAndSave(const shared_ptr<Node>& p)
 	Vector3d vbc = m_nodes[2]->x - m_nodes[1]->x;
 	Vector3d vbd = m_nodes[3]->x - m_nodes[1]->x;
 
-	double va = ScalarTripleProduct(vbp, vbd, vbc) * 1.0 / 6.0;
-	double vb = ScalarTripleProduct(vap, vac, vad) * 1.0 / 6.0;
-	double vc = ScalarTripleProduct(vap, vad, vab) * 1.0 / 6.0;
-	double vd = ScalarTripleProduct(vap, vab, vac) * 1.0 / 6.0;
+	double va = ScalarTripleProduct(vbp, vbd, vbc);
+	double vb = ScalarTripleProduct(vap, vac, vad);
+	double vc = ScalarTripleProduct(vap, vad, vab);
+	double vd = ScalarTripleProduct(vap, vab, vac);
 
-	double v = 1.0 / ScalarTripleProduct(vab, vac, vad) * 1.0 / 6.0;
+	double v = 1.0 / ScalarTripleProduct(vab, vac, vad);
 	weight << va * v, vb * v, vc * v, vd * v;
 	m_barycentric_weights.push_back(weight);
 	return weight;

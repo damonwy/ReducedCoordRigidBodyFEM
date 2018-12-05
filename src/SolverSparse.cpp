@@ -186,7 +186,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			spring0 = m_world->getSpring0();
 			meshembedding0 = m_world->getMeshEmbedding0();
 
-
 			t = m_world->getTspan()(0);
 			h = m_world->getH();
 			hsquare = h * h;
@@ -325,10 +324,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		if (ne == 0 && ni == 0) {	// No constraints
 			ConjugateGradient< SparseMatrix<double> > cg;
-			cg.setMaxIterations(25);
-			cg.setTolerance(1e-3);
+			cg.setMaxIterations(200);
+			cg.setTolerance(1e-6);
 			cg.compute(MDKr_sp);
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
+
+
+
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
 			int rows = nr + ne;
@@ -351,10 +353,11 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			LHS.block(nr, 0, ne, nr) = G;
 			SparseMatrix<double> LHS_sp(rows, cols);
 			LHS_sp = LHS.sparseView(1e-8);
-
+			
 			rhs.segment(0, nr) = fr_;
 			rhs.segment(nr, ne) = rhsG;
-
+			//cout << LHS << endl;
+			//cout << rhs << endl;
 		/*	VectorXd sol = LHS.ldlt().solve(rhs);
 			qdot1 = sol.segment(0, nr);
 			VectorXd l = sol.segment(nr, sol.rows() - nr);*/
@@ -456,7 +459,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
-
 		yk.segment(0, nr) = q1;
 		yk.segment(nr, nr) = qdot1;
 
