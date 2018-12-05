@@ -46,7 +46,7 @@ public:
 	int idxR;
 	int idxM;
 	std::vector<Eigen::Vector3d> m_normals;
-
+	bool isEnclosedByTet;		
 	bool attached;			
 	bool fixed;					// is fixed?
 	double r;					// radius

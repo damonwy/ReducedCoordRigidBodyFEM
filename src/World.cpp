@@ -18,6 +18,7 @@
 #include "SoftBodyInvertibleFEM.h"
 #include "SoftBodyCorotationalLinear.h"
 #include "MeshEmbedding.h"
+#include "MeshEmbeddingNull.h"
 
 #include "SoftBody.h"
 #include "FaceTriangle.h"
@@ -736,6 +737,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Eigen::from_json(js["sides"], sides);
 		double young = 1e3;
 		double possion = 0.35;
+		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
 
 		for (int i = 0; i < 2; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
@@ -754,7 +756,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//m_joints[1]->m_qdot(0) = -40.0;
 
 		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc", "muscle_cyc_cyc"); //
-		mesh_embedding->transformDenseMesh(Vector3d(10.0, 0.0, 0.0));
+		mesh_embedding->transformDenseMesh(E);
+		mesh_embedding->transformCoarseMesh(E);
+		mesh_embedding->precomputeWeights();
 
 	}
 	break;
@@ -896,7 +900,7 @@ shared_ptr<CompDoubleCylinder> World::addCompDoubleCylinder(
 	return comp;
 }
 
-shared_ptr<MeshEmbedding> addMeshEmbedding(
+shared_ptr<MeshEmbedding> World::addMeshEmbedding(
 	double density,
 	double young,
 	double possion,
@@ -912,16 +916,16 @@ shared_ptr<MeshEmbedding> addMeshEmbedding(
 	auto mesh_embedding = make_shared<MeshEmbedding>(coarse_body, dense_body);
 	mesh_embedding->load(RESOURCE_DIR, coarse_mesh, dense_mesh);
 
-
+	m_nmeshembeddings++;
+	m_meshembeddings.push_back(mesh_embedding);
+	return mesh_embedding;
 }
 
 shared_ptr<ConstraintNull> World::addConstraintNull() {
-
 	auto constraint = make_shared<ConstraintNull>();
 	m_nconstraints++;
 	m_constraints.push_back(constraint);
 	return constraint;
-
 }
 
 shared_ptr<JointNull> World::addJointNull() {
@@ -959,6 +963,13 @@ shared_ptr<SpringNull> World::addSpringNull() {
 	m_nsprings++;
 	m_springs.push_back(spring);
 	return spring;
+}
+
+shared_ptr<MeshEmbeddingNull> World::addMeshEmbeddingNull() {
+	auto mesh_null = make_shared<MeshEmbeddingNull>();
+	m_nmeshembeddings++;
+	m_meshembeddings.push_back(mesh_null);
+	return mesh_null;
 }
 
 shared_ptr<WrapSphere> World::addWrapSphere(shared_ptr<Body> b0, Vector3d r0, shared_ptr<Body> b1, Vector3d r1, shared_ptr<CompSphere> compSphere, int num_points, const string &RESOURCE_DIR) {
@@ -1077,6 +1088,9 @@ void World::init() {
 		}
 	}
 
+
+
+
 	if (m_njoints == 0) {
 		addJointNull();
 	}
@@ -1148,6 +1162,11 @@ void World::init() {
 		//m_softbodies[0]->setSlidingNodesByYZCircle(12.5, 1.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 	}
 
+	if (m_type == MESH_EMBEDDING) {
+		m_meshembeddings[0]->setAttachmentsByYZCircle(7.5, 1.4, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+
+	}
+
 	for (int i = 0; i < m_nsoftbodies; i++) {
 		m_softbodies[i]->countDofs(nm, nr);
 		m_softbodies[i]->init();
@@ -1168,6 +1187,26 @@ void World::init() {
 		m_softbodies.push_back(softbody);
 		m_nsoftbodies++;
 	}
+
+	for (int i = 0; i < m_nmeshembeddings; i++) {
+		m_meshembeddings[i]->countDofs(nm, nr);
+		m_meshembeddings[i]->init();
+		// Create attachment constraints
+		auto constraint = make_shared<ConstraintAttachSoftBody>(m_meshembeddings[i]->getCoarseMesh());
+		m_constraints.push_back(constraint);
+		m_nconstraints++;
+
+		if (i < m_nmeshembeddings - 1) {
+			m_meshembeddings[i]->next = m_meshembeddings[i + 1];
+		}
+	}
+
+	if (m_nmeshembeddings == 0) {
+		auto mesh_null = make_shared<MeshEmbeddingNull>();
+		m_meshembeddings.push_back(mesh_null);
+		m_nmeshembeddings++;
+	}
+
 	// init constraints
 
 	for (int i = 0; i < m_nconstraints; i++) {
@@ -1203,6 +1242,7 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	m_wraps[0]->draw(MV, prog, progSimple, P);
 	m_springs[0]->draw(MV, prog, progSimple, P);
 	m_softbodies[0]->draw(MV, prog, progSimple, P);
+	m_meshembeddings[0]->draw(MV, prog, progSimple, P);
 }
 
 Energy World::computeEnergy() {

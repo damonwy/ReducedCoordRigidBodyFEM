@@ -41,6 +41,7 @@ class WrapSphere;
 class WrapCylinder;
 class WrapDoubleCylinder;
 class MeshEmbedding;
+class MeshEmbeddingNull;
 
 enum WorldType {
 	SERIAL_CHAIN,
@@ -155,6 +156,7 @@ public:
 	std::shared_ptr<CompNull> addCompNull();
 	std::shared_ptr<WrapObst> addWrapNull();
 	std::shared_ptr<SpringNull> addSpringNull();
+	std::shared_ptr<MeshEmbeddingNull> addMeshEmbeddingNull();
 
 	std::shared_ptr<CompSphere> addCompSphere(
 		double r, 
@@ -251,6 +253,7 @@ public:
 	std::shared_ptr<SoftBody> getSoftBody0() const { return m_softbodies[0]; }
 	std::shared_ptr<Constraint> getConstraint0() const { return m_constraints[0]; }
 	std::shared_ptr<Spring> getSpring0() const { return m_springs[0]; }
+	std::shared_ptr<MeshEmbedding> getMeshEmbedding0() const { return m_meshembeddings[0]; }
 
 	Vector2d getTspan() const { return m_tspan; }
 	int getNsteps();
@@ -273,6 +276,7 @@ public:
 	int m_nconstraints;
 	int m_ncomps;
 	int m_nwraps;
+	int m_nmeshembeddings;
 	
 	int m_dense_nm;
 	int m_dense_nr;
@@ -294,7 +298,8 @@ private:
 	std::vector<std::shared_ptr<Body>> m_bodies;
 	std::vector<std::shared_ptr<Comp>> m_comps;
 	std::vector<std::shared_ptr<WrapObst>> m_wraps;
-	std::vector <std::shared_ptr<SoftBody>> m_softbodies;
+	std::vector<std::shared_ptr<SoftBody>> m_softbodies;
+	std::vector<std::shared_ptr<MeshEmbedding>> m_meshembeddings;
 	std::vector<std::shared_ptr<Joint>> m_joints;
 	std::vector<std::shared_ptr<Deformable>> m_deformables;
 	std::vector<std::shared_ptr<Spring>> m_springs;

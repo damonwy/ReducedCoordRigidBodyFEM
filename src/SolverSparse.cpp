@@ -12,6 +12,7 @@
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
 #include "MatlabDebug.h"
+#include "MeshEmbedding.h"
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
@@ -183,6 +184,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			softbody0 = m_world->getSoftBody0();
 			constraint0 = m_world->getConstraint0();
 			spring0 = m_world->getSpring0();
+			meshembedding0 = m_world->getMeshEmbedding0();
+
 
 			t = m_world->getTspan()(0);
 			h = m_world->getH();
@@ -204,6 +207,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			body0->computeMassSparse(Mm_);
 			deformable0->computeMassSparse(Mm_);
 			softbody0->computeMassSparse(Mm_);
+			meshembedding0->computeMassSparse(Mm_);
 			Mm_sp.setFromTriplets(Mm_.begin(), Mm_.end());
 		}
 
@@ -214,6 +218,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		softbody0->computeForce(grav, fm);
 		softbody0->computeStiffnessSparse(K_);
+
+		meshembedding0->computeForce(grav, fm);
+		meshembedding0->computeStiffnessSparse(K_);
 
 		joint0->computeForceStiffnessSparse(fr, Kr_);
 		joint0->computeForceDampingSparse(tmp, Dr_);
@@ -232,6 +239,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		deformable0->computeJacobianSparse(J_, Jdot_);
 		softbody0->computeJacobianSparse(J_);
+		meshembedding0->computeJacobianSparse(J_);
+
 		spring0->computeForceStiffnessDampingSparse(fm, Km_, Dm_);
 
 		Km_sp.setFromTriplets(Km_.begin(), Km_.end());
@@ -462,6 +471,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		softbody0->scatterDofs(yk, nr);
 		softbody0->scatterDDofs(ydotk, nr);
+
+		meshembedding0->scatterDofs(yk, nr);
+		meshembedding0->scatterDDofs(ydotk, nr);
 
 		//Energy ener = m_world->computeEnergy();
 		/*cout << "V" << ener.V << endl;

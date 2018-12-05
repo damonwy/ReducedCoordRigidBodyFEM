@@ -25,7 +25,8 @@ Node::Node() :
 	v(0.0, 0.0, 0.0),
 	m_nfaces(0),
 	fixed(false),
-	attached(false)
+	attached(false),
+	isEnclosedByTet(false)
 {
 	
 }
@@ -40,7 +41,9 @@ Node::Node(const shared_ptr<Shape> s) :
 	attached(false),
 	normal(0.0,0.0,0.0),
 	m_nfaces(0),
-	sphere(s)
+	sphere(s),
+	isEnclosedByTet(false)
+
 {
 	
 }

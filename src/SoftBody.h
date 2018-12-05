@@ -54,7 +54,7 @@ public:
 	void setAttachmentsByYZSurface(double x, double range, Vector2d yrange, Vector2d zrange, std::shared_ptr<Body> body);
 	void setAttachmentsByXZSurface(double y, double range, Vector2d xrange, Vector2d zrange, std::shared_ptr<Body> body);
 
-	void setAttachmentsByYZCircle(double x, double range, Eigen::Vector2d O, double r, std::shared_ptr<Body> body);
+	void setAttachmentsByYZCircle(double x, double range, Vector2d O, double r, std::shared_ptr<Body> body);
 
 	void setSlidingNodes(int id, std::shared_ptr<Body> body, Vector3d init_dir);
 	void setSlidingNodesByXYSurface(double z, Vector2d xrange, Vector2d yrange, double dir, std::shared_ptr<Body> body);

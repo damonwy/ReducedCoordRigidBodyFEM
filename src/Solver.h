@@ -21,6 +21,7 @@ class Deformable;
 class SoftBody;
 class Spring;
 class Constraint;
+class MeshEmbedding;
 
 typedef Eigen::Triplet<double> T;
 
@@ -100,6 +101,7 @@ protected:
 	std::shared_ptr<SoftBody> softbody0;
 	std::shared_ptr<Constraint> constraint0;
 	std::shared_ptr<Spring> spring0;
+	std::shared_ptr<MeshEmbedding> meshembedding0;
 
 	double t;
 	double h;

@@ -39,18 +39,18 @@ public:
 	Vector4d computeBarycentricWeightAndSave(const std::shared_ptr<Node>& p);
 	double computeEnergy();
 	double ScalarTripleProduct(const Eigen::Vector3d &a, const Eigen::Vector3d &b, const Eigen::Vector3d &c);
-
+	Vector3d computePositionByBarycentricWeight(Vector4d weight);
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
 	int i;
 	bool m_isInverted;
+	std::vector<Vector4d> m_barycentric_weights;	
+	// a list of material points which are enclosed by this tetrahedral element
+	std::vector<std::shared_ptr<Node> > m_enclosed_points; 
 
 protected:
 	Material m_material;
 	double m_young;
 	double m_poisson;
-	std::vector<std::shared_ptr<Node> > m_enclosed_points; 
-	std::vector<Vector4d> m_barycentric_weights;
-	// a list of material points which are enclosed by this tetrahedral element
 
 
 	// Lame coefficients

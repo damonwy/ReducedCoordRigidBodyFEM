@@ -379,6 +379,16 @@ double Tetrahedron::ScalarTripleProduct(const Vector3d &a, const Vector3d &b, co
 	return a.dot(b.cross(c));
 }
 
+Vector3d Tetrahedron::computePositionByBarycentricWeight(Vector4d weight) {
+	Vector3d pos;
+	pos.setZero();
+	for (int i = 0; i < 4; i++) {
+		pos += m_nodes[i]->x * weight(i);
+	}
+
+	return pos;
+}
+
 
 void Tetrahedron::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	if (m_isInverted) {
