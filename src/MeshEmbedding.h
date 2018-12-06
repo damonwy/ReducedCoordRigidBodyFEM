@@ -30,6 +30,8 @@ public:
 	void transformDenseMesh(Matrix4d E);
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	void setAttachmentsByYZCircle(double x, double range, Vector2d O, double r, std::shared_ptr<Body> body);
+	void setAttachmentsByXZCircle(double y, double range, Vector2d O, double r, std::shared_ptr<Body> body);
+
 	void computeMassSparse(std::vector<T> &M_);
 	void computeJacobianSparse(std::vector<T> &J_);
 

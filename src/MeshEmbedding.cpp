@@ -35,6 +35,7 @@ void MeshEmbedding::load(const string &RESOURCE_DIR, const string &COARSE_MESH_N
 	m_dense_mesh->load(RESOURCE_DIR, DENSE_MESH_NAME);
 	m_coarse_mesh->load(RESOURCE_DIR, COARSE_MESH_NAME);
 
+
 }
 
 void MeshEmbedding::init() {
@@ -44,18 +45,34 @@ void MeshEmbedding::init() {
 
 void MeshEmbedding::computeMassSparse(vector<T> &M_) {
 	m_coarse_mesh->computeMassSparse(M_);
+
+	if (next != nullptr) {
+		next->computeMassSparse(M_);
+	}
 }
 
 void MeshEmbedding::computeJacobianSparse(vector<T> &J_) {
 	m_coarse_mesh->computeJacobianSparse(J_);
+
+	if (next != nullptr) {
+		next->computeJacobianSparse(J_);
+	}
 }
 
 void MeshEmbedding::computeForce(Vector3d grav, VectorXd &f) {
 	m_coarse_mesh->computeForce(grav, f);
+
+	if (next != nullptr) {
+		next->computeForce(grav, f);
+	}
 }
 
 void MeshEmbedding::computeStiffnessSparse(std::vector<T> &K_) {
 	m_coarse_mesh->computeStiffnessSparse(K_);
+
+	if (next != nullptr) {
+		next->computeStiffnessSparse(K_);
+	}
 }
 
 void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
@@ -75,16 +92,25 @@ void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 
 	m_dense_mesh->updatePosNor();
 
+
+	if (next != nullptr) {
+		next->scatterDofs(y, nr);
+	}
 }
 
 void MeshEmbedding::scatterDDofs(VectorXd &ydot, int nr) {
 
 	m_coarse_mesh->scatterDDofs(ydot, nr);
+	if (next != nullptr) {
+		next->scatterDDofs(ydot, nr);
+	}
 }
 
 void MeshEmbedding::gatherDofs(VectorXd &y, int nr) {
 	m_coarse_mesh->gatherDofs(y, nr);
-	
+	if (next != nullptr) {
+		next->gatherDofs(y, nr);
+	}
 }
 
 void MeshEmbedding::precomputeWeights() {
@@ -120,6 +146,8 @@ void MeshEmbedding::precomputeWeights() {
 		}
 	}
 
+
+
 }
 
 void MeshEmbedding::transformCoarseMesh(Matrix4d E) {
@@ -131,6 +159,8 @@ void MeshEmbedding::transformDenseMesh(Matrix4d E) {
 }
 void MeshEmbedding::countDofs(int &nm, int &nr) {
 	m_coarse_mesh->countDofs(nm, nr);
+
+
 }
 
 void MeshEmbedding::updatePosNor() {
@@ -142,6 +172,8 @@ void MeshEmbedding::updatePosNor() {
 
 void MeshEmbedding::setAttachmentsByYZCircle(double x, double range, Vector2d O, double r, shared_ptr<Body> body) {
 	m_coarse_mesh->setAttachmentsByYZCircle(x, range, O, r, body);
+}
 
-
+void MeshEmbedding::setAttachmentsByXZCircle(double y, double range, Vector2d O, double r, shared_ptr<Body> body) {
+	m_coarse_mesh->setAttachmentsByXZCircle(y, range, O, r, body);
 }

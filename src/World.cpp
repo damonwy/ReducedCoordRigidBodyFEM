@@ -804,24 +804,50 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			// Init constraints
 			if (i > 0) {
-				addConstraintJointLimit(m_joints[i], -M_PI / 2.0, M_PI / 2.0);
+				addConstraintJointLimit(m_joints[i], -M_PI / 4.0, M_PI / 4.0);
 			}
 
 			//m_joints[i]->setStiffness(m_stiffness);
 			m_joints[i]->setDamping(m_damping);
 
 		}
-		//m_joints[0]->m_qdot(0) = 10.0;
-		m_joints[1]->m_qdot(0) = -20.0;
 
+		for (int i = 0; i < 2; i++) {
+			auto body = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_y_9.obj");
+
+			if (i == 0) {
+				addJointFixed(body, Vector3d(-7.5, 5.0, 0.0), Matrix3d::Identity(), 0.0);
+
+				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[2+i - 1]);
+
+			}
+
+			// Init constraints
+			if (i > 0) {
+				addConstraintJointLimit(m_joints[i], -M_PI / 4.0, M_PI / 4.0);
+			}
+
+			//m_joints[i]->setStiffness(m_stiffness);
+			m_joints[i]->setDamping(m_damping);
+
+
+		}
+
+
+		//m_joints[0]->m_qdot(0) = 10.0;
+		//m_joints[1]->m_qdot(0) = -20.0;
+		m_joints[3]->m_qdot(0) = -3.0;
 		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "right_arm_embedded", "right_arm"); //
 		//mesh_embedding->transformDenseMesh(E);
 		//mesh_embedding->transformCoarseMesh(E);
 		mesh_embedding->precomputeWeights();
 		//mesh_embedding->toggleDrawingCoarseMesh(true);
-		auto torso = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "torso", "torso"); //
+		auto torso = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "torso_embedded_w_hole", "torso"); //
 		torso->precomputeWeights();
-
+		torso->toggleDrawingCoarseMesh(true);
 	}
 	break;
 	default:
@@ -1234,6 +1260,8 @@ void World::init() {
 
 		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 		//m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.5, Vector2d(0.0, 0.0), 0.8, m_bodies[1]);
+		m_meshembeddings[1]->setAttachmentsByXZCircle(0.0, 4.5, Vector2d(-7.5, 0.0), 0.5, m_bodies[2]);
+		m_meshembeddings[1]->setAttachmentsByXZCircle(-10.0, 4.5, Vector2d(-7.5, 0.0), 0.5, m_bodies[3]);
 
 	}
 

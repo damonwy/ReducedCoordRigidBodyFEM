@@ -48,7 +48,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pqzRa5.0", &input_mesh, &output_mesh);
+	tetrahedralize("pqzRa15.0", &input_mesh, &output_mesh);
 
 	double r = 0.01;
 
@@ -449,6 +449,18 @@ void SoftBody::setAttachmentsByYZCircle(double x, double range, Vector2d O, doub
 		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
 
 		if (abs(xi(0) - x) < range && diff < 0.0001) {
+			setAttachments(i, body);
+		}
+	}
+}
+
+void SoftBody::setAttachmentsByXZCircle(double y, double range, Vector2d O, double r, shared_ptr<Body> body) {
+	for (int i = 0; i < (int)m_nodes.size(); i++) {
+		auto node = m_nodes[i];
+		Vector3d xi = node->x;
+		double diff = pow((xi(0) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
+
+		if (abs(xi(1 ) - y) < range && diff < 0.0001) {
 			setAttachments(i, body);
 		}
 	}
