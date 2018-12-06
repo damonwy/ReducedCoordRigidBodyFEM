@@ -51,7 +51,7 @@ protected:
 	Material m_material;
 	double m_young;
 	double m_poisson;
-
+	Vector3f m_enclosed_color;
 
 	// Lame coefficients
 	double m_mu;

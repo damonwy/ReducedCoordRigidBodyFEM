@@ -4,19 +4,27 @@
 #include "Node.h"
 #include "Tetrahedron.h"
 #include "Body.h"
+#include "FaceTriangle.h"
 using namespace std;
 using namespace Eigen;
 
 MeshEmbedding::MeshEmbedding(const shared_ptr<SoftBody> coarse_mesh, const shared_ptr<SoftBody> dense_mesh) {
 	m_coarse_mesh = coarse_mesh;
 	m_dense_mesh = dense_mesh;
+	m_isDenseMesh = true;
+	m_isCoarseMesh = false;
 
 }
 
 void MeshEmbedding::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
+	if (m_isDenseMesh) {
+		m_dense_mesh->draw(MV, prog, progSimple, P);
+	}
 
-	m_dense_mesh->draw(MV, prog, progSimple, P);
-	//m_coarse_mesh->draw(MV, prog, progSimple, P);
+	if (m_isCoarseMesh) {
+		m_coarse_mesh->draw(MV, prog, progSimple, P);
+	}
+
 	if (next != nullptr) {
 		next->draw(MV, prog, progSimple, P);
 	}
@@ -81,20 +89,37 @@ void MeshEmbedding::gatherDofs(VectorXd &y, int nr) {
 
 void MeshEmbedding::precomputeWeights() {
 	const vector<shared_ptr<Tetrahedron> > &coarse_mesh_tets = m_coarse_mesh->getTets();
-	const vector<shared_ptr<Node> > &dense_mesh_nodes = m_dense_mesh->getNodes();
+	const vector<shared_ptr<FaceTriangle> > &dense_mesh_trifaces = m_dense_mesh->getFaces();
+	//for (int i = 0; i < (int)coarse_mesh_tets.size(); i++) {
+	//	auto tet = coarse_mesh_tets[i];
+	//	for (int j = 0; j < (int)dense_mesh_nodes.size(); j++) {
+	//		auto node = dense_mesh_nodes[j];
+	//		if (!node->isEnclosedByTet && tet->checkPointInside(node)) {
+	//			// the point is inside the tet
+	//			tet->addEnclosedPoint(node);
+	//			Vector4d weight = tet->computeBarycentricWeightAndSave(node);
+	//			
+	//			node->isEnclosedByTet = true;
+	//		}
+	//	}
+	//}
+
 	for (int i = 0; i < (int)coarse_mesh_tets.size(); i++) {
 		auto tet = coarse_mesh_tets[i];
-		for (int j = 0; j < (int)dense_mesh_nodes.size(); j++) {
-			auto node = dense_mesh_nodes[j];
-			if (!node->isEnclosedByTet && tet->checkPointInside(node)) {
-				// the point is inside the tet
-				tet->addEnclosedPoint(node);
-				Vector4d weight = tet->computeBarycentricWeightAndSave(node);
-				
-				node->isEnclosedByTet = true;
-			}
+		for (int j = 0; j < (int)dense_mesh_trifaces.size(); j++) {
+			for (int k = 0; k < 3; k++) {
+				auto node = dense_mesh_trifaces[j]->m_nodes[k];
+				if (!node->isEnclosedByTet && tet->checkPointInside(node)) {
+					// the point is inside the tet
+					tet->addEnclosedPoint(node);
+					Vector4d weight = tet->computeBarycentricWeightAndSave(node);
+
+					node->isEnclosedByTet = true;
+				}
+			}			
 		}
 	}
+
 }
 
 void MeshEmbedding::transformCoarseMesh(Matrix4d E) {

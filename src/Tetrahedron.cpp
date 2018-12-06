@@ -23,6 +23,7 @@ Tetrahedron::Tetrahedron()
 Tetrahedron::Tetrahedron(double young, double poisson, double density, Material material, const vector<shared_ptr<Node>> &nodes) :
 	m_young(young), m_poisson(poisson), m_density(density), m_material(material), m_nodes(nodes)
 {
+	m_enclosed_color << (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f;
 	m_mu = m_young / (2.0 * (1.0 + m_poisson));
 	m_lambda = m_young * m_poisson / ((1.0 + m_poisson) * (1.0 - 2.0 * m_poisson));
 
@@ -395,6 +396,15 @@ void Tetrahedron::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> pro
 		prog->bind();
 		for (int i = 0; i < 4; i++) {
 			auto node = m_nodes[i];
+			node->draw(MV, prog);
+		}
+		prog->unbind();
+	}
+	if ((int)m_enclosed_points.size() > 0) {
+		prog->bind();
+		for (int i = 0; i < (int)m_enclosed_points.size(); i++) {
+			auto node = m_enclosed_points[i];
+			glUniform3fv(prog->getUniform("kd"), 1, m_enclosed_color.data());
 			node->draw(MV, prog);
 		}
 		prog->unbind();

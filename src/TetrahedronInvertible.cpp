@@ -14,8 +14,8 @@ Tetrahedron(young, poisson, density, material, nodes), m_isInvertible(true)
 
 void TetrahedronInvertible::precompute() {
 	// Compute volume
-	this->W = 1.0 / 6.0 * Dm.determinant();
-	m_mass = this->W * this->m_density;
+	this->W = abs(1.0 / 6.0 * Dm.determinant());
+	m_mass = (this->W * this->m_density);
 
 	// Distribute 1/4 mass to each node
 	// Initialize the undeformed position vector

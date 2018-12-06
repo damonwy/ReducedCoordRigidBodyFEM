@@ -38,7 +38,8 @@ public:
 	void scatterDofs(Eigen::VectorXd &y, int nr);
 	void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 	void gatherDofs(Eigen::VectorXd &y, int nr);
-
+	void toggleDrawingDenseMesh(bool isDenseMesh) { m_isDenseMesh = isDenseMesh; }
+	void toggleDrawingCoarseMesh(bool isCoarseMesh) { m_isCoarseMesh = isCoarseMesh; }
 
 	std::shared_ptr<SoftBody> getDenseMesh() { return m_dense_mesh; }
 	std::shared_ptr<SoftBody> getCoarseMesh() { return m_coarse_mesh; }
@@ -46,5 +47,7 @@ public:
 protected:
 	std::shared_ptr<SoftBody> m_dense_mesh;
 	std::shared_ptr<SoftBody> m_coarse_mesh;
+	bool m_isDenseMesh;
+	bool m_isCoarseMesh;
 
 };

@@ -737,23 +737,35 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Eigen::from_json(js["sides"], sides);
 		double young = 1e3;
 		double possion = 0.35;
+		m_stiffness = 1.0e4;
+		m_damping = 1.0e3;
+
 		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
 
 		for (int i = 0; i < 2; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
 
 			if (i == 0) {
-				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 			}
 			else {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 
 			}
+
+			// Init constraints
+			if (i > 0) {
+				addConstraintJointLimit(m_joints[i], -M_PI / 2.0, M_PI / 2.0);
+			}
+
+			//m_joints[i]->setStiffness(m_stiffness);
+			m_joints[i]->setDamping(m_damping);
+
 		}
 		//m_joints[0]->m_qdot(0) = 10.0;
-		//m_joints[1]->m_qdot(0) = -10.0;
+		m_joints[1]->m_qdot(0) = -10.0;
 
 		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "embedded", "muscle_cyc_cyc"); //
 		mesh_embedding->transformDenseMesh(E);
@@ -762,7 +774,56 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
+	case HUMAN_BODY:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e3;
+		double possion = 0.35;
+		m_stiffness = 1.0e4;
+		m_damping = 1.0e3;
 
+		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
+
+		for (int i = 0; i < 2; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+
+			if (i == 0) {
+				addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+
+			// Init constraints
+			if (i > 0) {
+				addConstraintJointLimit(m_joints[i], -M_PI / 2.0, M_PI / 2.0);
+			}
+
+			//m_joints[i]->setStiffness(m_stiffness);
+			m_joints[i]->setDamping(m_damping);
+
+		}
+		//m_joints[0]->m_qdot(0) = 10.0;
+		m_joints[1]->m_qdot(0) = -20.0;
+
+		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "right_arm_embedded", "right_arm"); //
+		//mesh_embedding->transformDenseMesh(E);
+		//mesh_embedding->transformCoarseMesh(E);
+		mesh_embedding->precomputeWeights();
+		//mesh_embedding->toggleDrawingCoarseMesh(true);
+		auto torso = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "torso", "torso"); //
+		torso->precomputeWeights();
+
+	}
+	break;
 	default:
 		break;
 	}
@@ -1164,6 +1225,15 @@ void World::init() {
 
 		m_meshembeddings[0]->setAttachmentsByYZCircle(13.5, 2.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(13.5, 2.5, Vector2d(0.0, 0.0), 0.8, m_bodies[1]);
+
+	}
+
+	if (m_type == HUMAN_BODY) {
+		m_meshembeddings[0]->setAttachmentsByYZCircle(5.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		//m_meshembeddings[0]->setAttachmentsByYZCircle(5.0, 4.5, Vector2d(0.0, 0.0), 0.8, m_bodies[0]);
+
+		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		//m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.5, Vector2d(0.0, 0.0), 0.8, m_bodies[1]);
 
 	}
 

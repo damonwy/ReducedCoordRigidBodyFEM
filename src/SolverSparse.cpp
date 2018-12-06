@@ -128,6 +128,14 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	G_sp.resize(ne, nr);
 	G_sp.data().squeeze();
 
+	Cm.resize(nim, nm);
+	Cm.setZero();
+	Cmdot.resize(nim, nm);
+	Cmdot.setZero();
+	Cr.resize(nir, nr);
+	Cr.setZero();
+	Crdot.resize(nir, nr);
+	Crdot.setZero();
 }
 
 VectorXd SolverSparse::dynamics(VectorXd y)
@@ -287,49 +295,50 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			rhsG = -gdot - 100.0 * g;// todo!!!!!
 		}
 
-		//if (ni > 0) {
-		//	// Check for active inequality constraint
-		//	constraint0->computeJacIneqMSparse(Cm, Cmdot, cm, cmdot, cmddot);
-		//	constraint0->computeJacIneqRSparse(Cr, Crdot, cr, crdot, crddot);
-		//	rowsR.clear();
-		//	rowsM.clear();
+		if (ni > 0) {
+			// Check for active inequality constraint
+			//constraint0->computeJacIneqMSparse(Cm, Cmdot, cm, cmdot, cmddot);
+			//constraint0->computeJacIneqRSparse(Cr, Crdot, cr, crdot, crddot);
+			constraint0->computeJacIneqM(Cm, Cmdot, cm, cmdot, cmddot);
+			constraint0->computeJacIneqR(Cr, Crdot, cr, crdot, crddot);
 
-		//	constraint0->getActiveList(rowsM, rowsR);
-		//	nim = rowsM.size();
-		//	nir = rowsR.size();
-		//	ni = nim + nir;
+			rowsR.clear();
+			rowsM.clear();
 
-		//	if (ni > 0) {
-		//		Eigen::VectorXi m_rowsM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsM.data(), rowsM.size());
-		//		Eigen::VectorXi m_rowsR = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsR.data(), rowsR.size());
+			constraint0->getActiveList(rowsM, rowsR);
+			nim = rowsM.size();
+			nir = rowsR.size();
+			ni = nim + nir;
 
-		//		MatrixXd m_Cm = Cm(m_rowsM, Eigen::placeholders::all);
-		//		MatrixXd m_Cr = Cr(m_rowsR, Eigen::placeholders::all);
-		//		VectorXd m_cm = cm(m_rowsM);
-		//		VectorXd m_cr = cr(m_rowsR);
-		//		VectorXd m_cmdot = cmdot(m_rowsM);
-		//		VectorXd m_crdot = crdot(m_rowsR);
+			if (ni > 0) {
+				Eigen::VectorXi m_rowsM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsM.data(), rowsM.size());
+				Eigen::VectorXi m_rowsR = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsR.data(), rowsR.size());
 
-		//		MatrixXd CmJ = m_Cm * J;
-		//		C.resize(CmJ.rows() + m_Cr.rows(), m_Cr.cols());
-		//		C << CmJ, m_Cr;
-		//		rhsC.resize(C.rows());
-		//		VectorXd c(C.rows());
-		//		c << m_cm, m_cr;
-		//		VectorXd cdot(C.rows());
-		//		cdot << m_cmdot, m_crdot;
-		//		rhsC = -cdot - 105.0 * c;
-		//	}
-		//}
+				MatrixXd m_Cm = Cm(m_rowsM, Eigen::placeholders::all);
+				MatrixXd m_Cr = Cr(m_rowsR, Eigen::placeholders::all);
+				VectorXd m_cm = cm(m_rowsM);
+				VectorXd m_cr = cr(m_rowsR);
+				VectorXd m_cmdot = cmdot(m_rowsM);
+				VectorXd m_crdot = crdot(m_rowsR);
+
+				MatrixXd CmJ = m_Cm * MatrixXd(J_sp);
+				C.resize(CmJ.rows() + m_Cr.rows(), m_Cr.cols());
+				C << CmJ, m_Cr;
+				rhsC.resize(C.rows());
+				VectorXd c(C.rows());
+				c << m_cm, m_cr;
+				VectorXd cdot(C.rows());
+				cdot << m_cmdot, m_crdot;
+				rhsC = -cdot - 5.0 * c;
+			}
+		}
 
 		if (ne == 0 && ni == 0) {	// No constraints
 			ConjugateGradient< SparseMatrix<double> > cg;
-			cg.setMaxIterations(200);
+			cg.setMaxIterations(100);
 			cg.setTolerance(1e-6);
 			cg.compute(MDKr_sp);
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
-
-
 
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
@@ -424,38 +433,38 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
 		}
-		//else {  // Both equality and inequality
-		//	shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
-		//	program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
-		//	program_->setParamInt(MSK_IPAR_LOG, 10);
-		//	program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
-		//	program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
-		//	program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
-		//	program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
-		//	program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
-		//	program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
-		//	program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
-		//	program_->setNumberOfVariables(nr);
+		else {  // Both equality and inequality
+			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
+			program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
+			program_->setParamInt(MSK_IPAR_LOG, 10);
+			program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
+			program_->setNumberOfVariables(nr);
 
-		//	program_->setObjectiveMatrix(MDKr_sp);
-		//	program_->setObjectiveVector(-fr_);
-		//	program_->setNumberOfInequalities(ni);
-		//	program_->setInequalityMatrix(C.sparseView());
-		//	program_->setNumberOfEqualities(ne);
-		//	VectorXd cvec(ni);
-		//	cvec.setZero();
+			program_->setObjectiveMatrix(MDKr_sp);
+			program_->setObjectiveVector(-fr_);
+			program_->setNumberOfInequalities(ni);
+			program_->setInequalityMatrix(C.sparseView());
+			program_->setNumberOfEqualities(ne);
+			VectorXd cvec(ni);
+			cvec.setZero();
 
-		//	program_->setInequalityVector(cvec);
-		//	program_->setEqualityMatrix(G_sp);
+			program_->setInequalityVector(cvec);
+			program_->setEqualityMatrix(G_sp);
 
-		//	VectorXd gvec(ne);
-		//	gvec.setZero();
-		//	program_->setEqualityVector(rhsG);
+			VectorXd gvec(ne);
+			gvec.setZero();
+			program_->setEqualityVector(rhsG);
 
-		//	bool success = program_->solve();
-		//	VectorXd sol = program_->getPrimalSolution();
-		//	qdot1 = sol.segment(0, nr);
-		//}
+			bool success = program_->solve();
+			VectorXd sol = program_->getPrimalSolution();
+			qdot1 = sol.segment(0, nr);
+		}
 		
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;

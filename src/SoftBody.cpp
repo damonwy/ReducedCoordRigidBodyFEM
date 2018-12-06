@@ -48,7 +48,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pqzRa1.0", &input_mesh, &output_mesh);
+	tetrahedralize("pqzRa5.0", &input_mesh, &output_mesh);
 
 	double r = 0.01;
 
@@ -119,10 +119,10 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 		Vector3d normal = triface->computeNormal();
 
 		if ((normal - m_trifaces[0]->m_normal).norm() < 0.1) {
-			triface->isFlat = true;
+			//triface->isFlat = true;
 		}
 		if ((normal + m_trifaces[0]->m_normal).norm() < 0.1) {
-			triface->isFlat = true;
+			//triface->isFlat = true;
 		}
 	}
 }
@@ -135,6 +135,14 @@ void SoftBody::init() {
 
 	for (int i = 0; i < (int)m_compared_nodes.size(); ++i) {
 		m_compared_nodes[i]->init();
+	}
+
+	for (int i = 0; i < (int)m_tets.size(); ++i) {
+		auto tet = m_tets[i];
+		for (int j = 0; j < (int)tet->m_enclosed_points.size(); ++j) {
+			tet->m_enclosed_points[j]->init();
+
+		}
 	}
 
 	// Init Buffers
@@ -440,7 +448,7 @@ void SoftBody::setAttachmentsByYZCircle(double x, double range, Vector2d O, doub
 		Vector3d xi = node->x;
 		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
 
-		if (abs(xi(0) - x) < range && diff < 2.3) {
+		if (abs(xi(0) - x) < range && diff < 0.0001) {
 			setAttachments(i, body);
 		}
 	}

@@ -66,6 +66,8 @@ public:
 	bool getInvertiblity() { return m_isInvertible; }
 	const std::vector<std::shared_ptr<Node> > & getNodes() const { return m_nodes; }
 	const std::vector<std::shared_ptr<Tetrahedron> > & getTets() const { return m_tets; }
+	const std::vector<std::shared_ptr<FaceTriangle> > & getFaces() const { return m_trifaces; }
+
 	void transform(Vector3d dx);
 	void transform(Matrix4d E);
 	// attached 

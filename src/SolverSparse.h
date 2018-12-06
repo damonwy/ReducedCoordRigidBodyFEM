@@ -106,4 +106,10 @@ private:
 	int m_dense_nm;
 	int m_dense_nr;
 
+	Eigen::MatrixXd Cm;
+	Eigen::MatrixXd Cmdot;
+
+	Eigen::MatrixXd Cr;
+	Eigen::MatrixXd Crdot;
+
 };
