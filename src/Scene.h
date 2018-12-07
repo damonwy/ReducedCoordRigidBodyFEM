@@ -36,7 +36,7 @@ public:
 	void step();
 	void solve();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, const std::shared_ptr<Program> prog3, std::shared_ptr<MatrixStack> P) const;
-
+	void toggleCoarseMesh();
 	double getTime() const { return t; }
 	Eigen::VectorXd y;
 private:

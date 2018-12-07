@@ -85,7 +85,8 @@ public:
 	std::shared_ptr<Body> m_parent;
 	Vector3f m_attached_color;
 	Vector3f m_sliding_color;
-
+	bool m_isDrawing;
+	void toggleDrawing(bool isDrawing) { m_isDrawing = isDrawing; }
 protected:
 	std::shared_ptr<Shape> bodyShape;
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;

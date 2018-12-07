@@ -21,6 +21,7 @@ Body::Body() {
 Body::Body(double density):
 m_density(density)
 {
+	m_isDrawing = true;
 	m_damping = 0.0;
 	I_i.setIdentity();
 	E_ji.setIdentity();
@@ -127,7 +128,7 @@ void Body::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shar
 
 void Body::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, shared_ptr<MatrixStack> P) const {
 	prog->bind();
-	if (bodyShape) {
+	if (bodyShape && m_isDrawing) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 		glUniform3f(prog->getUniform("lightPos1"), 66.0f, 25.0f, 25.0f);
 		glUniform1f(prog->getUniform("intensity_1"), 0.6f);

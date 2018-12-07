@@ -72,6 +72,9 @@ static void char_callback(GLFWwindow *window, unsigned int key)
 		case 'r':
 			scene->reset();
 			break;
+		case 'w':
+			scene->toggleCoarseMesh();
+			break;
 	}
 }
 

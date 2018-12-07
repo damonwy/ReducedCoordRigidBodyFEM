@@ -804,7 +804,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			// Init constraints
 			if (i > 0) {
-				addConstraintJointLimit(m_joints[i], -M_PI / 4.0, M_PI / 4.0);
+				addConstraintJointLimit(m_joints[i], -M_PI / 2.0, M_PI / 2.0);
 			}
 
 			//m_joints[i]->setStiffness(m_stiffness);
@@ -812,42 +812,85 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		}
 
-		for (int i = 0; i < 2; i++) {
-			auto body = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_y_9.obj");
+		//for (int i = 0; i < 2; i++) {
+		//	auto body = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_y_9.obj");
 
-			if (i == 0) {
-				addJointFixed(body, Vector3d(-7.5, 5.0, 0.0), Matrix3d::Identity(), 0.0);
+		//	if (i == 0) {
+		//		addJointFixed(body, Vector3d(-7.5, 5.0, 0.0), Matrix3d::Identity(), 0.0);
 
-				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
-			}
-			else {
-				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[2+i - 1]);
+		//		//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+		//	}
+		//	else {
+		//		auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[2+i - 1]);
 
-			}
+		//	}
 
-			// Init constraints
-			if (i > 0) {
-				addConstraintJointLimit(m_joints[i], -M_PI / 4.0, M_PI / 4.0);
-			}
+		//	// Init constraints
+		//	if (i > 0) {
+		//		addConstraintJointLimit(m_joints[i], -M_PI / 4.0, M_PI / 4.0);
+		//	}
 
-			//m_joints[i]->setStiffness(m_stiffness);
-			m_joints[i]->setDamping(m_damping);
+		//	//m_joints[i]->setStiffness(m_stiffness);
+		//	m_joints[i]->setDamping(m_damping);
 
 
-		}
+		//}
+
+		auto torso = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "torso.obj"); // body2
+		addJointFixed(torso, Vector3d(0, 5.0, 0.0), Matrix3d::Identity(), 0.0);
+		auto head = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "head.obj");// body3
+		addJointFixed(head, Vector3d(-7.5, 12.0, 0.0), Matrix3d::Identity(), 0.0);
+
+		auto fix_left = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");// body4
+		auto joint_left_fixed = addJointFixed(fix_left, Vector3d(-15, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+		fix_left->toggleDrawing(false);
+		auto left_arm0 = addBody(density, sides, Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");// body5
+		auto joint_left_0 = addJointRevolute(left_arm0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, joint_left_fixed);
+		auto left_arm1 = addBody(density, sides, Vector3d(-5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");// body6
+		auto joint_left_1 = addJointRevolute(left_arm1, Vector3d::UnitZ(), Vector3d(-10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, joint_left_0);
+
+		auto fix_left_leg = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_y_9.obj");
+		fix_left_leg->toggleDrawing(false);
+
+		auto joint_left_leg_fixed = addJointFixed(fix_left_leg, Vector3d(-12.0, -13.0, 0.0), Matrix3d::Identity(), 0.0);
+		auto left_leg0 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_y_9.obj");
+		auto joint_left_leg0 = addJointRevolute(left_leg0, Vector3d::UnitX(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, joint_left_leg_fixed);
+		auto left_leg1 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_y_9.obj");
+		auto joint_left_leg1 = addJointRevolute(left_leg1, Vector3d::UnitX(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, joint_left_leg0);
+
 
 
 		//m_joints[0]->m_qdot(0) = 10.0;
-		//m_joints[1]->m_qdot(0) = -20.0;
-		m_joints[3]->m_qdot(0) = -3.0;
-		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "right_arm_embedded", "right_arm"); //
+		m_joints[1]->m_qdot(0) = -20.0;
+
+		joint_left_leg0->m_qdot(0) = -20.0;
+
+
+		//m_joints[3]->m_qdot(0) = -3.0;
+		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "right_arm_coarse_1", "right_arm_dense_1"); //
 		//mesh_embedding->transformDenseMesh(E);
 		//mesh_embedding->transformCoarseMesh(E);
 		mesh_embedding->precomputeWeights();
+		Vector3f muscle_color = Vector3f(255.0f, 160.0f, 122.0f);
+		muscle_color /= 255.0f;
+		mesh_embedding->getDenseMesh()->setColor(muscle_color);
 		//mesh_embedding->toggleDrawingCoarseMesh(true);
-		auto torso = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "torso_embedded_w_hole", "torso"); //
-		torso->precomputeWeights();
-		torso->toggleDrawingCoarseMesh(true);
+		//auto torso = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "torso_embedded_w_hole", "torso"); //
+		//torso->precomputeWeights();
+		//torso->toggleDrawingCoarseMesh(true);
+		auto left_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_arm_coarse_1", "left_arm_dense_1"); //
+		left_arm_mesh->precomputeWeights();
+		left_arm_mesh->getDenseMesh()->setColor(muscle_color);
+
+		// Init springs
+		auto deformable0 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[1], Vector3d(5.0, 0.0, 0.0));
+		deformable0->setStiffness(m_stiffness);
+		//auto deformable1 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
+		//deformable1->setStiffness(m_stiffness);
+		for (int i = 0; i < (int)m_deformables.size(); i++) {
+			m_deformables[i]->load(RESOURCE_DIR);
+		}
+
 	}
 	break;
 	default:
@@ -1258,10 +1301,13 @@ void World::init() {
 		m_meshembeddings[0]->setAttachmentsByYZCircle(5.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 		//m_meshembeddings[0]->setAttachmentsByYZCircle(5.0, 4.5, Vector2d(0.0, 0.0), 0.8, m_bodies[0]);
 
-		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 5.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 		//m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.5, Vector2d(0.0, 0.0), 0.8, m_bodies[1]);
-		m_meshembeddings[1]->setAttachmentsByXZCircle(0.0, 4.5, Vector2d(-7.5, 0.0), 0.5, m_bodies[2]);
-		m_meshembeddings[1]->setAttachmentsByXZCircle(-10.0, 4.5, Vector2d(-7.5, 0.0), 0.5, m_bodies[3]);
+		//m_meshembeddings[1]->setAttachmentsByXZCircle(0.0, 4.5, Vector2d(-7.5, 0.0), 0.5, m_bodies[2]);
+	//	m_meshembeddings[1]->setAttachmentsByXZCircle(-10.0, 4.5, Vector2d(-7.5, 0.0), 0.5, m_bodies[3]);
+
+		m_meshembeddings[1]->setAttachmentsByYZCircle(-20.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[5]);
+		m_meshembeddings[1]->setAttachmentsByYZCircle(-30.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[6]);
 
 	}
 

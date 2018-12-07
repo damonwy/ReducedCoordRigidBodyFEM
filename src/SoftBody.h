@@ -89,6 +89,8 @@ public:
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
 	bool m_isInverted;
 
+
+
 protected:
 	int m_type;
 	bool m_isInvertible;

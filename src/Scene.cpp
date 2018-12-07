@@ -127,3 +127,10 @@ void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	m_world->draw(MV, prog, progSimple, progSoft, P);
 	
 }
+
+void Scene::toggleCoarseMesh() {
+	bool isOn = m_world->getMeshEmbedding0()->m_isCoarseMesh;
+	
+	m_world->getMeshEmbedding0()->toggleDrawingCoarseMesh(!isOn);
+
+}
