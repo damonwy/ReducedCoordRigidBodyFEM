@@ -342,66 +342,66 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
-			int rows = nr + ne;
-			int cols = nr + ne;
-			//cout << rows << endl;
-			//cout << cols << endl;
+		//	int rows = nr + ne;
+		//	int cols = nr + ne;
+		//	//cout << rows << endl;
+		//	//cout << cols << endl;
 
-			MatrixXd LHS(rows, cols);
-			VectorXd rhs(rows);
-			LHS.setZero();
-			rhs.setZero();
-			VectorXd guess = rhs;
-			guess.segment(0, nr) = qdot0;
+		//	MatrixXd LHS(rows, cols);
+		//	VectorXd rhs(rows);
+		//	LHS.setZero();
+		//	rhs.setZero();
+		//	VectorXd guess = rhs;
+		//	guess.segment(0, nr) = qdot0;
 
-			MatrixXd MDKr_ = MatrixXd(MDKr_sp);
-			MatrixXd G = MatrixXd(G_sp);
+		//	MatrixXd MDKr_ = MatrixXd(MDKr_sp);
+		//	MatrixXd G = MatrixXd(G_sp);
 
-			LHS.block(0, 0, nr, nr) = MDKr_;
-			LHS.block(0, nr, nr, ne) = G.transpose();
-			LHS.block(nr, 0, ne, nr) = G;
-			SparseMatrix<double> LHS_sp(rows, cols);
-			LHS_sp = LHS.sparseView(1e-8);
-			
-			rhs.segment(0, nr) = fr_;
-			rhs.segment(nr, ne) = rhsG;
-			//cout << LHS << endl;
-			//cout << rhs << endl;
-		/*	VectorXd sol = LHS.ldlt().solve(rhs);
+		//	LHS.block(0, 0, nr, nr) = MDKr_;
+		//	LHS.block(0, nr, nr, ne) = G.transpose();
+		//	LHS.block(nr, 0, ne, nr) = G;
+		//	SparseMatrix<double> LHS_sp(rows, cols);
+		//	LHS_sp = LHS.sparseView(1e-8);
+		//	
+		//	rhs.segment(0, nr) = fr_;
+		//	rhs.segment(nr, ne) = rhsG;
+		//	//cout << LHS << endl;
+		//	//cout << rhs << endl;
+		///*	VectorXd sol = LHS.ldlt().solve(rhs);
+		//	qdot1 = sol.segment(0, nr);
+		//	VectorXd l = sol.segment(nr, sol.rows() - nr);*/
+		//	//cout << qdot1.segment<2>(0) << endl << endl;
+
+		//	ConjugateGradient< SparseMatrix<double> > cg;
+		//	cg.setMaxIterations(200);
+		//	cg.setTolerance(1e-6);
+		//	cg.compute(LHS_sp);
+		//	qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
+
+			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
+			program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
+			program_->setParamInt(MSK_IPAR_LOG, 10);
+			program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
+			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
+			program_->setNumberOfVariables(nr);
+			program_->setObjectiveMatrix(MDKr_sp);
+
+			program_->setObjectiveVector(-fr_);
+
+			program_->setNumberOfEqualities(ne);
+			program_->setEqualityMatrix(G_sp);
+
+			program_->setEqualityVector(rhsG);
+
+
+			bool success = program_->solve();
+			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
-			VectorXd l = sol.segment(nr, sol.rows() - nr);*/
-			//cout << qdot1.segment<2>(0) << endl << endl;
-
-			ConjugateGradient< SparseMatrix<double> > cg;
-			cg.setMaxIterations(200);
-			cg.setTolerance(1e-6);
-			cg.compute(LHS_sp);
-			qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
-
-			//shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
-			//program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
-			//program_->setParamInt(MSK_IPAR_LOG, 10);
-			//program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
-			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
-			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
-			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
-			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
-			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
-			//program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
-			//program_->setNumberOfVariables(nr);
-			//program_->setObjectiveMatrix(MDKr_sp);
-
-			//program_->setObjectiveVector(-fr_);
-
-			//program_->setNumberOfEqualities(ne);
-			//program_->setEqualityMatrix(G_sp);
-
-			//program_->setEqualityVector(rhsG);
-
-
-			//bool success = program_->solve();
-			//VectorXd sol = program_->getPrimalSolution();
-			//qdot1 = sol.segment(0, nr);
 			//VectorXd l = program_->getDualEquality();
 			//constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
 			//constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);

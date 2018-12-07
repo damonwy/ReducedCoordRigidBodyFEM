@@ -48,7 +48,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pqzRa15.0", &input_mesh, &output_mesh);
+	tetrahedralize("pqzRa20.0", &input_mesh, &output_mesh);
 
 	double r = 0.01;
 
@@ -134,13 +134,13 @@ void SoftBody::init() {
 	}
 
 	for (int i = 0; i < (int)m_compared_nodes.size(); ++i) {
-		m_compared_nodes[i]->init();
+		//m_compared_nodes[i]->init();
 	}
 
 	for (int i = 0; i < (int)m_tets.size(); ++i) {
 		auto tet = m_tets[i];
 		for (int j = 0; j < (int)tet->m_enclosed_points.size(); ++j) {
-			tet->m_enclosed_points[j]->init();
+			//tet->m_enclosed_points[j]->init();
 
 		}
 	}
@@ -226,21 +226,21 @@ void SoftBody::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog,
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	for (int i = 0; i < (int)m_attach_nodes.size(); i++) {
-		auto node = m_attach_nodes[i];
-		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
-		node->draw(MV, prog);
+		//auto node = m_attach_nodes[i];
+		//glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
+		//node->draw(MV, prog);
 	}
 
 	for (int i = 0; i < (int)m_sliding_nodes.size(); i++) {
-		auto node = m_sliding_nodes[i];
-		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
-		node->draw(MV, prog);
+		//auto node = m_sliding_nodes[i];
+		//glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
+		//node->draw(MV, prog);
 	}
 
 	for (int i = 0; i < (int)m_compared_nodes.size(); i++) {
-		auto node = m_compared_nodes[i];
-		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
-		node->draw(MV, prog);
+		//auto node = m_compared_nodes[i];
+		//glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
+		//node->draw(MV, prog);
 	}
 
 	for (int i = 0; i < (int)m_tets.size(); ++i) {
@@ -251,8 +251,8 @@ void SoftBody::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog,
 
 	// Draw the normals of the sliding nodes
 	for (int i = 0; i < (int)m_normals_sliding.size(); ++i) {
-		auto vec = m_normals_sliding[i];
-		vec->draw(MV, P, progSimple);
+		//auto vec = m_normals_sliding[i];
+		//vec->draw(MV, P, progSimple);
 	}
 
 }

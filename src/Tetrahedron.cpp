@@ -400,7 +400,7 @@ void Tetrahedron::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> pro
 		}
 		prog->unbind();
 	}
-	if ((int)m_enclosed_points.size() > 0) {
+	/*if ((int)m_enclosed_points.size() > 0) {
 		prog->bind();
 		for (int i = 0; i < (int)m_enclosed_points.size(); i++) {
 			auto node = m_enclosed_points[i];
@@ -408,6 +408,6 @@ void Tetrahedron::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> pro
 			node->draw(MV, prog);
 		}
 		prog->unbind();
-	}
+	}*/
 
 }

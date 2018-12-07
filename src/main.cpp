@@ -107,7 +107,7 @@ static void init()
 	GLSL::checkVersion();
 	
 	// Set background color
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
 	// Enable z-buffer test
 	glEnable(GL_DEPTH_TEST);
 	// Enable alpha blending

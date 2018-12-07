@@ -837,8 +837,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//}
 
 		auto torso = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "torso.obj"); // body2
+		torso->setColor(Vector3f(143.0f / 255.0f, 188.0f / 255.0f, 143.0f/255.0f));
 		addJointFixed(torso, Vector3d(0, 5.0, 0.0), Matrix3d::Identity(), 0.0);
 		auto head = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "head.obj");// body3
+		head->setColor(Vector3f(245.0f / 255.0f, 222.0f / 255.0f, 179.0f / 255.0f));
 		addJointFixed(head, Vector3d(-7.5, 12.0, 0.0), Matrix3d::Identity(), 0.0);
 
 		auto fix_left = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");// body4
@@ -858,12 +860,13 @@ void World::load(const std::string &RESOURCE_DIR) {
 		auto left_leg1 = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_y_9.obj");
 		auto joint_left_leg1 = addJointRevolute(left_leg1, Vector3d::UnitX(), Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, joint_left_leg0);
 
-
-
+		addConstraintJointLimit(joint_left_0, -M_PI / 2.0, M_PI / 2.0);
+		addConstraintJointLimit(joint_left_1, -M_PI / 2.0, M_PI / 2.0);
 		//m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -20.0;
+		joint_left_1->m_qdot(0) = -20.0;
 
-		joint_left_leg0->m_qdot(0) = -20.0;
+		joint_left_leg1->m_qdot(0) = 20.0;
 
 
 		//m_joints[3]->m_qdot(0) = -3.0;
@@ -871,7 +874,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//mesh_embedding->transformDenseMesh(E);
 		//mesh_embedding->transformCoarseMesh(E);
 		mesh_embedding->precomputeWeights();
-		Vector3f muscle_color = Vector3f(255.0f, 160.0f, 122.0f);
+		Vector3f muscle_color = Vector3f(255.0f, 228.0f, 196.0f);
 		muscle_color /= 255.0f;
 		mesh_embedding->getDenseMesh()->setColor(muscle_color);
 		//mesh_embedding->toggleDrawingCoarseMesh(true);
@@ -882,11 +885,15 @@ void World::load(const std::string &RESOURCE_DIR) {
 		left_arm_mesh->precomputeWeights();
 		left_arm_mesh->getDenseMesh()->setColor(muscle_color);
 
+		//auto left_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_leg_coarse", "left_leg_dense"); //
+		//left_leg_mesh->precomputeWeights();
+		//left_leg_mesh->getDenseMesh()->setColor(muscle_color);
+
 		// Init springs
 		auto deformable0 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[1], Vector3d(5.0, 0.0, 0.0));
 		deformable0->setStiffness(m_stiffness);
-		//auto deformable1 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
-		//deformable1->setStiffness(m_stiffness);
+		auto deformable1 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 2, nullptr, Vector3d(-45.0, 0.0, 0.0), m_bodies[6], Vector3d(-5.0, 0.0, 0.0));
+		deformable1->setStiffness(m_stiffness);
 		for (int i = 0; i < (int)m_deformables.size(); i++) {
 			m_deformables[i]->load(RESOURCE_DIR);
 		}
@@ -1308,6 +1315,9 @@ void World::init() {
 
 		m_meshembeddings[1]->setAttachmentsByYZCircle(-20.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[5]);
 		m_meshembeddings[1]->setAttachmentsByYZCircle(-30.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[6]);
+
+		//m_meshembeddings[2]->setAttachmentsByXZCircle(-18.0, 3.0, Vector2d(-12.0, 0.0), 0.5, m_bodies[8]);
+		//m_meshembeddings[2]->setAttachmentsByXZCircle(-28.0, 3.0, Vector2d(-12.0, 0.0), 0.5, m_bodies[9]);
 
 	}
 

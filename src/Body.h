@@ -46,7 +46,7 @@ public:
 	void computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D);
 	void computeForceDampingSparse(Eigen::VectorXd &f, std::vector<T> &D_);
 	void computeEnergies(Vector3d grav, Energy &energies);
-
+	void setColor(Vector3f color) { m_body_color = color; };
 	void load(const std::string &RESOURCE_DIR, std::string box_shape);
 	void init(int &nm);
 	void update();
@@ -85,6 +85,8 @@ public:
 	std::shared_ptr<Body> m_parent;
 	Vector3f m_attached_color;
 	Vector3f m_sliding_color;
+
+	Vector3f m_body_color;
 	bool m_isDrawing;
 	void toggleDrawing(bool isDrawing) { m_isDrawing = isDrawing; }
 protected:

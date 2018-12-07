@@ -42,7 +42,7 @@ m_density(density)
 	wext_i.setZero();
 	fgrav.setZero();
 	fcor.setZero();
-
+	m_body_color << 0.8f, 0.7f, 0.7f;
 	m_attached_color << (float)(rand() % 255)/255.0f,(float)(rand() % 255)/255.0f,(float)(rand() % 255)/255.0f;
 	m_sliding_color << (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f;
 }
@@ -136,7 +136,7 @@ void Body::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 		glUniform1f(prog->getUniform("intensity_2"), 0.2f);
 		glUniform1f(prog->getUniform("s"), 300.0f);
 		glUniform3f(prog->getUniform("ka"), 0.2f, 0.2f, 0.2f);
-		glUniform3f(prog->getUniform("kd"), 0.8f, 0.7f, 0.7f);
+		glUniform3fv(prog->getUniform("kd"), 1, this->m_body_color.data());
 		glUniform3f(prog->getUniform("ks"), 1.0f, 0.9f, 0.8f);
 
 		MV->pushMatrix();
