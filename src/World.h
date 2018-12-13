@@ -281,7 +281,7 @@ public:
 	
 	int m_dense_nm;
 	int m_dense_nr;
-
+	int m_ntets;
 private:
 	Energy m_energy;		// the energy in current state
 	Energy m_energy0;		// the energy in initial state
@@ -293,6 +293,8 @@ private:
 	double m_t;
 	double m_h;
 	Eigen::Vector2d m_tspan;	
+	bool isleftleg;
+	bool isrightleg;
 
 	double m_Hexpected;		// used to check correctness
 

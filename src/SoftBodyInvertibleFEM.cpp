@@ -28,6 +28,7 @@ SoftBody(density, young, poisson, material)
 void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 	// Computes force vector
 	if (m_isGravity) {
+//#pragma omp parallel for
 		for (int i = 0; i < (int)m_nodes.size(); i++) {
 			int idxM = m_nodes[i]->idxM;
 			double m = m_nodes[i]->m;

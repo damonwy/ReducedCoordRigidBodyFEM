@@ -23,6 +23,7 @@
 #include "Vector.h"
 #include "TetrahedronCorotational.h"
 #include "TetrahedronInvertible.h"
+#include <omp.h>
 
 using namespace std;
 using namespace Eigen;
@@ -48,7 +49,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pqzRa20.0", &input_mesh, &output_mesh);
+	tetrahedralize("pq5.0zR", &input_mesh, &output_mesh);
 
 	double r = 0.01;
 
@@ -288,15 +289,18 @@ void SoftBody::transform(Matrix4d E) {
 void SoftBody::updatePosNor() {
 	// update normals
 	for (int i = 0; i < (int)m_normals_sliding.size(); ++i) {
-		auto vec = m_normals_sliding[i];
-		vec->update();
+		//auto vec = m_normals_sliding[i];
+		//vec->update();
 	}
 
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		node->clearNormals();
 	}
 
+
+//#pragma omp parallel for
 	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 
@@ -325,6 +329,7 @@ void SoftBody::updatePosNor() {
 		}
 	}
 
+//#pragma omp parallel for
 	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 		if (!triface->isFlat) {
@@ -551,6 +556,7 @@ void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eige
 
 void SoftBody::gatherDofs(VectorXd &y, int nr) {
 	// Gathers qdot and qddot into y
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		y.segment<3>(idxR) = m_nodes[i]->x;
@@ -564,6 +570,7 @@ void SoftBody::gatherDofs(VectorXd &y, int nr) {
 
 VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
 	// Gathers qdot and qddot into ydot
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		ydot.segment<3>(idxR) = m_nodes[i]->v;
@@ -585,6 +592,7 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 
 	}
 
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		if (!m_nodes[i]->fixed) {
@@ -601,6 +609,7 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 
 void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 	// Scatters qdot and qddot from ydot
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		if (!m_nodes[i]->fixed) {
@@ -660,7 +669,6 @@ void SoftBody::computeForce_(Vector3d grav, VectorXd &f) {
 		for (int i = 0; i < (int)m_nodes.size(); i++) {
 			int idxM = m_nodes[i]->idxM;
 			double m = m_nodes[i]->m;
-
 			f.segment<3>(idxM) += m * grav;
 		}
 	}

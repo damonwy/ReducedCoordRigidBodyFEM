@@ -103,6 +103,9 @@ protected:
 	std::shared_ptr<Spring> spring0;
 	std::shared_ptr<MeshEmbedding> meshembedding0;
 
+	int m_ntets;
+
+
 	double t;
 	double h;
 	double hsquare;

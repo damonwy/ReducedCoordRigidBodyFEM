@@ -40,6 +40,7 @@ public:
 	double getTime() const { return t; }
 	Eigen::VectorXd y;
 private:
+	int count;
 	double t;
 	double h;
 	int time_step;

@@ -165,10 +165,11 @@ VectorXd TetrahedronInvertible::computeElasticForces(VectorXd f) {
 	else {
 		// We need an additional step to decide whether the element undergoes large deformation
 		m_isInverted = false;
-		checkNecessityForSVD(m_delta_L, m_delta_U, this->F);
+		//checkNecessityForSVD(m_delta_L, m_delta_U, this->F);
+		
 		// The necessity of SVD is available in m_isSVD
 	}
-
+	m_isSVD = true;
 	if (m_isSVD) {
 		// SVD on the deformation gradient
 		int modifiedSVD = 1;

@@ -31,6 +31,8 @@
 #include "MatrixStack.h"
 #include "Shape.h"
 #include "Scene.h"
+#include <omp.h>
+#include <Eigen/Core>
 
 using namespace std;
 using namespace Eigen;
@@ -292,6 +294,11 @@ void stepWorld() {
 
 int main(int argc, char **argv)
 {
+	Eigen::initParallel();
+	omp_set_num_threads(4);
+	Eigen::setNbThreads(4);
+
+
 	if(argc < 2) {
 		cout << "Please specify the resource directory." << endl;
 		return 0;

@@ -12,7 +12,7 @@ TetrahedronCorotational::TetrahedronCorotational(double young, double poisson, d
 
 void TetrahedronCorotational::precompute() {
 	// Compute volume
-	this->W = 1.0 / 6.0 * Dm.determinant();
+	this->W = abs(1.0 / 6.0 * Dm.determinant());
 	m_mass = (this->W * this->m_density);
 
 	// Distribute 1/4 mass to each node

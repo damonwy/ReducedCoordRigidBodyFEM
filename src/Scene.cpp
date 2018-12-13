@@ -63,6 +63,7 @@ void Scene::load(const string &RESOURCE_DIR)
 
 void Scene::init()
 {
+	count = 0;
 	m_world->init();
 	VectorXd y0, y1;
 	y0.resize(2 * m_world->nr);
@@ -105,7 +106,8 @@ void Scene::step()
 	y = m_solver->dynamics(y);
 	m_world->update();
 	m_world->incrementTime();
-	
+	//count++;
+	//cout << count << endl;
 	//if(tk < m_solution->t(n_steps-1)) {
 	//	m_solution->searchTime(tk, search_idx, output_idx, s);
 	//	search_idx = output_idx;

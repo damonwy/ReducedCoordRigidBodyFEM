@@ -16,6 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
+#include <omp.h>
 
 using namespace std;
 using namespace Eigen;
@@ -55,6 +56,7 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	Km_sp.resize(nm, nm);
 	Km_sp.data().squeeze();
 	Km_.clear();
+
 
 	J_dense.setZero();
 	Jdot_dense.setZero();
@@ -157,10 +159,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			nir = m_world->nir;
 			ni = nim + nir;
 
+			m_ntets = m_world->m_ntets;
+
 			Mm_sp.resize(nm, nm);
 			Mm_sp.data().squeeze();
 			Mm_.clear();
-
+			Mm_.reserve(nm);  
+			
 			m_dense_nm = m_world->m_dense_nm;
 			m_dense_nr = m_world->m_dense_nr;
 
@@ -236,6 +241,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		joint0->computeJacobian(J_dense, Jdot_dense);
 
 		//// Push back the dense part
+
+//#pragma omp parallel for
 		for (int i = 0; i < J_dense.rows(); ++i) {
 			for (int j = 0; j < J_dense.cols(); ++j) {
 
@@ -265,16 +272,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		fr_ = Mr_sp * qdot0 + h * (J_sp.transpose() * (fm - Mm_sp * Jdot_sp * qdot0) + fr); // check
 		MDKr_sp = Mr_sp + J_sp.transpose() * (h * Dm_sp - hsquare * Km_sp) * J_sp + h * Dr_sp - hsquare * Kr_sp;
-		/*sparse_to_file_as_dense(Mr_sp, "Mr_sp");
-		sparse_to_file_as_dense(J_sp, "J_sp");
-		sparse_to_file_as_dense(Jdot_sp, "Jdot_sp");
-		sparse_to_file_as_dense(Km_sp, "Km_sp");
-		sparse_to_file_as_dense(Dr_sp, "Dr_sp");
-		sparse_to_file_as_dense(Kr_sp, "Kr_sp");
-		sparse_to_file_as_dense(K_sp, "K_sp");
-		sparse_to_file_as_dense(Mm_sp, "Mm_sp");
-*/
-		
+	
 		if (ne > 0) {
 			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
 			constraint0->computeJacEqRSparse(Gr_, Grdot_, gr, grdot, grddot);
@@ -292,7 +290,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
-			rhsG = -gdot - 100.0 * g;// todo!!!!!
+			rhsG = -gdot - 5.0 * g;// todo!!!!!
 		}
 
 		if (ni > 0) {

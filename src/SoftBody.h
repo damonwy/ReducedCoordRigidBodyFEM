@@ -96,7 +96,6 @@ protected:
 	bool m_isInvertible;
 	bool m_isGravity;
 	bool m_isElasticForce;
-
 	Material m_material;
 	Vector3f m_color;
 
