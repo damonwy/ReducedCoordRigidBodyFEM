@@ -67,17 +67,17 @@ void Deformable::scatterDDofs(VectorXd &ydot, int nr) {
 	}	
 }
 
-void Deformable::computeJacobian(MatrixXd &J, MatrixXd &Jdot) {
-	computeJacobian_(J, Jdot);
+void Deformable::computeJacobian(MatrixXd &J) {
+	computeJacobian_(J);
 	if (next != nullptr) {
-		next->computeJacobian(J, Jdot);
+		next->computeJacobian(J);
 	}
 }
 
-void Deformable::computeJacobianSparse(std::vector<T> &J_, std::vector<T> &Jdot_){
-	computeJacobianSparse_(J_, Jdot_);
+void Deformable::computeJacobianSparse(std::vector<T> &J_){
+	computeJacobianSparse_(J_);
 	if (next != nullptr) {
-		next->computeJacobianSparse(J_, Jdot_);
+		next->computeJacobianSparse(J_);
 	}
 }
 

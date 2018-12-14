@@ -79,7 +79,7 @@ void TetrahedronCorotational::precompute() {
 	this->Kexx = this->Ke * this->xx;
 }
 
-VectorXd TetrahedronCorotational::computeElasticForces(VectorXd f) {
+void TetrahedronCorotational::computeElasticForces(VectorXd &f) {
 	this->F = computeDeformationGradient();
 	this->R = gs3(this->F);
 
@@ -102,7 +102,7 @@ VectorXd TetrahedronCorotational::computeElasticForces(VectorXd f) {
 		int rowi = m_nodes[i]->idxM;
 		f.segment<3>(rowi) = f.segment<3>(rowi) - this->RKxx.segment<3>(3 * i) + this->Kx.segment<3>(3 * i);
 	}
-	return f;
+	
 }
 
 void TetrahedronCorotational::computeForceDifferentials(MatrixXd &K_global) {

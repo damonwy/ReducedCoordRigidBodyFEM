@@ -757,7 +757,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 			// Init constraints
 			if (i > 0) {
-				addConstraintJointLimit(m_joints[i], -M_PI / 2.0, M_PI / 2.0);
+				//addConstraintJointLimit(m_joints[i], -M_PI / 2.0, M_PI / 2.0);
 			}
 
 			//m_joints[i]->setStiffness(m_stiffness);

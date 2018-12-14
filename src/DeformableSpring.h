@@ -44,8 +44,8 @@ protected:
 	void computeForceDampingSparse_(Vector3d grav, Eigen::VectorXd &f, std::vector<T> &D_);
 
 	void computeEnergies_(Vector3d grav, Energy &ener);
-	void computeJacobian_(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
-	void computeJacobianSparse_(std::vector<T> &J_, std::vector<T> &Jdot_);
+	void computeJacobian_(Eigen::MatrixXd &J);
+	void computeJacobianSparse_(std::vector<T> &J_);
 
 };
 

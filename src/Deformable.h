@@ -32,8 +32,8 @@ public:
 	void scatterDofs(Eigen::VectorXd &y, int nr);
 	void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
-	void computeJacobian(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
-	void computeJacobianSparse(std::vector<T> &J_, std::vector<T> &Jdot_);
+	void computeJacobian(Eigen::MatrixXd &J);
+	void computeJacobianSparse(std::vector<T> &J_);
 	void computeMass(Eigen::MatrixXd &M);
 	void computeForce(Vector3d grav, Eigen::VectorXd &f);
 	void computeMassSparse(std::vector<T> &M_);
@@ -62,8 +62,8 @@ public:
 	virtual void computeForceDamping_(Vector3d grav, Eigen::VectorXd &f, Eigen::MatrixXd &D) {}
 	virtual void computeForceDampingSparse_(Vector3d grav, Eigen::VectorXd &f, std::vector<T> &D_) {}
 	virtual void computeEnergies_(Vector3d grav, Energy &ener) {}
-	virtual void computeJacobian_(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot) {}
-	virtual void computeJacobianSparse_(std::vector<T> &J_, std::vector<T> &Jdot_) {}
+	virtual void computeJacobian_(Eigen::MatrixXd &J) {}
+	virtual void computeJacobianSparse_(std::vector<T> &J_) {}
 	
 	std::shared_ptr<Deformable> next;
 	std::string m_name;

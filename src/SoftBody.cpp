@@ -298,48 +298,53 @@ void SoftBody::updatePosNor() {
 		auto node = m_nodes[i];
 		node->clearNormals();
 	}
+	
 
-
-//#pragma omp parallel for
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 
 		Vector3d p0 = triface->m_nodes[0]->x;
 		Vector3d p1 = triface->m_nodes[1]->x;
 		Vector3d p2 = triface->m_nodes[2]->x;
-
+#pragma omp critical
+		{
 		Vector3d normal = triface->computeNormal();
+			for (int ii = 0; ii < 3; ii++) {
+				posBuf[9 * i + 0 + ii] = float(p0(ii));
+				posBuf[9 * i + 3 + ii] = float(p1(ii));
+				posBuf[9 * i + 6 + ii] = float(p2(ii));
 
-		for (int ii = 0; ii < 3; ii++) {
-			posBuf[9 * i + 0 + ii] = float(p0(ii));
-			posBuf[9 * i + 3 + ii] = float(p1(ii));
-			posBuf[9 * i + 6 + ii] = float(p2(ii));
-
-			if (!triface->isFlat) {
-				// If the node is on the curved surface, average the normals after this loop
-				auto node = triface->m_nodes[ii];
-				node->addNormal(normal);
-			}
-			else {
-				// Don't average normals if it's a flat surface
-				norBuf[9 * i + 0 + ii] = float(normal(ii));
-				norBuf[9 * i + 3 + ii] = float(normal(ii));
-				norBuf[9 * i + 6 + ii] = float(normal(ii));
+				if (!triface->isFlat) {
+					// If the node is on the curved surface, average the normals after this loop
+					auto node = triface->m_nodes[ii];
+					node->addNormal(normal);
+				}
+				else {
+					// Don't average normals if it's a flat surface
+					norBuf[9 * i + 0 + ii] = float(normal(ii));
+					norBuf[9 * i + 3 + ii] = float(normal(ii));
+					norBuf[9 * i + 6 + ii] = float(normal(ii));
+				}
 			}
 		}
 	}
 
-//#pragma omp parallel for
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 		if (!triface->isFlat) {
 			// Use the average normals if it's a curved surface
 			for (int ii = 0; ii < 3; ii++) {
 				// Average normals here
-				Vector3d normal = triface->m_nodes[ii]->computeNormal();
-				for (int iii = 0; iii < 3; iii++) {
-					norBuf[9 * i + 3 * ii + iii] = float(normal(iii));
-				}
+
+#pragma omp critical
+				{
+					Vector3d normal = triface->m_nodes[ii]->computeNormal();				
+					for (int iii = 0; iii < 3; iii++) {
+						norBuf[9 * i + 3 * ii + iii] = float(normal(iii));
+					}
+				}			
 			}
 		}
 	}
@@ -559,8 +564,11 @@ void SoftBody::gatherDofs(VectorXd &y, int nr) {
 #pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-		y.segment<3>(idxR) = m_nodes[i]->x;
-		y.segment<3>(nr + idxR) = m_nodes[i]->v;
+#pragma omp critical
+		{
+			y.segment<3>(idxR) = m_nodes[i]->x;
+			y.segment<3>(nr + idxR) = m_nodes[i]->v;
+		}
 	}
 
 	if (next != nullptr) {
@@ -573,8 +581,11 @@ VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
 #pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-		ydot.segment<3>(idxR) = m_nodes[i]->v;
-		ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
+#pragma omp critical
+		{
+			ydot.segment<3>(idxR) = m_nodes[i]->v;
+			ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
+		}
 	}
 
 	if (next != nullptr) {
@@ -587,18 +598,25 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 	// Scatters q and qdot from y
 
 	// Update points
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_compared_nodes.size(); ++i) {
-		m_compared_nodes[i]->update();
-
+#pragma omp critical
+		{
+			m_compared_nodes[i]->update();
+		}
 	}
 
 #pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-		if (!m_nodes[i]->fixed) {
-			m_nodes[i]->x = y.segment<3>(idxR);
-			m_nodes[i]->v = y.segment<3>(nr + idxR);
+#pragma omp critical
+		{
+			if (!m_nodes[i]->fixed) {
+				m_nodes[i]->x = y.segment<3>(idxR);
+				m_nodes[i]->v = y.segment<3>(nr + idxR);
+			}
 		}
+
 	}
 	updatePosNor();
 
@@ -612,9 +630,12 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 #pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-		if (!m_nodes[i]->fixed) {
-			m_nodes[i]->v = ydot.segment<3>(idxR);
-			m_nodes[i]->a = ydot.segment<3>(nr + idxR);
+#pragma omp critical
+		{
+			if (!m_nodes[i]->fixed) {
+				m_nodes[i]->v = ydot.segment<3>(idxR);
+				m_nodes[i]->a = ydot.segment<3>(nr + idxR);
+			}
 		}
 	}
 
@@ -669,15 +690,21 @@ void SoftBody::computeForce_(Vector3d grav, VectorXd &f) {
 		for (int i = 0; i < (int)m_nodes.size(); i++) {
 			int idxM = m_nodes[i]->idxM;
 			double m = m_nodes[i]->m;
-			f.segment<3>(idxM) += m * grav;
+			{
+				f.segment<3>(idxM) += m * grav;
+			}
+			
 		}
 	}
 
 	// Elastic Forces
 	if (m_isElasticForce) {
+
 		for (int i = 0; i < (int)m_tets.size(); i++) {
 			auto tet = m_tets[i];
-			f = tet->computeElasticForces(f);
+			{
+				tet->computeElasticForces(f);
+			}
 		}
 	}
 }
@@ -693,11 +720,14 @@ void SoftBody::computeStiffness(MatrixXd &K) {
 void SoftBody::computeStiffness_(MatrixXd &K) {
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
-		tet->computeForceDifferentials(K);
+		{
+			tet->computeForceDifferentials(K);
+		}
 	}
 }
 
 void SoftBody::computeStiffnessSparse(vector<T> &K_) {
+
 	computeStiffnessSparse_(K_);
 
 	if (next != nullptr) {

@@ -151,7 +151,7 @@ bool TetrahedronInvertible::checkNecessityForSVD(double deltaL, double deltaU, M
 }
 
 
-VectorXd TetrahedronInvertible::computeElasticForces(VectorXd f) {
+void TetrahedronInvertible::computeElasticForces(VectorXd &f) {
 	bool print = false;
 
 	this->F = computeDeformationGradient();
@@ -219,7 +219,7 @@ VectorXd TetrahedronInvertible::computeElasticForces(VectorXd f) {
 		f.segment<3>(row3) -= this->H.col(i);
 
 	}
-	return f;
+	
 }
 
 

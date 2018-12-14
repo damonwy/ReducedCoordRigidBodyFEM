@@ -23,38 +23,52 @@ using namespace Eigen;
 
 void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir) {
 	ni = nim + nir;
+	int nre = nr + ne;
+
 	fm.setZero();
 	fr.setZero();
 	fr_.setZero();
 	tmp.setZero();
 	
 	Mr_sp.resize(nr, nr);
-	Mr_sp.data().squeeze();
+	//Mr_sp.data().squeeze();
 
 	Mr_sp_temp.resize(nr, nr);
-	Mr_sp_temp.data().squeeze();
+	//Mr_sp_temp.data().squeeze();
 
 	MDKr_sp.resize(nr, nr);
-	MDKr_sp.data().squeeze();
+	//MDKr_sp.data().squeeze();
+	MDKr_sp_tp.resize(nr, nr);
+	//MDKr_sp_tp.data().squeeze();
+	lhs_left_tp.resize(nr, nre);
+	//lhs_left_tp.data().squeeze();
+	lhs_right_tp.resize(ne, nre);
+	//lhs_right_tp.data().squeeze();
+	lhs_left.resize(nre, nr);
+	//lhs_left.data().squeeze();
+	lhs_right.resize(nre, ne);
+	//lhs_right.data().squeeze();
+	LHS_sp.resize(nre, nre);
+	//LHS_sp.data().squeeze();
 
 	Kr_sp.resize(nr, nr);
-	Kr_sp.data().squeeze();
+	//Kr_sp.data().squeeze();
 	Kr_.clear();
 
 	Dr_sp.resize(nr, nr);
-	Dr_sp.data().squeeze();
+	//Dr_sp.data().squeeze();
 	Dr_.clear();
 	
 	Dm_sp.resize(nm, nm);
-	Dm_sp.data().squeeze();
+	//Dm_sp.data().squeeze();
 	Dm_.clear();
 
 	K_sp.resize(nm, nm);
-	K_sp.data().squeeze();
+	//K_sp.data().squeeze();
 	K_.clear();
 
 	Km_sp.resize(nm, nm);
-	Km_sp.data().squeeze();
+	//Km_sp.data().squeeze();
 	Km_.clear();
 
 
@@ -62,19 +76,19 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	Jdot_dense.setZero();
 
 	J_sp.resize(nm, nr);
-	J_sp.data().squeeze();
-	J_.clear();
+	//J_sp.data().squeeze();
+	//J_.clear();
 
 	Jdot_sp.resize(nm, nr);
-	Jdot_sp.data().squeeze();
+	//Jdot_sp.data().squeeze();
 	Jdot_.clear();
 	
 	Gm_sp.resize(nem, nm);
-	Gm_sp.data().squeeze();
+	//Gm_sp.data().squeeze();
 	Gm_.clear();
 
 	Gmdot_sp.resize(nem, nm);
-	Gmdot_sp.data().squeeze();
+	//Gmdot_sp.data().squeeze();
 	Gmdot_.clear();
 
 	gm.setZero();
@@ -82,11 +96,11 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	gmddot.setZero();
 
 	Gr_sp.resize(ner, nr);
-	Gr_sp.data().squeeze();
+	//Gr_sp.data().squeeze();
 	Gr_.clear();
 
 	Grdot_sp.resize(ner, nr);
-	Grdot_sp.data().squeeze();
+	//Grdot_sp.data().squeeze();
 	Grdot_.clear();
 
 	gr.setZero();
@@ -96,13 +110,15 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	g.setZero();
 	gdot.setZero();
 	rhsG.setZero();
+	rhs.setZero();
+	guess.setZero();
 
 	Cm_sp.resize(nim, nm);
-	Cm_sp.data().squeeze();
+	//Cm_sp.data().squeeze();
 	Cm_.clear();
 
 	Cmdot_sp.resize(nim, nm);
-	Cmdot_sp.data().squeeze();
+	//Cmdot_sp.data().squeeze();
 	Cmdot_.clear();
 
 	cm.resize(nim);
@@ -113,11 +129,11 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	cmddot.setZero();
 
 	Cr_sp.resize(nir, nr);
-	Cr_sp.data().squeeze();
+	//Cr_sp.data().squeeze();
 	Cr_.clear();
 
 	Crdot_sp.resize(nir, nr);
-	Crdot_sp.data().squeeze();
+	//Crdot_sp.data().squeeze();
 	Crdot_.clear();
 
 	cr.resize(nir);
@@ -128,7 +144,9 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	crddot.setZero();
 
 	G_sp.resize(ne, nr);
-	G_sp.data().squeeze();
+	//G_sp.data().squeeze();
+	G_sp_tp.resize(nr, ne);
+	//G_sp_tp.data().squeeze();
 
 	Cm.resize(nim, nm);
 	Cm.setZero();
@@ -186,6 +204,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			grddot.resize(ner);
 			g.resize(ne);
 			rhsG.resize(ne);
+			rhs.resize(nr + ne);
+			guess.resize(nr + ne);
 			gdot.resize(ne);
 			gm.resize(nem);
 			gmdot.resize(nem);
@@ -203,7 +223,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			h = m_world->getH();
 			hsquare = h * h;
 			this->grav = m_world->getGrav();
+			zero.resize(ne, ne);
 
+			deformable0->computeJacobianSparse(J_);		
+			softbody0->computeJacobianSparse(J_);
+			meshembedding0->computeJacobianSparse(J_);
+			J_vec_idx = J_.size();
 		}
 
 		nim = m_world->nim;
@@ -241,19 +266,24 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		joint0->computeJacobian(J_dense, Jdot_dense);
 
 		//// Push back the dense part
-
-//#pragma omp parallel for
-		for (int i = 0; i < J_dense.rows(); ++i) {
-			for (int j = 0; j < J_dense.cols(); ++j) {
-
-				J_.push_back(T(i, j, J_dense(i, j)));
-				Jdot_.push_back(T(i, j, Jdot_dense(i, j)));
+		if (step == 0) {
+			for (int i = 0; i < J_dense.rows(); ++i) {
+				for (int j = 0; j < J_dense.cols(); ++j) {
+					J_.push_back(T(i, j, J_dense(i, j)));
+					Jdot_.push_back(T(i, j, Jdot_dense(i, j)));
+				}
 			}
 		}
-
-		deformable0->computeJacobianSparse(J_, Jdot_);
-		softbody0->computeJacobianSparse(J_);
-		meshembedding0->computeJacobianSparse(J_);
+		else {
+			int idx = J_vec_idx;
+			for (int i = 0; i < J_dense.rows(); ++i) {
+				for (int j = 0; j < J_dense.cols(); ++j) {
+					J_[idx] = (T(i, j, J_dense(i, j)));
+					Jdot_.push_back(T(i, j, Jdot_dense(i, j)));
+					idx++;
+				}
+			}
+		}
 
 		spring0->computeForceStiffnessDampingSparse(fm, Km_, Dm_);
 
@@ -261,8 +291,11 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		Dm_sp.setFromTriplets(Dm_.begin(), Dm_.end());
 		Dr_sp.setFromTriplets(Dr_.begin(), Dr_.end());
 		K_sp.setFromTriplets(K_.begin(), K_.end()); // check
+		//cout << "K" << K_.size() << endl;
+
 		Kr_sp.setFromTriplets(Kr_.begin(), Kr_.end());
 		J_sp.setFromTriplets(J_.begin(), J_.end()); // check
+
 		Jdot_sp.setFromTriplets(Jdot_.begin(), Jdot_.end());
 		
 		Mr_sp = J_sp.transpose() * (Mm_sp - hsquare * K_sp) * J_sp;
@@ -333,50 +366,69 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		if (ne == 0 && ni == 0) {	// No constraints
 			ConjugateGradient< SparseMatrix<double> > cg;
-			cg.setMaxIterations(100);
-			cg.setTolerance(1e-6);
+			//cg.setMaxIterations(100);
+			cg.setTolerance(1e-3);
 			cg.compute(MDKr_sp);
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
 
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
-		//	int rows = nr + ne;
-		//	int cols = nr + ne;
-		//	//cout << rows << endl;
-		//	//cout << cols << endl;
+			//int rows = nr + ne;
+			//int cols = nr + ne;
 
-		//	MatrixXd LHS(rows, cols);
-		//	VectorXd rhs(rows);
-		//	LHS.setZero();
-		//	rhs.setZero();
-		//	VectorXd guess = rhs;
-		//	guess.segment(0, nr) = qdot0;
+			/*
+			//Slow
 
-		//	MatrixXd MDKr_ = MatrixXd(MDKr_sp);
-		//	MatrixXd G = MatrixXd(G_sp);
+			MatrixXd LHS(rows, cols);		
+			LHS.setZero();
+			
+			MatrixXd MDKr_ = MatrixXd(MDKr_sp);
+			MatrixXd G = MatrixXd(G_sp);
 
-		//	LHS.block(0, 0, nr, nr) = MDKr_;
-		//	LHS.block(0, nr, nr, ne) = G.transpose();
-		//	LHS.block(nr, 0, ne, nr) = G;
-		//	SparseMatrix<double> LHS_sp(rows, cols);
-		//	LHS_sp = LHS.sparseView(1e-8);
-		//	
-		//	rhs.segment(0, nr) = fr_;
-		//	rhs.segment(nr, ne) = rhsG;
-		//	//cout << LHS << endl;
-		//	//cout << rhs << endl;
-		///*	VectorXd sol = LHS.ldlt().solve(rhs);
-		//	qdot1 = sol.segment(0, nr);
-		//	VectorXd l = sol.segment(nr, sol.rows() - nr);*/
-		//	//cout << qdot1.segment<2>(0) << endl << endl;
+			LHS.block(0, 0, nr, nr) = MDKr_;
+			LHS.block(0, nr, nr, ne) = G.transpose();
+			LHS.block(nr, 0, ne, nr) = G;
+			SparseMatrix<double> LHS_sp(rows, cols);
+			LHS_sp = LHS.sparseView(1e-8);
+			
+			*/
 
-		//	ConjugateGradient< SparseMatrix<double> > cg;
-		//	cg.setMaxIterations(200);
-		//	cg.setTolerance(1e-6);
-		//	cg.compute(LHS_sp);
-		//	qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
+			guess.segment(0, nr) = qdot0;
 
-			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
+			// Assemble sparse matrices
+			MDKr_sp_tp = MDKr_sp.transpose();
+			G_sp_tp = G_sp.transpose();
+
+			// Combine MDKr' and G' by column
+			lhs_left_tp.leftCols(nr) = MDKr_sp_tp;
+			lhs_left_tp.rightCols(ne) = G_sp_tp;
+
+			// Combine G and Z by column
+			lhs_right_tp.leftCols(nr) = G_sp;
+			lhs_right_tp.rightCols(ne) = zero;
+
+			lhs_left = lhs_left_tp.transpose();  // rows x nr
+			lhs_right = lhs_right_tp.transpose(); // rows x ne
+
+			LHS_sp.leftCols(nr) = lhs_left;
+			LHS_sp.rightCols(ne) = lhs_right;
+			
+			rhs.segment(0, nr) = fr_;
+			rhs.segment(nr, ne) = rhsG;
+
+			//VectorXd sol = LHS.ldlt().solve(rhs);
+			//qdot1 = sol.segment(0, nr);
+			//VectorXd l = sol.segment(nr, sol.rows() - nr);
+
+			ConjugateGradient< SparseMatrix<double> > cg;
+			cg.setMaxIterations(1000);
+			cg.setTolerance(1e-3);
+			cg.compute(LHS_sp);
+			qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
+			//std::cout << "#iterations:     " << cg.iterations() << std::endl;
+			//std::cout << "estimated error: " << cg.error() << std::endl;
+
+		/*	shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
 			program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
 			program_->setParamInt(MSK_IPAR_LOG, 10);
 			program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
@@ -399,7 +451,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 			bool success = program_->solve();
 			VectorXd sol = program_->getPrimalSolution();
-			qdot1 = sol.segment(0, nr);
+			qdot1 = sol.segment(0, nr);*/
+
 			//VectorXd l = program_->getDualEquality();
 			//constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
 			//constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);

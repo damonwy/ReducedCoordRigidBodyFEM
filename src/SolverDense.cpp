@@ -185,7 +185,7 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		joint0->computeForceDamping(tmp, Dr);
 		joint0->computeJacobian(J, Jdot);
 	
-		deformable0->computeJacobian(J, Jdot);
+		deformable0->computeJacobian(J);
 		softbody0->computeJacobian(J);
 		
 		spring0->computeForceStiffnessDamping(fm, Km, Dm);
@@ -437,7 +437,7 @@ shared_ptr<Solution> SolverDense::solve() {
 			joint0->computeJacobian(J, Jdot);
 			//Jdot = joint0->computeJacobianDerivative(Jdot, J, nm, nr);
 			// spring jacobian todo
-			deformable0->computeJacobian(J, Jdot);
+			deformable0->computeJacobian(J);
 
 			softbody0->computeJacobian(J);
 

@@ -11,7 +11,7 @@ public:
 	TetrahedronCorotational() {}
 	TetrahedronCorotational(double young, double poisson, double density, Material material, const std::vector<std::shared_ptr<Node>> &nodes);
 	virtual ~TetrahedronCorotational() {}
-	Eigen::VectorXd computeElasticForces(Eigen::VectorXd f);
+	void computeElasticForces(Eigen::VectorXd &f);
 	void computeForceDifferentials(Eigen::MatrixXd &K);
 	void computeForceDifferentialsSparse(std::vector<T> &K_);
 	void precompute();

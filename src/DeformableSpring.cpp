@@ -291,13 +291,13 @@ void DeformableSpring::computeEnergies_(Vector3d grav, Energy &ener) {
 	}
 }
 
-void DeformableSpring::computeJacobian_(MatrixXd &J, MatrixXd &Jdot) {
+void DeformableSpring::computeJacobian_(MatrixXd &J) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		J.block<3, 3>(m_nodes[i]->idxM, m_nodes[i]->idxR) = Matrix3d::Identity();
 	}
 }
 
-void DeformableSpring::computeJacobianSparse_(vector<T> &J_, vector<T> &Jdot_) {
+void DeformableSpring::computeJacobianSparse_(vector<T> &J_) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		for (int j = 0; j < 3; ++j) {
 			J_.push_back(T(m_nodes[i]->idxM + j, m_nodes[i]->idxR + j, 1.0));

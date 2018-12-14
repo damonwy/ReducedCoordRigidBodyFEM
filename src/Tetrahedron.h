@@ -31,7 +31,7 @@ public:
 	virtual void computeForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
 	virtual void computeForceDifferentialsSparse(std::vector<T> &K_) {}
 
-	virtual Eigen::VectorXd computeElasticForces(Eigen::VectorXd f);
+	virtual void computeElasticForces(Eigen::VectorXd &f);
 
 	bool checkSameSide(const std::shared_ptr<Node> &v0, const std::shared_ptr<Node> &v1, const std::shared_ptr<Node> &v2, const std::shared_ptr<Node> &v3, const std::shared_ptr<Node> &p);
 	bool checkPointInside(const std::shared_ptr<Node>& p);

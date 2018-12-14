@@ -69,7 +69,7 @@ Matrix3d Tetrahedron::computeDeformationGradientDifferential(VectorXd dx) {
 
 
 
-VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
+void Tetrahedron::computeElasticForces(VectorXd &f) {
 	this->F = computeDeformationGradient();
 	// The deformation gradient is available in this->F
 	this->FTF.noalias() = F.transpose() * F;
@@ -89,7 +89,6 @@ VectorXd Tetrahedron::computeElasticForces(VectorXd f) {
 		//m_nodes[i]->addForce(H.col(i));
 		//m_nodes[3]->addForce(-H.col(i));
 	}
-	return f;
 }
 
 

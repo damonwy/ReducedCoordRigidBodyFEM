@@ -15,6 +15,11 @@ private:
 	std::vector<T> Mm_;
 
 	Eigen::SparseMatrix<double> MDKr_sp;
+	Eigen::SparseMatrix<double> MDKr_sp_tp;
+
+
+
+
 	Eigen::SparseMatrix<double> K_sp;
 	std::vector<T> K_;
 
@@ -27,6 +32,7 @@ private:
 
 	Eigen::SparseMatrix<double> J_sp;
 	std::vector<T> J_;
+	std::vector<T> J_pre;
 	Eigen::SparseMatrix<double> Jdot_sp;
 	std::vector<T> Jdot_;
 	Eigen::VectorXd q0;
@@ -34,7 +40,10 @@ private:
 	Eigen::VectorXd qdot0;
 	Eigen::VectorXd qdot1;
 	Eigen::VectorXd qddot;
+	Eigen::VectorXd rhs;
+	Eigen::VectorXd guess;
 
+	int J_vec_idx;
 	Eigen::SparseMatrix<double> Mr_sp;
 	Eigen::SparseMatrix<double> Mr_sp_temp;
 	Eigen::SparseMatrix<double> Dm_sp;
@@ -101,7 +110,13 @@ private:
 	std::vector<int> rowsR;
 
 	Eigen::SparseMatrix<double, Eigen::RowMajor> G_sp;
-
+	Eigen::SparseMatrix<double> G_sp_tp;
+	Eigen::SparseMatrix<double> lhs_left_tp;
+	Eigen::SparseMatrix<double> lhs_left;
+	Eigen::SparseMatrix<double> lhs_right_tp;
+	Eigen::SparseMatrix<double> lhs_right;
+	Eigen::SparseMatrix<double> zero;
+	Eigen::SparseMatrix<double> LHS_sp;
 
 	int m_dense_nm;
 	int m_dense_nr;

@@ -12,7 +12,7 @@ public:
 	virtual ~TetrahedronInvertible() {}
 	bool checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F);
 	//Matrix3x4d computeAreaWeightedVertexNormals();
-	Eigen::VectorXd computeElasticForces(Eigen::VectorXd f);
+	void computeElasticForces(Eigen::VectorXd &f);
 
 	void computeForceDifferentials(Eigen::MatrixXd &K);
 	void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
