@@ -4,6 +4,7 @@
 #pragma once
 #ifndef REDUCEDCOORD_SRC_SPRINGDAMPER_H_
 #define REDUCEDCOORD_SRC_SPRINGDAMPER_H_
+#define EIGEN_USE_MKL_ALL
 
 #include "Spring.h"
 

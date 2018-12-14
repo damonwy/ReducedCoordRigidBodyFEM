@@ -2,6 +2,7 @@
 
 #ifndef MUSCLEMASS_SRC_WRAPSHPERE_H_
 #define MUSCLEMASS_SRC_WRAPSHPERE_H_
+#define EIGEN_USE_MKL_ALL
 
 /*
 * WrapSphere.hpp

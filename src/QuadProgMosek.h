@@ -1,6 +1,8 @@
 #pragma once
 #ifndef RIGIDBODYJOINTS_SRC_QUADPROGMOSEK_H_
 #define RIGIDBODYJOINTS_SRC_QUADPROGMOSEK_H_
+#define EIGEN_USE_MKL_ALL
+
 #include "QuadProg.h"
 
 #include <memory>

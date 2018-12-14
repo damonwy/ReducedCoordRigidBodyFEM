@@ -32,8 +32,8 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	
 	Mr_sp.resize(nr, nr);
 	//Mr_sp.data().squeeze();
-
 	Mr_sp_temp.resize(nr, nr);
+
 	//Mr_sp_temp.data().squeeze();
 
 	MDKr_sp.resize(nr, nr);
@@ -299,6 +299,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		Jdot_sp.setFromTriplets(Jdot_.begin(), Jdot_.end());
 		
 		Mr_sp = J_sp.transpose() * (Mm_sp - hsquare * K_sp) * J_sp;
+		
 		//Mr_sp_temp = Mr_sp.transpose();
 		//Mr_sp += Mr_sp_temp;
 		//Mr_sp *= 0.5;
@@ -420,10 +421,16 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			//qdot1 = sol.segment(0, nr);
 			//VectorXd l = sol.segment(nr, sol.rows() - nr);
 
+			// QR:
+	/*		SparseQR< SparseMatrix<double>, COLAMDOrdering<int>> sqr(LHS_sp);
+			assert(sqr.info() == Success);
+			qdot1 = sqr.solve(rhs).segment(0, nr);*/
+
 			ConjugateGradient< SparseMatrix<double> > cg;
 			cg.setMaxIterations(1000);
 			cg.setTolerance(1e-3);
 			cg.compute(LHS_sp);
+
 			qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
 			//std::cout << "#iterations:     " << cg.iterations() << std::endl;
 			//std::cout << "estimated error: " << cg.error() << std::endl;

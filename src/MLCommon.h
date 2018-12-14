@@ -1,7 +1,7 @@
 #pragma once
 #ifndef MUSCLEMASS_SRC_MLCOMMON_H_
 #define MUSCLEMASS_SRC_MLCOMMON_H_
-
+#define EIGEN_USE_MKL_ALL
 #include <json.hpp>
 
 #define EIGEN_DONT_ALIGN_STATICALLY
@@ -108,5 +108,8 @@ int tensor9x12Index(int i, int j, int m, int n);
 Eigen::Matrix3d gs3(Eigen::Matrix3d A);
 
 Matrix6d hooke(double young, double poisson);
-
+void eigen_decomposition(double A[3][3], double V[3][3], double d[3]);
+static double hypot2(double x, double y);
+static void tql2(double V[3][3], double d[3], double e[3]);
+static void tred2(double V[3][3], double d[3], double e[3]);
 #endif // MUSCLEMASS_SRC_MLCOMMON_H_

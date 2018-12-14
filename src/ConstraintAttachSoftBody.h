@@ -1,5 +1,6 @@
 #pragma once
 // ConstraintAttachSoftBody
+#define EIGEN_USE_MKL_ALL
 
 #include "Constraint.h"
 

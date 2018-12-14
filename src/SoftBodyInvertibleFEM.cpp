@@ -21,7 +21,7 @@ SoftBodyInvertibleFEM::SoftBodyInvertibleFEM(double density, double young, doubl
 SoftBody(density, young, poisson, material)
 {
 	m_isInverted = false;
-	m_isGravity = true;
+	//m_isGravity = true;
 	m_type = 1;
 }
 
@@ -58,30 +58,36 @@ void SoftBodyInvertibleFEM::computeStiffness_(MatrixXd &K) {
 }
 
 void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {
-	VectorXd df(3 * m_nodes.size());
-	VectorXd Dx = df;
+	//VectorXd df(3 * m_nodes.size());
+	//VectorXd Dx = df;
+	//for (int i = 0; i < (int)m_tets.size(); i++) {
+	//	auto tet = m_tets[i];
+	//	for (int ii = 0; ii < 4; ii++) {
+	//		auto node = tet->m_nodes[ii];
+	//		int id = node->i;
+	//		int col = node->idxM;
+
+	//		for (int iii = 0; iii < 3; iii++) {
+	//			df.setZero();
+	//			Dx.setZero();
+	//			Dx(3 * id + iii) = 1.0;
+	//			
+	//			//tet->computeForceDifferentials(Dx, df);
+	//			int irow = col - 3 * id;
+	//			int icol = col + iii;
+	//			
+	//			tet->computeForceDifferentialsSparse(Dx, irow, icol, K_);
+
+	//			//tet->computeInvertibleForceDifferentials(Dx, df);
+	//			//cout << df << endl;
+	//		}
+	//	}
+	//}
+
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
-		for (int ii = 0; ii < 4; ii++) {
-			auto node = tet->m_nodes[ii];
-			int id = node->i;
-			int col = node->idxM;
+		tet->computeForceDifferentialsSparse(K_);
 
-			for (int iii = 0; iii < 3; iii++) {
-				df.setZero();
-				Dx.setZero();
-				Dx(3 * id + iii) = 1.0;
-				
-				//tet->computeForceDifferentials(Dx, df);
-				int irow = col - 3 * id;
-				int icol = col + iii;
-				
-				tet->computeForceDifferentialsSparse(Dx, irow, icol, K_);
-
-				//tet->computeInvertibleForceDifferentials(Dx, df);
-				//cout << df << endl;
-			}
-		}
 	}
 
 }

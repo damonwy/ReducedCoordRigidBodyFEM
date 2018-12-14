@@ -67,8 +67,6 @@ Matrix3d Tetrahedron::computeDeformationGradientDifferential(VectorXd dx) {
 	return this->dF;
 }
 
-
-
 void Tetrahedron::computeElasticForces(VectorXd &f) {
 	this->F = computeDeformationGradient();
 	// The deformation gradient is available in this->F
@@ -86,12 +84,8 @@ void Tetrahedron::computeElasticForces(VectorXd &f) {
 		f.segment<3>(rowi) += H.col(i);
 		int row3 = m_nodes[3]->idxM;
 		f.segment<3>(row3) -= H.col(i);
-		//m_nodes[i]->addForce(H.col(i));
-		//m_nodes[3]->addForce(-H.col(i));
 	}
 }
-
-
 
 void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	this->F = computeDeformationGradient();
@@ -174,23 +168,21 @@ void Tetrahedron::computeForceDifferentialsSparse(VectorXd dx, int row, int col,
 
 Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 
-	Matrix3d E = Matrix3d::Zero();
 	Matrix3d P = Matrix3d::Zero();
-	Matrix3d I = Matrix3d::Identity();
-	Matrix3d R, A, S, FIT, FT;
-
 	//if (m_isSVD) {
 	//	m_material = CO_ROTATED;
 	//}
 	//else {
 	//	//m_material = STVK;
-
 	//}
 
 	switch (m_material)
 	{
 	case LINEAR:
 	{
+		Matrix3d I = Matrix3d::Identity();
+		Matrix3d E = Matrix3d::Zero();
+
 		E.noalias() = 0.5 * (F + F.transpose()) - I;
 		//psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
 		P.noalias() = 2.0 * mu * E + lambda * E.trace() * I;
@@ -199,6 +191,8 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 
 	case NEO_HOOKEAN:
 	{
+		Matrix3d FIT, FT;
+
 		//double I1 = (F.transpose() * F).trace();
 		//double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
 		FT = F.transpose();
@@ -213,6 +207,9 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 
 	case STVK:
 	{
+		Matrix3d I = Matrix3d::Identity();
+		Matrix3d E = Matrix3d::Zero();
+
 		//E.noalias() = 0.5 * (F.transpose() * F - I);
 		E.noalias() = 0.5 * (this->FTF - I);
 		//psi = mu * E.norm()*E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
@@ -223,10 +220,14 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 	case CO_ROTATED:
 	{
 		// Polar decomposition
-		A.noalias() = F.adjoint() * F;
-		SelfAdjointEigenSolver<Matrix3d> es(A);
-		S.noalias() = es.operatorSqrt();
-		R.noalias() = F * S.inverse();
+		Matrix3d R = gs3(F);
+		Matrix3d I = Matrix3d::Identity();
+
+
+		//A.noalias() = F.adjoint() * F;
+		//SelfAdjointEigenSolver<Matrix3d> es(A);
+		//S.noalias() = es.operatorSqrt();
+		//R.noalias() = F * S.inverse();
 
 		//E = S - I;
 		//psi = mu * E.norm() * E.norm() + 1.0 / 2.0 * lambda * E.trace() * E.trace();
@@ -245,35 +246,30 @@ Matrix3d Tetrahedron::computePKStress(Matrix3d F, double mu, double lambda) {
 }
 
 Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double mu, double lambda) {
-	Matrix3d E = Matrix3d::Zero();
-	Matrix3d P = Matrix3d::Zero();
-	Matrix3d dE = Matrix3d::Zero();
+	
 	Matrix3d dP = Matrix3d::Zero();
-	Matrix3d I3 = Matrix3d::Identity();
-	Matrix3d R, A, S, FIT, FT;
-
-	//if (m_isSVD) {
-	//	m_material = CO_ROTATED;
-	//}
-	//else {
-	//	//m_material = STVK;
-	//}
 
 	switch (m_material) {
 	case CO_ROTATED:
 	{
-		A.noalias() = F.adjoint() * F;
-		SelfAdjointEigenSolver<Matrix3d> es(A);
-		S = es.operatorSqrt();
-		R.noalias() = F * S.inverse();
+		Matrix3d R = gs3(F);
+		//A.noalias() = F.adjoint() * F;
+		//SelfAdjointEigenSolver<Matrix3d> es(A);
+		//S = es.operatorSqrt();
+		//R.noalias() = F * S.inverse();
+
 		//E = S - I3;
 		//P = 2.0 * mu *(F - R) + lambda * (R.transpose()*F - I3).trace() * R;
-		dP.noalias() = 2.0 * mu * dF + lambda * (R.transpose()*dF).trace() * R;
+		dP.noalias() = 2.0 * mu * dF + lambda * (R.transpose() * dF).trace() * R;
 		break;
 	}
 
 	case STVK:
 	{
+		Matrix3d E = Matrix3d::Zero();
+
+		Matrix3d dE = Matrix3d::Zero();
+		Matrix3d I3 = Matrix3d::Identity();
 		E.noalias() = 0.5 * (this->FTF - I3);
 		//E.noalias() = 1.0 / 2.0 * (F.transpose() * F - I3);
 		dE.noalias() = 0.5 * (dF.transpose() * F + F.transpose() * dF);
@@ -284,6 +280,8 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 
 	case NEO_HOOKEAN:
 	{	
+		Matrix3d FIT, FT;
+
 		/*double I1 = (F.transpose() * F).trace();
 		double I2 = ((F.transpose() * F) *  (F.transpose() * F)).trace();
 		double I3 = (F.transpose() * F).determinant();
@@ -306,6 +304,9 @@ Matrix3d Tetrahedron::computePKStressDerivative(Matrix3d F, Matrix3d dF, double 
 	}
 	case LINEAR:
 	{
+		Matrix3d E = Matrix3d::Zero();
+		Matrix3d dE = Matrix3d::Zero();
+		Matrix3d I3 = Matrix3d::Identity();
 		E.noalias() = 1.0 / 2.0 * (F + F.transpose()) - I3;
 		dE.noalias() = 1.0 / 2.0 * (dF + dF.transpose());
 		//P = 2.0 * mu * E + lambda * E.trace() * I3;

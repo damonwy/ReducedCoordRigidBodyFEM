@@ -1,4 +1,6 @@
 #include "MLCommon.h"
+#define n 3
+#define MAX(a, b) ((a)>(b)?(a):(b))
 
 glm::mat3 eigen_to_glm(const Eigen::Matrix3d &m) {
 	return glm::make_mat3x3((const double *)m.data());
@@ -69,20 +71,20 @@ bool rayTriangleIntersects(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector
 	return false;
 }
 
-void eigen_sym(Eigen::Matrix3d &a, Eigen::Vector3d &eig_val, Eigen::Matrix3d &eig_vec) {
-	Eigen::EigenSolver<Eigen::Matrix3d> es(a);
-
-	for (int i = 0; i < 3; i++) {
-		std::complex<double> ev = es.eigenvalues()[i];
-		eig_val(i) = ev.real();
-		Eigen::Vector3cd v = es.eigenvectors().col(i);
-		eig_vec(0, i) = v(0).real();
-		eig_vec(1, i) = v(1).real();
-		eig_vec(2, i) = v(2).real();
-	}
-
-
-}
+//void eigen_sym(Eigen::Matrix3d &a, Eigen::Vector3d &eig_val, Eigen::Matrix3d &eig_vec) {
+//	Eigen::EigenSolver<Eigen::Matrix3d> es(a);
+//
+//	for (int i = 0; i < 3; i++) {
+//		std::complex<double> ev = es.eigenvalues()[i];
+//		eig_val(i) = ev.real();
+//		Eigen::Vector3cd v = es.eigenvectors().col(i);
+//		eig_vec(0, i) = v(0).real();
+//		eig_vec(1, i) = v(1).real();
+//		eig_vec(2, i) = v(2).real();
+//	}
+//
+//
+//}
 
 /*
 Converts a 3x3x3x4 tensor index to 9x12 matrix index
@@ -92,7 +94,7 @@ m goes from [0, 3] inclusively
 n goes from [0, 2] inclusively
 */
 
-int tensor9x12Index(int i, int j, int m, int n)
+int tensor9x12Index(int i, int j, int m, int n_)
 {
 	/*
 	|  dF_00/du_v0x  dF_00/du_v0y  dF_00/du_v0z dF_00/du_v1x ...  dF_00/du_v3z  |
@@ -107,7 +109,7 @@ int tensor9x12Index(int i, int j, int m, int n)
 	| u_30 u_31 u_32 |   | v3x v3y v3z |
 	*/
 	int rowIndex_in9x12Matrix = 3 * i + j;
-	int columnIndex_in9x12Matrix = 3 * m + n;
+	int columnIndex_in9x12Matrix = 3 * m + n_;
 	/*
 	the resulting index is row major
 	e.g.,
@@ -116,6 +118,273 @@ int tensor9x12Index(int i, int j, int m, int n)
 	*/
 	return (12 * rowIndex_in9x12Matrix + columnIndex_in9x12Matrix);
 }
+
+// This routine was written by Jernej Barbic.
+void eigen_sym(Eigen::Matrix3d & a, Eigen::Vector3d & eig_val, Eigen::Matrix3d &eig_vec)
+{
+	double A[3][3] = { { a(0,0), a(0,1), a(0,2) },
+						{ a(1,0), a(1,1), a(1,2) },
+						{ a(2,0), a(2,1), a(2,2) } };
+	double V[3][3];
+	double d[3];
+	eigen_decomposition(A, V, d);
+
+	eig_val = Eigen::Vector3d(d[2], d[1], d[0]);
+	
+	eig_vec.col(0) = Eigen::Vector3d(V[0][2], V[1][2], V[2][2]);
+	eig_vec.col(1) = Eigen::Vector3d(V[0][1], V[1][1], V[2][1]);
+	eig_vec.col(2) = Eigen::Vector3d(V[0][0], V[1][0], V[2][0]);
+}
+
+void eigen_decomposition(double A[3][3], double V[3][3], double d[3]) {
+	double e[3];
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			V[i][j] = A[i][j];
+		}
+	}
+	tred2(V, d, e);
+	tql2(V, d, e);
+}
+
+double hypot2(double x, double y) {
+	return sqrt(x*x + y*y);
+}
+
+void tql2(double V[3][3], double d[3], double e[3]) {
+
+	//  This is derived from the Algol procedures tql2, by
+	//  Bowdler, Martin, Reinsch, and Wilkinson, Handbook for
+	//  Auto. Comp., Vol.ii-Linear Algebra, and the corresponding
+	//  Fortran subroutine in EISPACK.
+
+	for (int i = 1; i < n; i++) {
+		e[i - 1] = e[i];
+	}
+	e[n - 1] = 0.0;
+
+	double f = 0.0;
+	double tst1 = 0.0;
+	double eps = pow(2.0, -52.0);
+	for (int l = 0; l < n; l++) {
+
+		// Find small subdiagonal element
+
+		tst1 = MAX(tst1, fabs(d[l]) + fabs(e[l]));
+		int m = l;
+		while (m < n) {
+			if (fabs(e[m]) <= eps*tst1) {
+				break;
+			}
+			m++;
+		}
+
+		// If m == l, d[l] is an eigenvalue,
+		// otherwise, iterate.
+
+		if (m > l) {
+			int iter = 0;
+			do {
+				iter = iter + 1;  // (Could check iteration count here.)
+
+								  // Compute implicit shift
+
+				double g = d[l];
+				double p = (d[l + 1] - g) / (2.0 * e[l]);
+				double r = hypot2(p, 1.0);
+				if (p < 0) {
+					r = -r;
+				}
+				d[l] = e[l] / (p + r);
+				d[l + 1] = e[l] * (p + r);
+				double dl1 = d[l + 1];
+				double h = g - d[l];
+				for (int i = l + 2; i < n; i++) {
+					d[i] -= h;
+				}
+				f = f + h;
+
+				// Implicit QL transformation.
+
+				p = d[m];
+				double c = 1.0;
+				double c2 = c;
+				double c3 = c;
+				double el1 = e[l + 1];
+				double s = 0.0;
+				double s2 = 0.0;
+				for (int i = m - 1; i >= l; i--) {
+					c3 = c2;
+					c2 = c;
+					s2 = s;
+					g = c * e[i];
+					h = c * p;
+					r = hypot2(p, e[i]);
+					e[i + 1] = s * r;
+					s = e[i] / r;
+					c = p / r;
+					p = c * d[i] - s * g;
+					d[i + 1] = h + s * (c * g + s * d[i]);
+
+					// Accumulate transformation.
+
+					for (int k = 0; k < n; k++) {
+						h = V[k][i + 1];
+						V[k][i + 1] = s * V[k][i] + c * h;
+						V[k][i] = c * V[k][i] - s * h;
+					}
+				}
+				p = -s * s2 * c3 * el1 * e[l] / dl1;
+				e[l] = s * p;
+				d[l] = c * p;
+
+				// Check for convergence.
+
+			} while (fabs(e[l]) > eps*tst1);
+		}
+		d[l] = d[l] + f;
+		e[l] = 0.0;
+	}
+
+	// Sort eigenvalues and corresponding vectors.
+
+	for (int i = 0; i < n - 1; i++) {
+		int k = i;
+		double p = d[i];
+		for (int j = i + 1; j < n; j++) {
+			if (d[j] < p) {
+				k = j;
+				p = d[j];
+			}
+		}
+		if (k != i) {
+			d[k] = d[i];
+			d[i] = p;
+			for (int j = 0; j < n; j++) {
+				p = V[j][i];
+				V[j][i] = V[j][k];
+				V[j][k] = p;
+			}
+		}
+	}
+}
+
+void tred2(double V[3][3], double d[3], double e[3]) {
+
+	//  This is derived from the Algol procedures tred2 by
+	//  Bowdler, Martin, Reinsch, and Wilkinson, Handbook for
+	//  Auto. Comp., Vol.ii-Linear Algebra, and the corresponding
+	//  Fortran subroutine in EISPACK.
+
+	for (int j = 0; j < n; j++) {
+		d[j] = V[n - 1][j];
+	}
+
+	// Householder reduction to tridiagonal form.
+
+	for (int i = n - 1; i > 0; i--) {
+
+		// Scale to avoid under/overflow.
+
+		double scale = 0.0;
+		double h = 0.0;
+		for (int k = 0; k < i; k++) {
+			scale = scale + fabs(d[k]);
+		}
+		if (scale == 0.0) {
+			e[i] = d[i - 1];
+			for (int j = 0; j < i; j++) {
+				d[j] = V[i - 1][j];
+				V[i][j] = 0.0;
+				V[j][i] = 0.0;
+			}
+		}
+		else {
+
+			// Generate Householder vector.
+
+			for (int k = 0; k < i; k++) {
+				d[k] /= scale;
+				h += d[k] * d[k];
+			}
+			double f = d[i - 1];
+			double g = sqrt(h);
+			if (f > 0) {
+				g = -g;
+			}
+			e[i] = scale * g;
+			h = h - f * g;
+			d[i - 1] = f - g;
+			for (int j = 0; j < i; j++) {
+				e[j] = 0.0;
+			}
+
+			// Apply similarity transformation to remaining columns.
+
+			for (int j = 0; j < i; j++) {
+				f = d[j];
+				V[j][i] = f;
+				g = e[j] + V[j][j] * f;
+				for (int k = j + 1; k <= i - 1; k++) {
+					g += V[k][j] * d[k];
+					e[k] += V[k][j] * f;
+				}
+				e[j] = g;
+			}
+			f = 0.0;
+			for (int j = 0; j < i; j++) {
+				e[j] /= h;
+				f += e[j] * d[j];
+			}
+			double hh = f / (h + h);
+			for (int j = 0; j < i; j++) {
+				e[j] -= hh * d[j];
+			}
+			for (int j = 0; j < i; j++) {
+				f = d[j];
+				g = e[j];
+				for (int k = j; k <= i - 1; k++) {
+					V[k][j] -= (f * e[k] + g * d[k]);
+				}
+				d[j] = V[i - 1][j];
+				V[i][j] = 0.0;
+			}
+		}
+		d[i] = h;
+	}
+
+	// Accumulate transformations.
+
+	for (int i = 0; i < n - 1; i++) {
+		V[n - 1][i] = V[i][i];
+		V[i][i] = 1.0;
+		double h = d[i + 1];
+		if (h != 0.0) {
+			for (int k = 0; k <= i; k++) {
+				d[k] = V[k][i + 1] / h;
+			}
+			for (int j = 0; j <= i; j++) {
+				double g = 0.0;
+				for (int k = 0; k <= i; k++) {
+					g += V[k][i + 1] * V[k][j];
+				}
+				for (int k = 0; k <= i; k++) {
+					V[k][j] -= g * d[k];
+				}
+			}
+		}
+		for (int k = 0; k <= i; k++) {
+			V[k][i + 1] = 0.0;
+		}
+	}
+	for (int j = 0; j < n; j++) {
+		d[j] = V[n - 1][j];
+		V[n - 1][j] = 0.0;
+	}
+	V[n - 1][n - 1] = 1.0;
+	e[0] = 0.0;
+}
+
 
 int SVD(Eigen::Matrix3d &F,
 	Eigen::Matrix3d &U,
@@ -144,7 +413,8 @@ int SVD(Eigen::Matrix3d &F,
 
 	// form F^T F and do eigendecomposition
 
-	Eigen::Matrix3d normalEq = F.transpose() * F;
+	Eigen::Matrix3d normalEq;
+	normalEq.noalias() = F.transpose() * F;
 	Eigen::Vector3d eigenValues;
 	Eigen::Matrix3d eigenVectors;
 
@@ -172,8 +442,10 @@ int SVD(Eigen::Matrix3d &F,
 
 	// compute U using the formula:
 	// U = F * V * diag(SigmaInverse)
-	U = F * V;
-	U = U * SigmaInverse.asDiagonal();
+	U.noalias() = F * V;
+	Eigen::Matrix3d Utemp;
+	Utemp.noalias() = U * SigmaInverse.asDiagonal();
+	U = Utemp;
 
 	// In theory, U is now orthonormal, U^T U = U U^T = I .. it may be a rotation or a reflection, depending on F.
 	// But in practice, if singular values are small or zero, it may not be orthonormal, so we need to fix it.
@@ -254,7 +526,7 @@ int SVD(Eigen::Matrix3d &F,
 			//      and the corresponding column of U
 
 			double detU = U.determinant();
-			if (detU < -0.0000001)
+			if (detU < 0.0)
 			{
 				// negative determinant
 				// find the smallest singular value (they are all non-negative)

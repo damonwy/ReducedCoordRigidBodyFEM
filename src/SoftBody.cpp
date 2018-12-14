@@ -227,9 +227,9 @@ void SoftBody::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog,
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	for (int i = 0; i < (int)m_attach_nodes.size(); i++) {
-		//auto node = m_attach_nodes[i];
-		//glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
-		//node->draw(MV, prog);
+		auto node = m_attach_nodes[i];
+		glUniform3fv(prog->getUniform("kd"), 1, node->m_color.data());
+		node->draw(MV, prog);
 	}
 
 	for (int i = 0; i < (int)m_sliding_nodes.size(); i++) {

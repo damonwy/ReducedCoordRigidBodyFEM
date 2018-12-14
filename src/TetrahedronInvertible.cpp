@@ -1,3 +1,6 @@
+#define EIGEN_USE_MKL_ALL
+
+
 #include "TetrahedronInvertible.h"
 #include "Node.h"
 
@@ -23,8 +26,8 @@ void TetrahedronInvertible::precompute() {
 		m_nodes[i]->m += this->m_mass * 0.25;
 	}
 
-	m_delta_L = 0.001;
-	m_delta_U = 2.0;
+	m_delta_L = 0.1;
+	m_delta_U = 2.5;
 
 }
 
@@ -139,6 +142,7 @@ bool TetrahedronInvertible::checkNecessityForSVD(double deltaL, double deltaU, M
 		else {
 			// large deformation, need to do SVD
 			m_isSVD = true;
+			//cout << "svd " <<this->i << endl;
 		}
 	}
 	else {
@@ -166,16 +170,32 @@ void TetrahedronInvertible::computeElasticForces(VectorXd &f) {
 		// We need an additional step to decide whether the element undergoes large deformation
 		m_isInverted = false;
 		//checkNecessityForSVD(m_delta_L, m_delta_U, this->F);
+		//
+		//m_isSVD = false;
+		//if (!SVD(this->F, this->U, this->Fhats, this->V, 1e-8, modifiedSVD)) {
+		//	//cout << "error in svd " << endl;
+		//}
+		//this->UT = this->U.transpose();
+		//this->VT = this->V.transpose();
+		//this->Fhat = Fhats.asDiagonal();
+		//for (int k = 0; k < 3; ++k) {
+		//	if (Fhats(k) < 0.3 || Fhats(k) > 1.5) {
+		//		m_isSVD = true;
+
+		//	}
+		//}
 		
 		// The necessity of SVD is available in m_isSVD
 	}
 	m_isSVD = true;
 	if (m_isSVD) {
-		// SVD on the deformation gradient
-		int modifiedSVD = 1;
+		//cout << "svd " << this->i << endl;
 
-		if (!SVD(this->F, this->U, this->Fhats, this->V, 1e-8, modifiedSVD)) {
-			//cout << "error in svd " << endl;
+		// SVD on the deformation gradient
+		modifiedSVD = 1;
+
+		if (SVD(this->F, this->U, this->Fhats, this->V, 1e-8, modifiedSVD)) {
+			cout << "error in svd " << endl;
 		}
 		this->UT = this->U.transpose();
 		this->VT = this->V.transpose();
@@ -219,7 +239,6 @@ void TetrahedronInvertible::computeElasticForces(VectorXd &f) {
 		f.segment<3>(row3) -= this->H.col(i);
 
 	}
-	
 }
 
 
@@ -286,9 +305,6 @@ void TetrahedronInvertible::computeForceDifferentials(MatrixXd &K_global) {
 	}
 
 	this->K.block<3, 3>(9, 9) = -this->K.block<3, 3>(0, 9) - this->K.block<3, 3>(3, 9) - this->K.block<3, 3>(6, 9);
-	//cout << "Ki" << endl << this->K << endl;
-	//VectorXcd ev = this->K.eigenvalues();
-	//cout << ev << endl; 
 
 	int i = m_nodes[0]->idxM;
 	int j = m_nodes[1]->idxM;
@@ -336,6 +352,65 @@ void TetrahedronInvertible::computeForceDifferentialsSparse(VectorXd dx, int row
 			K_.push_back(T(row + 3 * m_nodes[3]->i + j, col, -dH(j, i)));
 		}
 	}
+}
+
+
+void TetrahedronInvertible::computeForceDifferentialsSparse(vector<T> &K_) {
+
+	this->K.setZero();
+	Matrix3d UTdFV;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			this->dDs.setZero();
+			this->dDs(j, i) = 1.0;
+			this->dF.noalias() = this->dDs * this->Bm;
+			UTdFV.noalias() = this->UT * this->dF * this->V;
+			this->dPhat = computePKStressDerivative(this->Fhat, UTdFV, m_mu, m_lambda);
+
+			this->dP.noalias() = this->U * this->dPhat * this->VT;
+			this->dH.noalias() = -W * dP * this->BmT;
+
+			//Matrix3d hessian = this->dP * this->Nm.block<3, 3>(0, 0);
+			for (int t = 0; t < 3; t++) {
+				Vector3d temp = dH.col(t);
+				this->K.block<3, 1>(t * 3, i * 3 + j) = temp;
+				this->K.block<3, 1>(9, i * 3 + j) -= temp;
+				this->K.block<1, 3>(i * 3 + j, 9) -= temp;
+			}
+		}
+	}
+
+	this->K.block<3, 3>(9, 9) = -this->K.block<3, 3>(0, 9) - this->K.block<3, 3>(3, 9) - this->K.block<3, 3>(6, 9);
+
+	int a = m_nodes[0]->idxM;
+	int b = m_nodes[1]->idxM;
+	int c = m_nodes[2]->idxM;
+	int d = m_nodes[3]->idxM;
+
+	for (int idx = 0; idx < 3; idx++) {
+		for (int jdx = 0; jdx < 3; jdx++) {
+			K_.push_back(T(a + idx, a + jdx, this->K(0 + idx, 0 + jdx)));
+			K_.push_back(T(a + idx, b + jdx, this->K(0 + idx, 3 + jdx)));
+			K_.push_back(T(a + idx, c + jdx, this->K(0 + idx, 6 + jdx)));
+			K_.push_back(T(a + idx, d + jdx, this->K(0 + idx, 9 + jdx)));
+
+			K_.push_back(T(b + idx, a + jdx, this->K(3 + idx, 0 + jdx)));
+			K_.push_back(T(b + idx, b + jdx, this->K(3 + idx, 3 + jdx)));
+			K_.push_back(T(b + idx, c + jdx, this->K(3 + idx, 6 + jdx)));
+			K_.push_back(T(b + idx, d + jdx, this->K(3 + idx, 9 + jdx)));
+
+			K_.push_back(T(c + idx, a + jdx, this->K(6 + idx, 0 + jdx)));
+			K_.push_back(T(c + idx, b + jdx, this->K(6 + idx, 3 + jdx)));
+			K_.push_back(T(c + idx, c + jdx, this->K(6 + idx, 6 + jdx)));
+			K_.push_back(T(c + idx, d + jdx, this->K(6 + idx, 9 + jdx)));
+
+			K_.push_back(T(d + idx, a + jdx, this->K(9 + idx, 0 + jdx)));
+			K_.push_back(T(d + idx, b + jdx, this->K(9 + idx, 3 + jdx)));
+			K_.push_back(T(d + idx, c + jdx, this->K(9 + idx, 6 + jdx)));
+			K_.push_back(T(d + idx, d + jdx, this->K(9 + idx, 9 + jdx)));
+		}
+	}
+
 }
 
 Matrix3d TetrahedronInvertible::clampHessian(Matrix3d &hessian, int clamped) {

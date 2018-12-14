@@ -1,6 +1,7 @@
 #pragma once
 #ifndef RIGIDBODYJOINTS_SRC_QUADPROG_H_
 #define RIGIDBODYJOINTS_SRC_QUADPROG_H_
+#define EIGEN_USE_MKL_ALL
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>

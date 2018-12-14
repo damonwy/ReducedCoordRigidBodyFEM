@@ -2,6 +2,8 @@
 #ifndef REDUCEDCOORD_SRC_TETRAHEDRONINVERTIBLE_H_
 #define REDUCEDCOORD_SRC_TETRAHEDRONINVERTIBLE_H_
 
+#define EIGEN_USE_MKL_ALL
+
 #include "Tetrahedron.h"
  
 class TetrahedronInvertible : public Tetrahedron {
@@ -18,6 +20,7 @@ public:
 	void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
 	void computeForceDifferentials(Eigen::VectorXd dx, int row, int col, Eigen::MatrixXd &K);
 	void computeForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
+	void computeForceDifferentialsSparse(std::vector<T> &K_);
 
 	Matrix3d clampHessian(Matrix3d &hessian, int clamped);
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
@@ -41,7 +44,7 @@ protected:
 	Vector3d Fhats;
 	Matrix3d Phat;
 	Matrix3d dPhat;
-
+	int modifiedSVD;
 };
 
 #endif // REDUCEDCOORD_SRC_TETRAHEDRONINVERTIBLE_H_

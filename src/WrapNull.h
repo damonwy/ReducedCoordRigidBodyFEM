@@ -2,6 +2,7 @@
 
 #ifndef MUSCLEMASS_SRC_WRAPNULL_H_
 #define MUSCLEMASS_SRC_WRAPNULL_H_
+#define EIGEN_USE_MKL_ALL
 
 #include "WrapObst.h"
 

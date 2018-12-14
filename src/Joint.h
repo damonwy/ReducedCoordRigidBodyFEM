@@ -5,6 +5,9 @@
 #pragma once
 #ifndef REDUCEDCOORD_SRC_JOINT_H_
 #define REDUCEDCOORD_SRC_JOINT_H_
+
+#define EIGEN_USE_MKL_ALL
+
 #include <vector>
 #include <memory>
 #define EIGEN_DONT_ALIGN_STATICALLY

@@ -1,5 +1,6 @@
 #pragma once
 // ConstraintLoop Spherical constraint between two bodies
+#define EIGEN_USE_MKL_ALL
 
 #include "Constraint.h"
 

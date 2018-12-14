@@ -1,4 +1,6 @@
 #pragma once
+#define EIGEN_USE_MKL_ALL
+
 #include "Solver.h"
 
 class SolverDense : public Solver {

@@ -1,5 +1,7 @@
 #pragma once
+#define EIGEN_USE_MKL_ALL
 #include "SoftBody.h"
+
 
 class SoftBodyNull : public SoftBody {
 

@@ -1,7 +1,8 @@
 #pragma once
+
+#define EIGEN_USE_MKL_ALL
+
 #include "Solver.h"
-
-
 
 class SolverSparse : public Solver {
 public:
@@ -16,9 +17,6 @@ private:
 
 	Eigen::SparseMatrix<double> MDKr_sp;
 	Eigen::SparseMatrix<double> MDKr_sp_tp;
-
-
-
 
 	Eigen::SparseMatrix<double> K_sp;
 	std::vector<T> K_;

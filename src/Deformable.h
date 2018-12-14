@@ -1,6 +1,7 @@
 #pragma once
 #ifndef REDUCEDCOORD_SRC_DEFORMABLE_H_
 #define REDUCEDCOORD_SRC_DEFORMABLE_H_
+#define EIGEN_USE_MKL_ALL
 
 #include <vector>
 #include <memory>

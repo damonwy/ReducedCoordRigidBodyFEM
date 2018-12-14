@@ -5,6 +5,7 @@
 #pragma once
 #ifndef REDUCEDCOORD_SRC_DEFORMABLESPRING_H_
 #define REDUCEDCOORD_SRC_DEFORMABLESPRING_H_
+#define EIGEN_USE_MKL_ALL
 
 #include "Deformable.h"
 

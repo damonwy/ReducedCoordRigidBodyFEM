@@ -1,6 +1,7 @@
 #pragma once
 #ifndef MUSCLEMASS_SRC_SCENE_H_
 #define MUSCLEMASS_SRC_SCENE_H_
+#define EIGEN_USE_MKL_ALL
 
 #include <vector>
 #include <memory>

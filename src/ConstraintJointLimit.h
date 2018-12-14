@@ -1,6 +1,7 @@
 #pragma once
 // ConstraintJointLimit Inequality joint limit constraint
 // Works only for revolute joints
+#define EIGEN_USE_MKL_ALL
 
 #include "Constraint.h"
 

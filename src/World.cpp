@@ -807,7 +807,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				//addConstraintJointLimit(m_joints[i], -M_PI / 4.0, M_PI / 4.0);
 			}
 
-			//m_joints[i]->setStiffness(m_stiffness);
+			m_joints[i]->setStiffness(m_stiffness);
 			m_joints[i]->setDamping(m_damping);
 		}
 
@@ -880,7 +880,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		//m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = 20*1.2;
-		joint_left_arm_1->m_qdot(0) = -25.0*1.2;
+		joint_left_arm_1->m_qdot(0) = 20.0;
 
 		//m_joints[1]->m_qdot(0) = 5;
 
@@ -1058,10 +1058,10 @@ shared_ptr<MeshEmbedding> World::addMeshEmbedding(
 	string coarse_mesh,
 	string dense_mesh) 
 {
-	auto coarse_body = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
+	//auto coarse_body = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
 
 	auto dense_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
-	//auto coarse_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
+	auto coarse_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
 
 	auto mesh_embedding = make_shared<MeshEmbedding>(coarse_body, dense_body);
 	mesh_embedding->load(RESOURCE_DIR, coarse_mesh, dense_mesh);
@@ -1319,16 +1319,20 @@ void World::init() {
 	}
 
 	if (m_type == HUMAN_BODY) {
-		m_meshembeddings[0]->setAttachmentsByYZCircle(5.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(5.0, 4.5, Vector2d(0.0, 0.0), 0.5, m_bodies[0]);
 		//m_meshembeddings[0]->setAttachmentsByYZCircle(5.0, 4.5, Vector2d(0.0, 0.0), 0.8, m_bodies[0]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(0.0, 0.1, Vector2d(0.0, 0.0), 1.414*2, m_bodies[0]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(20.2, 1.0, Vector2d(0.0, 0.0), 2.05, m_bodies[1]);
 
-		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.5, Vector2d(0.0, 0.0), 0.5, m_bodies[1]);
 		//m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.5, Vector2d(0.0, 0.0), 0.8, m_bodies[1]);
 		//m_meshembeddings[1]->setAttachmentsByXZCircle(0.0, 4.5, Vector2d(-7.5, 0.0), 0.5, m_bodies[2]);
 	//	m_meshembeddings[1]->setAttachmentsByXZCircle(-10.0, 4.5, Vector2d(-7.5, 0.0), 0.5, m_bodies[3]);
 
-		m_meshembeddings[1]->setAttachmentsByYZCircle(-20.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[5]);
-		m_meshembeddings[1]->setAttachmentsByYZCircle(-30.0, 3.0, Vector2d(0.0, 0.0), 0.5, m_bodies[6]);
+		m_meshembeddings[1]->setAttachmentsByYZCircle(-20.0, 4.5, Vector2d(0.0, 0.0), 0.5, m_bodies[5]);
+		m_meshembeddings[1]->setAttachmentsByYZCircle(-30.0, 4.5, Vector2d(0.0, 0.0), 0.5, m_bodies[6]);
+		m_meshembeddings[1]->setAttachmentsByYZCircle(-15.0, 1.0, Vector2d(0.0, 0.0), 2.05, m_bodies[5]);
+		m_meshembeddings[1]->setAttachmentsByYZCircle(-35.0, 1.0, Vector2d(0.0, 0.0), 2.05, m_bodies[6]);
 
 		if (isrightleg) {
 			m_meshembeddings[2]->setAttachmentsByXZCircle(-18.0, 3.0, Vector2d(-12.0, 0.0), 0.5, m_bodies[8]);

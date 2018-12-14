@@ -1,4 +1,7 @@
 #pragma once
+#define EIGEN_USE_MKL_ALL
+
+
 #include "Comp.h"
 #include "Node.h"
 #include "Vector.h"
