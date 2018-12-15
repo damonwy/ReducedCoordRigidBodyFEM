@@ -31,21 +31,32 @@ public:
 	virtual void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
 	virtual void computeForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
 	virtual void computeForceDifferentialsSparse(std::vector<T> &K_) {}
+	virtual void computeForceDifferentials();
 
+
+	void assembleGlobalStiffnessMatrixDense(Eigen::MatrixXd &K_global);
+	void assembleGlobalStiffnessMatrixSparse(std::vector<T> &K_);
+	void assembleGlobalForceVector(Eigen::VectorXd &f);
+
+	virtual void computeElasticForces();
 	virtual void computeElasticForces(Eigen::VectorXd &f);
 
 	bool checkSameSide(const std::shared_ptr<Node> &v0, const std::shared_ptr<Node> &v1, const std::shared_ptr<Node> &v2, const std::shared_ptr<Node> &v3, const std::shared_ptr<Node> &p);
 	bool checkPointInside(const std::shared_ptr<Node>& p);
+	bool checkInverted();
+
 	void addEnclosedPoint(const std::shared_ptr<Node>& p) { m_enclosed_points.push_back(p); }
 	Vector4d computeBarycentricWeightAndSave(const std::shared_ptr<Node>& p);
 	double computeEnergy();
 	double ScalarTripleProduct(const Eigen::Vector3d &a, const Eigen::Vector3d &b, const Eigen::Vector3d &c);
 	Vector3d computePositionByBarycentricWeight(Vector4d weight);
+	
 	std::vector<std::shared_ptr<Node>> m_nodes;	// i, j, k, l
-	int i;
+	int i;			// local index
 	bool m_isInverted;
-	std::vector<Vector4d> m_barycentric_weights;	
-	// a list of material points which are enclosed by this tetrahedral element
+
+	std::vector<Vector4d> m_barycentric_weights;	// a list of material points which are enclosed by this tetrahedral element
+	
 	std::vector<std::shared_ptr<Node> > m_enclosed_points; 
 
 protected:

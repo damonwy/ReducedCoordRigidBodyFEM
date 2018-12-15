@@ -105,7 +105,7 @@ Vector3d Node::computeNormal() {
 	}
 
 	normal /= m_normals.size();
-	normal.normalized();
+	normal.normalize();
 	return normal;
 }
 

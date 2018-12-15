@@ -776,7 +776,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	break;
 	case HUMAN_BODY:
 	{
-		m_h = 1.0e-2;
+		m_h = 1.0e-1;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;

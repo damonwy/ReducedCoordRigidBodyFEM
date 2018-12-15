@@ -26,6 +26,8 @@ SoftBody(density, young, poisson, material)
 }
 
 void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
+	m_isInverted = false;
+
 	// Computes force vector
 	if (m_isGravity) {
 //#pragma omp parallel for
@@ -35,26 +37,36 @@ void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 			f.segment<3>(idxM) += m * grav;
 		}
 	}
-	m_isInverted = false;
+
 	// Elastic Forces
 	if (m_isElasticForce) {
+#pragma omp parallel for
 		for (int i = 0; i < (int)m_tets.size(); i++) {
 			auto tet = m_tets[i];
-			tet->computeElasticForces(f);
-			if (tet->m_isInverted) {
-				m_isInverted = true;
-				cout << "tet " << i << " is inverted!" << endl;
-			}
+			tet->computeElasticForces();			
+		}
+
+		for (int i = 0; i < (int)m_tets.size(); i++) {
+			auto tet = m_tets[i];
+			tet->assembleGlobalForceVector(f);
+			m_isInverted = tet->checkInverted();
 		}
 	}
 }
 
+
+
 void SoftBodyInvertibleFEM::computeStiffness_(MatrixXd &K) {
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
-		tet->computeForceDifferentials(K);
+		tet->computeForceDifferentials();
 	}
 
+	for (int i = 0; i < (int)m_tets.size(); i++) {
+		auto tet = m_tets[i];
+		tet->assembleGlobalStiffnessMatrixDense(K);
+	}
 }
 
 void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {
@@ -84,10 +96,14 @@ void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {
 	//	}
 	//}
 
+#pragma omp parallel for
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
-		tet->computeForceDifferentialsSparse(K_);
-
+		tet->computeForceDifferentials();
 	}
 
+	for (int i = 0; i < (int)m_tets.size(); i++) {
+		auto tet = m_tets[i];
+		tet->assembleGlobalStiffnessMatrixSparse(K_);
+	}
 }

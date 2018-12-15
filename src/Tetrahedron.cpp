@@ -67,7 +67,7 @@ Matrix3d Tetrahedron::computeDeformationGradientDifferential(VectorXd dx) {
 	return this->dF;
 }
 
-void Tetrahedron::computeElasticForces(VectorXd &f) {
+void Tetrahedron::computeElasticForces() {
 	this->F = computeDeformationGradient();
 	// The deformation gradient is available in this->F
 	this->FTF.noalias() = F.transpose() * F;
@@ -78,11 +78,20 @@ void Tetrahedron::computeElasticForces(VectorXd &f) {
 	/*if (isInvert && m_isInvertible) {
 		this->H = -W * U * P * V.transpose() * this->BmT);
 	}*/
+}
 
-	for (int i = 0; i < (int)m_nodes.size() - 1; i++) {
-		int rowi = m_nodes[i]->idxM;
-		f.segment<3>(rowi) += H.col(i);
-		int row3 = m_nodes[3]->idxM;
+void Tetrahedron::computeElasticForces(VectorXd &f) {
+	computeElasticForces();
+	assembleGlobalForceVector(f);
+}
+
+void Tetrahedron::assembleGlobalForceVector(Eigen::VectorXd &f) {
+	int row3 = m_nodes[3]->idxM;
+	int rowi;
+
+	for (int i = 0; i < (int)m_nodes.size() - 1; ++i) {
+		rowi = m_nodes[i]->idxM;
+		f.segment<3>(rowi) += H.col(i);	
 		f.segment<3>(row3) -= H.col(i);
 	}
 }
@@ -99,7 +108,7 @@ void Tetrahedron::computeForceDifferentials(VectorXd dx, VectorXd& df) {
 	}
 }
 
-void Tetrahedron::computeForceDifferentials(MatrixXd &K_global) {
+void Tetrahedron::computeForceDifferentials() {
 	this->F = computeDeformationGradient();
 	this->K.setZero();
 
@@ -107,7 +116,7 @@ void Tetrahedron::computeForceDifferentials(MatrixXd &K_global) {
 		for (int j = 0; j < 3; j++) {
 			this->dDs.setZero();
 			this->dDs(j, i) = 1.0;
-			this->dF = this->dDs * this->Bm;			
+			this->dF = this->dDs * this->Bm;
 			this->dP = computePKStressDerivative(F, dF, m_mu, m_lambda);
 			this->dH = -W * dP * this->BmT;
 			for (int t = 0; t < 3; t++) {
@@ -123,7 +132,50 @@ void Tetrahedron::computeForceDifferentials(MatrixXd &K_global) {
 	//cout << "Ki" << endl << this->K << endl;
 	//VectorXcd ev = this->K.eigenvalues();
 	//cout << ev << endl;
+}
 
+bool Tetrahedron::checkInverted() {
+	if (this->m_isInverted) {		
+		cout << "tet " << i << " is inverted!" << endl;
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void Tetrahedron::assembleGlobalStiffnessMatrixSparse(vector<T> &K_) {
+	int a = m_nodes[0]->idxM;
+	int b = m_nodes[1]->idxM;
+	int c = m_nodes[2]->idxM;
+	int d = m_nodes[3]->idxM;
+
+	for (int idx = 0; idx < 3; idx++) {
+		for (int jdx = 0; jdx < 3; jdx++) {
+			K_.push_back(T(a + idx, a + jdx, this->K(0 + idx, 0 + jdx)));
+			K_.push_back(T(a + idx, b + jdx, this->K(0 + idx, 3 + jdx)));
+			K_.push_back(T(a + idx, c + jdx, this->K(0 + idx, 6 + jdx)));
+			K_.push_back(T(a + idx, d + jdx, this->K(0 + idx, 9 + jdx)));
+
+			K_.push_back(T(b + idx, a + jdx, this->K(3 + idx, 0 + jdx)));
+			K_.push_back(T(b + idx, b + jdx, this->K(3 + idx, 3 + jdx)));
+			K_.push_back(T(b + idx, c + jdx, this->K(3 + idx, 6 + jdx)));
+			K_.push_back(T(b + idx, d + jdx, this->K(3 + idx, 9 + jdx)));
+
+			K_.push_back(T(c + idx, a + jdx, this->K(6 + idx, 0 + jdx)));
+			K_.push_back(T(c + idx, b + jdx, this->K(6 + idx, 3 + jdx)));
+			K_.push_back(T(c + idx, c + jdx, this->K(6 + idx, 6 + jdx)));
+			K_.push_back(T(c + idx, d + jdx, this->K(6 + idx, 9 + jdx)));
+
+			K_.push_back(T(d + idx, a + jdx, this->K(9 + idx, 0 + jdx)));
+			K_.push_back(T(d + idx, b + jdx, this->K(9 + idx, 3 + jdx)));
+			K_.push_back(T(d + idx, c + jdx, this->K(9 + idx, 6 + jdx)));
+			K_.push_back(T(d + idx, d + jdx, this->K(9 + idx, 9 + jdx)));
+		}
+	}
+}
+
+void Tetrahedron::assembleGlobalStiffnessMatrixDense(MatrixXd &K_global) {
 	int i = m_nodes[0]->idxM;
 	int j = m_nodes[1]->idxM;
 	int k = m_nodes[2]->idxM;
@@ -148,6 +200,12 @@ void Tetrahedron::computeForceDifferentials(MatrixXd &K_global) {
 	K_global.block<3, 3>(l, j) += this->K.block<3, 3>(9, 3);
 	K_global.block<3, 3>(l, k) += this->K.block<3, 3>(9, 6);
 	K_global.block<3, 3>(l, l) += this->K.block<3, 3>(9, 9);
+}
+
+
+void Tetrahedron::computeForceDifferentials(MatrixXd &K_global) {
+	computeForceDifferentials();
+	assembleGlobalStiffnessMatrixDense(K_global);
 }
 
 

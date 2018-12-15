@@ -14,17 +14,18 @@ public:
 	virtual ~TetrahedronInvertible() {}
 	bool checkNecessityForSVD(double deltaL, double deltaU, Matrix3d F);
 	//Matrix3x4d computeAreaWeightedVertexNormals();
-	void computeElasticForces(Eigen::VectorXd &f);
+	void computeElasticForces();
 
 	void computeForceDifferentials(Eigen::MatrixXd &K);
 	void computeForceDifferentials(Eigen::VectorXd dx, Eigen::VectorXd &df);
 	void computeForceDifferentials(Eigen::VectorXd dx, int row, int col, Eigen::MatrixXd &K);
 	void computeForceDifferentialsSparse(Eigen::VectorXd dx, int row, int col, std::vector<T> &K_);
-	void computeForceDifferentialsSparse(std::vector<T> &K_);
+	void computeForceDifferentials();
 
 	Matrix3d clampHessian(Matrix3d &hessian, int clamped);
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
 	void precompute();
+
 protected:
 	bool m_isInvertible;
 
