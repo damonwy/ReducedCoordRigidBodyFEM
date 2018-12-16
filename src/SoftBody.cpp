@@ -32,6 +32,8 @@ using json = nlohmann::json;
 SoftBody::SoftBody(): m_isInvertible(true), m_isGravity(false), m_isElasticForce(true){
 	m_color << 1.0f, 1.0f, 0.0f;
 	m_isInverted = false;
+	m_isCollisionWithFloor = false;
+	m_npotentialcols = 0;
 }
 
 SoftBody::SoftBody(double density, double young, double poisson, Material material) :
@@ -40,8 +42,11 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 {
 	m_color << 1.0f, 1.0f, 0.0f;
 	m_isInverted = false;
+	m_isCollisionWithFloor = false;
+
 	//m_isGravity = true;
 	m_type = 0;
+	m_npotentialcols = 0;
 }
 
 void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
@@ -78,6 +83,12 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 			auto node = m_nodes[output_mesh.trifacelist[3 * i + ii]];
 			node->m_nfaces++;
 			triface->m_nodes.push_back(node);
+
+			// Mark nodes that need collision constraints and count the number of all these points
+			if (node->x0(1) < m_collision_y && !node->isCollisionDetection) {
+				node->isCollisionDetection = true;
+				m_npotentialcols++;
+			}
 		}
 		triface->update();
 		m_trifaces.push_back(triface);
@@ -300,14 +311,12 @@ void SoftBody::updatePosNor() {
 	}
 	
 
-#pragma omp parallel for
 	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 
 		Vector3d p0 = triface->m_nodes[0]->x;
 		Vector3d p1 = triface->m_nodes[1]->x;
 		Vector3d p2 = triface->m_nodes[2]->x;
-#pragma omp critical
 		{
 		Vector3d normal = triface->computeNormal();
 			for (int ii = 0; ii < 3; ii++) {
@@ -330,15 +339,12 @@ void SoftBody::updatePosNor() {
 		}
 	}
 
-#pragma omp parallel for
 	for (int i = 0; i < (int)m_trifaces.size(); i++) {
 		auto triface = m_trifaces[i];
 		if (!triface->isFlat) {
 			// Use the average normals if it's a curved surface
 			for (int ii = 0; ii < 3; ii++) {
 				// Average normals here
-
-#pragma omp critical
 				{
 					Vector3d normal = triface->m_nodes[ii]->computeNormal();				
 					for (int iii = 0; iii < 3; iii++) {
@@ -561,10 +567,8 @@ void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eige
 
 void SoftBody::gatherDofs(VectorXd &y, int nr) {
 	// Gathers qdot and qddot into y
-#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-#pragma omp critical
 		{
 			y.segment<3>(idxR) = m_nodes[i]->x;
 			y.segment<3>(nr + idxR) = m_nodes[i]->v;
@@ -576,12 +580,10 @@ void SoftBody::gatherDofs(VectorXd &y, int nr) {
 	}
 }
 
-VectorXd SoftBody::gatherDDofs(VectorXd ydot, int nr) {
+VectorXd SoftBody::gatherDDofs(VectorXd &ydot, int nr) {
 	// Gathers qdot and qddot into ydot
-#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-#pragma omp critical
 		{
 			ydot.segment<3>(idxR) = m_nodes[i]->v;
 			ydot.segment<3>(nr + idxR) = m_nodes[i]->a;
@@ -598,22 +600,29 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 	// Scatters q and qdot from y
 
 	// Update points
-#pragma omp parallel for
+#pragma omp parallel for num_threads(getThreadsNumber((int)m_compared_nodes.size(), MIN_ITERATOR_NUM))
 	for (int i = 0; i < (int)m_compared_nodes.size(); ++i) {
-#pragma omp critical
 		{
 			m_compared_nodes[i]->update();
 		}
 	}
 
-#pragma omp parallel for
+#pragma omp parallel for num_threads(getThreadsNumber((int)m_nodes.size(), MIN_ITERATOR_NUM))
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-#pragma omp critical
 		{
 			if (!m_nodes[i]->fixed) {
+
 				m_nodes[i]->x = y.segment<3>(idxR);
 				m_nodes[i]->v = y.segment<3>(nr + idxR);
+				if (m_isCollisionWithFloor) {
+					if (m_nodes[i]->x(1) < m_floor_y && m_nodes[i]->v(1) < 0.0) {
+						m_nodes[i]->x(1) = m_floor_y;
+						m_nodes[i]->v(1) = 0.0;
+					}
+					
+				}
+			
 			}
 		}
 
@@ -627,10 +636,9 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 
 void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 	// Scatters qdot and qddot from ydot
-#pragma omp parallel for
+#pragma omp parallel for num_threads(getThreadsNumber((int)m_nodes.size(), MIN_ITERATOR_NUM))
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
-#pragma omp critical
 		{
 			if (!m_nodes[i]->fixed) {
 				m_nodes[i]->v = ydot.segment<3>(idxR);

@@ -30,7 +30,6 @@ void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 
 	// Computes force vector
 	if (m_isGravity) {
-//#pragma omp parallel for
 		for (int i = 0; i < (int)m_nodes.size(); i++) {
 			int idxM = m_nodes[i]->idxM;
 			double m = m_nodes[i]->m;
@@ -40,7 +39,7 @@ void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 
 	// Elastic Forces
 	if (m_isElasticForce) {
-#pragma omp parallel for
+#pragma omp parallel for num_threads(getThreadsNumber((int)m_tets.size(), MIN_ITERATOR_NUM))
 		for (int i = 0; i < (int)m_tets.size(); i++) {
 			auto tet = m_tets[i];
 			tet->computeElasticForces();			
@@ -57,7 +56,7 @@ void SoftBodyInvertibleFEM::computeForce_(Vector3d grav, VectorXd &f) {
 
 
 void SoftBodyInvertibleFEM::computeStiffness_(MatrixXd &K) {
-#pragma omp parallel for
+#pragma omp parallel for num_threads(getThreadsNumber((int)m_tets.size(), MIN_ITERATOR_NUM))
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
 		tet->computeForceDifferentials();
@@ -96,7 +95,7 @@ void SoftBodyInvertibleFEM::computeStiffnessSparse_(vector<T> &K_) {
 	//	}
 	//}
 
-#pragma omp parallel for
+#pragma omp parallel for num_threads(getThreadsNumber((int)m_tets.size(), MIN_ITERATOR_NUM))
 	for (int i = 0; i < (int)m_tets.size(); i++) {
 		auto tet = m_tets[i];
 		tet->computeForceDifferentials();

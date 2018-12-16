@@ -18,7 +18,7 @@ typedef Eigen::Triplet<double> T;
 class MeshEmbedding {
 public:
 	MeshEmbedding() {}
-	MeshEmbedding(const std::shared_ptr<SoftBody> coarse_mesh, const std::shared_ptr<SoftBody> dense_mesh);
+	MeshEmbedding(double density, double young, double possion, Material material, SoftBodyType type);
 
 	virtual ~MeshEmbedding() {}
 

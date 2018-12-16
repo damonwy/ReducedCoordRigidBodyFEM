@@ -26,7 +26,8 @@ Node::Node() :
 	m_nfaces(0),
 	fixed(false),
 	attached(false),
-	isEnclosedByTet(false)
+	isEnclosedByTet(false),
+	isCollisionDetection(false)
 {
 	
 }
@@ -42,7 +43,8 @@ Node::Node(const shared_ptr<Shape> s) :
 	normal(0.0,0.0,0.0),
 	m_nfaces(0),
 	sphere(s),
-	isEnclosedByTet(false)
+	isEnclosedByTet(false),
+	isCollisionDetection(false)
 
 {
 	

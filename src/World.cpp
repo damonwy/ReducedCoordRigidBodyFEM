@@ -776,7 +776,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	break;
 	case HUMAN_BODY:
 	{
-		m_h = 1.0e-1;
+		m_h = 1.0e-2;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
@@ -912,6 +912,49 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
+
+	case WORM:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e3;
+		double possion = 0.35;
+		m_stiffness = 1.0e4;
+		m_damping = 1.0e3;
+
+		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
+
+		for (int i = 0; i < 4; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+
+			if (i == 0) {
+				//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+			}
+			m_joints[i]->setStiffness(m_stiffness);
+			m_joints[i]->setDamping(m_damping);
+		}
+
+		Vector3f muscle_color = Vector3f(255.0f, 228.0f, 196.0f);
+		muscle_color /= 255.0f;
+
+		auto worm = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm_coarse", "worm_dense"); 
+		worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(20.0, 0.0, 0.0)));
+		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(20.0, 0.0, 0.0)));
+		worm->precomputeWeights();
+		worm->getDenseMesh()->setColor(muscle_color);
+		worm->getCoarseMesh()->setFloor(-25.0);
+		worm->getCoarseMesh()->setYthreshold(0.0);
+	}
+	break;
+
 	default:
 		break;
 	}
@@ -1058,12 +1101,8 @@ shared_ptr<MeshEmbedding> World::addMeshEmbedding(
 	string coarse_mesh,
 	string dense_mesh) 
 {
-	//auto coarse_body = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
-
-	auto dense_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
-	auto coarse_body = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
-
-	auto mesh_embedding = make_shared<MeshEmbedding>(coarse_body, dense_body);
+	
+	auto mesh_embedding = make_shared<MeshEmbedding>(density, young, possion, material, SOFT_INVERTIBLE);
 	mesh_embedding->load(RESOURCE_DIR, coarse_mesh, dense_mesh);
 
 	m_nmeshembeddings++;
@@ -1344,6 +1383,17 @@ void World::init() {
 			m_meshembeddings[3]->setAttachmentsByXZCircle(-28.0, 3.0, Vector2d(-3.0, 0.0), 0.5, m_bodies[12]);
 		}
 		
+	}
+
+
+	if (m_type == WORM) {
+
+		m_meshembeddings[0]->setAttachmentsByYZCircle(4.15, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[0]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[1]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(25.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[2]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(35.85, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[3]);
+
+
 	}
 
 	for (int i = 0; i < m_nsoftbodies; i++) {

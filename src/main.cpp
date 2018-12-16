@@ -344,7 +344,11 @@ int main(int argc, char **argv)
 	init();
 	// Start simulation thread.
 	thread stepperThread(stepperFunc);
-	// Loop until the user closes the window.
+	/*for (int i = 0; i < 100; i++) {
+		scene->step();
+	}	*/
+
+	//// Loop until the user closes the window.
 	while(!glfwWindowShouldClose(window)) {
 		//stepWorld();
 		// Render scene.
