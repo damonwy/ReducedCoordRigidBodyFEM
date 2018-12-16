@@ -438,7 +438,7 @@ double Tetrahedron::ScalarTripleProduct(const Vector3d &a, const Vector3d &b, co
 	return a.dot(b.cross(c));
 }
 
-Vector3d Tetrahedron::computePositionByBarycentricWeight(Vector4d weight) {
+Vector3d Tetrahedron::computePositionByBarycentricWeight(const Vector4d &weight) {
 	Vector3d pos;
 	pos.setZero();
 	for (int i = 0; i < 4; i++) {

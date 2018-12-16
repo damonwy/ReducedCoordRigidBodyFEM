@@ -1,7 +1,7 @@
 #pragma once
 
 #define EIGEN_USE_MKL_ALL
-
+//#include <Eigen/PardisoSupport>
 #include "Solver.h"
 
 class SolverSparse : public Solver {
@@ -124,5 +124,6 @@ private:
 
 	Eigen::MatrixXd Cr;
 	Eigen::MatrixXd Crdot;
-
+	//Eigen::PardisoLU<Eigen::SparseMatrix<double>> solver;
+	Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
 };

@@ -19,6 +19,9 @@
 #include <complex>
 #include <unsupported/Eigen/CXX11/Tensor>
 #define MAX(a, b) ((a)>(b)?(a):(b))
+
+#include <omp.h>
+
 //typedef Eigen::Triplet<double> T;
 
 typedef Eigen::Matrix<int, 6, 1> Vector6i;
@@ -61,7 +64,7 @@ typedef Eigen::TensorFixedSize<double, Eigen::Sizes<6, 2, 2>> Tensor6x2x2d;
 enum Integrator { REDMAX_EULER, REDUCED_ODE45, REDMAX_ODE45 };
 enum Material {LINEAR, CO_ROTATED, STVK, NEO_HOOKEAN, MOONEY_RIVLIN};
 enum Axis {X_AXIS, Y_AXIS, Z_AXIS};
-
+enum SoftBodyType {SOFT_COROTATED, SOFT_INVERTIBLE, SOFT_COMMON};
 struct Energy {
 	double K;
 	double V;
@@ -645,5 +648,16 @@ inline int SVD(Eigen::Matrix3d &F,
 //
 //
 //}
+
+const int MIN_ITERATOR_NUM = 4;
+inline int getThreadsNumber(int n, int min_n) {
+	int ncore = omp_get_num_procs();
+	int max_tn = n / min_n;
+	int tn = max_tn > 2 * ncore ? 2 * ncore : max_tn;
+	if (tn < 1) {
+		tn = 1;
+	}
+	return tn;
+}
 
 #endif // MUSCLEMASS_SRC_MLCOMMON_H_

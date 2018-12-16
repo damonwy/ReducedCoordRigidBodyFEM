@@ -53,7 +53,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(HUMAN_BODY);//_INVERTIBLE
+	m_world = make_shared<World>(WORM);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
@@ -107,8 +107,10 @@ void Scene::step()
 	m_world->update();
 	m_world->incrementTime();
 	count++;
+	if (count == 99) {
+		cout << count << endl;
+	}
 	
-	cout << count << endl;
 	//if(tk < m_solution->t(n_steps-1)) {
 	//	m_solution->searchTime(tk, search_idx, output_idx, s);
 	//	search_idx = output_idx;

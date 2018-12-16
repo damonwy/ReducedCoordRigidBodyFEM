@@ -1,5 +1,6 @@
 #include "MeshEmbedding.h"
-
+#include "SoftBodyInvertibleFEM.h"
+#include "SoftBodyCorotationalLinear.h"
 #include "SoftBody.h"
 #include "Node.h"
 #include "Tetrahedron.h"
@@ -8,9 +9,24 @@
 using namespace std;
 using namespace Eigen;
 
-MeshEmbedding::MeshEmbedding(const shared_ptr<SoftBody> coarse_mesh, const shared_ptr<SoftBody> dense_mesh) {
-	m_coarse_mesh = coarse_mesh;
-	m_dense_mesh = dense_mesh;
+MeshEmbedding::MeshEmbedding(double density, double young, double possion, Material material, SoftBodyType type) {
+	if (type == SOFT_INVERTIBLE) {
+		auto dense_ptr = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
+		auto coarse_ptr = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
+		m_dense_mesh = dense_ptr;
+		m_coarse_mesh = coarse_ptr;
+	}
+	else if (type == SOFT_COROTATED) {
+		auto dense_ptr = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
+		m_dense_mesh = dense_ptr;
+		auto coarse_ptr = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
+		m_coarse_mesh = coarse_ptr;
+	}
+	else {
+		m_dense_mesh = make_shared<SoftBody>(density, young, possion, material);
+		m_coarse_mesh = make_shared<SoftBody>(density, young, possion, material);
+	}
+
 	m_isDenseMesh = true;
 	m_isCoarseMesh = false;
 

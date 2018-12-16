@@ -52,6 +52,7 @@ public:
 	bool isEnclosedByTet;		
 	bool attached;			
 	bool fixed;					// is fixed?
+	bool isCollisionDetection;	// need to do collison detection?
 	double r;					// radius
 	double m;					// mass
 	int i;						// starting index

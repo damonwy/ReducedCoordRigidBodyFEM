@@ -45,7 +45,7 @@ public:
 	void computeStiffnessSparse(std::vector<T> &K_);
 
 	virtual void gatherDofs(Eigen::VectorXd &y, int nr);
-	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd ydot, int nr);
+	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd &ydot, int nr);
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
 	virtual void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
@@ -66,6 +66,9 @@ public:
 	void setSlidingNodesByYZCircle(double x, double range_x, Vector2d O, double r, std::shared_ptr<Body> body);
 
 	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
+	void setFloor(double floor_y) { m_floor_y = floor_y; m_isCollisionWithFloor = true; }
+	void setYthreshold(double collision_y) { m_collision_y = collision_y; }
+
 	bool getInvertiblity() { return m_isInvertible; }
 
 
@@ -92,7 +95,8 @@ public:
 	std::shared_ptr<SoftBody> next;
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
 	bool m_isInverted;
-
+	
+	int m_npotentialcols;		// how many nodes need to check
 
 
 protected:
@@ -100,8 +104,12 @@ protected:
 	bool m_isInvertible;
 	bool m_isGravity;
 	bool m_isElasticForce;
+	bool m_isCollisionWithFloor;
 	Material m_material;
 	Vector3f m_color;
+
+	double m_floor_y;
+	double m_collision_y;	// nodes on the mesh surface and whose y(1) below this, need to do collision detection
 
 	std::vector<std::shared_ptr<Node> > m_nodes;	
 	std::vector<std::shared_ptr<Tetrahedron> > m_tets;
