@@ -1,17 +1,17 @@
 #pragma once
 
 #define EIGEN_USE_MKL_ALL
-//#include <Eigen/PardisoSupport>
 #include "Solver.h"
 
 class SolverSparse : public Solver {
 public:
 	SolverSparse() {}
-	SolverSparse(std::shared_ptr<World> world, Integrator integrator) : Solver(world, integrator) {}
+	SolverSparse(std::shared_ptr<World> world, Integrator integrator, SparseSolver solver) : Solver(world, integrator), m_sparse_solver(solver) {}
 	Eigen::VectorXd dynamics(Eigen::VectorXd y);
 	void initMatrix(int nm, int nr, int nem, int ner, int nim, int nir);
 
 private:
+	SparseSolver m_sparse_solver;
 	Eigen::SparseMatrix<double> Mm_sp;
 	std::vector<T> Mm_;
 
@@ -29,6 +29,7 @@ private:
 	Eigen::MatrixXd Jdot_dense;
 
 	Eigen::SparseMatrix<double> J_sp;
+	Eigen::SparseMatrix<double> J_t_sp;
 	std::vector<T> J_;
 	std::vector<T> J_pre;
 	Eigen::SparseMatrix<double> Jdot_sp;
@@ -124,6 +125,6 @@ private:
 
 	Eigen::MatrixXd Cr;
 	Eigen::MatrixXd Crdot;
-	//Eigen::PardisoLU<Eigen::SparseMatrix<double>> solver;
+	//
 	Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
 };

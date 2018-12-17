@@ -69,6 +69,7 @@ struct Energy {
 	double K;
 	double V;
 };
+enum SparseSolver {CG, CG_ILUT, QR, BICG,BICG_ILUT, SLDLT, LU, PARDISO_LU};
 
 template<typename T>
 using  MatrixType = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
