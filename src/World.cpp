@@ -928,7 +928,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
 
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 8; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
 
 			if (i == 0) {
@@ -945,12 +945,26 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Vector3f muscle_color = Vector3f(255.0f, 228.0f, 196.0f);
 		muscle_color /= 255.0f;
 
-		auto worm = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm_coarse", "worm_dense"); 
-		worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(20.0, 0.0, 0.0)));
-		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(20.0, 0.0, 0.0)));
+		m_joints[0]->m_qdot[0] = -10;
+		//m_joints[1]->m_qdot[0] = 5;
+
+		//m_joints[2]->m_qdot[0] = 2;
+		//m_joints[3]->m_qdot[0] = 2;
+		m_joints[1]->m_qdot[0] = 10;
+		m_joints[3]->m_qdot[0] = 2;
+		m_joints[4]->m_qdot[0] = 2;
+		m_joints[5]->m_qdot[0] = 2;
+
+		m_joints[6]->m_qdot[0] = 4;
+		m_joints[7]->m_qdot[0] = 4;
+		
+
+		auto worm = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense"); 
+		worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
+		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->precomputeWeights();
 		worm->getDenseMesh()->setColor(muscle_color);
-		worm->getCoarseMesh()->setFloor(-25.0);
+		worm->getCoarseMesh()->setFloor(-21.0);
 		worm->getCoarseMesh()->setYthreshold(0.0);
 	}
 	break;
@@ -1388,11 +1402,19 @@ void World::init() {
 
 	if (m_type == WORM) {
 
-		m_meshembeddings[0]->setAttachmentsByYZCircle(4.15, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[0]);
+		/*m_meshembeddings[0]->setAttachmentsByYZCircle(4.15, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[0]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[1]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(25.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[2]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(35.85, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[3]);
-
+*/
+		m_meshembeddings[0]->setAttachmentsByYZCircle(4.15, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[0]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[1]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(25.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[2]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(35.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[3]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(45.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[4]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(55.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[5]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(65.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[6]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(75.85, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[7]);
 
 	}
 
