@@ -50,7 +50,7 @@ public:
 	int idxM;
 	std::vector<Eigen::Vector3d> m_normals;
 	bool isEnclosedByTet;		
-	bool attached;			
+		
 	bool fixed;					// is fixed?
 	bool isCollisionDetection;	// need to do collison detection?
 	double r;					// radius
@@ -68,6 +68,11 @@ public:
 	Eigen::Vector3f m_color; 
 	double L;
 	std::shared_ptr<Shape> sphere;
+	
+	
+	bool attached;		
+	Eigen::Vector3d m_r;
+
 private:
 	
 	double V;					// potential energy

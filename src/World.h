@@ -74,6 +74,16 @@ enum WorldType {
 	WORM
 };
 
+struct Floor {
+	float y;
+	Eigen::Vector2f xrange;
+	Eigen::Vector2f zrange;
+	Floor(float y_, Eigen::Vector2f x, Eigen::Vector2f z):
+		y(y_), xrange(x), zrange(z)
+	{
+
+	}
+};
 
 class World
 {
@@ -150,7 +160,8 @@ public:
 		Material material, 
 		const std::string &RESOURCE_DIR,
 		std::string dense_mesh,
-		std::string coarse_mesh
+		std::string coarse_mesh,
+		SoftBodyType soft_body_type
 	);
 
 	std::shared_ptr<ConstraintNull> addConstraintNull();
@@ -236,6 +247,12 @@ public:
 		const std::shared_ptr<Program> progSoft, 
 		std::shared_ptr<MatrixStack> P);
 
+	void drawFloor(
+		Floor f,
+		std::shared_ptr<MatrixStack> MV, 
+		const std::shared_ptr<Program> progSimple, 
+		std::shared_ptr<MatrixStack> P);
+
 	void setTime(double t) { m_t = t; }
 	double getTime() const { return m_t; }
 	double getH() const { return m_h; }
@@ -300,6 +317,8 @@ private:
 
 	double m_Hexpected;		// used to check correctness
 
+	
+
 	std::vector<std::shared_ptr<Body>> m_bodies;
 	std::vector<std::shared_ptr<Comp>> m_comps;
 	std::vector<std::shared_ptr<WrapObst>> m_wraps;
@@ -309,7 +328,7 @@ private:
 	std::vector<std::shared_ptr<Deformable>> m_deformables;
 	std::vector<std::shared_ptr<Spring>> m_springs;
 	std::vector<std::shared_ptr<Constraint>> m_constraints;
-
+	std::vector<Floor> m_floors;
 	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;
 	typedef std::map<int, std::shared_ptr<Body>> MapBodyUID;
 

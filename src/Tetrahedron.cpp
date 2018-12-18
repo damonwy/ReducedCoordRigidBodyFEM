@@ -6,6 +6,8 @@
 
 #include "MatrixStack.h"
 #include "Program.h"
+#include "SE3.h"
+#include "Body.h"
 
 using namespace Eigen;
 using namespace std;
@@ -26,7 +28,7 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	m_enclosed_color << (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f;
 	m_mu = m_young / (2.0 * (1.0 + m_poisson));
 	m_lambda = m_young * m_poisson / ((1.0 + m_poisson) * (1.0 - 2.0 * m_poisson));
-
+	m_isInverted = false;
 	// Compute the inverse of the Dm matrix
 	// Dm is a 3x3 matrix where the columns are the edge vectors of a tet in rest configuration
 
@@ -86,13 +88,43 @@ void Tetrahedron::computeElasticForces(VectorXd &f) {
 }
 
 void Tetrahedron::assembleGlobalForceVector(Eigen::VectorXd &f) {
-	int row3 = m_nodes[3]->idxM;
 	int rowi;
+	auto node3 = m_nodes[3];
+	int row3 = node3->idxM;
 
 	for (int i = 0; i < (int)m_nodes.size() - 1; ++i) {
-		rowi = m_nodes[i]->idxM;
+		auto node = m_nodes[i];
+		rowi = node->idxM;
+
 		f.segment<3>(rowi) += H.col(i);	
-		f.segment<3>(row3) -= H.col(i);
+		f.segment<3>(row3) -= H.col(i);		
+
+		// Compute the force to the body attached
+		if (node->attached) {
+			Vector4d temp;
+			temp << node->m_r, 1.0;
+			Matrix3x6d G = SE3::gamma(node->m_r);
+			Vector6d f_body;
+			Matrix3d R = node->getParent()->E_wi.block<3, 3>(0, 0);
+			f_body.noalias() = G.transpose() * R.transpose() * H.col(i);
+			int row_body = node->getParent()->idxM;
+			f.segment<6>(row_body) += f_body;
+			//cout << "fixed " << f_body << endl;
+
+		}
+
+		if (node3->attached) {
+			Vector4d temp;
+			temp << node3->m_r, 1.0;
+
+			Matrix3x6d G = SE3::gamma(node3->m_r);
+			Vector6d f_body;
+			Matrix3d R = node3->getParent()->E_wi.block<3, 3>(0, 0);
+			f_body.noalias() = - G.transpose() * R.transpose() * H.col(i);
+			int row_body = node3->getParent()->idxM;
+			f.segment<6>(row_body) += f_body;
+			//cout << "fixed " << f_body << endl;
+		}
 	}
 }
 

@@ -54,7 +54,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pq5.0zR", &input_mesh, &output_mesh);
+	tetrahedralize("pq5.0zRa15.0", &input_mesh, &output_mesh);
 
 	double r = 0.01;
 
@@ -304,7 +304,7 @@ void SoftBody::updatePosNor() {
 		//vec->update();
 	}
 
-#pragma omp parallel for
+#pragma omp parallel for num_threads(getThreadsNumber((int)m_nodes.size(), MIN_ITERATOR_NUM))
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		node->clearNormals();
@@ -361,6 +361,7 @@ void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 	node->setParent(body);
 	node->setColor(body->m_attached_color);
 	node->r = 0.1;
+	node->attached = true;
 	m_attach_bodies.push_back(body);
 	m_attach_nodes.push_back(node);
 
@@ -368,7 +369,8 @@ void SoftBody::setAttachments(int id, shared_ptr<Body> body) {
 	E_ws.block<3, 1>(0, 3) = node->x;
 
 	Matrix4d E_is = body->E_iw * E_ws;
-	Vector3d r = E_is.block<3, 1>(0, 3);
+	Vector3d r = E_is.block<3, 1>(0, 3); // relative to body
+	node->m_r = r;
 	m_r.push_back(r);
 }
 
@@ -555,6 +557,8 @@ void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eige
 	y_axis << 0.0, 1.0, 0.0;
 	y_axis *= dir;
 	
+
+
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
@@ -616,9 +620,9 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 				m_nodes[i]->x = y.segment<3>(idxR);
 				m_nodes[i]->v = y.segment<3>(nr + idxR);
 				if (m_isCollisionWithFloor) {
-					if (m_nodes[i]->x(1) < m_floor_y && m_nodes[i]->v(1) < 0.0) {
-						m_nodes[i]->x(1) = m_floor_y;
-						m_nodes[i]->v(1) = 0.0;
+					if (m_nodes[i]->x(1) < m_floor_y) { //&& m_nodes[i]->v(1) < 0.0
+						//m_nodes[i]->x(1) = m_floor_y;
+						//m_nodes[i]->v(1) = 0.0;
 					}
 					
 				}
@@ -627,7 +631,7 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 		}
 
 	}
-	updatePosNor();
+	
 
 	if (next != nullptr) {
 		next->scatterDofs(y, nr);
@@ -641,12 +645,21 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 		int idxR = m_nodes[i]->idxR;
 		{
 			if (!m_nodes[i]->fixed) {
+				
 				m_nodes[i]->v = ydot.segment<3>(idxR);
 				m_nodes[i]->a = ydot.segment<3>(nr + idxR);
+				if (m_isCollisionWithFloor) {
+					if (m_nodes[i]->x(1) < m_floor_y ) {//&& m_nodes[i]->v(1) < 0.0
+						m_nodes[i]->x(1) = m_floor_y;
+						m_nodes[i]->v(1) = 0.0;
+						m_nodes[i]->a(1) = 0.0;
+						
+					}
+				}
 			}
 		}
 	}
-
+	updatePosNor();
 	if (next != nullptr) {
 		next->scatterDDofs(ydot, nr);
 	}

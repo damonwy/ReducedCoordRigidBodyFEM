@@ -17,6 +17,7 @@
 #include <fstream>
 #include <json.hpp>
 #include <omp.h>
+#include <Eigen/PardisoSupport>
 
 
 
@@ -78,6 +79,7 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	Jdot_dense.setZero();
 
 	J_sp.resize(nm, nr);
+	J_t_sp.resize(nr, nm);
 	//J_sp.data().squeeze();
 	//J_.clear();
 
@@ -249,6 +251,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			meshembedding0->computeMassSparse(Mm_);
 			Mm_sp.setFromTriplets(Mm_.begin(), Mm_.end());
 		}
+		
 
 		body0->computeGrav(grav, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);
@@ -299,16 +302,20 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		J_sp.setFromTriplets(J_.begin(), J_.end()); // check
 
 		Jdot_sp.setFromTriplets(Jdot_.begin(), Jdot_.end());
-		
-		Mr_sp = J_sp.transpose() * (Mm_sp - hsquare * K_sp) * J_sp;
+
+		J_t_sp = J_sp.transpose();
+
+
+		Mr_sp = J_t_sp * (Mm_sp - hsquare * K_sp) * J_sp;
 		
 		//Mr_sp_temp = Mr_sp.transpose();
 		//Mr_sp += Mr_sp_temp;
 		//Mr_sp *= 0.5;
 
-		fr_ = Mr_sp * qdot0 + h * (J_sp.transpose() * (fm - Mm_sp * Jdot_sp * qdot0) + fr); 
-		MDKr_sp = Mr_sp + J_sp.transpose() * (h * Dm_sp - hsquare * Km_sp) * J_sp + h * Dr_sp - hsquare * Kr_sp;
-	
+		fr_ = Mr_sp * qdot0 + h * (J_t_sp * (fm - Mm_sp * Jdot_sp * qdot0) + fr); 
+		MDKr_sp = Mr_sp + J_t_sp * (h * Dm_sp - hsquare * Km_sp) * J_sp + h * Dr_sp - hsquare * Kr_sp;
+
+
 		if (ne > 0) {
 			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
 			constraint0->computeJacEqRSparse(Gr_, Grdot_, gr, grdot, grddot);
@@ -422,101 +429,109 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			//VectorXd sol = LHS.ldlt().solve(rhs);
 			//qdot1 = sol.segment(0, nr);
 			//VectorXd l = sol.segment(nr, sol.rows() - nr);
+			switch (m_sparse_solver)
+			{
+			case CG: 
+				{
+					ConjugateGradient< SparseMatrix<double>, Lower | Upper> cg;
+					cg.setMaxIterations(1000);
+					cg.setTolerance(1e-3);
+					cg.compute(LHS_sp);
+					qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
 
-			//// QR:
-			//SparseQR< SparseMatrix<double>, COLAMDOrdering<int>> sqr(LHS_sp);
-			//assert(sqr.info() == Success);
-			//qdot1 = sqr.solve(rhs).segment(0, nr);
+					//std::cout << "#iterations:     " << cg.iterations() << std::endl;
+					//std::cout << "estimated error: " << cg.error() << std::endl;
+					break;
+				}
+			case CG_ILUT: 
+				{
+					ConjugateGradient< SparseMatrix<double>, Lower | Upper, IncompleteLUT<double>> cg;
+					cg.preconditioner().setDroptol(0.01);
+					cg.setMaxIterations(1000);
+					cg.setTolerance(1e-3);
+					cg.compute(LHS_sp);
+					qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
+				}			
+			case BICG:
+				{
+					BiCGSTAB<SparseMatrix<double> >  BCGST;
+					BCGST.compute(LHS_sp);
+					BCGST.setTolerance(1e-3);
+					qdot1 = BCGST.solveWithGuess(rhs, guess).segment(0, nr);
+					break;
+				}
+			case BICG_ILUT: 
+				{
+					BiCGSTAB<SparseMatrix<double>, IncompleteLUT<double>>  BCGST;
+					BCGST.preconditioner().setDroptol(0.001);
+					BCGST.compute(LHS_sp);
+					BCGST.setTolerance(1e-3);
+					qdot1 = BCGST.solveWithGuess(rhs, guess).segment(0, nr);
+					break;
+				}
+			case SLDLT:
+				{
+					SimplicialLDLT<SparseMatrix<double> > sldlt;
+					sldlt.compute(LHS_sp);
+					qdot1 = sldlt.solve(rhs).segment(0, nr);
+					break;
+				}			
+			case LU: 
+				{
+					LHS_sp.makeCompressed();
+					if (step == 0) {
+						solver.analyzePattern(LHS_sp);
+					}
 
-			//ConjugateGradient< SparseMatrix<double>, Lower|Upper, IncompleteLUT<double>> cg;
-			//cg.preconditioner().setDroptol(0.001);
+					solver.factorize(LHS_sp);
+					qdot1 = solver.solve(rhs).segment(0, nr);
+					break;
+				}		
+			case PARDISO_LU:
+				{
+					PardisoLU<Eigen::SparseMatrix<double>> solver;
+					solver.compute(LHS_sp);
+					qdot1 = solver.solve(rhs).segment(0, nr);
+				}
+				break;
+			case QR:
+				{
+					SparseQR< SparseMatrix<double>, COLAMDOrdering<int>> sqr(LHS_sp);
+					assert(sqr.info() == Success);
+					qdot1 = sqr.solve(rhs).segment(0, nr);
+					break;
+				}
+			default:
+				{
+					shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
+					program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
+					program_->setParamInt(MSK_IPAR_LOG, 10);
+					program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
+					program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
+					program_->setNumberOfVariables(nr);
+					program_->setObjectiveMatrix(MDKr_sp);
 
-			//cg.setMaxIterations(1000);
-			//cg.setTolerance(1e-3);
-			//cg.compute(LHS_sp);
+					program_->setObjectiveVector(-fr_);
 
-			//qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
+					program_->setNumberOfEqualities(ne);
+					program_->setEqualityMatrix(G_sp);
 
-			//ConjugateGradient< SparseMatrix<double>, Lower|Upper> cg;
-			//
-			//cg.setMaxIterations(1000);
-			//cg.setTolerance(1e-3);
-			//cg.compute(LHS_sp);
-			////qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
-			//qdot1 = cg.solve(rhs).segment(0, nr);
+					program_->setEqualityVector(rhsG);
 
-			/*BiCGSTAB<SparseMatrix<double>, IncompleteLUT<double> >  BCGST;
-			BCGST.preconditioner().setDroptol(0.001);
-			BCGST.compute(LHS_sp);
-			BCGST.setTolerance(1e-3);
-			qdot1 = BCGST.solveWithGuess(rhs, guess).segment(0, nr);*/
-			//qdot1 = BCGST.solve(rhs).segment(0, nr);
-
-			//BiCGSTAB<SparseMatrix<double> >  BCGST;
-			//BCGST.compute(LHS_sp);
-			//BCGST.setTolerance(1e-3);
-			////qdot1 = BCGST.solveWithGuess(rhs, guess).segment(0, nr);
-			//qdot1 = BCGST.solve(rhs).segment(0, nr);
-
-			//SimplicialLDLT<SparseMatrix<double> > sldlt;
-			//sldlt.compute(LHS_sp);
-			//qdot1 = sldlt.solve(rhs).segment(0, nr);
-
-			//SparseLU<SparseMatrix<double> > solver;
-			//LHS_sp.makeCompressed();
-			//if (step == 0) {
-			//	solver.analyzePattern(LHS_sp);
-			//}
-			//else {
-
-			//}
-			//
-			//
-			//solver.factorize(LHS_sp);
-			//
-			////solver.factorize(LHS_sp);
-			//qdot1 = solver.solve(rhs).segment(0, nr);
-			//LHS_sp.makeCompressed();
-			
-			//solver.compute(LHS_sp);
-			if (step == 0) {
-				solver.analyzePattern(LHS_sp);
+					bool success = program_->solve();
+					VectorXd sol = program_->getPrimalSolution();
+					qdot1 = sol.segment(0, nr);	
+					VectorXd l = program_->getDualEquality();
+					constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
+					constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
+				}
+				break;
 			}
-
-			solver.factorize(LHS_sp);
-			qdot1 = solver.solve(rhs).segment(0, nr);
-
-			//std::cout << "#iterations:     " << cg.iterations() << std::endl;
-			//std::cout << "estimated error: " << cg.error() << std::endl;
-
-		/*	shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
-			program_->setParamInt(MSK_IPAR_OPTIMIZER, MSK_OPTIMIZER_INTPNT);
-			program_->setParamInt(MSK_IPAR_LOG, 10);
-			program_->setParamInt(MSK_IPAR_LOG_FILE, 1);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_DFEAS, 1e-8);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_INFEAS, 1e-10);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_MU_RED, 1e-8);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_NEAR_REL, 1e3);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_PFEAS, 1e-8);
-			program_->setParamDouble(MSK_DPAR_INTPNT_QO_TOL_REL_GAP, 1e-8);
-			program_->setNumberOfVariables(nr);
-			program_->setObjectiveMatrix(MDKr_sp);
-
-			program_->setObjectiveVector(-fr_);
-
-			program_->setNumberOfEqualities(ne);
-			program_->setEqualityMatrix(G_sp);
-
-			program_->setEqualityVector(rhsG);
-
-
-			bool success = program_->solve();
-			VectorXd sol = program_->getPrimalSolution();
-			qdot1 = sol.segment(0, nr);*/
-
-			//VectorXd l = program_->getDualEquality();
-			//constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
-			//constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
 
 		}
 		else if (ne == 0 && ni > 0) {  // Just inequality
@@ -602,6 +617,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		/*cout << "V" << ener.V << endl;
 		cout << "K" << ener.K << endl;
 		cout << " sum " << ener.V + ener.K << endl;*/
+
 		step++;
 		return yk;
 	}
