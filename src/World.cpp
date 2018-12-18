@@ -945,18 +945,19 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Vector3f muscle_color = Vector3f(255.0f, 228.0f, 196.0f);
 		muscle_color /= 255.0f;
 
-		m_joints[0]->m_qdot[0] = -10;
+		//m_joints[0]->m_qdot[0] = -10;
 		//m_joints[1]->m_qdot[0] = 5;
 
 		//m_joints[2]->m_qdot[0] = 2;
 		//m_joints[3]->m_qdot[0] = 2;
-		m_joints[1]->m_qdot[0] = 10;
+
+		/*m_joints[1]->m_qdot[0] = 10;
 		m_joints[3]->m_qdot[0] = 2;
 		m_joints[4]->m_qdot[0] = 2;
 		m_joints[5]->m_qdot[0] = 2;
 
 		m_joints[6]->m_qdot[0] = 4;
-		m_joints[7]->m_qdot[0] = 4;
+		m_joints[7]->m_qdot[0] = 4;*/
 		
 
 		auto worm = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense"); 
@@ -964,7 +965,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->precomputeWeights();
 		worm->getDenseMesh()->setColor(muscle_color);
-		worm->getCoarseMesh()->setFloor(-21.0);
+		worm->getCoarseMesh()->setFloor(-41.0);
 		worm->getCoarseMesh()->setYthreshold(0.0);
 	}
 	break;
