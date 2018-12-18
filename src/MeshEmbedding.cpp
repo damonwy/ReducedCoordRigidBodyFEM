@@ -93,6 +93,17 @@ void MeshEmbedding::computeStiffnessSparse(std::vector<T> &K_) {
 
 void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 	m_coarse_mesh->scatterDofs(y, nr);
+
+
+	if (next != nullptr) {
+		next->scatterDofs(y, nr);
+	}
+}
+
+void MeshEmbedding::scatterDDofs(VectorXd &ydot, int nr) {
+
+	m_coarse_mesh->scatterDDofs(ydot, nr);
+
 	const vector<std::shared_ptr<Tetrahedron> > &coarse_mesh_tets = m_coarse_mesh->getTets();
 
 	// update dense mesh using coarse mesh
@@ -109,14 +120,8 @@ void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 	m_dense_mesh->updatePosNor();
 
 
-	if (next != nullptr) {
-		next->scatterDofs(y, nr);
-	}
-}
 
-void MeshEmbedding::scatterDDofs(VectorXd &ydot, int nr) {
 
-	m_coarse_mesh->scatterDDofs(ydot, nr);
 	if (next != nullptr) {
 		next->scatterDDofs(ydot, nr);
 	}

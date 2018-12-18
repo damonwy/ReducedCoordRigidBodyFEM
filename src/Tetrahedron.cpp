@@ -28,7 +28,7 @@ Tetrahedron::Tetrahedron(double young, double poisson, double density, Material 
 	m_enclosed_color << (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f;
 	m_mu = m_young / (2.0 * (1.0 + m_poisson));
 	m_lambda = m_young * m_poisson / ((1.0 + m_poisson) * (1.0 - 2.0 * m_poisson));
-
+	m_isInverted = false;
 	// Compute the inverse of the Dm matrix
 	// Dm is a 3x3 matrix where the columns are the edge vectors of a tet in rest configuration
 

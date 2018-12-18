@@ -767,7 +767,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -10.0;
 
-		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "embedded", "muscle_cyc_cyc"); //
+		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "embedded", "muscle_cyc_cyc", SOFT_INVERTIBLE); //
 		mesh_embedding->transformDenseMesh(E);
 		mesh_embedding->transformCoarseMesh(E);
 		mesh_embedding->precomputeWeights();
@@ -851,7 +851,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			joint_left_leg1->m_qdot(0) = 20.0;
 			addConstraintJointLimit(joint_left_leg0, -M_PI / 4.0, M_PI / 4.0);
 			addConstraintJointLimit(joint_left_leg1, -M_PI / 4.0, M_PI / 4.0);
-			auto left_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_leg_coarse", "left_leg_dense"); //
+			auto left_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_leg_coarse", "left_leg_dense", SOFT_INVERTIBLE); //
 			left_leg_mesh->precomputeWeights();
 			left_leg_mesh->getDenseMesh()->setColor(muscle_color);
 		}
@@ -871,7 +871,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			addConstraintJointLimit(joint_right_leg_1, -M_PI / 4.0, M_PI / 4.0);
 			Matrix4d E_l_r = Matrix4d::Identity();
 			E_l_r.block<3, 1>(0, 3) = Vector3d(9.0, 0.0, 0.0);
-			auto right_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_leg_coarse", "left_leg_dense"); //
+			auto right_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_leg_coarse", "left_leg_dense", SOFT_INVERTIBLE); //
 			right_leg_mesh->transformCoarseMesh(E_l_r);
 			right_leg_mesh->transformDenseMesh(E_l_r);
 			right_leg_mesh->precomputeWeights();
@@ -888,7 +888,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//joint_left_leg1->m_qdot(0) = 5.0;
 		//joint_right_leg_1->m_qdot(0) = -5.0;
 
-		auto right_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "right_arm_coarse_1", "right_arm_dense_1"); //
+		auto right_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "right_arm_coarse_1", "right_arm_dense_1", SOFT_INVERTIBLE); //
 		right_arm_mesh->precomputeWeights();
 		
 		right_arm_mesh->getDenseMesh()->setColor(muscle_color);
@@ -896,7 +896,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//auto torso = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "torso_embedded_w_hole", "torso"); //
 		//torso->precomputeWeights();
 
-		auto left_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_arm_coarse_1", "left_arm_dense_1"); //
+		auto left_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_arm_coarse_1", "left_arm_dense_1", SOFT_INVERTIBLE); //
 		left_arm_mesh->precomputeWeights();
 		left_arm_mesh->getDenseMesh()->setColor(muscle_color);
 	
@@ -942,30 +942,32 @@ void World::load(const std::string &RESOURCE_DIR) {
 			m_joints[i]->setDamping(m_damping);
 		}
 
-		Vector3f muscle_color = Vector3f(255.0f, 228.0f, 196.0f);
-		muscle_color /= 255.0f;
+		Vector3f worm_color = Vector3f(102.0f, 204.0f, 0.0f);
+		worm_color /= 255.0f;
 
-		//m_joints[0]->m_qdot[0] = -10;
+		m_joints[0]->m_qdot[0] = -10;
 		//m_joints[1]->m_qdot[0] = 5;
 
 		//m_joints[2]->m_qdot[0] = 2;
 		//m_joints[3]->m_qdot[0] = 2;
 
-		/*m_joints[1]->m_qdot[0] = 10;
+		m_joints[1]->m_qdot[0] = 10;
 		m_joints[3]->m_qdot[0] = 2;
 		m_joints[4]->m_qdot[0] = 2;
 		m_joints[5]->m_qdot[0] = 2;
 
 		m_joints[6]->m_qdot[0] = 4;
-		m_joints[7]->m_qdot[0] = 4;*/
+		m_joints[7]->m_qdot[0] = 4;
 		
+		Floor f0(-21.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
+		m_floors.push_back(f0);
 
-		auto worm = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense"); 
+		auto worm = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense", SOFT_INVERTIBLE); 
 		worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->precomputeWeights();
-		worm->getDenseMesh()->setColor(muscle_color);
-		worm->getCoarseMesh()->setFloor(-41.0);
+		worm->getDenseMesh()->setColor(worm_color);
+		worm->getCoarseMesh()->setFloor(-21.0);
 		worm->getCoarseMesh()->setYthreshold(0.0);
 	}
 	break;
@@ -1114,10 +1116,11 @@ shared_ptr<MeshEmbedding> World::addMeshEmbedding(
 	Material material,
 	const string &RESOURCE_DIR,
 	string coarse_mesh,
-	string dense_mesh) 
+	string dense_mesh,
+	SoftBodyType soft_body_type)
 {
 	
-	auto mesh_embedding = make_shared<MeshEmbedding>(density, young, possion, material, SOFT_INVERTIBLE);
+	auto mesh_embedding = make_shared<MeshEmbedding>(density, young, possion, material, soft_body_type);
 	mesh_embedding->load(RESOURCE_DIR, coarse_mesh, dense_mesh);
 
 	m_nmeshembeddings++;
@@ -1408,14 +1411,14 @@ void World::init() {
 		m_meshembeddings[0]->setAttachmentsByYZCircle(25.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[2]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(35.85, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[3]);
 */
-		m_meshembeddings[0]->setAttachmentsByYZCircle(4.15, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[0]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(3.175, 6.825, Vector2d(0.0, 0.0), 2.0, m_bodies[0]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[1]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(25.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[2]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(35.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[3]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(45.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[4]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(55.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[5]);
 		m_meshembeddings[0]->setAttachmentsByYZCircle(65.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[6]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(75.85, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[7]);
+		m_meshembeddings[0]->setAttachmentsByYZCircle(76.825, 7.225, Vector2d(0.0, 0.0), 2.9, m_bodies[7]);
 
 	}
 
@@ -1491,6 +1494,52 @@ int World::getNsteps() {
 	return nsteps;
 }
 
+void World::drawFloor(Floor f, shared_ptr<MatrixStack> MV, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) {
+	// Draw grid
+	progSimple->bind();
+	glUniformMatrix4fv(progSimple->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
+	glUniformMatrix4fv(progSimple->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+	glLineWidth(2.0f);
+	float x0 = f.xrange(0);
+	float x1 = f.xrange(1);
+	float z0 = f.zrange(0);
+	float z1 = f.zrange(1);
+	int gridSize = 10;
+	glLineWidth(1.0f);
+	glBegin(GL_LINES);
+	for (int i = 1; i < gridSize; ++i) {
+		if (i == gridSize / 2) {
+			glColor3f(0.1f, 0.1f, 0.1f);
+		}
+		else {
+			glColor3f(0.8f, 0.8f, 0.8f);
+		}
+		float x = x0 + i / (float)gridSize * (x1 - x0);
+		glVertex3f(x, f.y, z0);
+		glVertex3f(x, f.y, z1);
+	}
+	for (int i = 1; i < gridSize; ++i) {
+		if (i == gridSize / 2) {
+			glColor3f(0.1f, 0.1f, 0.1f);
+		}
+		else {
+			glColor3f(0.8f, 0.8f, 0.8f);
+		}
+		float z = z0 + i / (float)gridSize * (z1 - z0);
+		glVertex3f(x0, f.y, z);
+		glVertex3f(x1, f.y, z);
+	}
+	glEnd();
+	glColor3f(0.4f, 0.4f, 0.4f);
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(x0, f.y, z0);
+	glVertex3f(x1, f.y, z0);
+	glVertex3f(x1, f.y, z1);
+	glVertex3f(x0, f.y, z1);
+	glEnd();
+	progSimple->unbind();
+}
+
 void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, const shared_ptr<Program> progSoft, shared_ptr<MatrixStack> P) {
 	m_bodies[0]->draw(MV, prog, P);
 	m_joints[0]->draw(MV, prog, progSimple, P);
@@ -1500,6 +1549,9 @@ void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, con
 	m_springs[0]->draw(MV, prog, progSimple, P);
 	m_softbodies[0]->draw(MV, prog, progSimple, P);
 	m_meshembeddings[0]->draw(MV, prog, progSimple, P);
+	for (int i = 0; i < (int)m_floors.size(); ++i) {
+		drawFloor(m_floors[i], MV, progSimple, P);
+	}
 }
 
 Energy World::computeEnergy() {

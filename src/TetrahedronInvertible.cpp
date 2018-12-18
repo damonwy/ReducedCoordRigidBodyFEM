@@ -6,7 +6,7 @@
 using namespace std;
 using namespace Eigen;
 
-#define Fthreshold 0.1
+#define Fthreshold 0.2
 
 TetrahedronInvertible::TetrahedronInvertible(double young, double poisson, double density, Material material, const vector<shared_ptr<Node>> &nodes):
 Tetrahedron(young, poisson, density, material, nodes), m_isInvertible(true)

@@ -54,7 +54,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pq5.0zR", &input_mesh, &output_mesh);
+	tetrahedralize("pq5.0zRa15.0", &input_mesh, &output_mesh);
 
 	double r = 0.01;
 
@@ -621,8 +621,8 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 				m_nodes[i]->v = y.segment<3>(nr + idxR);
 				if (m_isCollisionWithFloor) {
 					if (m_nodes[i]->x(1) < m_floor_y) { //&& m_nodes[i]->v(1) < 0.0
-						m_nodes[i]->x(1) = m_floor_y;
-						m_nodes[i]->v(1) = 0.0;
+						//m_nodes[i]->x(1) = m_floor_y;
+						//m_nodes[i]->v(1) = 0.0;
 					}
 					
 				}
@@ -631,7 +631,7 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 		}
 
 	}
-	updatePosNor();
+	
 
 	if (next != nullptr) {
 		next->scatterDofs(y, nr);
@@ -646,23 +646,20 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 		{
 			if (!m_nodes[i]->fixed) {
 				
+				m_nodes[i]->v = ydot.segment<3>(idxR);
+				m_nodes[i]->a = ydot.segment<3>(nr + idxR);
 				if (m_isCollisionWithFloor) {
 					if (m_nodes[i]->x(1) < m_floor_y ) {//&& m_nodes[i]->v(1) < 0.0
+						m_nodes[i]->x(1) = m_floor_y;
+						m_nodes[i]->v(1) = 0.0;
 						m_nodes[i]->a(1) = 0.0;
 						
 					}
-					else {
-						m_nodes[i]->v = ydot.segment<3>(idxR);
-						m_nodes[i]->a = ydot.segment<3>(nr + idxR);
-					}
-					
 				}
-
-
 			}
 		}
 	}
-
+	updatePosNor();
 	if (next != nullptr) {
 		next->scatterDDofs(ydot, nr);
 	}
