@@ -119,9 +119,6 @@ void MeshEmbedding::scatterDDofs(VectorXd &ydot, int nr) {
 
 	m_dense_mesh->updatePosNor();
 
-
-
-
 	if (next != nullptr) {
 		next->scatterDDofs(ydot, nr);
 	}

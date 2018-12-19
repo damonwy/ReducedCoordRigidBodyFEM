@@ -288,9 +288,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 		}
 
 		// Init springs
-		auto deformable0 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
+		auto deformable0 = addDeformableSpring(sides.x()*sides.y()*sides.z() * density, 3, nullptr, Vector3d(10.0 * m_nbodies + 10.0, 10.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(5.0, 0.0, 0.0));
 		deformable0->setStiffness(m_stiffness);
-		auto deformable1 = addDeformableSpring(sides(0)*sides(1)*sides(2)*density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
+		auto deformable1 = addDeformableSpring(sides.x()*sides.y()*sides.z() * density, 2, m_bodies[0], Vector3d(0.0, 0.0, 0.0), m_bodies[m_nbodies - 1], Vector3d(0.0, 0.0, 0.0));
 		deformable1->setStiffness(m_stiffness);
 		for (int i = 0; i < (int)m_deformables.size(); i++) {
 			m_deformables[i]->load(RESOURCE_DIR);
@@ -921,7 +921,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		density = 1.0;
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e3;
+		double young = 1e4;
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
@@ -938,34 +938,35 @@ void World::load(const std::string &RESOURCE_DIR) {
 			else {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
-			m_joints[i]->setStiffness(m_stiffness);
-			m_joints[i]->setDamping(m_damping);
+			//m_joints[i]->setStiffness(m_stiffness);
+			//m_joints[i]->setDamping(m_damping);
 		}
 
 		Vector3f worm_color = Vector3f(102.0f, 204.0f, 0.0f);
 		worm_color /= 255.0f;
 
-		m_joints[0]->m_qdot[0] = -10;
+		m_joints[0]->m_qdot[0] = -110;
 		//m_joints[1]->m_qdot[0] = 5;
 
 		//m_joints[2]->m_qdot[0] = 2;
 		//m_joints[3]->m_qdot[0] = 2;
 
-		m_joints[1]->m_qdot[0] = 10;
-		m_joints[3]->m_qdot[0] = 2;
-		m_joints[4]->m_qdot[0] = 2;
-		m_joints[5]->m_qdot[0] = 2;
+		m_joints[1]->m_qdot[0] = 100;
+		m_joints[3]->m_qdot[0] = 20;
+		m_joints[4]->m_qdot[0] = 20;
+		m_joints[5]->m_qdot[0] = 20;
 
-		m_joints[6]->m_qdot[0] = 4;
-		m_joints[7]->m_qdot[0] = 4;
+		m_joints[6]->m_qdot[0] = 30;
+		m_joints[7]->m_qdot[0] = 30;
 		
 		Floor f0(-21.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		auto worm = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense", SOFT_INVERTIBLE); 
+		auto worm = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense", SOFT_INVERTIBLE);
 		worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->precomputeWeights();
+	
 		worm->getDenseMesh()->setColor(worm_color);
 		worm->getCoarseMesh()->setFloor(-21.0);
 		worm->getCoarseMesh()->setYthreshold(0.0);

@@ -105,22 +105,7 @@ void TetrahedronCorotational::computeElasticForces(VectorXd &f) {
 		int rowi = node->idxM;
 		Vector3d fi = -this->RKxx.segment<3>(3 * i) + this->Kx.segment<3>(3 * i);
 		f.segment<3>(rowi) = f.segment<3>(rowi) + fi;
-		
-		if (node->attached) {
-			Vector4d temp;
-			temp << node->m_r, 1.0;
-			Matrix3x6d G = SE3::gamma(node->m_r);
-			Vector6d f_body;
-			Matrix3d R = node->getParent()->E_wi.block<3, 3>(0, 0);
-			f_body.noalias() = G.transpose() * R.transpose() * fi;
-			int row_body = node->getParent()->idxM;
-			f.segment<6>(row_body) += f_body;
-			//cout << "fixed " << f_body << endl;
-
-		}
 	}
-
-
 	
 }
 

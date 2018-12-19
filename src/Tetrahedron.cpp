@@ -99,32 +99,6 @@ void Tetrahedron::assembleGlobalForceVector(Eigen::VectorXd &f) {
 		f.segment<3>(rowi) += H.col(i);	
 		f.segment<3>(row3) -= H.col(i);		
 
-		// Compute the force to the body attached
-		if (node->attached) {
-			Vector4d temp;
-			temp << node->m_r, 1.0;
-			Matrix3x6d G = SE3::gamma(node->m_r);
-			Vector6d f_body;
-			Matrix3d R = node->getParent()->E_wi.block<3, 3>(0, 0);
-			f_body.noalias() = G.transpose() * R.transpose() * H.col(i);
-			int row_body = node->getParent()->idxM;
-			f.segment<6>(row_body) += f_body;
-			//cout << "fixed " << f_body << endl;
-
-		}
-
-		if (node3->attached) {
-			Vector4d temp;
-			temp << node3->m_r, 1.0;
-
-			Matrix3x6d G = SE3::gamma(node3->m_r);
-			Vector6d f_body;
-			Matrix3d R = node3->getParent()->E_wi.block<3, 3>(0, 0);
-			f_body.noalias() = - G.transpose() * R.transpose() * H.col(i);
-			int row_body = node3->getParent()->idxM;
-			f.segment<6>(row_body) += f_body;
-			//cout << "fixed " << f_body << endl;
-		}
 	}
 }
 
