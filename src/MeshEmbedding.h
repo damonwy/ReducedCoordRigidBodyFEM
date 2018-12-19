@@ -8,9 +8,9 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "MLCommon.h"
+#include "SoftBody.h"
 
 class Body;
-class SoftBody;
 class Program;
 class MatrixStack;
 typedef Eigen::Triplet<double> T;
@@ -32,21 +32,24 @@ public:
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	void setAttachmentsByYZCircle(double x, double range, Vector2d O, double r, std::shared_ptr<Body> body);
 	void setAttachmentsByXZCircle(double y, double range, Vector2d O, double r, std::shared_ptr<Body> body);
-
+	void setDamping(double damping) { m_damping = damping; m_coarse_mesh->setDamping(damping); }
 	void computeMassSparse(std::vector<T> &M_);
 	void computeJacobianSparse(std::vector<T> &J_);
 
 	void computeForce(Vector3d grav, Eigen::VectorXd &f);
 	void computeStiffnessSparse(std::vector<T> &K_);
+	void computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D);
+	void computeForceDampingSparse(Eigen::VectorXd &f, std::vector<T> &D_);
+
 	void scatterDofs(Eigen::VectorXd &y, int nr);
 	void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 	void gatherDofs(Eigen::VectorXd &y, int nr);
-	void toggleDrawingDenseMesh(bool isDenseMesh) { m_isDenseMesh = isDenseMesh; if (next != nullptr) { next->toggleDrawingDenseMesh(isDenseMesh); } }
-	void toggleDrawingCoarseMesh(bool isCoarseMesh) { m_isCoarseMesh = isCoarseMesh; if (next != nullptr) { next->toggleDrawingCoarseMesh(isCoarseMesh); }
+	inline void toggleDrawingDenseMesh(bool isDenseMesh) { m_isDenseMesh = isDenseMesh; if (next != nullptr) { next->toggleDrawingDenseMesh(isDenseMesh); } }
+	inline void toggleDrawingCoarseMesh(bool isCoarseMesh) { m_isCoarseMesh = isCoarseMesh; if (next != nullptr) { next->toggleDrawingCoarseMesh(isCoarseMesh); }
 	}
 
-	std::shared_ptr<SoftBody> getDenseMesh() { return m_dense_mesh; }
-	std::shared_ptr<SoftBody> getCoarseMesh() { return m_coarse_mesh; }
+	inline std::shared_ptr<SoftBody> getDenseMesh() { return m_dense_mesh; }
+	inline std::shared_ptr<SoftBody> getCoarseMesh() { return m_coarse_mesh; }
 	bool m_isDenseMesh;
 	bool m_isCoarseMesh;
 
@@ -55,5 +58,5 @@ public:
 protected:
 	std::shared_ptr<SoftBody> m_dense_mesh;
 	std::shared_ptr<SoftBody> m_coarse_mesh;
-
+	double m_damping;
 };

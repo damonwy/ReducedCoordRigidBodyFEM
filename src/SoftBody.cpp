@@ -757,6 +757,42 @@ void SoftBody::computeStiffnessSparse(vector<T> &K_) {
 	}
 }
 
+void SoftBody::computeForceDamping(VectorXd &f, MatrixXd &D) {
+	// Computes maximal damping vector and matrix
+	int n_nodes = (int)m_nodes.size();
+	Matrix3d I3 = Matrix3d::Identity();
+
+	for (int i = 0; i < n_nodes; i++) {
+		int idxM = m_nodes[i]->idxM;
+		D.block<3, 3>(idxM, idxM) += m_damping * I3;
+		f.segment<3>(idxM) -= m_damping * m_nodes[i]->v;
+	}
+
+	if (next != nullptr) {
+		next->computeForceDamping(f, D);
+	}
+}
+
+
+void SoftBody::computeForceDampingSparse(VectorXd &f, vector<T> &D_) {
+	// Computes maximal damping vector and matrix
+	int n_nodes = (int)m_nodes.size();
+
+	for (int i = 0; i < n_nodes; i++) {
+		int idxM = m_nodes[i]->idxM;
+
+		for (int j = 0; j < 3; ++j) {
+			D_.push_back(T(idxM + j, idxM + j, m_damping));
+		}
+		f.segment<3>(idxM) -= m_damping * m_nodes[i]->v;
+	}
+
+	if (next != nullptr) {
+		next->computeForceDampingSparse(f, D_);
+	}
+}
+
+
 void SoftBody::computeStiffnessSparse_(vector<T> &K_) {
 	VectorXd df(3 * m_nodes.size());
 	VectorXd Dx = df;

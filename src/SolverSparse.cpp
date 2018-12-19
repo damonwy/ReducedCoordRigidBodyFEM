@@ -262,8 +262,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		softbody0->computeStiffnessSparse(K_);
 
 		meshembedding0->computeForce(grav, fm);
+		meshembedding0->computeForceDampingSparse(tmp, Dm_);
 		meshembedding0->computeStiffnessSparse(K_);
-
 		joint0->computeForceStiffnessSparse(fr, Kr_);
 		joint0->computeForceDampingSparse(tmp, Dr_);
 

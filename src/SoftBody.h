@@ -43,13 +43,15 @@ public:
 	void computeForce(Vector3d grav, Eigen::VectorXd &f);
 	void computeStiffness(Eigen::MatrixXd &K);
 	void computeStiffnessSparse(std::vector<T> &K_);
+	void computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D);
+	void computeForceDampingSparse(Eigen::VectorXd &f, std::vector<T> &D_);
 
 	virtual void gatherDofs(Eigen::VectorXd &y, int nr);
 	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd &ydot, int nr);
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
 	virtual void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
-	void setColor(Vector3f color) { m_color = color; }
+	inline void setColor(Vector3f color) { m_color = color; }
 	void setAttachments(int id, std::shared_ptr<Body> body);
 	void setAttachmentsByLine(Vector3d dir, Vector3d orig, std::shared_ptr<Body> body);
 	void setAttachmentsByXYSurface(double z, double range, Vector2d xrange, Vector2d yrange, std::shared_ptr<Body> body);
@@ -65,16 +67,16 @@ public:
 	void setSlidingNodesByXZSurface(double y, Vector2d xrange, Vector2d zrange, double dir, std::shared_ptr<Body> body);
 	void setSlidingNodesByYZCircle(double x, double range_x, Vector2d O, double r, std::shared_ptr<Body> body);
 
-	void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
-	void setFloor(double floor_y) { m_floor_y = floor_y; m_isCollisionWithFloor = true; }
-	void setYthreshold(double collision_y) { m_collision_y = collision_y; }
+	inline void setInvertiblity(bool isInvertible) { m_isInvertible = isInvertible; }
+	inline void setFloor(double floor_y) { m_floor_y = floor_y; m_isCollisionWithFloor = true; }
+	inline void setYthreshold(double collision_y) { m_collision_y = collision_y; }
+	void setDamping(double damping) { m_damping = damping; }
+	inline bool getInvertiblity() { return m_isInvertible; }
 
-	bool getInvertiblity() { return m_isInvertible; }
 
-
-	const std::vector<std::shared_ptr<Node> > & getNodes() const { return m_nodes; }
-	const std::vector<std::shared_ptr<Tetrahedron> > & getTets() const { return m_tets; }
-	const std::vector<std::shared_ptr<FaceTriangle> > & getFaces() const { return m_trifaces; }
+	inline const std::vector<std::shared_ptr<Node> > & getNodes() const { return m_nodes; }
+	inline const std::vector<std::shared_ptr<Tetrahedron> > & getTets() const { return m_tets; }
+	inline const std::vector<std::shared_ptr<FaceTriangle> > & getFaces() const { return m_trifaces; }
 
 	void transform(Vector3d dx);
 	void transform(Matrix4d E);
@@ -124,6 +126,7 @@ protected:
 	unsigned norBufID;
 	unsigned texBufID;
 
+	double m_damping;
 	double m_young;
 	double m_poisson;
 	double m_density;
@@ -133,6 +136,7 @@ protected:
 	virtual void computeStiffnessSparse_(std::vector<T> &K_);
 	virtual void computeStiffness_(Eigen::MatrixXd &K);
 	virtual void computeForce_(Vector3d grav, Eigen::VectorXd &f);
+	
 };
 
 

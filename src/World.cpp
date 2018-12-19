@@ -966,7 +966,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->precomputeWeights();
-	
+		worm->setDamping(1.0e1);
 		worm->getDenseMesh()->setColor(worm_color);
 		worm->getCoarseMesh()->setFloor(-21.0);
 		worm->getCoarseMesh()->setYthreshold(0.0);
