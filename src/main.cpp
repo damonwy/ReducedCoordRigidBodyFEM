@@ -277,18 +277,18 @@ void stepperFunc()
 }
 
 void stepWorld() {
-	//char str1[5] = ".jpg";
-	//char str0[10];
+	char str1[5] = ".jpg";
+	char str0[10];
 	if (keyToggles[(unsigned)' ']) {
 		// This can be parallelized!
 		
 		scene->step();
-		//sprintf(str0, "%d", steps);
-		//strcat(str0, str1);
+		sprintf(str0, "%d", steps);
+		strcat(str0, str1);
 
-		//glReadPixels(0, 0, (GLsizei)1920, (GLsizei)1080, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-		//stbi_write_jpg(str0, 1920, 1080, 4, pixels, 100);
-		//steps += 1;
+		glReadPixels(0, 0, (GLsizei)1920, (GLsizei)1080, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		stbi_write_jpg(str0, 1920, 1080, 4, pixels, 100);
+		steps += 1;
 	}
 
 }
@@ -343,14 +343,14 @@ int main(int argc, char **argv)
 	// Initialize scene.
 	init();
 	// Start simulation thread.
-	thread stepperThread(stepperFunc);
+	//thread stepperThread(stepperFunc);
 	/*for (int i = 0; i < 100; i++) {
 		scene->step();
 	}	*/
 
 	//// Loop until the user closes the window.
 	while(!glfwWindowShouldClose(window)) {
-		//stepWorld();
+		stepWorld();
 		// Render scene.
 		render();
 
@@ -360,7 +360,7 @@ int main(int argc, char **argv)
 		glfwPollEvents();
 	}
 	// Quit program.
-	stepperThread.detach();
+	//stepperThread.detach();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

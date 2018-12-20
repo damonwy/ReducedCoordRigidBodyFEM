@@ -59,7 +59,9 @@ public:
 	int idxER;								// Reduced equality constraint indices
 	int idxIM;								// Maximal inequality constraint indices
 	int idxIR;								// Reduced inequality constraint indices
-	Eigen::MatrixXi idxQ;					// Associated DOF indices
+	Eigen::MatrixXd idxQ;					// Associated DOF indices
+	int nidxQ;
+
 	bool activeM;							// Whether the maximal inequality constraint is active
 	bool activeR;							// Whether the reduced inequality constraint is active
 	Eigen::VectorXd fcon;					// Computed constraint force

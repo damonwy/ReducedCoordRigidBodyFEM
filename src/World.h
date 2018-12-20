@@ -71,7 +71,8 @@ enum WorldType {
 	SPRING_DAMPER,
 	MESH_EMBEDDING,
 	HUMAN_BODY,
-	WORM
+	WORM,
+	STARFISH
 };
 
 struct Floor {
@@ -301,6 +302,10 @@ public:
 	int m_dense_nm;
 	int m_dense_nr;
 	int m_ntets;
+
+	int nlegs;
+	int nsegments;
+
 private:
 	Energy m_energy;		// the energy in current state
 	Energy m_energy0;		// the energy in initial state

@@ -145,7 +145,6 @@ void DeformableSpring::countDofs_(int &nm, int &nr) {
 
 void DeformableSpring::gatherDofs_(VectorXd &y, int nr) {
 	// Gathers q and qdot into y
-#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		y.segment<3>(idxR) = m_nodes[i]->x;
@@ -155,7 +154,6 @@ void DeformableSpring::gatherDofs_(VectorXd &y, int nr) {
 
 void DeformableSpring::gatherDDofs_(VectorXd &ydot, int nr) {
 	// Gathers qdot and qddot into ydot
-#pragma omp parallel for
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
 		ydot.segment<3>(idxR) = m_nodes[i]->v;

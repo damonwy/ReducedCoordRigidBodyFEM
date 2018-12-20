@@ -262,8 +262,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		softbody0->computeStiffnessSparse(K_);
 
 		meshembedding0->computeForce(grav, fm);
+		meshembedding0->computeForceDampingSparse(tmp, Dm_);
 		meshembedding0->computeStiffnessSparse(K_);
-
 		joint0->computeForceStiffnessSparse(fr, Kr_);
 		joint0->computeForceDampingSparse(tmp, Dr_);
 
@@ -333,7 +333,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
-			rhsG = -gdot - 5.0 * g;// todo!!!!!
+			rhsG = -gdot - 100.0 * g;// todo!!!!!
 		}
 
 		if (ni > 0) {

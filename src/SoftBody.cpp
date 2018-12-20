@@ -54,7 +54,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pq5.0zRa15.0", &input_mesh, &output_mesh);
+	tetrahedralize("pq2.0za15.0", &input_mesh, &output_mesh);//
 
 	double r = 0.01;
 
@@ -85,7 +85,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 			triface->m_nodes.push_back(node);
 
 			// Mark nodes that need collision constraints and count the number of all these points
-			if (node->x0(1) < m_collision_y && !node->isCollisionDetection) {
+			if (node->x0.y() < m_collision_y && !node->isCollisionDetection) {
 				node->isCollisionDetection = true;
 				m_npotentialcols++;
 			}
@@ -442,7 +442,7 @@ void SoftBody::setAttachmentsByXYSurface(double z, double range, Vector2d xrange
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
-		if (abs(xi(2) - z) < range && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
+		if (abs(xi(2) - z) < range && xi(0) <= xrange.y() && xi(0) >= xrange(0) && xi.y() <= yrange.y() && xi.y() >= yrange(0)) {
 			setAttachments(i, body);
 		}
 	}
@@ -453,7 +453,7 @@ void SoftBody::setAttachmentsByYZSurface(double x, double range, Vector2d yrange
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
-		if (abs(xi(0) - x) < range && xi(2) <= zrange(1) && xi(2) >= zrange(0) && xi(1) <= yrange(1) && xi(1) >= yrange(0)) {
+		if (abs(xi(0) - x) < range && xi(2) <= zrange.y() && xi(2) >= zrange(0) && xi.y() <= yrange.y() && xi.y() >= yrange(0)) {
 			setAttachments(i, body);
 		}
 	}
@@ -464,7 +464,7 @@ void SoftBody::setAttachmentsByYZCircle(double x, double range, Vector2d O, doub
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
-		double diff = pow((xi(1) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
+		double diff = pow((xi.y() - O(0)), 2) + pow((xi(2) - O.y()), 2) - r * r;
 
 		if (abs(xi(0) - x) < range && diff < 0.0001) {
 			setAttachments(i, body);
@@ -476,7 +476,7 @@ void SoftBody::setAttachmentsByXZCircle(double y, double range, Vector2d O, doub
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
-		double diff = pow((xi(0) - O(0)), 2) + pow((xi(2) - O(1)), 2) - r * r;
+		double diff = pow((xi(0) - O(0)), 2) + pow((xi(2) - O.y()), 2) - r * r;
 
 		if (abs(xi(1 ) - y) < range && diff < 0.0001) {
 			setAttachments(i, body);
@@ -489,7 +489,7 @@ void SoftBody::setAttachmentsByXZSurface(double y, double range, Eigen::Vector2d
 		auto node = m_nodes[i];
 		Vector3d xi = node->x;
 
-		if (abs(xi(1) - y) < range && xi(0) <= xrange(1) && xi(0) >= xrange(0) && xi(2) <= zrange(1) && xi(2) >= zrange(0)) {
+		if (abs(xi.y() - y) < range && xi(0) <= xrange.y() && xi(0) >= xrange(0) && xi(2) <= zrange.y() && xi(2) >= zrange(0)) {
 			setAttachments(i, body);
 		}
 	}
@@ -620,9 +620,9 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 				m_nodes[i]->x = y.segment<3>(idxR);
 				m_nodes[i]->v = y.segment<3>(nr + idxR);
 				if (m_isCollisionWithFloor) {
-					if (m_nodes[i]->x(1) < m_floor_y) { //&& m_nodes[i]->v(1) < 0.0
-						//m_nodes[i]->x(1) = m_floor_y;
-						//m_nodes[i]->v(1) = 0.0;
+					if (m_nodes[i]->x.y() < m_floor_y && m_nodes[i]->v.y() < 0.0) { //
+						y.segment<3>(idxR).y() = m_floor_y;
+						y.segment<3>(nr + idxR).y() = 0.0;
 					}
 					
 				}
@@ -649,11 +649,12 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 				m_nodes[i]->v = ydot.segment<3>(idxR);
 				m_nodes[i]->a = ydot.segment<3>(nr + idxR);
 				if (m_isCollisionWithFloor) {
-					if (m_nodes[i]->x(1) < m_floor_y ) {//&& m_nodes[i]->v(1) < 0.0
-						m_nodes[i]->x(1) = m_floor_y;
-						m_nodes[i]->v(1) = 0.0;
-						m_nodes[i]->a(1) = 0.0;
-						
+					if (m_nodes[i]->x.y() < m_floor_y && m_nodes[i]->v.y() < 0.0) {//
+						m_nodes[i]->x.y() = m_floor_y;
+						m_nodes[i]->v.y() = 0.0;
+						m_nodes[i]->a.y() = 0.0;
+						ydot.segment<3>(idxR).y() = 0.0;
+						ydot.segment<3>(nr + idxR).y() = 0.0;
 					}
 				}
 			}
@@ -755,6 +756,42 @@ void SoftBody::computeStiffnessSparse(vector<T> &K_) {
 		next->computeStiffnessSparse(K_);
 	}
 }
+
+void SoftBody::computeForceDamping(VectorXd &f, MatrixXd &D) {
+	// Computes maximal damping vector and matrix
+	int n_nodes = (int)m_nodes.size();
+	Matrix3d I3 = Matrix3d::Identity();
+
+	for (int i = 0; i < n_nodes; i++) {
+		int idxM = m_nodes[i]->idxM;
+		D.block<3, 3>(idxM, idxM) += m_damping * I3;
+		f.segment<3>(idxM) -= m_damping * m_nodes[i]->v;
+	}
+
+	if (next != nullptr) {
+		next->computeForceDamping(f, D);
+	}
+}
+
+
+void SoftBody::computeForceDampingSparse(VectorXd &f, vector<T> &D_) {
+	// Computes maximal damping vector and matrix
+	int n_nodes = (int)m_nodes.size();
+
+	for (int i = 0; i < n_nodes; i++) {
+		int idxM = m_nodes[i]->idxM;
+
+		for (int j = 0; j < 3; ++j) {
+			D_.push_back(T(idxM + j, idxM + j, m_damping));
+		}
+		f.segment<3>(idxM) -= m_damping * m_nodes[i]->v;
+	}
+
+	if (next != nullptr) {
+		next->computeForceDampingSparse(f, D_);
+	}
+}
+
 
 void SoftBody::computeStiffnessSparse_(vector<T> &K_) {
 	VectorXd df(3 * m_nodes.size());

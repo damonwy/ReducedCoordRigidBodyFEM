@@ -1,7 +1,6 @@
 #include "MeshEmbedding.h"
 #include "SoftBodyInvertibleFEM.h"
 #include "SoftBodyCorotationalLinear.h"
-#include "SoftBody.h"
 #include "Node.h"
 #include "Tetrahedron.h"
 #include "Body.h"
@@ -83,7 +82,23 @@ void MeshEmbedding::computeForce(Vector3d grav, VectorXd &f) {
 	}
 }
 
-void MeshEmbedding::computeStiffnessSparse(std::vector<T> &K_) {
+void MeshEmbedding::computeForceDamping(VectorXd &f, MatrixXd &D) {
+	m_coarse_mesh->computeForceDamping(f, D);
+
+	if (next != nullptr) {
+		next->computeForceDamping(f, D);
+	}
+}
+
+void MeshEmbedding::computeForceDampingSparse(VectorXd &f, vector<T> &D_) {
+	m_coarse_mesh->computeForceDampingSparse(f, D_);
+
+	if (next != nullptr) {
+		next->computeForceDampingSparse(f, D_);
+	}
+}
+
+void MeshEmbedding::computeStiffnessSparse(vector<T> &K_) {
 	m_coarse_mesh->computeStiffnessSparse(K_);
 
 	if (next != nullptr) {
@@ -118,9 +133,6 @@ void MeshEmbedding::scatterDDofs(VectorXd &ydot, int nr) {
 	}
 
 	m_dense_mesh->updatePosNor();
-
-
-
 
 	if (next != nullptr) {
 		next->scatterDDofs(ydot, nr);
