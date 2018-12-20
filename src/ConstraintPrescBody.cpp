@@ -17,7 +17,6 @@ ConstraintPrescBody::ConstraintPrescBody(shared_ptr<Body> body, VectorXi prows, 
 void ConstraintPrescBody::computeJacEqR_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
 	int row = idxEM;
 	int col = m_body->idxM;
-	idxQ = col;
 	
 	Matrix6d I6 = - Matrix6d::Identity();
 
@@ -35,7 +34,6 @@ void ConstraintPrescBody::computeJacEqR_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd
 void ConstraintPrescBody::computeJacEqRSparse_(vector<T> &Gm, vector<T> &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
 	int row = idxEM;
 	int col = m_body->idxM;
-	idxQ = col;
 
 	for (int i = 0; i < nconEM; ++i) {
 		Gm.push_back(T(row + m_prows(i), col + m_prows(i), -1.0));

@@ -20,9 +20,8 @@ Constraint(0, joint->m_ndof, 0, 0), m_joint(joint), m_vel(vel)
 void ConstraintPrescJoint::computeJacEqR_(MatrixXd &Gr, MatrixXd &Grdot, VectorXd &gr, VectorXd &grdot, VectorXd &grddot) {
 	int row = idxER;
 	int col = m_joint->idxR;
-	idxQ = col;
 	nidxQ = m_joint->m_ndof;
-	MatrixXd In(m_joint->m_ndof);
+	MatrixXd In(m_joint->m_ndof, m_joint->m_ndof);
 	In.setIdentity();
 	In *= -1.0;
 
@@ -40,9 +39,8 @@ void ConstraintPrescJoint::computeJacEqR_(MatrixXd &Gr, MatrixXd &Grdot, VectorX
 void ConstraintPrescJoint::computeJacEqRSparse_(vector<T> &Gr, vector<T> &Grdot, VectorXd &gr, VectorXd &grdot, VectorXd &grddot) {
 	int row = idxER;
 	int col = m_joint->idxR;
-	idxQ = col;
 	nidxQ = m_joint->m_ndof;
-	MatrixXd In(m_joint->m_ndof);
+	MatrixXd In(m_joint->m_ndof, m_joint->m_ndof);
 	In.setIdentity();
 	In *= -1.0;
 

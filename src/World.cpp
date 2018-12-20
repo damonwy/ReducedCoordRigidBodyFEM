@@ -921,7 +921,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		density = 1.0;
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e4;
+		double young = 1e3;
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
@@ -959,24 +959,78 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[6]->m_qdot[0] = 30;
 		m_joints[7]->m_qdot[0] = 30;
 		
-		Floor f0(-21.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
+		Floor f0(-31.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
 		auto worm = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense", SOFT_INVERTIBLE);
 		worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->precomputeWeights();
-		worm->setDamping(1.0e1);
+		worm->setDamping(1.2);
 		worm->getDenseMesh()->setColor(worm_color);
-		worm->getCoarseMesh()->setFloor(-21.0);
+		worm->getCoarseMesh()->setFloor(-31.0);
 		worm->getCoarseMesh()->setYthreshold(0.0);
 	}
 	break;
+	case STARFISH:
+	{
+		m_h = 1.0e-2;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -0.0, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e4;
+		double possion = 0.35;
+		m_stiffness = 1.0e4;
+		m_damping = 1.0e3;
 
+		nlegs = 5;
+		nsegments = 8;
+
+		for (int k = 0; k < nlegs; ++k) {
+			for (int i = 0; i < nsegments; i++) {
+				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+
+				if (i == 0) {
+					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + 72 * k)/180.0*M_PI), 0.0, RESOURCE_DIR);
+				}
+				else {
+					auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, -0.5, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
+				}
+				//m_joints[i]->setStiffness(m_stiffness);
+				//m_joints[i]->setDamping(m_damping);
+			}
+		}
+
+		//m_joints[0]->m_qdot[0] = -1.0;
+		m_joints[16]->m_qdot[0] = -0.8;
+		//m_joints[16]->m_qdot[0] = -0.7;
+		//m_joints[24]->m_qdot[0] = -0.7;
+		//m_joints[32]->m_qdot[0] = -0.7;
+
+		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
+		starfish_color /= 255.0f;
+
+		Floor f0(-31.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
+		m_floors.push_back(f0);
+
+		auto starfish = addSoftBodyInvertibleFEM(0.1*density, young, possion, CO_ROTATED, RESOURCE_DIR, "starfish");
+
+		//auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "starfish", "starfish", SOFT_INVERTIBLE);
+		//starfish->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
+		//starfish->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
+		//starfish->precomputeWeights();
+		//starfish->setDamping(1.2);
+		starfish->setColor(starfish_color);
+		starfish->setFloor(-31.0);
+		//starfish->getCoarseMesh()->setYthreshold(0.0);
+	}
+	break;
 	default:
 		break;
 	}
-
 }
 
 shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, Material material, const string &RESOURCE_DIR, string file_name) {
@@ -1002,7 +1056,6 @@ shared_ptr<SoftBodyCorotationalLinear> World::addSoftBodyCorotationalLinearFEM(d
 	m_nsoftbodies++;
 	return softbody;
 }
-
 
 shared_ptr<Body> World::addBody(double density, Vector3d sides, Vector3d p, Matrix3d R, const string &RESOURCE_DIR, string file_name) {
 	auto body = make_shared<BodyCuboid>(density, sides);
@@ -1422,6 +1475,25 @@ void World::init() {
 		m_meshembeddings[0]->setAttachmentsByYZCircle(76.825, 7.225, Vector2d(0.0, 0.0), 2.9, m_bodies[7]);
 
 	}
+
+	if (m_type == STARFISH) {
+
+		for (int i = 0; i < nlegs; i++) {
+			double r_ = 4.0;
+			for (int j = 0; j < nsegments; j++) {
+				double theta = (18.0 + i * 72.0) / 180.0 * M_PI;
+				double x_, y_, z_;
+				x_ = (j * 10.0 + 5.0) * cos(theta);
+				y_ = - 0.5 * j;
+				z_ = - (j * 10.0 + 5.0) * sin(theta);
+				
+				m_softbodies[0]->setAttachmentsByYZCircle(x_, 4.5, Vector2d(y_, z_), r_, m_bodies[nsegments * i + j]);
+				r_ *= 0.8;
+
+			}
+		}
+	}
+
 
 	for (int i = 0; i < m_nsoftbodies; i++) {
 		m_softbodies[i]->countDofs(nm, nr);

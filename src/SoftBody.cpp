@@ -54,7 +54,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pq3.0zRa15.0", &input_mesh, &output_mesh);
+	tetrahedralize("pq2.0za15.0", &input_mesh, &output_mesh);//
 
 	double r = 0.01;
 
