@@ -35,7 +35,7 @@ public:
 	void setTransform(Matrix4d E);	
 	void setJoint(std::shared_ptr<Joint> joint) { m_joint = joint; };
 	void setAttachedColor(Vector3f color) { m_attached_color = color; }
-
+	void setDrawingOption(bool drawing) { m_isDrawing = drawing; }
 	std::string getName() const { return m_name; };
 	std::shared_ptr<Joint> getJoint() const { return m_joint; };
 
@@ -79,7 +79,7 @@ public:
 	Vector6d fgrav;
 	Matrix3d R_wi;
 	Matrix3d R_iw;
-
+	bool  m_isDrawing;
 	double m_damping;					// Viscous damping
 	std::shared_ptr<Joint> m_joint;		// Joint to parent
 	int idxM;							// Maximal indices
@@ -90,7 +90,6 @@ public:
 	Vector3f m_sliding_color;
 
 	Vector3f m_body_color;
-	bool m_isDrawing;
 	void toggleDrawing(bool isDrawing) { m_isDrawing = isDrawing; }
 protected:
 	std::shared_ptr<Shape> bodyShape;

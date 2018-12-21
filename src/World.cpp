@@ -978,37 +978,39 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
-		m_grav << 0.0, -0.0, 0.0;
+		m_grav << 0.0, -98.0, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e4;
+		double young = 1e3;
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
 
 		nlegs = 5;
-		nsegments = 8;
+		nsegments = 4;
 
 		for (int k = 0; k < nlegs; ++k) {
 			for (int i = 0; i < nsegments; i++) {
 				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
-
+				body->setDrawingOption(false);
 				if (i == 0) {
 					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + 72 * k)/180.0*M_PI), 0.0, RESOURCE_DIR);
 				}
 				else {
-					auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, -0.5, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
+					auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(20.0, -0.5, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
 				}
 				//m_joints[i]->setStiffness(m_stiffness);
 				//m_joints[i]->setDamping(m_damping);
 			}
 		}
 
-		//m_joints[0]->m_qdot[0] = -1.0;
-		m_joints[16]->m_qdot[0] = -0.8;
+		m_joints[0]->m_qdot[0] = -5.0;
+		m_joints[8]->m_qdot[0] = -5.0;
+
+		m_joints[16]->m_qdot[0] = -5.0;
 		//m_joints[16]->m_qdot[0] = -0.7;
-		//m_joints[24]->m_qdot[0] = -0.7;
-		//m_joints[32]->m_qdot[0] = -0.7;
+		m_joints[4]->m_qdot[0] = -7.0;
+		
 
 		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
 		starfish_color /= 255.0f;
@@ -1016,15 +1018,15 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Floor f0(-31.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		auto starfish = addSoftBodyInvertibleFEM(0.1*density, young, possion, CO_ROTATED, RESOURCE_DIR, "starfish");
+		//auto starfish = addSoftBodyInvertibleFEM(0.1*density, young, possion, CO_ROTATED, RESOURCE_DIR, "starfish");
 
-		//auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "starfish", "starfish", SOFT_INVERTIBLE);
+		auto starfish = addMeshEmbedding(0.01* density, young, possion, CO_ROTATED, RESOURCE_DIR, "starfish_coarse_", "starfish", SOFT_INVERTIBLE);
 		//starfish->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		//starfish->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
-		//starfish->precomputeWeights();
-		//starfish->setDamping(1.2);
-		starfish->setColor(starfish_color);
-		starfish->setFloor(-31.0);
+		starfish->precomputeWeights();
+		starfish->setDamping(1.3);
+		starfish->getDenseMesh()->setColor(starfish_color);
+		//starfish->setFloor(-31.0);
 		//starfish->getCoarseMesh()->setYthreshold(0.0);
 	}
 	break;
@@ -1479,16 +1481,16 @@ void World::init() {
 	if (m_type == STARFISH) {
 
 		for (int i = 0; i < nlegs; i++) {
-			double r_ = 4.0;
+			double r_ =5.0;
 			for (int j = 0; j < nsegments; j++) {
 				double theta = (18.0 + i * 72.0) / 180.0 * M_PI;
 				double x_, y_, z_;
-				x_ = (j * 10.0 + 5.0) * cos(theta);
+				x_ = (j * 20.0 + 10.0) * cos(theta);
 				y_ = - 0.5 * j;
-				z_ = - (j * 10.0 + 5.0) * sin(theta);
+				z_ = - (j * 20.0 + 10.0) * sin(theta);
 				
-				m_softbodies[0]->setAttachmentsByYZCircle(x_, 4.5, Vector2d(y_, z_), r_, m_bodies[nsegments * i + j]);
-				r_ *= 0.8;
+				m_meshembeddings[0]->setAttachmentsByYZCircle(x_, 9.5, Vector2d(y_, z_), r_, m_bodies[nsegments * i + j]);
+				//r_ *= 0.8;
 
 			}
 		}
