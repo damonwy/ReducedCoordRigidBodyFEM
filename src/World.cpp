@@ -54,6 +54,9 @@
 #include "WrapDoubleCylinder.h"
 #include "Vector.h"
 
+#include "Skeleton.h"
+#include "TetgenHelper.h"
+
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
@@ -942,10 +945,37 @@ void World::load(const std::string &RESOURCE_DIR) {
 			//m_joints[i]->setDamping(m_damping);
 		}
 
+		Vector3d start_pt = Vector3d::Zero();
+		Vector3d end_pt = Vector3d(80.0, 0.0, 0.0);
+		int nsegments = 8;
+		int nsamples = 5;
+
+		vector<std::shared_ptr<Node>> additional_nodes;
+
+		for (int i = 0; i < nsegments; ++i) {
+			Vector3d n0 = Vector3d(-40.0 + i * 10.0, 3.0, 0.0);
+			Vector3d n1 = n0;
+			n1.x() += 10.0;
+			
+			for (int s = 0; s < nsamples; s++) {
+				double f = double(s) / double(nsamples);
+				auto node = make_shared<Node>();
+				node->i = nsamples * i + s;
+				node->x = f * n1 + (1.0 - f) * n0;
+				additional_nodes.push_back(node);
+			}
+		}
+	
+		TetgenHelper::createNodeFile(additional_nodes, (char *)(RESOURCE_DIR + "worm8_coarse.a.node").c_str());
+
+
 		Vector3f worm_color = Vector3f(102.0f, 204.0f, 0.0f);
 		worm_color /= 255.0f;
 
 		m_joints[0]->m_qdot[0] = -110;
+
+
+
 		//m_joints[1]->m_qdot[0] = 5;
 
 		//m_joints[2]->m_qdot[0] = 2;
@@ -994,7 +1024,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				body->setDrawingOption(false);
 				if (i == 0) {
 					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + 72 * k)/180.0*M_PI), 0.0, RESOURCE_DIR);
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + 72 * k)/180.0*M_PI), 0.0, RESOURCE_DIR);
 				}
 				else {
 					auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(20.0, -0.5, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
@@ -1003,6 +1033,16 @@ void World::load(const std::string &RESOURCE_DIR) {
 				//m_joints[i]->setDamping(m_damping);
 			}
 		}
+
+		Matrix4d E0 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 / 180.0 * M_PI)), Vector3d::Zero());
+		double len_skeleton = 20.0;
+		//auto skeleton0 = make_shared<Skeleton>(E0, len_skeleton, nsegments);
+		int n_samples;
+
+		Vector3d start_pt = Vector3d::Zero();
+		Vector3d end_pt = Vector3d(len_skeleton * cos( 18.0 / 180.0 * M_PI),0.0, len_skeleton * sin(18.0 / 180.0 * M_PI));
+
+
 
 		m_joints[0]->m_qdot[0] = -5.0;
 		m_joints[8]->m_qdot[0] = -5.0;

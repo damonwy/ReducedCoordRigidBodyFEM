@@ -52,10 +52,14 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 
 	// Tetrahedralize 3D mesh
-	tetgenio input_mesh, output_mesh;
+	tetgenio input_mesh, output_mesh, additional_node;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pq5.0za200.0", &input_mesh, &output_mesh);//
-
+	additional_node.load_node((char *)(RESOURCE_DIR + MESH_NAME + ".a").c_str());
+	cout << additional_node.numberofpoints << endl;
+	tetrahedralize("pq5.0za200.0i", &input_mesh, &output_mesh, &additional_node);//
+	output_mesh.save_nodes("outmesh");
+	output_mesh.save_elements("outmesh");
+	output_mesh.save_faces("outmesh");
 	double r = 0.01;
 
 	// Create Nodes

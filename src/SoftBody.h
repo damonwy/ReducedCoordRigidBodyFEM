@@ -28,6 +28,7 @@ public:
 	SoftBody(double density, double young, double poisson, Material material);
 	virtual ~SoftBody() {}
 
+	void insertAdditionalPoints();
 	virtual void load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME);
 	virtual void init();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
