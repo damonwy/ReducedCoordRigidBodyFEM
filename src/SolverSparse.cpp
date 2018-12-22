@@ -333,7 +333,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
-			rhsG = -gdot - 100.0 * g;// todo!!!!!
+			rhsG = -gdot - 10.0 * g;// todo!!!!!
 		}
 
 		if (ni > 0) {

@@ -56,6 +56,8 @@
 
 #include "Skeleton.h"
 #include "TetgenHelper.h"
+#include "Line.h"
+#include "Surface.h"
 
 using namespace std;
 using namespace Eigen;
@@ -220,7 +222,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 				addConstraintJointLimit(m_joints[i], -M_PI / 4, M_PI / 4);
 			}
 		}
-
 	}
 
 	break;
@@ -918,16 +919,16 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	case WORM:
 	{
-		m_h = 1.0e-2;
+		m_h = 1.0e-1;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e3;
-		double possion = 0.35;
+		double young = 1e4;
+		double possion = 0.4;
 		m_stiffness = 1.0e4;
-		m_damping = 1.0e3;
+		m_damping = 1.0e2;
 
 		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
 
@@ -942,7 +943,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 			//m_joints[i]->setStiffness(m_stiffness);
-			//m_joints[i]->setDamping(m_damping);
+			m_joints[i]->setDamping(m_damping);
 		}
 
 		Vector3d start_pt = Vector3d::Zero();
@@ -951,12 +952,15 @@ void World::load(const std::string &RESOURCE_DIR) {
 		int nsamples = 5;
 
 		vector<std::shared_ptr<Node>> additional_nodes;
-
+		
 		for (int i = 0; i < nsegments; ++i) {
-			Vector3d n0 = Vector3d(-40.0 + i * 10.0, 3.0, 0.0);
+			Vector3d n0 = Vector3d(i * 10.0, 0.0, 0.0);
 			Vector3d n1 = n0;
 			n1.x() += 10.0;
-			
+			auto line = make_shared<Line>(n0, n1);
+			line->setBody(m_bodies[i]);
+			m_lines.push_back(line);
+
 			for (int s = 0; s < nsamples; s++) {
 				double f = double(s) / double(nsamples);
 				auto node = make_shared<Node>();
@@ -968,40 +972,108 @@ void World::load(const std::string &RESOURCE_DIR) {
 	
 		TetgenHelper::createNodeFile(additional_nodes, (char *)(RESOURCE_DIR + "worm8_coarse.a.node").c_str());
 
-
 		Vector3f worm_color = Vector3f(102.0f, 204.0f, 0.0f);
 		worm_color /= 255.0f;
 
-		m_joints[0]->m_qdot[0] = -110;
-
-
+		m_joints[0]->m_qdot[0] = -11;
 
 		//m_joints[1]->m_qdot[0] = 5;
 
 		//m_joints[2]->m_qdot[0] = 2;
 		//m_joints[3]->m_qdot[0] = 2;
 
-		m_joints[1]->m_qdot[0] = 100;
-		m_joints[3]->m_qdot[0] = 20;
-		m_joints[4]->m_qdot[0] = 20;
-		m_joints[5]->m_qdot[0] = 20;
+		m_joints[1]->m_qdot[0] = 10;
+		m_joints[3]->m_qdot[0] = 2;
+		m_joints[4]->m_qdot[0] = 2;
+		m_joints[5]->m_qdot[0] = 2;
 
-		m_joints[6]->m_qdot[0] = 30;
-		m_joints[7]->m_qdot[0] = 30;
+		m_joints[6]->m_qdot[0] = 3;
+		m_joints[7]->m_qdot[0] = 3;
 		
 		Floor f0(-31.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
 		auto worm = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense", SOFT_INVERTIBLE);
-		worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
+		//worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->precomputeWeights();
-		worm->setDamping(1.2);
+		worm->setDamping(10.0);
 		worm->getDenseMesh()->setColor(worm_color);
 		worm->getCoarseMesh()->setFloor(-31.0);
 		worm->getCoarseMesh()->setYthreshold(0.0);
 	}
 	break;
+
+	case CROSS: {
+		m_h = 1.0e-1;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98.0*5.0, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e3;
+		double possion = 0.4;
+		m_stiffness = 1.0e4;
+		m_damping = 1.0e1;
+
+		nlegs = 4;
+		nsegments = 4;
+		double len_segment = 10.0;
+		double rotation = 360.0 / nlegs;
+
+		for (int k = 0; k < nlegs; ++k) {
+			for (int i = 0; i < nsegments; i++) {
+				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+				if (i == 0) {
+					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (0.0 + rotation * k) / 180.0 * M_PI), 0.0, RESOURCE_DIR);
+				}
+				else {
+					auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
+				}
+				//m_joints[i]->setStiffness(m_stiffness);
+				m_joints[i]->setDamping(m_damping);
+			}
+		}
+
+		int nsamples = 4;		
+		vector<std::shared_ptr<Node>> additional_nodes;
+		int idx_body = 0;
+		addSkeleton(Vector3d::Zero(), Vector3d(40.0, 0.0, 0.0), nsegments, nsamples, idx_body, additional_nodes);
+		addSkeleton(Vector3d::Zero(), Vector3d(0.0, 0.0, -40.0), nsegments, nsamples, idx_body, additional_nodes);
+		addSkeleton(Vector3d::Zero(), Vector3d(-40.0, 0.0, 0.0), nsegments, nsamples, idx_body, additional_nodes);
+		addSkeleton(Vector3d::Zero(), Vector3d(0.0, 0.0, 40.0), nsegments, nsamples, idx_body, additional_nodes);
+
+		TetgenHelper::createNodeFile(additional_nodes, (char *)(RESOURCE_DIR + "cross_coarse.a.node").c_str());
+
+		Vector3f cross_color = Vector3f(102.0f, 204.0f, 0.0f);
+		cross_color /= 255.0f;
+
+		m_joints[0]->m_qdot[0] = 5.0;
+		m_joints[1]->m_qdot[0] = 5;
+		m_joints[2]->m_qdot[0] = 5;
+		m_joints[3]->m_qdot[0] = 5;
+
+		m_joints[4]->m_qdot[0] = 5.0;
+		m_joints[5]->m_qdot[0] = 6.0;
+		m_joints[6]->m_qdot[0] = 3.0;
+		m_joints[7]->m_qdot[0] = 3.0;
+		m_joints[8]->m_qdot[0] = 2.0;
+		//m_joints[12]->m_qdot[0] = 5;
+		double y_floor = -21.0;
+
+		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
+		m_floors.push_back(f0);
+
+		auto cross = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "cross_coarse", "cross_dense", SOFT_INVERTIBLE);
+		cross->precomputeWeights();
+		cross->setDamping(15.0);
+		cross->getDenseMesh()->setColor(cross_color);
+		cross->getCoarseMesh()->setFloor(y_floor);
+
+	}
+		break;
+
 	case STARFISH:
 	{
 		m_h = 1.0e-2;
@@ -1014,9 +1086,17 @@ void World::load(const std::string &RESOURCE_DIR) {
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
-
+		double mesh_damping = 4.0;
+		double y_floor = -31.0;
 		nlegs = 5;
 		nsegments = 4;
+		double rotation = 360.0 / nlegs;
+		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
+		starfish_color /= 255.0f;
+		std::string coarse_file_name = "starfish_coarse2";
+		std::string dense_file_name = "starfish2";
+
+		double len_segment = 20.0;
 
 		for (int k = 0; k < nlegs; ++k) {
 			for (int i = 0; i < nsegments; i++) {
@@ -1024,10 +1104,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 				body->setDrawingOption(false);
 				if (i == 0) {
 					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-					addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + 72 * k)/180.0*M_PI), 0.0, RESOURCE_DIR);
+					addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k)/180.0 * M_PI), 0.0, RESOURCE_DIR);
 				}
 				else {
-					auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(20.0, -0.5, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
+					auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
 				}
 				//m_joints[i]->setStiffness(m_stiffness);
 				//m_joints[i]->setDamping(m_damping);
@@ -1035,14 +1115,20 @@ void World::load(const std::string &RESOURCE_DIR) {
 		}
 
 		Matrix4d E0 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 / 180.0 * M_PI)), Vector3d::Zero());
-		double len_skeleton = 20.0;
-		//auto skeleton0 = make_shared<Skeleton>(E0, len_skeleton, nsegments);
-		int n_samples;
+		double len_skeleton = nsegments * len_segment;
 
-		Vector3d start_pt = Vector3d::Zero();
-		Vector3d end_pt = Vector3d(len_skeleton * cos( 18.0 / 180.0 * M_PI),0.0, len_skeleton * sin(18.0 / 180.0 * M_PI));
+		int nsamples = 4;
 
+		vector<std::shared_ptr<Node>> additional_nodes;
+		int idx_body = 0;
+		Vector3d end_pt;
+		for (int i = 0; i < nlegs; ++i) {
+			double theta = (18.0 + rotation * i) / 180.0 * M_PI;
+			end_pt = len_skeleton * Vector3d(cos(theta), 0.0, sin(theta));
+			addSkeleton(Vector3d::Zero(), end_pt, nsegments, nsamples, idx_body, additional_nodes);
+		}
 
+		//TetgenHelper::createNodeFile(additional_nodes, (char *)(RESOURCE_DIR + coarse_file_name + ".a.node").c_str());
 
 		m_joints[0]->m_qdot[0] = -5.0;
 		m_joints[8]->m_qdot[0] = -5.0;
@@ -1050,24 +1136,16 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[16]->m_qdot[0] = -5.0;
 		//m_joints[16]->m_qdot[0] = -0.7;
 		m_joints[4]->m_qdot[0] = -7.0;
-		
-
-		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
-		starfish_color /= 255.0f;
-
-		Floor f0(-31.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
+			
+		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		//auto starfish = addSoftBodyInvertibleFEM(0.1*density, young, possion, CO_ROTATED, RESOURCE_DIR, "starfish");
-
-		auto starfish = addMeshEmbedding(0.01* density, young, possion, CO_ROTATED, RESOURCE_DIR, "starfish_coarse_", "starfish", SOFT_INVERTIBLE);
-		//starfish->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
-		//starfish->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
+		auto starfish = addMeshEmbedding(0.01* density, young, possion, CO_ROTATED, RESOURCE_DIR, coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
 		starfish->precomputeWeights();
-		starfish->setDamping(1.3);
+		starfish->setDamping(mesh_damping);
 		starfish->getDenseMesh()->setColor(starfish_color);
-		//starfish->setFloor(-31.0);
-		//starfish->getCoarseMesh()->setYthreshold(0.0);
+		starfish->getCoarseMesh()->setFloor(y_floor);
+
 	}
 	break;
 	default:
@@ -1335,6 +1413,23 @@ shared_ptr<WrapDoubleCylinder> World::addWrapDoubleCylinder(shared_ptr<Body> b0,
 	return wrapDoubleCylinder;
 }
 
+void World::addSkeleton(Vector3d x0, Vector3d x1, int nlines, int nsamples, int &idx_start_body, vector<shared_ptr<Node>> &nodes) {
+	double len_skeleton = (x1 - x0).norm();
+	double len_line = len_skeleton / nlines;
+	Vector3d dir = (x1 - x0) / len_skeleton;
+	for (int i = 0; i < nlines; ++i) {
+		Vector3d n0 = x0 + i * len_line * dir;
+		Vector3d n1 = n0 + len_line * dir;
+		
+		auto line = make_shared<Line>(n0, n1);
+		line->setBody(m_bodies[i + idx_start_body]);
+		m_lines.push_back(line);
+		line->addSampleNodes(nsamples, nodes);
+	}
+
+	idx_start_body = idx_start_body + nlines;
+}
+
 void World::init() {
 	for (int i = 0; i < m_nbodies; i++) {
 		m_bodies[i]->init(nm);
@@ -1502,40 +1597,37 @@ void World::init() {
 
 	if (m_type == WORM) {
 
-		/*m_meshembeddings[0]->setAttachmentsByYZCircle(4.15, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[0]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[1]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(25.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[2]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(35.85, 5.83, Vector2d(0.0, 0.0), 2.0, m_bodies[3]);
-*/
-		m_meshembeddings[0]->setAttachmentsByYZCircle(3.175, 6.825, Vector2d(0.0, 0.0), 2.0, m_bodies[0]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(15.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[1]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(25.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[2]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(35.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[3]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(45.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[4]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(55.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[5]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(65.0, 4.9, Vector2d(0.0, 0.0), 2.0, m_bodies[6]);
-		m_meshembeddings[0]->setAttachmentsByYZCircle(76.825, 7.225, Vector2d(0.0, 0.0), 2.9, m_bodies[7]);
+		for (int i = 0; i < (int)m_lines.size(); ++i) {
+			m_meshembeddings[0]->setAttachmentsByLine(m_lines[i]);
+		}
 
 	}
 
-	if (m_type == STARFISH) {
-
-		for (int i = 0; i < nlegs; i++) {
-			double r_ =5.0;
-			for (int j = 0; j < nsegments; j++) {
-				double theta = (18.0 + i * 72.0) / 180.0 * M_PI;
-				double x_, y_, z_;
-				x_ = (j * 20.0 + 10.0) * cos(theta);
-				y_ = - 0.5 * j;
-				z_ = - (j * 20.0 + 10.0) * sin(theta);
-				
-				m_meshembeddings[0]->setAttachmentsByYZCircle(x_, 9.5, Vector2d(y_, z_), r_, m_bodies[nsegments * i + j]);
-				//r_ *= 0.8;
-
-			}
+	if (m_type == CROSS) {	
+		for (int i = 0; i < (int)m_lines.size(); ++i) {
+			m_meshembeddings[0]->setAttachmentsByLine(m_lines[i]);
 		}
 	}
 
+	if (m_type == STARFISH) {
+		for (int i = 0; i < (int)m_lines.size(); ++i) {
+			//m_meshembeddings[0]->setAttachmentsByLine(m_lines[i]);
+		}
+		//for (int i = 0; i < nlegs; i++) {
+		//	double r_ =5.0;
+		//	for (int j = 0; j < nsegments; j++) {
+		//		double theta = (18.0 + i * 72.0) / 180.0 * M_PI;
+		//		double x_, y_, z_;
+		//		x_ = (j * 20.0 + 10.0) * cos(theta);
+		//		y_ = - 0.5 * j;
+		//		z_ = - (j * 20.0 + 10.0) * sin(theta);
+		//		
+		//		m_meshembeddings[0]->setAttachmentsByYZCircle(x_, 9.5, Vector2d(y_, z_), r_, m_bodies[nsegments * i + j]);
+		//		//r_ *= 0.8;
+
+		//	}
+		//}
+	}
 
 	for (int i = 0; i < m_nsoftbodies; i++) {
 		m_softbodies[i]->countDofs(nm, nr);
