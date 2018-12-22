@@ -13,6 +13,9 @@
 class Body;
 class Program;
 class MatrixStack;
+class Line;
+class Surface;
+
 typedef Eigen::Triplet<double> T;
 
 class MeshEmbedding {
@@ -32,6 +35,7 @@ public:
 	virtual void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	void setAttachmentsByYZCircle(double x, double range, Vector2d O, double r, std::shared_ptr<Body> body);
 	void setAttachmentsByXZCircle(double y, double range, Vector2d O, double r, std::shared_ptr<Body> body);
+	void setAttachmentsByLine(std::shared_ptr<Line> l);
 	virtual void setDamping(double damping) { m_damping = damping; m_coarse_mesh->setDamping(damping); }
 	virtual void computeMassSparse(std::vector<T> &M_);
 	virtual void computeJacobianSparse(std::vector<T> &J_);
@@ -48,7 +52,8 @@ public:
 	inline void toggleDrawingCoarseMesh(bool isCoarseMesh) { m_isCoarseMesh = isCoarseMesh; if (next != nullptr) { next->toggleDrawingCoarseMesh(isCoarseMesh); }
 	}
 
-	inline std::shared_ptr<SoftBody> getDenseMesh() { return m_dense_mesh; }
+	//inline std::shared_ptr<SoftBody> getDenseMesh() { return m_dense_mesh; }
+	inline std::shared_ptr<Surface> getDenseMesh() { return m_dense_mesh; }
 	inline std::shared_ptr<SoftBody> getCoarseMesh() { return m_coarse_mesh; }
 	bool m_isDenseMesh;
 	bool m_isCoarseMesh;
@@ -56,7 +61,8 @@ public:
 
 	std::shared_ptr<MeshEmbedding> next;
 protected:
-	std::shared_ptr<SoftBody> m_dense_mesh;
+	//std::shared_ptr<SoftBody> m_dense_mesh;
+	std::shared_ptr<Surface> m_dense_mesh;
 	std::shared_ptr<SoftBody> m_coarse_mesh;
 	double m_damping;
 

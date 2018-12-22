@@ -661,4 +661,11 @@ inline int getThreadsNumber(int n, int min_n) {
 	return tn;
 }
 
+
+inline bool isInLine() {
+
+
+
+}
+
 #endif // MUSCLEMASS_SRC_MLCOMMON_H_

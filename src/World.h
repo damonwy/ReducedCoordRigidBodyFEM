@@ -43,6 +43,8 @@ class WrapCylinder;
 class WrapDoubleCylinder;
 class MeshEmbedding;
 class MeshEmbeddingNull;
+class Line;
+class Node;
 
 enum WorldType {
 	SERIAL_CHAIN,
@@ -72,6 +74,7 @@ enum WorldType {
 	MESH_EMBEDDING,
 	HUMAN_BODY,
 	WORM,
+	CROSS,
 	STARFISH
 };
 
@@ -234,6 +237,13 @@ public:
 		int num_points,
 		const std::string &RESOURCE_DIR);
 
+	void addSkeleton(
+	Vector3d x0,
+	Vector3d x1,
+	int nlines,
+	int nsamples,
+	int &idx_start_body,
+	std::vector<std::shared_ptr<Node>> &nodes);
 
 	Energy computeEnergy();
 
@@ -333,6 +343,8 @@ private:
 	std::vector<std::shared_ptr<Deformable>> m_deformables;
 	std::vector<std::shared_ptr<Spring>> m_springs;
 	std::vector<std::shared_ptr<Constraint>> m_constraints;
+	std::vector<std::shared_ptr<Line> > m_lines;
+
 	std::vector<Floor> m_floors;
 	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;
 	typedef std::map<int, std::shared_ptr<Body>> MapBodyUID;

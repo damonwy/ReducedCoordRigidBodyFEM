@@ -5,24 +5,30 @@
 #include "Tetrahedron.h"
 #include "Body.h"
 #include "FaceTriangle.h"
+#include "Line.h"
+#include "Surface.h"
+
 using namespace std;
 using namespace Eigen;
 
 MeshEmbedding::MeshEmbedding(double density, double young, double possion, Material material, SoftBodyType type) {
 	if (type == SOFT_INVERTIBLE) {
-		auto dense_ptr = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
+		auto dense_ptr = make_shared<Surface>();
+		//auto dense_ptr = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
 		auto coarse_ptr = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
 		m_dense_mesh = dense_ptr;
 		m_coarse_mesh = coarse_ptr;
 	}
 	else if (type == SOFT_COROTATED) {
-		auto dense_ptr = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
+		auto dense_ptr = make_shared<Surface>();
+		//auto dense_ptr = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
 		m_dense_mesh = dense_ptr;
 		auto coarse_ptr = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
 		m_coarse_mesh = coarse_ptr;
 	}
 	else {
-		m_dense_mesh = make_shared<SoftBody>(density, young, possion, material);
+		m_dense_mesh = make_shared<Surface>();
+		//m_dense_mesh = make_shared<SoftBody>(density, young, possion, material);
 		m_coarse_mesh = make_shared<SoftBody>(density, young, possion, material);
 	}
 
@@ -33,7 +39,8 @@ MeshEmbedding::MeshEmbedding(double density, double young, double possion, Mater
 
 void MeshEmbedding::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	if (m_isDenseMesh) {
-		m_dense_mesh->draw(MV, prog, progSimple, P);
+		//m_dense_mesh->draw(MV, prog, progSimple, P);
+		m_dense_mesh->draw(MV, prog, P);
 	}
 
 	if (m_isCoarseMesh) {
@@ -209,4 +216,9 @@ void MeshEmbedding::setAttachmentsByYZCircle(double x, double range, Vector2d O,
 
 void MeshEmbedding::setAttachmentsByXZCircle(double y, double range, Vector2d O, double r, shared_ptr<Body> body) {
 	m_coarse_mesh->setAttachmentsByXZCircle(y, range, O, r, body);
+}
+
+void  MeshEmbedding::setAttachmentsByLine(shared_ptr<Line> l) {
+	m_coarse_mesh->setAttachmentsByLine(l);
+
 }

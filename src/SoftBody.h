@@ -20,6 +20,8 @@ class Body;
 class FaceTriangle;
 class Tetrahedron;
 class Vector;
+class Line;
+
 typedef Eigen::Triplet<double> T;
 class SoftBody {
 
@@ -28,6 +30,7 @@ public:
 	SoftBody(double density, double young, double poisson, Material material);
 	virtual ~SoftBody() {}
 
+	void insertAdditionalPoints() {}
 	virtual void load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME);
 	virtual void init();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
@@ -54,6 +57,8 @@ public:
 	inline void setColor(Vector3f color) { m_color = color; }
 	void setAttachments(int id, std::shared_ptr<Body> body);
 	void setAttachmentsByLine(Vector3d dir, Vector3d orig, std::shared_ptr<Body> body);
+	void setAttachmentsByLine(std::shared_ptr<Line> l, std::shared_ptr<Body> body);
+	void setAttachmentsByLine(std::shared_ptr<Line> l);
 	void setAttachmentsByXYSurface(double z, double range, Vector2d xrange, Vector2d yrange, std::shared_ptr<Body> body);
 	void setAttachmentsByYZSurface(double x, double range, Vector2d yrange, Vector2d zrange, std::shared_ptr<Body> body);
 	void setAttachmentsByXZSurface(double y, double range, Vector2d xrange, Vector2d zrange, std::shared_ptr<Body> body);
@@ -72,7 +77,6 @@ public:
 	inline void setYthreshold(double collision_y) { m_collision_y = collision_y; }
 	void setDamping(double damping) { m_damping = damping; }
 	inline bool getInvertiblity() { return m_isInvertible; }
-
 
 	inline const std::vector<std::shared_ptr<Node> > & getNodes() const { return m_nodes; }
 	inline const std::vector<std::shared_ptr<Tetrahedron> > & getTets() const { return m_tets; }
