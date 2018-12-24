@@ -252,7 +252,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			Mm_sp.setFromTriplets(Mm_.begin(), Mm_.end());
 		}
 		
-
+		//*(m_world->scenefcnPtr)(m_world->getTime());
+		sceneFcn(*m_world, &World::scenefcnPtr, m_world->getTime());
+		
 		body0->computeGrav(grav, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);
 		deformable0->computeForce(grav, fm);

@@ -6,12 +6,13 @@
 #include "MatrixStack.h"
 #include "Program.h"
 #include "Shape.h"
-
+#include "Constraint.h"
+#include "ConstraintPrescJoint.h"
 using namespace std;
 using namespace Eigen;
 
 Joint::Joint() {
-	presc = false;
+	presc = nullptr;
 }
 
 Joint::Joint(shared_ptr<Body> body, int ndof, shared_ptr<Joint> parent) :
@@ -53,7 +54,7 @@ m_ndof(ndof)
 	V.setZero();
 	Vdot.setZero();
 
-	presc = false;
+	presc = nullptr;
 }
 
 void Joint::load(const string &RESOURCE_DIR, string joint_shape) {
@@ -169,7 +170,7 @@ void Joint::computeInertia() {
 
 void Joint::computeForceStiffness(VectorXd &fr, MatrixXd &Kr) {
 	// Computes joint stiffness force vector and matrix
-	if (presc == false) {
+	if (presc == nullptr) {
 		int row = this->idxR;
 		// Add the joint torque here rather than having a separate function
 		fr.segment(row, m_ndof).noalias() += m_tau - m_Kr * m_q;
@@ -185,7 +186,7 @@ void Joint::computeForceStiffness(VectorXd &fr, MatrixXd &Kr) {
 
 void Joint::computeForceStiffnessSparse(VectorXd &fr, vector<T> &Kr_) {
 	// Computes joint stiffness force vector and matrix
-	if (presc == false) {
+	if (presc == nullptr) {
 		int row = this->idxR;
 		// Add the joint torque here rather than having a separate function
 		fr.segment(row, m_ndof) += m_tau - m_Kr * m_q;
@@ -202,7 +203,7 @@ void Joint::computeForceStiffnessSparse(VectorXd &fr, vector<T> &Kr_) {
 
 void Joint::computeForceDamping(VectorXd &fr, MatrixXd &Dr) {
 	// Computes joint damping force vector and matrix
-	if (presc == false) {
+	if (presc == nullptr) {
 		int row = this->idxR;
 		fr.segment(row, m_ndof).noalias() -= m_Dr * m_qdot;
 		MatrixXd I(m_ndof, m_ndof);
@@ -216,7 +217,7 @@ void Joint::computeForceDamping(VectorXd &fr, MatrixXd &Dr) {
 }
 
 void Joint::computeForceDampingSparse(VectorXd &fr, vector<T> &Dr_) {
-	if (presc == false) {
+	if (presc == nullptr) {
 		int row = this->idxR;
 		fr.segment(row, m_ndof) -= m_Dr * m_qdot;
 

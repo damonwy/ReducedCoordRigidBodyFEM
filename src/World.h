@@ -286,6 +286,8 @@ public:
 	std::shared_ptr<Spring> getSpring0() const { return m_springs[0]; }
 	std::shared_ptr<MeshEmbedding> getMeshEmbedding0() const { return m_meshembeddings[0]; }
 
+
+
 	Vector2d getTspan() const { return m_tspan; }
 	int getNsteps();
 
@@ -315,6 +317,9 @@ public:
 
 	int nlegs;
 	int nsegments;
+	void (World::*scenefcnPtr)(double t);
+
+	void sceneCross(double t);
 
 private:
 	Energy m_energy;		// the energy in current state
@@ -331,7 +336,7 @@ private:
 	bool isrightleg;
 
 	double m_Hexpected;		// used to check correctness
-
+	
 	
 
 	std::vector<std::shared_ptr<Body>> m_bodies;

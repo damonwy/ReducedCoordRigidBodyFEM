@@ -54,9 +54,9 @@ void MeshEmbedding::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 
 void MeshEmbedding::load(const string &RESOURCE_DIR, const string &COARSE_MESH_NAME, const string &DENSE_MESH_NAME) {
 
-	m_dense_mesh->load(RESOURCE_DIR, DENSE_MESH_NAME);
+	
 	m_coarse_mesh->load(RESOURCE_DIR, COARSE_MESH_NAME);
-
+	m_dense_mesh->load(RESOURCE_DIR, DENSE_MESH_NAME);
 
 }
 

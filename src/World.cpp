@@ -33,6 +33,8 @@
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
 #include "ConstraintAttachSoftBody.h"
+#include "ConstraintPrescBody.h"
+#include "ConstraintPrescJoint.h"
 
 #include "Deformable.h"
 #include "DeformableSpring.h"
@@ -54,7 +56,6 @@
 #include "WrapDoubleCylinder.h"
 #include "Vector.h"
 
-#include "Skeleton.h"
 #include "TetgenHelper.h"
 #include "Line.h"
 #include "Surface.h"
@@ -1035,6 +1036,13 @@ void World::load(const std::string &RESOURCE_DIR) {
 				m_joints[i]->setDamping(m_damping);
 			}
 		}
+		//auto con0 = make_shared<ConstraintPrescBody>(m_bodies[3], Vector3d(1, 3, 5), REDMAX_EULER);
+		auto con0 = make_shared<ConstraintPrescJoint>(m_joints[3], REDMAX_EULER);
+		scenefcnPtr = &World::sceneCross;
+		m_nconstraints++;
+		m_constraints.push_back(con0);
+		//scene.constraints{ end + 1 } = reduced.ConstraintPrescBody(scene.bodies{ end }, [2 4 6], vel);
+		//scene.constraints{ end + 1 } = reduced.ConstraintPrescJoint(scene.joints{ 3 }, vel);
 
 		int nsamples = 4;		
 		vector<std::shared_ptr<Node>> additional_nodes;
@@ -1113,29 +1121,27 @@ void World::load(const std::string &RESOURCE_DIR) {
 				//m_joints[i]->setDamping(m_damping);
 			}
 		}
-
-		Matrix4d E0 = SE3::RpToE(SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 / 180.0 * M_PI)), Vector3d::Zero());
 		double len_skeleton = nsegments * len_segment;
 
-		int nsamples = 4;
+		int nsamples = 1;
 
 		vector<std::shared_ptr<Node>> additional_nodes;
 		int idx_body = 0;
 		Vector3d end_pt;
-		for (int i = 0; i < nlegs; ++i) {
+		for (int i = 0; i < 1; ++i) {
 			double theta = (18.0 + rotation * i) / 180.0 * M_PI;
-			end_pt = len_skeleton * Vector3d(cos(theta), 0.0, sin(theta));
+			end_pt = len_skeleton * Vector3d(cos(theta), 0.0, -sin(theta));
 			addSkeleton(Vector3d::Zero(), end_pt, nsegments, nsamples, idx_body, additional_nodes);
 		}
+		//addSkeleton(Vector3d::Zero(), Vector3d(1.0, 0.0, 0.0), 1, nsamples, idx_body, additional_nodes);
+		TetgenHelper::createNodeFile(additional_nodes, (char *)(RESOURCE_DIR + coarse_file_name + ".a.node").c_str());
 
-		//TetgenHelper::createNodeFile(additional_nodes, (char *)(RESOURCE_DIR + coarse_file_name + ".a.node").c_str());
+		//m_joints[0]->m_qdot[0] = -5.0;
+		//m_joints[8]->m_qdot[0] = -5.0;
 
-		m_joints[0]->m_qdot[0] = -5.0;
-		m_joints[8]->m_qdot[0] = -5.0;
-
-		m_joints[16]->m_qdot[0] = -5.0;
-		//m_joints[16]->m_qdot[0] = -0.7;
-		m_joints[4]->m_qdot[0] = -7.0;
+		//m_joints[16]->m_qdot[0] = -5.0;
+		////m_joints[16]->m_qdot[0] = -0.7;
+		//m_joints[4]->m_qdot[0] = -7.0;
 			
 		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
@@ -1611,7 +1617,7 @@ void World::init() {
 
 	if (m_type == STARFISH) {
 		for (int i = 0; i < (int)m_lines.size(); ++i) {
-			//m_meshembeddings[0]->setAttachmentsByLine(m_lines[i]);
+			m_meshembeddings[0]->setAttachmentsByLine(m_lines[i]);
 		}
 		//for (int i = 0; i < nlegs; i++) {
 		//	double r_ =5.0;
@@ -1678,6 +1684,7 @@ void World::init() {
 
 	for (int i = 0; i < m_nconstraints; i++) {
 		m_constraints[i]->countDofs(nem, ner, nim, nir);
+		m_constraints[i]->init();
 		if (i < m_nconstraints - 1) {
 			m_constraints[i]->next = m_constraints[i + 1];
 		}
@@ -1796,4 +1803,11 @@ shared_ptr<Joint> World::getJoint(int uid) {
 shared_ptr<Joint> World::getJoint(const string &name) {
 	MapJointName::const_iterator it = m_jointName.find(name);
 	return (it == m_jointName.end() ? NULL : it->second);
+}
+
+void World::sceneCross(double t) {
+
+	m_joints[3]->presc->m_q[0] = 10.0;
+	m_joints[3]->presc->m_qdot[0] = 0.0;
+	m_joints[3]->presc->m_qddot[0] = 0.0;
 }
