@@ -1127,12 +1127,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 		}
 		double len_skeleton = nsegments * len_segment;
 
-		int nsamples = 1;
+		int nsamples = 4;
 
 		vector<std::shared_ptr<Node>> additional_nodes;
 		int idx_body = 0;
 		Vector3d end_pt;
-		for (int i = 0; i < 1; ++i) {
+		for (int i = 0; i < nlegs; ++i) {
 			double theta = (18.0 + rotation * i) / 180.0 * M_PI;
 			end_pt = len_skeleton * Vector3d(cos(theta), 0.0, -sin(theta));
 			addSkeleton(Vector3d::Zero(), end_pt, nsegments, nsamples, idx_body, additional_nodes);

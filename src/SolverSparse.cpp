@@ -342,7 +342,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			G_sp.bottomRows(ner) = Gr_sp;
 			
 			//sparse_to_file_as_dense(G_sp, "G_sp");
-			cout << MatrixXd(G_sp) << endl;
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
 			gdot.segment(0, nem) = gmdot;
