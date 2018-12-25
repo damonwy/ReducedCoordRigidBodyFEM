@@ -245,6 +245,8 @@ public:
 	int &idx_start_body,
 	std::vector<std::shared_ptr<Node>> &nodes);
 
+	void sceneCross(double t);
+
 	Energy computeEnergy();
 
 	void load(const std::string &RESOURCE_DIR);
@@ -287,7 +289,6 @@ public:
 	std::shared_ptr<MeshEmbedding> getMeshEmbedding0() const { return m_meshembeddings[0]; }
 
 
-
 	Vector2d getTspan() const { return m_tspan; }
 	int getNsteps();
 
@@ -317,15 +318,12 @@ public:
 
 	int nlegs;
 	int nsegments;
-	void (World::*scenefcnPtr)(double t);
-
-	void sceneCross(double t);
+	WorldType m_type;
 
 private:
 	Energy m_energy;		// the energy in current state
 	Energy m_energy0;		// the energy in initial state
 
-	WorldType m_type;
 	Eigen::Vector3d m_grav;
 	double m_stiffness;
 	double m_damping;
@@ -337,8 +335,6 @@ private:
 
 	double m_Hexpected;		// used to check correctness
 	
-	
-
 	std::vector<std::shared_ptr<Body>> m_bodies;
 	std::vector<std::shared_ptr<Comp>> m_comps;
 	std::vector<std::shared_ptr<WrapObst>> m_wraps;

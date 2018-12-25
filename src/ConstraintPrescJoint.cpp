@@ -52,6 +52,7 @@ void ConstraintPrescJoint::computeJacEqRSparse_(vector<T> &Gr, vector<T> &Grdot,
 	}
 
 	gr.segment(row, nconER) = m_q - m_joint->m_q;
+	
 	if (m_vel == REDMAX_EULER) {
 		grdot.segment(row, nconER) = m_qdot;
 	}

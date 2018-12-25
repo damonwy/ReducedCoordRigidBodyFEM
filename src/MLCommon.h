@@ -661,12 +661,4 @@ inline int getThreadsNumber(int n, int min_n) {
 	return tn;
 }
 
-template <typename Ptr, typename MemberFunctor, typename param>
-void sceneFcn(Ptr &&ptr, MemberFunctor func, param v)
-{
-	//((*ptr).*func)(v);
-	(std::forward<Ptr>(ptr).*func)(v);
-}
-
-
 #endif // MUSCLEMASS_SRC_MLCOMMON_H_

@@ -53,11 +53,11 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(CROSS);//_INVERTIBLE
+	m_world = make_shared<World>(SERIAL_CHAIN);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
-	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, CG);
+	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, PARDISO_LU);
 }
 
 

@@ -121,6 +121,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 		}
+
+		auto con0 = make_shared<ConstraintPrescJoint>(m_joints[3], REDMAX_EULER);
+		m_nconstraints++;
+		m_constraints.push_back(con0);
+
 		break;
 	}
 	case DIFF_REVOLUTE_AXES:
@@ -1038,7 +1043,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 		}
 		//auto con0 = make_shared<ConstraintPrescBody>(m_bodies[3], Vector3d(1, 3, 5), REDMAX_EULER);
 		auto con0 = make_shared<ConstraintPrescJoint>(m_joints[3], REDMAX_EULER);
-		scenefcnPtr = &World::sceneCross;
 		m_nconstraints++;
 		m_constraints.push_back(con0);
 		//scene.constraints{ end + 1 } = reduced.ConstraintPrescBody(scene.bodies{ end }, [2 4 6], vel);
@@ -1807,7 +1811,7 @@ shared_ptr<Joint> World::getJoint(const string &name) {
 
 void World::sceneCross(double t) {
 
-	m_joints[3]->presc->m_q[0] = 10.0;
+	m_joints[3]->presc->m_q[0] = 0.0;
 	m_joints[3]->presc->m_qdot[0] = 0.0;
 	m_joints[3]->presc->m_qddot[0] = 0.0;
 }
