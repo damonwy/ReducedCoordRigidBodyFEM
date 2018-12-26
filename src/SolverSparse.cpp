@@ -264,6 +264,10 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		if (m_world->m_type == SERIAL_CHAIN) {
 			m_world->sceneCross(m_world->getTime());
 		}
+
+		if (m_world->m_type == STARFISH) {
+			m_world->sceneStarFish(m_world->getTime());
+		}
 			
 		body0->computeGrav(grav, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);

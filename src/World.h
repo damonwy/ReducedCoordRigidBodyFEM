@@ -23,6 +23,7 @@ class MatrixStack;
 class Program;
 class Constraint;
 class ConstraintJointLimit;
+class ConstraintPrescJoint;
 class ConstraintNull;
 class Spring;
 class SpringNull;
@@ -236,6 +237,8 @@ public:
 		std::shared_ptr<CompDoubleCylinder> compDoubleCylinder,
 		int num_points,
 		const std::string &RESOURCE_DIR);
+	std::shared_ptr<ConstraintPrescJoint> addConstraintPrescJoint(
+		std::shared_ptr<Joint> j);
 
 	void addSkeleton(
 	Vector3d x0,
@@ -246,6 +249,7 @@ public:
 	std::vector<std::shared_ptr<Node>> &nodes);
 
 	void sceneCross(double t);
+	void sceneStarFish(double t);
 
 	Energy computeEnergy();
 
