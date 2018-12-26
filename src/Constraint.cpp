@@ -23,6 +23,13 @@ activeR(false)
 
 }
 
+void Constraint::init() {
+	init_();
+	if (next != nullptr) {
+		next->init();
+	}
+}
+
 void Constraint::countDofs(int &nem, int &ner, int &nim, int &nir) {
 	// Counts DOFs
 	idxEM = nem;

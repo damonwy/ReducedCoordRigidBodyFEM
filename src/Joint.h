@@ -21,6 +21,7 @@ class Body;
 class MatrixStack;
 class Program;
 class Shape;
+class ConstraintPrescJoint;
 typedef Eigen::Triplet<double> T;
 
 class Joint : public std::enable_shared_from_this<Joint> {
@@ -41,7 +42,7 @@ public:
 	Eigen::VectorXd m_tau;			// Joint torque
 	Eigen::VectorXd m_tauCon;		// Constraint torque	
 	
-	bool presc;						// Presribed motion constraint
+	std::shared_ptr<ConstraintPrescJoint> presc;						// Presribed motion constraint
 	double m_Kr;					// Joint stiffness
 	double m_Dr;					// Joint damping
 	Eigen::MatrixXd m_S;			// Jacobian

@@ -53,6 +53,8 @@ void Surface::load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME
 		triface->update();
 		m_trifaces.push_back(triface);
 	}
+
+	//output_mesh.deinitialize();
 }
 
 

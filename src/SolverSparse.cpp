@@ -1,4 +1,12 @@
 #include "SolverSparse.h"
+
+#include <Eigen/PardisoSupport>
+#include <functional>
+#include <iostream>
+#include <fstream>
+#include <json.hpp>
+#include <omp.h>
+
 #include "World.h"
 #include "Body.h"
 #include "SoftBody.h"
@@ -13,13 +21,6 @@
 #include "QuadProgMosek.h"
 #include "MatlabDebug.h"
 #include "MeshEmbedding.h"
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
-#include <omp.h>
-#include <Eigen/PardisoSupport>
-
-
 
 using namespace std;
 using namespace Eigen;
@@ -113,6 +114,8 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 
 	g.setZero();
 	gdot.setZero();
+	gddot.setZero();
+
 	rhsG.setZero();
 	rhs.setZero();
 	guess.setZero();
@@ -211,6 +214,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			rhs.resize(nr + ne);
 			guess.resize(nr + ne);
 			gdot.resize(ne);
+			gddot.resize(ne);
 			gm.resize(nem);
 			gmdot.resize(nem);
 			gmddot.resize(nem);
@@ -253,6 +257,18 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		}
 		
 
+		if (m_world->m_type == CROSS) {
+			m_world->sceneCross(m_world->getTime());
+		}
+
+		if (m_world->m_type == SERIAL_CHAIN) {
+			m_world->sceneCross(m_world->getTime());
+		}
+
+		if (m_world->m_type == STARFISH) {
+			m_world->sceneStarFish(m_world->getTime());
+		}
+			
 		body0->computeGrav(grav, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);
 		deformable0->computeForce(grav, fm);
@@ -330,10 +346,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			G_sp.bottomRows(ner) = Gr_sp;
 			
 			//sparse_to_file_as_dense(G_sp, "G_sp");
-
 			g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
-			rhsG = -gdot - 10.0 * g;// todo!!!!!
+			gdot.segment(0, nem) = gmdot;
+			gdot.segment(nem, ner) = grdot;
+			gddot.segment(0, nem) = gmddot;
+			gddot.segment(nem, ner) = grddot;
+			rhsG = - gdot - 5.0 * g ;
 		}
 
 		if (ni > 0) {

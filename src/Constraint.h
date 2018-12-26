@@ -39,7 +39,7 @@ public:
 	void computeJacIneqMSparse(std::vector<T> &Cm, std::vector<T> &Cmdot, Eigen::VectorXd &cm, Eigen::VectorXd &cmdot, Eigen::VectorXd &cmddot);
 	void computeJacIneqRSparse(std::vector<T> &Cr, std::vector<T> &Crdot, Eigen::VectorXd &cr, Eigen::VectorXd &crdot, Eigen::VectorXd &crddot);
 
-
+	void init();
 	void countDofs(int &nem, int &ner, int &nim, int &nir);
 	void getActiveList(std::vector<int> &listM, std::vector<int> &listR);
 
@@ -86,6 +86,7 @@ protected:
 
 	virtual void ineqEventFcn_(std::vector<double> &value, std::vector<int> &isterminal, std::vector<int> &direction) {}
 	virtual void ineqProjPos_() {}
+	virtual void init_() {}
 };
 
 

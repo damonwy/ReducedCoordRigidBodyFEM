@@ -7,7 +7,6 @@ using namespace Eigen;
 ConstraintPrescJoint::ConstraintPrescJoint(shared_ptr<Joint> joint, Integrator vel):
 Constraint(0, joint->m_ndof, 0, 0), m_joint(joint), m_vel(vel)
 {
-	// set joint ->presc = this;
 	m_q.resize(joint->m_ndof);
 	m_qdot.resize(joint->m_ndof);
 	m_qddot.resize(joint->m_ndof);
@@ -16,6 +15,9 @@ Constraint(0, joint->m_ndof, 0, 0), m_joint(joint), m_vel(vel)
 	m_qddot.setZero();
 }
 
+void ConstraintPrescJoint::init_() {
+	m_joint->presc = getSelf();
+}
 
 void ConstraintPrescJoint::computeJacEqR_(MatrixXd &Gr, MatrixXd &Grdot, VectorXd &gr, VectorXd &grdot, VectorXd &grddot) {
 	int row = idxER;
@@ -50,6 +52,7 @@ void ConstraintPrescJoint::computeJacEqRSparse_(vector<T> &Gr, vector<T> &Grdot,
 	}
 
 	gr.segment(row, nconER) = m_q - m_joint->m_q;
+	
 	if (m_vel == REDMAX_EULER) {
 		grdot.segment(row, nconER) = m_qdot;
 	}

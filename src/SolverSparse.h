@@ -78,6 +78,7 @@ private:
 
 	Eigen::VectorXd g;
 	Eigen::VectorXd gdot;
+	Eigen::VectorXd gddot;
 	Eigen::VectorXd rhsG;
 
 	Eigen::SparseMatrix<double> Cm_sp;

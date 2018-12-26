@@ -56,7 +56,7 @@ void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
 	tetgenio input_mesh, output_mesh, additional_node;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
 	additional_node.load_node((char *)(RESOURCE_DIR + MESH_NAME + ".a").c_str());
-	tetrahedralize("pq2.0zi", &input_mesh, &output_mesh, &additional_node);//a20.0
+	tetrahedralize("pqziYVVVa10.0", &input_mesh, &output_mesh, &additional_node);//
 
 	output_mesh.save_nodes((char *)(RESOURCE_DIR + MESH_NAME + ".o").c_str());
 	output_mesh.save_elements((char *)(RESOURCE_DIR + MESH_NAME + ".o").c_str());
