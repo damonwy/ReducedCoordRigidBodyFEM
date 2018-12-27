@@ -21,6 +21,9 @@
 #include "QuadProgMosek.h"
 #include "MatlabDebug.h"
 #include "MeshEmbedding.h"
+#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
+#include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
+#include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
 
 using namespace std;
 using namespace Eigen;
@@ -453,11 +456,11 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			case CG: 
 				{
 					ConjugateGradient< SparseMatrix<double>, Lower | Upper> cg;
-					cg.setMaxIterations(1000);
+					//cg.setMaxIterations(2000);
 					cg.setTolerance(1e-3);
 					cg.compute(LHS_sp);
 					qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
-
+					
 					//std::cout << "#iterations:     " << cg.iterations() << std::endl;
 					//std::cout << "estimated error: " << cg.error() << std::endl;
 					break;
@@ -470,7 +473,37 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					cg.setTolerance(1e-3);
 					cg.compute(LHS_sp);
 					qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
-				}			
+					break;
+				}	
+			case MINRES_SOLVER:
+				{						
+					VectorXd diagA = MDKr_sp.diagonal();
+					VectorXd oneA = diagA;
+					oneA.setIdentity();
+					VectorXd diagAinv = oneA.cwiseQuotient(diagA);
+					MatrixXd B = G_sp * diagAinv.asDiagonal() * G_sp_tp;
+					MatrixXd A = diagA.asDiagonal();
+
+
+					MINRES<SparseMatrix<double>, Lower | Upper, Eigen::IdentityPreconditioner> mr;
+					mr.compute(LHS_sp);
+					mr.setTolerance(1e-4);
+					qdot1 = mr.solveWithGuess(rhs, guess).segment(0, nr);
+					//sparse_to_file_as_dense(LHS_sp, "LHS");
+					std::cout << "#iterations:     " << mr.iterations() << std::endl;
+					std::cout << "estimated error: " << mr.error() << std::endl;
+					//vec_to_file(rhs, "rhs");
+					break;
+				}
+				
+			case GMRES_SOLVER:
+				{
+					GMRES<SparseMatrix<double>> gm;
+					gm.compute(LHS_sp);
+					gm.setTolerance(1e-3);
+					qdot1 = gm.solveWithGuess(rhs, guess).segment(0, nr);
+					break;
+				}
 			case BICG:
 				{
 					BiCGSTAB<SparseMatrix<double> >  BCGST;

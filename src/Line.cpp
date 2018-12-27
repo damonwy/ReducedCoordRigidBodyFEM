@@ -37,7 +37,7 @@ void Line::addSampleNodes(int n, std::vector<std::shared_ptr<Node>> &nodes) {
 
 bool Line::isInLine(Vector3d x) {
 	double diff = (x - m_x0).norm() + (x - m_x1).norm() - (m_x0 - m_x1).norm();
-	if (diff < 0.001) {
+	if (diff < 0.0001) {
 		return true;
 	}
 	else {
@@ -48,7 +48,7 @@ bool Line::isInLine(Vector3d x) {
 bool Line::isInLine(std::shared_ptr<Node> n) {
 	double diff = (n->x - m_x0).norm() + (n->x - m_x1).norm() - (m_x0 - m_x1).norm();
 
-	if (diff < 0.001) {
+	if (diff < 0.0001) {
 		return true;
 	}
 	else {

@@ -50,14 +50,14 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 	m_npotentialcols = 0;
 }
 
-void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME) {
+void SoftBody::load(const string &RESOURCE_DIR, const string &MESH_NAME, const string &TETGEN_FLAGS) {
 
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh, additional_node;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
 	additional_node.load_node((char *)(RESOURCE_DIR + MESH_NAME + ".a").c_str());
-	tetrahedralize("pqziYVVVa10.0", &input_mesh, &output_mesh, &additional_node);//
-
+	tetrahedralize((char *)TETGEN_FLAGS.c_str(), &input_mesh, &output_mesh, &additional_node);//a10.0
+		//"pqziVVVYa2.0"
 	output_mesh.save_nodes((char *)(RESOURCE_DIR + MESH_NAME + ".o").c_str());
 	output_mesh.save_elements((char *)(RESOURCE_DIR + MESH_NAME + ".o").c_str());
 	output_mesh.save_faces((char *)(RESOURCE_DIR + MESH_NAME + ".o").c_str());

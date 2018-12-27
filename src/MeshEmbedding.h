@@ -25,7 +25,11 @@ public:
 
 	virtual ~MeshEmbedding() {}
 
-	void load(const std::string &RESOURCE_DIR, const std::string &COARSE_MESH_NAME, const std::string &DENSE_MESH_NAME);
+	void load(const std::string &RESOURCE_DIR, 
+		const std::string &COARSE_MESH_NAME, 
+		const std::string &TETGEN_FLAGS_0, 
+		const std::string &DENSE_MESH_NAME,
+		const std::string &TETGEN_FLAGS_1);
 	virtual void init();
 	void precomputeWeights();
 	void updatePosNor();

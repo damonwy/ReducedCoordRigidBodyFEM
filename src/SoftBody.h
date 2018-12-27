@@ -31,7 +31,7 @@ public:
 	virtual ~SoftBody() {}
 
 	void insertAdditionalPoints() {}
-	virtual void load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME);
+	virtual void load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME, const std::string &TETGEN_FLAGS);
 	virtual void init();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> progSimple, std::shared_ptr<MatrixStack> P) const;
 	void updatePosNor();

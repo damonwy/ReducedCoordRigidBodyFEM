@@ -36,6 +36,8 @@
 #include <omp.h>
 #include <Eigen/Core>
 
+#define RECORD_VIDEO 0
+
 using namespace std;
 using namespace Eigen;
 
@@ -343,14 +345,21 @@ int main(int argc, char **argv)
 	// Initialize scene.
 	init();
 	// Start simulation thread.
+	
+	if (RECORD_VIDEO == 0) {
+		//
+	}
 	thread stepperThread(stepperFunc);
-	/*for (int i = 0; i < 100; i++) {
-		scene->step();
-	}	*/
+	for (int i = 0; i < 100; i++) {
+		//scene->step();
+	}	
 
 	//// Loop until the user closes the window.
 	while(!glfwWindowShouldClose(window)) {
-		//stepWorld();
+		if (RECORD_VIDEO == 1) {
+			//stepWorld();
+		}
+		
 		// Render scene.
 		render();
 
@@ -360,6 +369,9 @@ int main(int argc, char **argv)
 		glfwPollEvents();
 	}
 	// Quit program.
+	if (RECORD_VIDEO == 0) {
+		
+	}
 	stepperThread.detach();
 	glfwDestroyWindow(window);
 	glfwTerminate();

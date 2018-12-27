@@ -341,7 +341,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[1]->m_qdot(0) = -40.0;
 		// Init constraints
 		
-		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "box10_1_1");
+		auto softbody = addSoftBody( 0.001 * density, young, possion, NEO_HOOKEAN, RESOURCE_DIR, "pqz", "box10_1_1");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -593,7 +593,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBody(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "box10_1_1");
+		auto softbody = addSoftBody(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqz", "box10_1_1");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -627,7 +627,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//m_joints[0]->m_qdot(0) = 10.0;
 		//m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc"); //
+		auto softbody = addSoftBodyInvertibleFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqz", "muscle_cyc_cyc"); //
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -661,7 +661,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//m_joints[0]->m_qdot(0) = 10.0;
 		//m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBodyCorotationalLinearFEM(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "muscle_cyc_cyc"); //
+		auto softbody = addSoftBodyCorotationalLinearFEM(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqz", "muscle_cyc_cyc"); //
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -695,7 +695,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -40.0;
 
-		auto softbody = addSoftBodyCorotationalLinearFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "box10_1_1");
+		auto softbody = addSoftBodyCorotationalLinearFEM(0.001 * density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqz", "box10_1_1");
 		softbody->transform(Vector3d(10.0, 0.0, 0.0));
 		softbody->setColor(Vector3f(255.0, 204.0, 153.0) / 255.0);
 
@@ -777,7 +777,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//m_joints[0]->m_qdot(0) = 10.0;
 		m_joints[1]->m_qdot(0) = -10.0;
 
-		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "embedded", "muscle_cyc_cyc", SOFT_INVERTIBLE); //
+		auto mesh_embedding = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqz", "pqz", "embedded", "muscle_cyc_cyc", SOFT_INVERTIBLE); //
 		mesh_embedding->transformDenseMesh(E);
 		mesh_embedding->transformCoarseMesh(E);
 		mesh_embedding->precomputeWeights();
@@ -861,7 +861,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			joint_left_leg1->m_qdot(0) = 20.0;
 			addConstraintJointLimit(joint_left_leg0, -M_PI / 4.0, M_PI / 4.0);
 			addConstraintJointLimit(joint_left_leg1, -M_PI / 4.0, M_PI / 4.0);
-			auto left_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_leg_coarse", "left_leg_dense", SOFT_INVERTIBLE); //
+			auto left_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqzi", "pqz", "left_leg_coarse", "left_leg_dense", SOFT_INVERTIBLE); //
 			left_leg_mesh->precomputeWeights();
 			left_leg_mesh->getDenseMesh()->setColor(muscle_color);
 		}
@@ -881,7 +881,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 			addConstraintJointLimit(joint_right_leg_1, -M_PI / 4.0, M_PI / 4.0);
 			Matrix4d E_l_r = Matrix4d::Identity();
 			E_l_r.block<3, 1>(0, 3) = Vector3d(9.0, 0.0, 0.0);
-			auto right_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_leg_coarse", "left_leg_dense", SOFT_INVERTIBLE); //
+			auto right_leg_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqzi", "pqz", "left_leg_coarse", "left_leg_dense", SOFT_INVERTIBLE); //
 			right_leg_mesh->transformCoarseMesh(E_l_r);
 			right_leg_mesh->transformDenseMesh(E_l_r);
 			right_leg_mesh->precomputeWeights();
@@ -898,7 +898,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//joint_left_leg1->m_qdot(0) = 5.0;
 		//joint_right_leg_1->m_qdot(0) = -5.0;
 
-		auto right_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "right_arm_coarse_1", "right_arm_dense_1", SOFT_INVERTIBLE); //
+		auto right_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqzi", "pqz", "right_arm_coarse_1", "right_arm_dense_1", SOFT_INVERTIBLE); //
 		right_arm_mesh->precomputeWeights();
 		
 		right_arm_mesh->getDenseMesh()->setColor(muscle_color);
@@ -906,7 +906,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		//auto torso = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "torso_embedded_w_hole", "torso"); //
 		//torso->precomputeWeights();
 
-		auto left_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "left_arm_coarse_1", "left_arm_dense_1", SOFT_INVERTIBLE); //
+		auto left_arm_mesh = addMeshEmbedding(0.001 *density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqzi", "pqz", "left_arm_coarse_1", "left_arm_dense_1", SOFT_INVERTIBLE); //
 		left_arm_mesh->precomputeWeights();
 		left_arm_mesh->getDenseMesh()->setColor(muscle_color);
 	
@@ -925,7 +925,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	case WORM:
 	{
-		m_h = 1.0e-1;
+		m_h = 1.0e-2;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
@@ -999,7 +999,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Floor f0(-31.0f, Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		auto worm = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "worm8_coarse", "worm8_dense", SOFT_INVERTIBLE);
+		auto worm = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqzi", "pqz", "worm8_coarse", "worm8_dense", SOFT_INVERTIBLE);
 		//worm->transformCoarseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->transformDenseMesh(SE3::RpToE(Matrix3d::Identity(), Vector3d(40.0, 0.0, 0.0)));
 		worm->precomputeWeights();
@@ -1077,7 +1077,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		auto cross = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "cross_coarse", "cross_dense", SOFT_INVERTIBLE);
+		auto cross = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqzi", "pqz", "cross_coarse", "cross_dense", SOFT_INVERTIBLE);
 		cross->precomputeWeights();
 		cross->setDamping(15.0);
 		cross->getDenseMesh()->setColor(cross_color);
@@ -1088,24 +1088,24 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	case STARFISH:
 	{
-		m_h = 1.0e-2;
+		m_h = 1.0e-1;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
 		m_grav << 0.0, -0.0, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e3;
+		double young = 1e4;
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
-		double mesh_damping = 4.0;
-		double y_floor = -31.0;
+		double mesh_damping = 1.0;
+		double y_floor = -35.0;
 		nlegs = 5;
 		nsegments = 8;
 		double rotation = 360.0 / nlegs;
 		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
 		starfish_color /= 255.0f;
-		std::string coarse_file_name = "starfish_coarse2";
+		std::string coarse_file_name = "starfish_coarse3";//starfishco
 		std::string dense_file_name = "starfish2";
 
 		double len_segment = 10.0;
@@ -1113,7 +1113,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		for (int k = 0; k < nlegs; ++k) {
 			for (int i = 0; i < nsegments; i++) {
 				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
-				//body->setDrawingOption(false);
+				body->setDrawingOption(false);
 
 				shared_ptr<Joint> joint;
 				if (i == 0) {
@@ -1128,10 +1128,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 				//m_joints[i]->setDamping(m_damping);
 			}
 		}
-
-		auto con0 = make_shared<ConstraintPrescJoint>(m_joints[2], REDMAX_EULER);
-		m_nconstraints++;
-		m_constraints.push_back(con0);
 
 		double len_skeleton = nsegments * len_segment;
 		int nsamples = 4;
@@ -1157,11 +1153,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		auto starfish = addMeshEmbedding(0.01* density, young, possion, CO_ROTATED, RESOURCE_DIR, coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
+		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziYV", "pqz", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
 		starfish->precomputeWeights();
 		starfish->setDamping(mesh_damping);
 		starfish->getDenseMesh()->setColor(starfish_color);
-		starfish->getCoarseMesh()->setFloor(y_floor);
+		//starfish->getCoarseMesh()->setFloor(y_floor);
 
 	}
 	break;
@@ -1177,25 +1173,25 @@ shared_ptr<ConstraintPrescJoint> World::addConstraintPrescJoint(shared_ptr<Joint
 	return con;
 }
 
-shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, Material material, const string &RESOURCE_DIR, string file_name) {
+shared_ptr<SoftBody> World::addSoftBody(double density, double young, double possion, Material material, const string &RESOURCE_DIR, const string &TETGEN_FLAGS, string file_name) {
 	auto softbody = make_shared<SoftBody>(density, young, possion, material);
-	softbody->load(RESOURCE_DIR, file_name);
+	softbody->load(RESOURCE_DIR, file_name, TETGEN_FLAGS);
 	m_softbodies.push_back(softbody);
 	m_nsoftbodies++;
 	return softbody;
 }
 
-shared_ptr<SoftBodyInvertibleFEM> World::addSoftBodyInvertibleFEM(double density, double young, double possion, Material material, const string &RESOURCE_DIR, string file_name) {
+shared_ptr<SoftBodyInvertibleFEM> World::addSoftBodyInvertibleFEM(double density, double young, double possion, Material material, const string &RESOURCE_DIR, const string &TETGEN_FLAGS, string file_name) {
 	auto softbody = make_shared<SoftBodyInvertibleFEM>(density, young, possion, material);
-	softbody->load(RESOURCE_DIR, file_name);
+	softbody->load(RESOURCE_DIR, file_name, TETGEN_FLAGS);
 	m_softbodies.push_back(softbody);
 	m_nsoftbodies++;
 	return softbody;
 }
 
-shared_ptr<SoftBodyCorotationalLinear> World::addSoftBodyCorotationalLinearFEM(double density, double young, double possion, Material material, const string &RESOURCE_DIR, string file_name) {
+shared_ptr<SoftBodyCorotationalLinear> World::addSoftBodyCorotationalLinearFEM(double density, double young, double possion, Material material, const string &RESOURCE_DIR, const string &TETGEN_FLAGS, string file_name) {
 	auto softbody = make_shared<SoftBodyCorotationalLinear>(density, young, possion, material);
-	softbody->load(RESOURCE_DIR, file_name);
+	softbody->load(RESOURCE_DIR, file_name, TETGEN_FLAGS);
 	m_softbodies.push_back(softbody);
 	m_nsoftbodies++;
 	return softbody;
@@ -1313,13 +1309,15 @@ shared_ptr<MeshEmbedding> World::addMeshEmbedding(
 	double possion,
 	Material material,
 	const string &RESOURCE_DIR,
+	const string &TETGEN_FLAGS_0,
+	const string &TETGEN_FLAGS_1,
 	string coarse_mesh,
 	string dense_mesh,
 	SoftBodyType soft_body_type)
 {
 	
 	auto mesh_embedding = make_shared<MeshEmbedding>(density, young, possion, material, soft_body_type);
-	mesh_embedding->load(RESOURCE_DIR, coarse_mesh, dense_mesh);
+	mesh_embedding->load(RESOURCE_DIR, coarse_mesh, TETGEN_FLAGS_0, dense_mesh, TETGEN_FLAGS_1);
 
 	m_nmeshembeddings++;
 	m_meshembeddings.push_back(mesh_embedding);
@@ -1832,46 +1830,91 @@ void World::sceneCross(double t) {
 
 void World::sceneStarFish(double t) {
 
-	double sinTheta = M_PI * sin(t);
-	double cosTheta = M_PI * cos(t);
-	for (int i = 0; i < 5; i++) {
-		m_joints[0 + 8 * i]->presc->m_q[0] = 1.0 / 5.0 * sinTheta;
-		m_joints[0 + 8 * i]->presc->m_qdot[0] = 1.0 / 5.0 * cosTheta;
-		m_joints[0 + 8 * i]->presc->m_qddot[0] = - 1.0 / 5.0 * sinTheta;
+	double sinTheta =  M_PI * sin( t);
+	double cosTheta = M_PI * cos( t);
+	double d30 = 1.0 / 6.0;
+	double d45 = 1.0 / 4.0;
+	double d15 = 1.0 / 12.0;
+	double d60 = 1.0 / 3.0;
+	double d90 = 1.0 / 2.0;
+	double d10 = 1.0 / 18.0;
+	double d12 = 1.0 / 15.0;
+	double d18 = 1.0 / 10.0;
+	double d20 = 1.0 / 9.0;
+	double d22 = 1.0 / 8.0;
+	
+	for (int i = 0; i < nlegs; i++) {
+		if (i > -1) {
+			m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
+			m_joints[0 + nsegments * i]->presc->m_qdot[0] = d60 * cosTheta;
+			m_joints[0 + nsegments * i]->presc->m_qddot[0] = -d60 * sinTheta;
 
 
-		m_joints[1 + 8 * i]->presc->m_q[0] = -1.0 / 18.0 * sinTheta;
-		m_joints[1 + 8 * i]->presc->m_qdot[0] = -1.0 / 18.0 * cosTheta;
-		m_joints[1 + 8 * i]->presc->m_qddot[0] = 1.0 / 18.0 * sinTheta;
+			m_joints[1 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[1 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[1 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
-		m_joints[2 + 8 * i]->presc->m_q[0] = -1.0 / 18.0 * sinTheta;
-		m_joints[2 + 8 * i]->presc->m_qdot[0] = -1.0 / 18.0 * cosTheta;
-		m_joints[2 + 8 * i]->presc->m_qddot[0] = 1.0 /18.0 * sinTheta;
+			m_joints[2 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[2 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[2 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
-		m_joints[3 + 8 * i]->presc->m_q[0] = -1.0 / 15.0 * sinTheta;
-		m_joints[3 + 8 * i]->presc->m_qdot[0] = -1.0 / 15.0 * cosTheta;
-		m_joints[3 + 8 * i]->presc->m_qddot[0] = 1.0 / 15.0 * sinTheta;
+			m_joints[3 + nsegments * i]->presc->m_q[0] = -d22 * sinTheta;
+			m_joints[3 + nsegments * i]->presc->m_qdot[0] = -d22 * cosTheta;
+			m_joints[3 + nsegments * i]->presc->m_qddot[0] = d22 * sinTheta;
 
-		m_joints[4 + 8 * i]->presc->m_q[0] = -1.0 / 12.0 * sinTheta;
-		m_joints[4 + 8 * i]->presc->m_qdot[0] = -1.0 / 12.0 * cosTheta;
-		m_joints[4 + 8 * i]->presc->m_qddot[0] = 1.0 / 12.0 * sinTheta;
-
-
-		m_joints[5 + 8 * i]->presc->m_q[0] =-1.0 / 15.0 * sinTheta;
-		m_joints[5 + 8 * i]->presc->m_qdot[0] = -1.0 / 15.0 * cosTheta;
-		m_joints[5 + 8 * i]->presc->m_qddot[0] = 1.0 / 15.0 * sinTheta;
-
-		m_joints[6 + 8 * i]->presc->m_q[0] = -1.0 / 18.0 * sinTheta;
-		m_joints[6 + 8 * i]->presc->m_qdot[0] = -1.0 /18.0 * cosTheta;
-		m_joints[6 + 8 * i]->presc->m_qddot[0] = 1.0 / 18.0 * sinTheta;
-
-		m_joints[7 + 8 * i]->presc->m_q[0] = -1.0 / 18.0 * sinTheta;
-		m_joints[7 + 8 * i]->presc->m_qdot[0] = -1.0 / 18.0 * cosTheta;
-		m_joints[7 + 8 * i]->presc->m_qddot[0] = 1.0 / 18.0 * sinTheta;
+			m_joints[4 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[4 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[4 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
 
+			m_joints[5 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[5 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[5 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
+			m_joints[6 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[6 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[6 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
+
+			m_joints[7 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[7 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[7 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
+
+		}
+		else {
+			m_joints[0 + 8 * i]->presc->m_q[0] = -1.0 / 6.0 * sinTheta;
+			m_joints[0 + 8 * i]->presc->m_qdot[0] = -1.0 / 6.0 * cosTheta;
+			m_joints[0 + 8 * i]->presc->m_qddot[0] = 1.0 / 6.0 * sinTheta;
+
+
+			m_joints[1 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
+			m_joints[1 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
+			m_joints[1 + 8 * i]->presc->m_qddot[0] = -1.0 / 18.0 * sinTheta;
+
+			m_joints[2 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
+			m_joints[2 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
+			m_joints[2 + 8 * i]->presc->m_qddot[0] = -1.0 /18.0 * sinTheta;
+
+			m_joints[3 + 8 * i]->presc->m_q[0] = 1.0 / 15.0 * sinTheta;
+			m_joints[3 + 8 * i]->presc->m_qdot[0] = 1.0 / 15.0 * cosTheta;
+			m_joints[3 + 8 * i]->presc->m_qddot[0] = -1.0 / 15.0 * sinTheta;
+
+			m_joints[4 + 8 * i]->presc->m_q[0] = 1.0 / 12.0 * sinTheta;
+			m_joints[4 + 8 * i]->presc->m_qdot[0] = 1.0 / 12.0 * cosTheta;
+			m_joints[4 + 8 * i]->presc->m_qddot[0] = -1.0 / 12.0 * sinTheta;
+
+
+			m_joints[5 + 8 * i]->presc->m_q[0] =1.0 / 15.0 * sinTheta;
+			m_joints[5 + 8 * i]->presc->m_qdot[0] = 1.0 / 15.0 * cosTheta;
+			m_joints[5 + 8 * i]->presc->m_qddot[0] =- 1.0 / 15.0 * sinTheta;
+
+			m_joints[6 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
+			m_joints[6 + 8 * i]->presc->m_qdot[0] = 1.0 /18.0 * cosTheta;
+			m_joints[6 + 8 * i]->presc->m_qddot[0] =- 1.0 / 18.0 * sinTheta;
+
+			m_joints[7 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
+			m_joints[7 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
+			m_joints[7 + 8 * i]->presc->m_qddot[0] =-1.0 / 18.0 * sinTheta;
+
+		}	
 	}
-
-
 }
