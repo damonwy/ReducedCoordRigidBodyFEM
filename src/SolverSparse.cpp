@@ -478,17 +478,27 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			case MINRES_SOLVER:
 				{						
 					VectorXd diagA = MDKr_sp.diagonal();
-					VectorXd oneA = diagA;
-					oneA.setIdentity();
+					VectorXd oneA(nr);
+					oneA.setOnes();
 					VectorXd diagAinv = oneA.cwiseQuotient(diagA);
+					//vec_to_file(diagAinv, "diagAinv");
 					MatrixXd B = G_sp * diagAinv.asDiagonal() * G_sp_tp;
+					
 					MatrixXd A = diagA.asDiagonal();
-
-
-					MINRES<SparseMatrix<double>, Lower | Upper, Eigen::IdentityPreconditioner> mr;
+					MatrixXd P(nr + ne, nr + ne);
+					P.setZero();
+					P.block(0, 0, nr, nr) = A;
+					P.block(nr, nr, ne, ne) = B;
+					SparseMatrix<double> P_sp = P.sparseView();
+					
+					MINRES<SparseMatrix<double>, Lower, DiagonalPreconditioner<double> > mr;
+					//mr.compute(LHS_sp);
+					mr.setMaxIterations(100000);
 					mr.compute(LHS_sp);
-					mr.setTolerance(1e-4);
-					qdot1 = mr.solveWithGuess(rhs, guess).segment(0, nr);
+					mr.preconditioner().compute(P_sp);
+					mr.setTolerance(1e-6);
+					//qdot1 = mr.solveWithGuess(rhs, guess).segment(0, nr);
+					qdot1 = mr.solve(rhs).segment(0, nr);
 					//sparse_to_file_as_dense(LHS_sp, "LHS");
 					std::cout << "#iterations:     " << mr.iterations() << std::endl;
 					std::cout << "estimated error: " << mr.error() << std::endl;

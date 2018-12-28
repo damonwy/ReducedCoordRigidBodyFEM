@@ -346,9 +346,6 @@ int main(int argc, char **argv)
 	init();
 	// Start simulation thread.
 	
-	if (RECORD_VIDEO == 0) {
-		//
-	}
 	thread stepperThread(stepperFunc);
 	for (int i = 0; i < 100; i++) {
 		//scene->step();
