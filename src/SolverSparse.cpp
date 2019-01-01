@@ -494,22 +494,22 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					//SparseMatrix<double> LHSNEW = P_sp * LHS_sp * P_sp;
 					//VectorXd rhsnew = P_sp * rhs;
 				
-					//KKTMatrix<double, Eigen::DiagonalPreconditioner<double>> kkt;
-					//DiagonalPreconditioner<double> A_solver;
-					//kkt.setAMatrix(A.sparseView(), A_solver);
-					//kkt.setGMatrix(G_sp);
+					KKTMatrix<double, Eigen::DiagonalPreconditioner<double>> kkt;
+					DiagonalPreconditioner<double> A_solver;
+					kkt.setAMatrix(A.sparseView(), A_solver);
+					kkt.setGMatrix(G_sp);
 
-					///*SchurComplementPreconditioner<double> kkt_preconditioner;
+					SchurComplementPreconditioner<double> kkt_preconditioner;
 					//kkt_preconditioner.compute(kkt);
-					//kkt_preconditioner.setDMatrix(B.sparseView());*/
+					//kkt_preconditioner.setDMatrix(B.sparseView());
 
 
-					//MINRES<SparseMatrix<double>, Lower, SchurComplementPreconditioner<double> > mr;
-					//mr.setMaxIterations(100000);
-					//mr.compute(LHS_sp);
-					//mr.preconditioner().compute(kkt);
-					//mr.preconditioner().setDMatrix(B.sparseView());
-					//qdot1 = mr.solve(rhs).segment(0, nr);
+					MINRES<SparseMatrix<double>, Lower, SchurComplementPreconditioner<double> > mr;
+					mr.setMaxIterations(100000);
+					mr.compute(LHS_sp);
+					mr.preconditioner().compute(kkt);
+					mr.preconditioner().setDMatrix(B.sparseView());
+					qdot1 = mr.solve(rhs).segment(0, nr);
 
 					//MINRES<SparseMatrix<double>, Lower, DiagonalPreconditioner<double> > mr;
 					//mr.setMaxIterations(100000);
