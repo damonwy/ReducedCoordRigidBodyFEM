@@ -482,44 +482,33 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					VectorXd oneA(nr);
 					oneA.setOnes();
 					VectorXd diagAinv = oneA.cwiseQuotient(diagA);
-					//vec_to_file(diagAinv, "diagAinv");
 					MatrixXd B = G_sp * diagAinv.asDiagonal() * G_sp_tp;
 					
-					MatrixXd A = diagA.asDiagonal();
-					MatrixXd P(nr + ne, nr + ne);
-					P.setZero();
-					P.block(0, 0, nr, nr) = A;
-					P.block(nr, nr, ne, ne) = B;
-					SparseMatrix<double> P_sp = P.inverse().sparseView();
-					//SparseMatrix<double> LHSNEW = P_sp * LHS_sp * P_sp;
-					//VectorXd rhsnew = P_sp * rhs;
-				
-					KKTMatrix<double, Eigen::DiagonalPreconditioner<double>> kkt;
-					DiagonalPreconditioner<double> A_solver;
-					kkt.setAMatrix(A.sparseView(), A_solver);
-					kkt.setGMatrix(G_sp);
+					//MatrixXd A = diagA.asDiagonal();
+					//MatrixXd P(nr + ne, nr + ne);
+					//P.setZero();
+					//P.block(0, 0, nr, nr) = A;
+					//P.block(nr, nr, ne, ne) = B;
+					//SparseMatrix<double> P_sp = P.inverse().sparseView();
 
-					SchurComplementPreconditioner<double> kkt_preconditioner;
+					SparseMatrix<double> D_sp = B.inverse().sparseView();
+				
+					//KKTMatrix<double, Eigen::DiagonalPreconditioner<double>> kkt;
+					//DiagonalPreconditioner<double> A_solver;
+					//kkt.setAMatrix(A.sparseView(), A_solver);
+					//kkt.setGMatrix(G_sp);
+
+					//SchurComplementPreconditioner<double> kkt_preconditioner;
 					//kkt_preconditioner.compute(kkt);
 					//kkt_preconditioner.setDMatrix(B.sparseView());
 
-
-					MINRES<SparseMatrix<double>, Lower, SchurComplementPreconditioner<double> > mr;
-					mr.setMaxIterations(100000);
+					MINRES<SparseMatrix<double>, Lower, SaddlePointPreconditioner<double> > mr;
+					mr.setMaxIterations(1000);
 					mr.compute(LHS_sp);
-					mr.preconditioner().compute(kkt);
-					mr.preconditioner().setDMatrix(B.sparseView());
+					mr.preconditioner().setADiagMatrix(diagAinv);
+					mr.preconditioner().setDMatrix(D_sp);
 					qdot1 = mr.solve(rhs).segment(0, nr);
 
-					//MINRES<SparseMatrix<double>, Lower, DiagonalPreconditioner<double> > mr;
-					//mr.setMaxIterations(100000);
-					//mr.compute(LHSNEW);
-					//mr.preconditioner().compute(P_sp);	
-					//qdot1 = (P_sp * (mr.solveWithGuess(rhsnew, guess))).segment(0, nr);
-					
-					//sparse_to_file_as_dense(LHS_sp, "LHS");
-//mr.setTolerance(1e-6);
-//qdot1 = mr.solve(rhs).segment(0, nr);
 					//std::cout << "#iterations:     " << mr.iterations() << std::endl;
 					//std::cout << "estimated error: " << mr.error() << std::endl;
 	
@@ -530,10 +519,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 						std::cout << "#iterations:     " << mr.iterations() << std::endl;
 						std::cout << "estimated error: " << mr.error() << std::endl;
 					}*/
-					//vec_to_file(qdot1, "qdot1");
-					//vec_to_file(rhs, "rhs");
-					//sparse_to_file_as_dense(P_sp, "P");
-					//vec_to_file(error_vec, "error_vec");
+
 					break;
 				}
 				

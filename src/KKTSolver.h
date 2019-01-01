@@ -171,7 +171,11 @@ public:
 	
 	inline const Vector solve(const Vector& b) const
 	{
+		//m_outer_solver.setTolerance(1e-5);
+		//m_outer_solver.setMaxIterations(10000);
 		Vector top = m_outer_solver.solve(b.topRows(m_nA));
+		std::cout << "iter" << m_outer_solver.iterations() << std::endl;
+		std::cout << "error" << m_outer_solver.error() << std::endl;
 		std::cout << b.topRows(m_nA) << std::endl;
 		std::cout << top << std::endl;
 		Vector bottom = m_D * b.bottomRows(m_nG);
@@ -203,4 +207,67 @@ private:
 	StorageIndex m_nA;
 	StorageIndex m_nG;
 	StorageIndex m_n;
+};
+
+
+template <typename _Scalar>
+class SaddlePointPreconditioner
+{
+public:
+	typedef _Scalar Scalar;
+	typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Vector;
+	typedef int StorageIndex;
+
+	enum {
+		ColsAtCompileTime = Eigen::Dynamic,
+		MaxColsAtCompileTime = Eigen::Dynamic
+	};
+
+	SaddlePointPreconditioner() :m_isInitialized(true) {}
+
+	template<typename MatType>
+	SaddlePointPreconditioner& analyzePattern(const MatType&) { return *this; }
+
+	template<typename MatType>
+	SaddlePointPreconditioner& compute(const MatType&) { return *this; }
+
+	template<typename MatType>
+	SaddlePointPreconditioner& factorize(const MatType&mat) { return *this;}
+
+	Eigen::Index rows() const { return m_mat.rows(); }
+	Eigen::Index cols() const { return m_mat.cols(); }
+
+	inline const Vector solve(const Vector& b) const
+	{
+		int nA = m_invdiag_A.rows();
+		Vector x(b.rows());
+		x.topRows(nA) = m_invdiag_A.cwiseProduct(b.segment(0, nA));
+		x.bottomRows(m_mat.rows()) = m_mat * b.bottomRows(m_mat.rows());
+		return x;
+	}
+
+	template<typename Rhs> inline const Eigen::Solve<SaddlePointPreconditioner, Rhs>
+	solve(const Eigen::MatrixBase<Rhs>& b) const
+		{
+			eigen_assert(m_isInitialized && "SaddlePointPreconditioner is not initialized.");
+			eigen_assert(m_mat.rows() + m_invdiag_A.rows() == b.rows()
+				&& "SaddlePointPreconditioner::solve(): invalid number of rows of the right hand side matrix b");
+			return Eigen::Solve<SaddlePointPreconditioner, Rhs>(*this, b.derived());
+		}
+
+	void setDMatrix(const Eigen::SparseMatrix<Scalar> &D)
+	{
+		m_mat = D;
+	}
+
+	void setADiagMatrix(const Vector &invdiag_A) {
+		m_invdiag_A = invdiag_A;
+	}
+
+	Eigen::ComputationInfo info() { return Eigen::Success; }
+
+protected:
+	Eigen::SparseMatrix<Scalar> m_mat;
+	Vector m_invdiag_A;
+	bool m_isInitialized;
 };
