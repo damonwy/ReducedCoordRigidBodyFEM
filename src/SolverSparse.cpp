@@ -478,11 +478,23 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				}	
 			case MINRES_SOLVER:
 				{						
-					VectorXd diagA = MDKr_sp.diagonal();
-					VectorXd oneA(nr);
-					oneA.setOnes();
-					VectorXd diagAinv = oneA.cwiseQuotient(diagA);
-					MatrixXd B = G_sp * diagAinv.asDiagonal() * G_sp_tp;
+					VectorXd diagAinv(nr);//= MDKr_sp.diagonal();
+					//VectorXd oneA(nr);
+					//oneA.setOnes();
+					//VectorXd diagAinv = oneA.cwiseQuotient(diagA);
+
+					for (int j = 0; j< MDKr_sp.outerSize(); ++j)
+					{
+						typename SparseMatrix<double>::InnerIterator it(MDKr_sp, j);
+						while (it && it.index() != j) ++it;
+						if (it && it.index() == j && it.value() != 0.0)
+							diagAinv(j) = 1.0 / it.value();
+						else
+							diagAinv(j) = 1.0;
+					}
+
+					MatrixXd B;
+					B.noalias() = MatrixXd(G_sp * diagAinv.asDiagonal() * G_sp_tp);
 					
 					//MatrixXd A = diagA.asDiagonal();
 					//MatrixXd P(nr + ne, nr + ne);
@@ -490,7 +502,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					//P.block(0, 0, nr, nr) = A;
 					//P.block(nr, nr, ne, ne) = B;
 					//SparseMatrix<double> P_sp = P.inverse().sparseView();
-
+					//MatrixXd D = B.inverse();
 					SparseMatrix<double> D_sp = B.inverse().sparseView();
 				
 					//KKTMatrix<double, Eigen::DiagonalPreconditioner<double>> kkt;
@@ -504,9 +516,11 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 					MINRES<SparseMatrix<double>, Lower, SaddlePointPreconditioner<double> > mr;
 					mr.setMaxIterations(1000);
+					mr.setTolerance(1e-6);
 					mr.compute(LHS_sp);
 					mr.preconditioner().setADiagMatrix(diagAinv);
 					mr.preconditioner().setDMatrix(D_sp);
+					//mr.preconditioner().setDDenseMatrix(D);
 					qdot1 = mr.solve(rhs).segment(0, nr);
 
 					//std::cout << "#iterations:     " << mr.iterations() << std::endl;

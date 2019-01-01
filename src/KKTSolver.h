@@ -1,5 +1,6 @@
 #pragma once
 #define EIGEN_DONT_ALIGN_STATICALLY
+#define EIGEN_USE_MKL_ALL
 
 #include <Eigen/Sparse>
 #include <Eigen/Dense>
@@ -174,15 +175,10 @@ public:
 		//m_outer_solver.setTolerance(1e-5);
 		//m_outer_solver.setMaxIterations(10000);
 		Vector top = m_outer_solver.solve(b.topRows(m_nA));
-		std::cout << "iter" << m_outer_solver.iterations() << std::endl;
-		std::cout << "error" << m_outer_solver.error() << std::endl;
-		std::cout << b.topRows(m_nA) << std::endl;
-		std::cout << top << std::endl;
 		Vector bottom = m_D * b.bottomRows(m_nG);
 		Vector all(m_n, 1);
 		all.topRows(m_nA) = top;
 		all.bottomRows(m_nG) = bottom;
-		std::cout << all << std::endl;
 		return all;
 	}
 	
@@ -216,6 +212,7 @@ class SaddlePointPreconditioner
 public:
 	typedef _Scalar Scalar;
 	typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Vector;
+	typedef Eigen::Matrix <Scalar, Eigen::Dynamic, Eigen::Dynamic> Matrix;
 	typedef int StorageIndex;
 
 	enum {
@@ -242,7 +239,8 @@ public:
 		int nA = m_invdiag_A.rows();
 		Vector x(b.rows());
 		x.topRows(nA) = m_invdiag_A.cwiseProduct(b.segment(0, nA));
-		x.bottomRows(m_mat.rows()) = m_mat * b.bottomRows(m_mat.rows());
+		x.bottomRows(m_mat.rows()).noalias()= m_mat * b.bottomRows(m_mat.rows());
+		//x.bottomRows(m_mat_dense.rows()).noalias() = m_mat_dense * b.bottomRows(m_mat_dense.rows());
 		return x;
 	}
 
@@ -264,10 +262,15 @@ public:
 		m_invdiag_A = invdiag_A;
 	}
 
+	void setDDenseMatrix(const Matrix &D) {
+		m_mat_dense = D;
+	}
+
 	Eigen::ComputationInfo info() { return Eigen::Success; }
 
 protected:
 	Eigen::SparseMatrix<Scalar> m_mat;
+	Matrix m_mat_dense;
 	Vector m_invdiag_A;
 	bool m_isInitialized;
 };
