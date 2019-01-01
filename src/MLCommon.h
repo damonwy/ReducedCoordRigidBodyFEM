@@ -18,6 +18,7 @@
 #include <iostream>
 #include <complex>
 #include <unsupported/Eigen/CXX11/Tensor>
+
 #define MAX(a, b) ((a)>(b)?(a):(b))
 
 #include <omp.h>
@@ -69,7 +70,8 @@ struct Energy {
 	double K;
 	double V;
 };
-enum SparseSolver {CG, CG_ILUT, QR, BICG,BICG_ILUT, SLDLT, LU, PARDISO_LU};
+enum SparseSolver {CG, CG_ILUT, QR, BICG,BICG_ILUT, SLDLT, LU, PARDISO_LU, MINRES_SOLVER, GMRES_SOLVER
+};
 
 template<typename T>
 using  MatrixType = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;

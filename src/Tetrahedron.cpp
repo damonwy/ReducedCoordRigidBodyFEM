@@ -142,7 +142,7 @@ void Tetrahedron::computeForceDifferentials() {
 
 bool Tetrahedron::checkInverted() {
 	if (this->m_isInverted) {		
-		cout << "tet " << i << " is inverted!" << endl;
+		//cout << "tet " << i << " is inverted!" << endl;
 		return true;
 	}
 	else {

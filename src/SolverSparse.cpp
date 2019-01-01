@@ -21,6 +21,10 @@
 #include "QuadProgMosek.h"
 #include "MatlabDebug.h"
 #include "MeshEmbedding.h"
+#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
+#include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
+#include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
+#include "KKTSolver.h"
 
 using namespace std;
 using namespace Eigen;
@@ -453,11 +457,11 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			case CG: 
 				{
 					ConjugateGradient< SparseMatrix<double>, Lower | Upper> cg;
-					cg.setMaxIterations(1000);
+					//cg.setMaxIterations(2000);
 					cg.setTolerance(1e-3);
 					cg.compute(LHS_sp);
 					qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
-
+					
 					//std::cout << "#iterations:     " << cg.iterations() << std::endl;
 					//std::cout << "estimated error: " << cg.error() << std::endl;
 					break;
@@ -470,7 +474,63 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					cg.setTolerance(1e-3);
 					cg.compute(LHS_sp);
 					qdot1 = cg.solveWithGuess(rhs, guess).segment(0, nr);
-				}			
+					break;
+				}	
+			case MINRES_SOLVER:
+				{						
+					VectorXd diagA = MDKr_sp.diagonal();
+					VectorXd oneA(nr);
+					oneA.setOnes();
+					VectorXd diagAinv = oneA.cwiseQuotient(diagA);
+					MatrixXd B = G_sp * diagAinv.asDiagonal() * G_sp_tp;
+					
+					//MatrixXd A = diagA.asDiagonal();
+					//MatrixXd P(nr + ne, nr + ne);
+					//P.setZero();
+					//P.block(0, 0, nr, nr) = A;
+					//P.block(nr, nr, ne, ne) = B;
+					//SparseMatrix<double> P_sp = P.inverse().sparseView();
+
+					SparseMatrix<double> D_sp = B.inverse().sparseView();
+				
+					//KKTMatrix<double, Eigen::DiagonalPreconditioner<double>> kkt;
+					//DiagonalPreconditioner<double> A_solver;
+					//kkt.setAMatrix(A.sparseView(), A_solver);
+					//kkt.setGMatrix(G_sp);
+
+					//SchurComplementPreconditioner<double> kkt_preconditioner;
+					//kkt_preconditioner.compute(kkt);
+					//kkt_preconditioner.setDMatrix(B.sparseView());
+
+					MINRES<SparseMatrix<double>, Lower, SaddlePointPreconditioner<double> > mr;
+					mr.setMaxIterations(1000);
+					mr.compute(LHS_sp);
+					mr.preconditioner().setADiagMatrix(diagAinv);
+					mr.preconditioner().setDMatrix(D_sp);
+					qdot1 = mr.solve(rhs).segment(0, nr);
+
+					//std::cout << "#iterations:     " << mr.iterations() << std::endl;
+					//std::cout << "estimated error: " << mr.error() << std::endl;
+	
+					/*for (int i = 1; i < 201; i++) {
+						mr.setMaxIterations(i*50);
+						qdot1 = mr.solve(rhs).segment(0, nr);
+						error_vec(i - 1) = (qdot1 - x_exact).norm();
+						std::cout << "#iterations:     " << mr.iterations() << std::endl;
+						std::cout << "estimated error: " << mr.error() << std::endl;
+					}*/
+
+					break;
+				}
+				
+			case GMRES_SOLVER:
+				{
+					GMRES<SparseMatrix<double>> gm;
+					gm.compute(LHS_sp);
+					gm.setTolerance(1e-3);
+					qdot1 = gm.solveWithGuess(rhs, guess).segment(0, nr);
+					break;
+				}
 			case BICG:
 				{
 					BiCGSTAB<SparseMatrix<double> >  BCGST;

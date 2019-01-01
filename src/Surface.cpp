@@ -15,11 +15,11 @@ using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
-void Surface::load(const std::string &RESOURCE_DIR, const std::string &MESH_NAME) {
+void Surface::load(const string &RESOURCE_DIR, const string &MESH_NAME, const string &TETGEN_FLAGS) {
 	// Tetrahedralize 3D mesh
 	tetgenio input_mesh, output_mesh;
 	input_mesh.load_ply((char *)(RESOURCE_DIR + MESH_NAME).c_str());
-	tetrahedralize("pqz", &input_mesh, &output_mesh);//
+	tetrahedralize((char *)TETGEN_FLAGS.c_str(), &input_mesh, &output_mesh);//"pqz"
 
 	double r = 0.01;
 

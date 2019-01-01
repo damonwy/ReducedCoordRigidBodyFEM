@@ -140,6 +140,7 @@ public:
 		double possion, 
 		Material material, 
 		const std::string &RESOURCE_DIR, 
+		const std::string &TETGEN_FLAGS,
 		std::string file_name);
 
 	std::shared_ptr<SoftBodyInvertibleFEM> addSoftBodyInvertibleFEM(
@@ -148,6 +149,7 @@ public:
 		double possion,
 		Material material,
 		const std::string &RESOURCE_DIR,
+		const std::string &TETGEN_FLAGS,
 		std::string file_name);
 
 	std::shared_ptr<SoftBodyCorotationalLinear> addSoftBodyCorotationalLinearFEM(
@@ -156,6 +158,7 @@ public:
 		double possion,
 		Material material,
 		const std::string &RESOURCE_DIR,
+		const std::string &TETGEN_FLAGS,
 		std::string file_name);
 
 	std::shared_ptr<MeshEmbedding> addMeshEmbedding(
@@ -164,6 +167,8 @@ public:
 		double possion,
 		Material material, 
 		const std::string &RESOURCE_DIR,
+		const std::string &TETGEN_FLAGS_0,
+		const std::string &TETGEN_FLAGS_1,
 		std::string dense_mesh,
 		std::string coarse_mesh,
 		SoftBodyType soft_body_type
