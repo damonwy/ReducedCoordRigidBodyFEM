@@ -2,6 +2,11 @@
 
 #define EIGEN_USE_MKL_ALL
 #include "Solver.h"
+#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
+#include "KKTSolver.h"
+
+
+
 
 class SolverSparse : public Solver {
 public:
@@ -128,4 +133,6 @@ private:
 	Eigen::MatrixXd Crdot;
 	//
 	Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
+	Eigen::MINRES<Eigen::SparseMatrix<double>, Eigen::Lower, SaddlePointPreconditioner<double> > mr;
+
 };

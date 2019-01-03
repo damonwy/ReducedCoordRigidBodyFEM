@@ -346,9 +346,9 @@ int main(int argc, char **argv)
 	init();
 	// Start simulation thread.
 	
-	//thread stepperThread(stepperFunc);
+	thread stepperThread(stepperFunc);
 	for (int i = 0; i < 100; i++) {
-		scene->step();
+		//scene->step();
 	}	
 
 	//// Loop until the user closes the window.
@@ -358,18 +358,18 @@ int main(int argc, char **argv)
 		}
 		
 		// Render scene.
-		//render();
+		render();
 
 		// Swap front and back buffers.
-		//glfwSwapBuffers(window);
+		glfwSwapBuffers(window);
 		// Poll for and process events.
-		//glfwPollEvents();
+		glfwPollEvents();
 	}
 	// Quit program.
 	if (RECORD_VIDEO == 0) {
 		
 	}
-	//stepperThread.detach();
+	stepperThread.detach();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

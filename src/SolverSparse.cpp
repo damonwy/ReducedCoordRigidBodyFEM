@@ -21,10 +21,9 @@
 #include "QuadProgMosek.h"
 #include "MatlabDebug.h"
 #include "MeshEmbedding.h"
-#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
+//#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
 #include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
 #include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
-#include "KKTSolver.h"
 
 using namespace std;
 using namespace Eigen;
@@ -478,10 +477,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				}	
 			case MINRES_SOLVER:
 				{						
-					VectorXd diagAinv(nr);//= MDKr_sp.diagonal();
-					//VectorXd oneA(nr);
-					//oneA.setOnes();
-					//VectorXd diagAinv = oneA.cwiseQuotient(diagA);
+					VectorXd diagAinv(nr);
 
 					for (int j = 0; j< MDKr_sp.outerSize(); ++j)
 					{
@@ -493,34 +489,29 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 							diagAinv(j) = 1.0;
 					}
 
-					MatrixXd B;
-					B.noalias() = MatrixXd(G_sp * diagAinv.asDiagonal() * G_sp_tp);
-					
+					SparseMatrix<double> B_sp = G_sp * diagAinv.asDiagonal() * G_sp_tp;
+					B_sp.makeCompressed();
 					//MatrixXd A = diagA.asDiagonal();
 					//MatrixXd P(nr + ne, nr + ne);
 					//P.setZero();
 					//P.block(0, 0, nr, nr) = A;
 					//P.block(nr, nr, ne, ne) = B;
-					//SparseMatrix<double> P_sp = P.inverse().sparseView();
-					//MatrixXd D = B.inverse();
-					SparseMatrix<double> D_sp = B.inverse().sparseView();
-				
-					//KKTMatrix<double, Eigen::DiagonalPreconditioner<double>> kkt;
-					//DiagonalPreconditioner<double> A_solver;
-					//kkt.setAMatrix(A.sparseView(), A_solver);
-					//kkt.setGMatrix(G_sp);
 
-					//SchurComplementPreconditioner<double> kkt_preconditioner;
-					//kkt_preconditioner.compute(kkt);
-					//kkt_preconditioner.setDMatrix(B.sparseView());
-
-					MINRES<SparseMatrix<double>, Lower, SaddlePointPreconditioner<double> > mr;
+					//MINRES<SparseMatrix<double>, Lower, SaddlePointPreconditioner<double> > mr;
 					mr.setMaxIterations(1000);
 					mr.setTolerance(1e-6);
-					mr.compute(LHS_sp);
+					mr.compute(LHS_sp);					
+
 					mr.preconditioner().setADiagMatrix(diagAinv);
-					mr.preconditioner().setDMatrix(D_sp);
-					//mr.preconditioner().setDDenseMatrix(D);
+					
+					mr.preconditioner().setDMatrix(B_sp);	
+
+
+					if (step == 0) {
+						mr.preconditioner().precompute();
+					}
+					mr.preconditioner().factor();
+
 					qdot1 = mr.solve(rhs).segment(0, nr);
 
 					//std::cout << "#iterations:     " << mr.iterations() << std::endl;

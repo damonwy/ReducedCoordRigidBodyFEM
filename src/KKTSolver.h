@@ -4,6 +4,14 @@
 
 #include <Eigen/Sparse>
 #include <Eigen/Dense>
+#include <Eigen/SparseCholesky>
+#include <Eigen/OrderingMethods>
+#include <Eigen\src\Core\util\IndexedViewHelper.h>
+#include <Eigen/Cholesky>
+#include <Eigen/PardisoSupport>
+#include <Eigen/SparseLU>
+
+
 #include <Eigen/IterativeLinearSolvers>
 #include <unsupported/Eigen/IterativeSolvers>
 
@@ -210,6 +218,7 @@ template <typename _Scalar>
 class SaddlePointPreconditioner
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	typedef _Scalar Scalar;
 	typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Vector;
 	typedef Eigen::Matrix <Scalar, Eigen::Dynamic, Eigen::Dynamic> Matrix;
@@ -223,13 +232,15 @@ public:
 	SaddlePointPreconditioner() :m_isInitialized(true) {}
 
 	template<typename MatType>
-	SaddlePointPreconditioner& analyzePattern(const MatType&) { return *this; }
+	SaddlePointPreconditioner& analyzePattern(const MatType&) {
+		return *this; }
 
 	template<typename MatType>
 	SaddlePointPreconditioner& compute(const MatType&) { return *this; }
 
 	template<typename MatType>
-	SaddlePointPreconditioner& factorize(const MatType&mat) { return *this;}
+	SaddlePointPreconditioner& factorize(const MatType&mat) { 
+		return *this;}
 
 	Eigen::Index rows() const { return m_mat.rows(); }
 	Eigen::Index cols() const { return m_mat.cols(); }
@@ -238,8 +249,15 @@ public:
 	{
 		int nA = m_invdiag_A.rows();
 		Vector x(b.rows());
-		x.topRows(nA) = m_invdiag_A.cwiseProduct(b.segment(0, nA));
-		x.bottomRows(m_mat.rows()).noalias()= m_mat * b.bottomRows(m_mat.rows());
+		x.topRows(nA) = m_invdiag_A.cwiseProduct(b.segment(0, nA));	
+		Vector lambda = b.bottomRows(m_mat.rows());
+		//x.bottomRows(m_mat_dense.rows()) = m_mat_dense.ldlt().solve(lambda);
+		//x.bottomRows(m_mat.rows()) = lambda; 
+		m_solver.matrixL().solveInPlace(lambda);
+		m_solver.matrixU().solveInPlace(lambda);
+		std::cout << lambda << std::endl;
+		x.bottomRows(m_mat.rows()) = lambda;
+		//x.bottomRows(m_mat.rows()) = m_solver.solve(lambda);
 		//x.bottomRows(m_mat_dense.rows()).noalias() = m_mat_dense * b.bottomRows(m_mat_dense.rows());
 		return x;
 	}
@@ -253,13 +271,24 @@ public:
 			return Eigen::Solve<SaddlePointPreconditioner, Rhs>(*this, b.derived());
 		}
 
-	void setDMatrix(const Eigen::SparseMatrix<Scalar> &D)
+	void setDMatrix(Eigen::SparseMatrix<Scalar> &D)
 	{
+		//m_mat = Eigen::Map<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>>(DATA, DATA rows, DATA cols);
 		m_mat = D;
+		//m_solver.analyzePattern(m_mat);
 	}
 
 	void setADiagMatrix(const Vector &invdiag_A) {
+		//m_invdiag_A = Eigen::Map<Eigen::VectorXd>(invdiag_A.data(), invdiag_A.size());
 		m_invdiag_A = invdiag_A;
+	}
+
+	void factor() {
+		m_solver.factorize(m_mat);
+	}
+
+	void precompute() {
+		m_solver.analyzePattern(m_mat);
 	}
 
 	void setDDenseMatrix(const Matrix &D) {
@@ -271,6 +300,7 @@ public:
 protected:
 	Eigen::SparseMatrix<Scalar> m_mat;
 	Matrix m_mat_dense;
+	Eigen::SparseLU< Eigen::SparseMatrix<Scalar, Eigen::ColMajor>, Eigen::NaturalOrdering<int >> m_solver;
 	Vector m_invdiag_A;
 	bool m_isInitialized;
 };
