@@ -21,10 +21,10 @@
 #include "QuadProgMosek.h"
 #include "MatlabDebug.h"
 #include "MeshEmbedding.h"
-#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
+//#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
 #include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
 #include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
-#include "KKTSolver.h"
+#include <Eigen/CholmodSupport>
 
 using namespace std;
 using namespace Eigen;
@@ -477,36 +477,52 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					break;
 				}	
 			case MINRES_SOLVER:
-				{						
-					VectorXd diagA = MDKr_sp.diagonal();
-					VectorXd oneA(nr);
-					oneA.setOnes();
-					VectorXd diagAinv = oneA.cwiseQuotient(diagA);
-					MatrixXd B = G_sp * diagAinv.asDiagonal() * G_sp_tp;
+				{					
+					VectorXd diagAinv(nr);
+
+					for (int j = 0; j< MDKr_sp.outerSize(); ++j)
+					{
+						typename SparseMatrix<double>::InnerIterator it(MDKr_sp, j);
+						while (it && it.index() != j) ++it;
+						if (it && it.index() == j && it.value() != 0.0)
+							diagAinv(j) = 1.0 / it.value();
+						else
+							diagAinv(j) = 1.0;
+					}
+
+					SparseMatrix<double> B_sp = G_sp * diagAinv.asDiagonal() * G_sp_tp;
 					
+					//Eigen::SimplicialLDLT< Eigen::SparseMatrix<double, Eigen::ColMajor>> pre_solver;
+					//pre_solver.compute(B_sp);
+					//SparseMatrix<double> I_sp(ne, ne);
+					//I_sp.setIdentity();
+					//SparseMatrix<double> D_sp = pre_solver.solve(I_sp);
+					if (step == 0) {
+						D_sp.reserve(5000);
+					}
+					D_sp = MatrixXd(B_sp).inverse().sparseView();
+					D_sp.makeCompressed();
 					//MatrixXd A = diagA.asDiagonal();
 					//MatrixXd P(nr + ne, nr + ne);
 					//P.setZero();
 					//P.block(0, 0, nr, nr) = A;
 					//P.block(nr, nr, ne, ne) = B;
-					//SparseMatrix<double> P_sp = P.inverse().sparseView();
 
-					SparseMatrix<double> D_sp = B.inverse().sparseView();
-				
-					//KKTMatrix<double, Eigen::DiagonalPreconditioner<double>> kkt;
-					//DiagonalPreconditioner<double> A_solver;
-					//kkt.setAMatrix(A.sparseView(), A_solver);
-					//kkt.setGMatrix(G_sp);
-
-					//SchurComplementPreconditioner<double> kkt_preconditioner;
-					//kkt_preconditioner.compute(kkt);
-					//kkt_preconditioner.setDMatrix(B.sparseView());
-
-					MINRES<SparseMatrix<double>, Lower, SaddlePointPreconditioner<double> > mr;
+					//MINRES<SparseMatrix<double>, Lower, SaddlePointPreconditioner<double> > mr;
 					mr.setMaxIterations(1000);
-					mr.compute(LHS_sp);
+					mr.setTolerance(1e-6);
+					mr.compute(LHS_sp);					
+
 					mr.preconditioner().setADiagMatrix(diagAinv);
+					
 					mr.preconditioner().setDMatrix(D_sp);
+
+
+					if (step == 0) {
+						//mr.preconditioner().precompute();
+					}
+					//mr.preconditioner().factor();
+
 					qdot1 = mr.solve(rhs).segment(0, nr);
 
 					//std::cout << "#iterations:     " << mr.iterations() << std::endl;
@@ -550,7 +566,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				}
 			case SLDLT:
 				{
-					SimplicialLDLT<SparseMatrix<double> > sldlt;
+					//SimplicialLDLT<SparseMatrix<double>, Lower, NaturalOrdering<int> > sldlt;
+					//SparseLU<SparseMatrix<double>> sldlt;
+
+					CholmodSimplicialLDLT<SparseMatrix<double>> sldlt;
+
+
+					//PardisoLDLT<Eigen::SparseMatrix<double>> sldlt;
 					sldlt.compute(LHS_sp);
 					qdot1 = sldlt.solve(rhs).segment(0, nr);
 					break;
