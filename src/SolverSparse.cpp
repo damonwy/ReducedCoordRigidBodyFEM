@@ -24,6 +24,7 @@
 //#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
 #include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
 #include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
+#include <Eigen/CholmodSupport>
 
 using namespace std;
 using namespace Eigen;
@@ -476,7 +477,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					break;
 				}	
 			case MINRES_SOLVER:
-				{						
+				{					
 					VectorXd diagAinv(nr);
 
 					for (int j = 0; j< MDKr_sp.outerSize(); ++j)
@@ -490,7 +491,17 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					}
 
 					SparseMatrix<double> B_sp = G_sp * diagAinv.asDiagonal() * G_sp_tp;
-					B_sp.makeCompressed();
+					
+					//Eigen::SimplicialLDLT< Eigen::SparseMatrix<double, Eigen::ColMajor>> pre_solver;
+					//pre_solver.compute(B_sp);
+					//SparseMatrix<double> I_sp(ne, ne);
+					//I_sp.setIdentity();
+					//SparseMatrix<double> D_sp = pre_solver.solve(I_sp);
+					if (step == 0) {
+						D_sp.reserve(5000);
+					}
+					D_sp = MatrixXd(B_sp).inverse().sparseView();
+					D_sp.makeCompressed();
 					//MatrixXd A = diagA.asDiagonal();
 					//MatrixXd P(nr + ne, nr + ne);
 					//P.setZero();
@@ -504,13 +515,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 					mr.preconditioner().setADiagMatrix(diagAinv);
 					
-					mr.preconditioner().setDMatrix(B_sp);	
+					mr.preconditioner().setDMatrix(D_sp);
 
 
 					if (step == 0) {
-						mr.preconditioner().precompute();
+						//mr.preconditioner().precompute();
 					}
-					mr.preconditioner().factor();
+					//mr.preconditioner().factor();
 
 					qdot1 = mr.solve(rhs).segment(0, nr);
 
@@ -555,7 +566,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				}
 			case SLDLT:
 				{
-					SimplicialLDLT<SparseMatrix<double> > sldlt;
+					//SimplicialLDLT<SparseMatrix<double>, Lower, NaturalOrdering<int> > sldlt;
+					//SparseLU<SparseMatrix<double>> sldlt;
+
+					CholmodSimplicialLDLT<SparseMatrix<double>> sldlt;
+
+
+					//PardisoLDLT<Eigen::SparseMatrix<double>> sldlt;
 					sldlt.compute(LHS_sp);
 					qdot1 = sldlt.solve(rhs).segment(0, nr);
 					break;

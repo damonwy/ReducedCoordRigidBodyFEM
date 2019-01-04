@@ -135,4 +135,6 @@ private:
 	Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
 	Eigen::MINRES<Eigen::SparseMatrix<double>, Eigen::Lower, SaddlePointPreconditioner<double> > mr;
 
+	Eigen::SparseMatrix<double> D_sp;
+
 };

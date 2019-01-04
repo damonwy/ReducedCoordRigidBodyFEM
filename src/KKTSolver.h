@@ -10,7 +10,7 @@
 #include <Eigen/Cholesky>
 #include <Eigen/PardisoSupport>
 #include <Eigen/SparseLU>
-
+#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
 
 #include <Eigen/IterativeLinearSolvers>
 #include <unsupported/Eigen/IterativeSolvers>
@@ -253,12 +253,17 @@ public:
 		Vector lambda = b.bottomRows(m_mat.rows());
 		//x.bottomRows(m_mat_dense.rows()) = m_mat_dense.ldlt().solve(lambda);
 		//x.bottomRows(m_mat.rows()) = lambda; 
-		m_solver.matrixL().solveInPlace(lambda);
-		m_solver.matrixU().solveInPlace(lambda);
-		std::cout << lambda << std::endl;
-		x.bottomRows(m_mat.rows()) = lambda;
+		//m_solver.matrixL().solveInPlace(lambda);
+		//m_solver.matrixU().solveInPlace(lambda);		
+
 		//x.bottomRows(m_mat.rows()) = m_solver.solve(lambda);
-		//x.bottomRows(m_mat_dense.rows()).noalias() = m_mat_dense * b.bottomRows(m_mat_dense.rows());
+
+		//std::cout << m_solver.iterations() << std::endl;
+		//std::cout << m_solver.error() << std::endl;
+
+		//x.bottomRows(m_mat.rows()) = lambda;
+
+		x.bottomRows(m_mat.rows()).noalias() = m_mat * lambda;
 		return x;
 	}
 
@@ -289,6 +294,8 @@ public:
 
 	void precompute() {
 		m_solver.analyzePattern(m_mat);
+		m_solver.setMaxIterations(10000);
+		m_solver.setTolerance(1e-6);
 	}
 
 	void setDDenseMatrix(const Matrix &D) {
@@ -303,4 +310,6 @@ protected:
 	Eigen::SparseLU< Eigen::SparseMatrix<Scalar, Eigen::ColMajor>, Eigen::NaturalOrdering<int >> m_solver;
 	Vector m_invdiag_A;
 	bool m_isInitialized;
+	//Eigen::MINRES<Eigen::SparseMatrix<Scalar>, Eigen::Lower > m_solver;
+
 };
