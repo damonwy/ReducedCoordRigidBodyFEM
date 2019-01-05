@@ -87,14 +87,14 @@ public:
 	void scatterDofs(Eigen::VectorXd y, int nr);
 	void scatterDDofs(Eigen::VectorXd ydot, int nr);
 	void scatterTauCon(Eigen::VectorXd tauc);
-
+	virtual void update_() {}
+	Matrix4d m_Q;		
 protected:
-	Matrix4d m_Q;										// Transformation matrix applied about the joint
+									// Transformation matrix applied about the joint
 	std::shared_ptr<Shape> m_jointShape;				// Joint shape			
 	std::shared_ptr<Body> m_body;						// Attached body
 	std::shared_ptr<Joint> m_parent;					// Parent joint
 	std::vector<std::shared_ptr<Joint>> m_children;		// Children joints
-	virtual void update_() {}
 
 private:
 	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);

@@ -70,7 +70,7 @@ struct Energy {
 	double K;
 	double V;
 };
-enum SparseSolver {CG, CG_ILUT, QR, BICG,BICG_ILUT, SLDLT, LU, PARDISO_LU, MINRES_SOLVER, GMRES_SOLVER
+enum SparseSolver {CG, CG_ILUT, QR, BICG,BICG_ILUT, SLDLT, LU, PARDISO_LU, PARDISO_LDLT, MINRES_SOLVER, GMRES_SOLVER
 };
 
 template<typename T>

@@ -24,7 +24,6 @@
 //#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
 #include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
 #include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
-#include <Eigen/CholmodSupport>
 
 using namespace std;
 using namespace Eigen;
@@ -566,13 +565,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				}
 			case SLDLT:
 				{
-					//SimplicialLDLT<SparseMatrix<double>, Lower, NaturalOrdering<int> > sldlt;
-					//SparseLU<SparseMatrix<double>> sldlt;
+					SimplicialLDLT<SparseMatrix<double>, Lower, NaturalOrdering<int> > sldlt;
 
-					CholmodSimplicialLDLT<SparseMatrix<double>> sldlt;
-
-
-					//PardisoLDLT<Eigen::SparseMatrix<double>> sldlt;
 					sldlt.compute(LHS_sp);
 					qdot1 = sldlt.solve(rhs).segment(0, nr);
 					break;
@@ -595,6 +589,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					qdot1 = solver.solve(rhs).segment(0, nr);
 				}
 				break;
+			case PARDISO_LDLT:
+				{
+					PardisoLDLT<SparseMatrix<double>> pldlt;
+					pldlt.compute(LHS_sp);
+					qdot1 = pldlt.solve(rhs).segment(0, nr);
+					break;
+				}
 			case QR:
 				{
 					SparseQR< SparseMatrix<double>, COLAMDOrdering<int>> sqr(LHS_sp);

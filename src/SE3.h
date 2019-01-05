@@ -30,9 +30,11 @@ public:
 	static Eigen::Matrix4d RpToE(Eigen::Matrix3d R, Eigen::Vector3d p);
 	static void EToRp(const Eigen::Matrix4d &E, Eigen::Matrix3d &R, Eigen::Vector3d &p);
 	static Matrix6d ad(Vector6d phi);
+	static Eigen::Matrix3d exp(const Vector3d &phi);
 	static Eigen::Matrix4d exp(const Vector6d &phi);
 	static Eigen::Matrix4d exp(const Eigen::Matrix4d &phi);
 	static Vector6d log(const Eigen::Matrix4d &A);
+	static bool reparam(Eigen::VectorXd &w);
 };
 
 
