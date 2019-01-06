@@ -46,6 +46,7 @@ class MeshEmbedding;
 class MeshEmbeddingNull;
 class Line;
 class Node;
+class JointFree;
 
 enum WorldType {
 	SERIAL_CHAIN,
@@ -77,7 +78,8 @@ enum WorldType {
 	WORM,
 	CROSS,
 	STARFISH,
-	FREEJOINT
+	FREEJOINT,
+	STARFISH_2
 };
 
 struct Floor {
@@ -122,6 +124,16 @@ public:
 		double q, 
 		std::shared_ptr<Joint> parent = nullptr);
 	
+	std::shared_ptr<JointFree> addJointFree(
+		std::shared_ptr<Body> body,
+		Vector3d p,
+		Matrix3d R,
+		Vector6d q0,
+		Vector6d qdot0,
+		const std::string &RESOURCE_DIR,
+		std::shared_ptr<Joint> parent = nullptr
+	);
+
 	std::shared_ptr<ConstraintJointLimit> addConstraintJointLimit(
 		std::shared_ptr<Joint> joint, 
 		double ql, 
@@ -256,6 +268,7 @@ public:
 
 	void sceneCross(double t);
 	void sceneStarFish(double t);
+	void sceneStarFish2(double t);
 
 	Energy computeEnergy();
 

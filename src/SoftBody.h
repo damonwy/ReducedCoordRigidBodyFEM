@@ -103,6 +103,7 @@ public:
 	bool m_isInverted;
 	
 	int m_npotentialcols;		// how many nodes need to check
+	bool m_isCollided;
 
 
 protected:

@@ -16,6 +16,7 @@ public:
 	void initMatrix(int nm, int nr, int nem, int ner, int nim, int nir);
 
 private:
+	bool isCollided;
 	SparseSolver m_sparse_solver;
 	Eigen::SparseMatrix<double> Mm_sp;
 	std::vector<T> Mm_;

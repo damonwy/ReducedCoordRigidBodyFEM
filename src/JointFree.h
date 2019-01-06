@@ -81,8 +81,6 @@ protected:
 		const std::shared_ptr<Program> prog,
 		const std::shared_ptr<Program> prog2,
 		std::shared_ptr<MatrixStack> P) const {
-
-
 	}
 };
 

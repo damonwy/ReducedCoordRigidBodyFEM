@@ -177,6 +177,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 	{
 		if (step == 0) {
 			// constant during simulation
+			 isCollided = false;
 			nr = m_world->nr;
 			nm = m_world->nm;
 			nem = m_world->nem;
@@ -259,6 +260,11 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			Mm_sp.setFromTriplets(Mm_.begin(), Mm_.end());
 		}
 		
+		
+		if (meshembedding0->getCoarseMesh()->m_isCollided) {
+			isCollided = true;
+		}
+
 
 		if (m_world->m_type == CROSS) {
 			m_world->sceneCross(m_world->getTime());
@@ -270,6 +276,10 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		if (m_world->m_type == STARFISH) {
 			m_world->sceneStarFish(m_world->getTime());
+		}
+
+		if (m_world->m_type == STARFISH_2 && !isCollided) {
+			//m_world->sceneStarFish2(m_world->getTime());
 		}
 			
 		body0->computeGrav(grav, fm);
@@ -288,8 +298,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		//// First get dense jacobian (only a small part of the matrix)
 		joint0->computeJacobian(J_dense, Jdot_dense);
-		cout << J_dense << endl;
-		cout << Jdot_dense << endl;
+	
 		//// Push back the dense part
 		if (step == 0) {
 			for (int i = 0; i < J_dense.rows(); ++i) {
@@ -335,18 +344,17 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		fr_ = Mr_sp * qdot0 + h * (J_t_sp * (fm - Mm_sp * Jdot_sp * qdot0) + fr); 
 		MDKr_sp = Mr_sp + J_t_sp * (h * Dm_sp - hsquare * Km_sp) * J_sp + h * Dr_sp - hsquare * Kr_sp;
 		//cout << MatrixXd(MDKr_sp) << endl << endl;
-		cout << "Mr_sp"<< endl << MatrixXd(Mr_sp) << endl << endl;
-		cout << "J_sp" << endl << MatrixXd(J_sp) << endl << endl;
-		cout << "fr_"<< (fr_) << endl << endl;
-		//cout << "qdot0" << qdot0 << endl << endl;
-		cout <<"fm"<< fm << endl << endl;
-		//cout <<"fr"<< fr << endl << endl;
+		//cout << "Mr_sp"<< endl << MatrixXd(Mr_sp) << endl << endl;
+		//cout << "J_sp" << endl << MatrixXd(J_sp) << endl << endl;
+		//cout << "fr_"<< (fr_) << endl << endl;
+		//cout <<"fm"<< fm << endl << endl;
 		
 
 		if (ne > 0) {
 			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
+			
 			constraint0->computeJacEqRSparse(Gr_, Grdot_, gr, grdot, grddot);
-
+		
 			Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
 			Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
 			Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
@@ -407,13 +415,11 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		if (ne == 0 && ni == 0) {	// No constraints
 			ConjugateGradient< SparseMatrix<double> > cg;
 			cg.setMaxIterations(100000);
-			cg.setTolerance(1e-5);
+			cg.setTolerance(1e-10);
 			cg.compute(MDKr_sp);
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
-			std::cout << "#iterations:     " << cg.iterations() << std::endl;
-			std::cout << "estimated error: " << cg.error() << std::endl;
 			
-			cout << qdot1 << endl;
+			//cout << qdot1 << endl;
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
 			//int rows = nr + ne;

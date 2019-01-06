@@ -1095,14 +1095,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
-		m_grav << 0.0, -0.0, 0.0;
+		m_grav << 0.0, -1.0, 0.0;
 		Eigen::from_json(js["sides"], sides);
 		double young = 1e4;
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
 		double mesh_damping = 1.0;
-		double y_floor = -35.0;
+		double y_floor = -100.0;
 		nlegs = 5;
 		nsegments = 8;
 		double rotation = 360.0 / nlegs;
@@ -1121,12 +1121,17 @@ void World::load(const std::string &RESOURCE_DIR) {
 				shared_ptr<Joint> joint;
 				if (i == 0) {
 					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
-					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k)/180.0 * M_PI), 0.0, RESOURCE_DIR);
+					Vector6d q0;
+					q0 << 0.0, 0.0, 0.0, 0.0, 5.0, 0.0;
+					joint = addJointFree(body, Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k) / 180.0 * M_PI),  Vector6d::Zero(), q0, RESOURCE_DIR);
+					//joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k)/180.0 * M_PI), 0.0, RESOURCE_DIR);
 				}
 				else {
 					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
+					addConstraintPrescJoint(joint);
+
 				}
-				addConstraintPrescJoint(joint);
+				//addConstraintPrescJoint(joint);
 				//m_joints[i]->setStiffness(m_stiffness);
 				//m_joints[i]->setDamping(m_damping);
 			}
@@ -1164,7 +1169,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
-	case FREEJOINT: {
+	case FREEJOINT: 
+	{
 		m_h = 1.0e-2;
 		density = 1.0;
 		m_grav << 0.0, -1.0, 0.0;
@@ -1178,31 +1184,104 @@ void World::load(const std::string &RESOURCE_DIR) {
 		for (int i = 0; i < 1; i++) {
 
 			auto body = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box_1_1_1.obj");
-
-
 			// Inits joints
 			if (i == 0) {
-				auto joint = make_shared<JointFree>(body);
-				Matrix4d E = Matrix4d::Identity();
-				joint->setJointTransform(E);
-				joint->m_q.setZero();
-				joint->m_qdot << 0.2, 0.4, 0.6, 0.0, 0.0, 3.0;
-				joint->load(RESOURCE_DIR, "sphere2.obj");
-				m_joints.push_back(joint);
-				m_njoints++;
+				Vector6d qdot0;
+				qdot0 << 0.2, 0.4, 0.6, 0.0, 0.0, 3.0;
+				addJointFree(body, Vector3d::Zero(), Matrix3d::Identity(), Vector6d::Zero(),qdot0, RESOURCE_DIR);
 				
 			}
 			else {
 				
 			}
 		}
-
-		/*auto con0 = make_shared<ConstraintPrescJoint>(m_joints[3], REDMAX_EULER);
-		m_nconstraints++;
-		m_constraints.push_back(con0);*/
-
 		break;
 	}
+	case STARFISH_2:
+	{
+		m_h = 1.0e-1;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -98.0, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		Vector3d root_sides;
+		Eigen::from_json(js["cube_sides"], root_sides);
+		double young = 1e4;
+		double possion = 0.35;
+		m_stiffness = 1.0e4;
+		m_damping = 1.0e3;
+		double mesh_damping = 1.0;
+		double y_floor = -20.0;
+		nlegs = 5;
+		nsegments = 8;
+		double rotation = 360.0 / nlegs;
+		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
+		starfish_color /= 255.0f;
+		std::string coarse_file_name = "starfish_coarse3";//starfishco
+		std::string dense_file_name = "starfish2";
+
+		double len_segment = 10.0;
+		auto root_body = addBody(density, root_sides, Vector3d::Zero(), Matrix3d::Identity(), RESOURCE_DIR, "box_1_1_1.obj");
+
+		Vector6d qdot0;
+		qdot0 << 0.0, 0.0, 0.0, 0.0, 10.0, 0.0;
+		auto root_joint = addJointFree(root_body, Vector3d::Zero(), Matrix3d::Identity(), Vector6d::Zero(), qdot0, RESOURCE_DIR);
+
+		for (int k = 0; k < nlegs; ++k) {
+			for (int i = 0; i < nsegments; i++) {
+				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+				//body->setDrawingOption(false);
+
+				shared_ptr<Joint> joint;
+				if (i == 0) {
+					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k)/180.0 * M_PI), 0.0, RESOURCE_DIR, root_joint);
+				}
+				else {
+					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1 + 1]);
+					//addConstraintPrescJoint(joint);
+
+				}
+				//addConstraintPrescJoint(joint);
+				//m_joints[i]->setStiffness(m_stiffness);
+				//m_joints[i]->setDamping(m_damping);
+			}
+		}
+
+		double len_skeleton = nsegments * len_segment;
+		int nsamples = 4;
+
+		vector<std::shared_ptr<Node>> additional_nodes;
+		int idx_body = 1;
+		Vector3d end_pt;
+		for (int i = 0; i < nlegs; ++i) {
+			double theta = (18.0 + rotation * i) / 180.0 * M_PI;
+			end_pt = len_skeleton * Vector3d(cos(theta), 0.0, -sin(theta));
+			addSkeleton(Vector3d::Zero(), end_pt, nsegments, nsamples, idx_body, additional_nodes);
+		}
+
+		TetgenHelper::createNodeFile(additional_nodes, (char *)(RESOURCE_DIR + coarse_file_name + ".a.node").c_str());
+
+		//m_joints[0]->m_qdot[0] = -5.0;
+		//m_joints[8]->m_qdot[0] = -5.0;
+
+		//m_joints[16]->m_qdot[0] = -5.0;
+		////m_joints[16]->m_qdot[0] = -0.7;
+		//m_joints[4]->m_qdot[0] = -7.0;
+
+		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
+		m_floors.push_back(f0);
+
+		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziYV", "pqz", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
+		starfish->precomputeWeights();
+		starfish->setDamping(mesh_damping);
+		starfish->getDenseMesh()->setColor(starfish_color);
+		//starfish->getCoarseMesh()->setFloor(y_floor);
+
+	}
+	break;
+
 	default:
 		break;
 	}
@@ -1260,6 +1339,26 @@ shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body,
 	Matrix4d E = SE3::RpToE(R, p);
 	joint->setJointTransform(E);
 	joint->m_q(0) = q;
+	joint->load(RESOURCE_DIR, "sphere2.obj");
+	m_joints.push_back(joint);
+	m_njoints++;
+	return joint;
+}
+
+shared_ptr<JointFree> World::addJointFree(
+	shared_ptr<Body> body,
+	Vector3d p,
+	Matrix3d R,
+	Vector6d q0,
+	Vector6d qdot0,
+	const string &RESOURCE_DIR,
+	shared_ptr<Joint> parent) 
+{
+	auto joint = make_shared<JointFree>(body, parent);
+	Matrix4d E = SE3::RpToE(R, p);
+	joint->setJointTransform(E);
+	joint->m_q = q0;
+	joint->m_qdot = qdot0;
 	joint->load(RESOURCE_DIR, "sphere2.obj");
 	m_joints.push_back(joint);
 	m_njoints++;
@@ -1693,6 +1792,13 @@ void World::init() {
 		//}
 	}
 
+	if (m_type == STARFISH_2) {
+		for (int i = 0; i < (int)m_lines.size(); ++i) {
+			m_meshembeddings[0]->setAttachmentsByLine(m_lines[i]);
+		}
+	}
+
+
 	for (int i = 0; i < m_nsoftbodies; i++) {
 		m_softbodies[i]->countDofs(nm, nr);
 		m_softbodies[i]->init();
@@ -1887,9 +1993,9 @@ void World::sceneStarFish(double t) {
 	
 	for (int i = 0; i < nlegs; i++) {
 		if (i > -1) {
-			m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
-			m_joints[0 + nsegments * i]->presc->m_qdot[0] = d60 * cosTheta;
-			m_joints[0 + nsegments * i]->presc->m_qddot[0] = -d60 * sinTheta;
+			//m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
+			//m_joints[0 + nsegments * i]->presc->m_qdot[0] = d60 * cosTheta;
+			//m_joints[0 + nsegments * i]->presc->m_qddot[0] = -d60 * sinTheta;
 
 
 			m_joints[1 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
@@ -1958,5 +2064,59 @@ void World::sceneStarFish(double t) {
 			m_joints[7 + 8 * i]->presc->m_qddot[0] =-1.0 / 18.0 * sinTheta;
 
 		}	
+	}
+}
+
+void World::sceneStarFish2(double t) {
+
+	double sinTheta = M_PI * sin(t);
+	double cosTheta = M_PI * cos(t);
+	double d30 = -1.0 / 6.0;
+	double d45 = -1.0 / 4.0;
+	double d15 = -1.0 / 12.0;
+	double d60 = -1.0 / 3.0;
+	double d90 = -1.0 / 2.0;
+	double d10 = -1.0 / 18.0;
+	double d12 = -1.0 / 15.0;
+	double d18 = -1.0 / 10.0;
+	double d20 = -1.0 / 9.0;
+	double d22 = -1.0 / 8.0;
+
+	for (int i = 0; i < nlegs; i++) {
+		if (i < -1) {
+			m_joints[0 + nsegments * i + 1]->presc->m_q[0] = d60 * sinTheta;
+			m_joints[0 + nsegments * i + 1]->presc->m_qdot[0] = d60 * cosTheta;
+			m_joints[0 + nsegments * i + 1]->presc->m_qddot[0] = -d60 * sinTheta;
+
+
+			m_joints[1 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[1 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[1 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
+
+			m_joints[2 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[2 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[2 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
+
+			m_joints[3 + nsegments * i + 1]->presc->m_q[0] = -d22 * sinTheta;
+			m_joints[3 + nsegments * i + 1]->presc->m_qdot[0] = -d22 * cosTheta;
+			m_joints[3 + nsegments * i + 1]->presc->m_qddot[0] = d22 * sinTheta;
+
+			m_joints[4 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[4 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[4 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
+
+
+			m_joints[5 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[5 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[5 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
+
+			m_joints[6 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[6 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[6 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
+
+			m_joints[7 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
+			m_joints[7 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
+			m_joints[7 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
+		}
 	}
 }

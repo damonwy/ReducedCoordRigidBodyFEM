@@ -18,8 +18,6 @@ public:
 	Joint(body, 3, parent)
 	{
 		m_radius = 1.0;
-
-
 	}
 
 	void load(const std::string &RESOURCE_DIR, std::string joint_shape) {
@@ -73,35 +71,21 @@ public:
 
 	void reparam_() {
 		Vector3d q0 = m_q.topRows(3);
-		std::cout << "q0" << q0 << std::endl;
 		Eigen::VectorXd q1 = q0;
 		bool flag = SE3::reparam(q1);
-		std::cout << "q1" << q1 << std::endl;
 
 		if (flag) {
 			Vector3d qdot0 = m_qdot.topRows(3);
-			std::cout << "qdot0" << qdot0 << std::endl;
-
 			Matrix3d S0 = m_S.block<3, 3>(0, 0);
 			// Update to compute new S (ignore new Sdot)
 			m_q.topRows(3) = q1;
-			std::cout << "S0" << S0 << std::endl;
-
 			update_();
 			Matrix3d S1 = m_S.block<3, 3>(0, 0);
-			std::cout << "S1" << S1 << std::endl;
-
 
 			// Update again to compute new Sdot
 			m_qdot.topRows(3) = S1.partialPivLu().solve(S0*qdot0);
-
-
-			std::cout << "S0QDOT0" << S0*qdot0 << std::endl;
-
-			std::cout << m_qdot.topRows(3) << std::endl;
 			update_();
 		}
-
 	}
 
 	void setGeometry(double radius) {

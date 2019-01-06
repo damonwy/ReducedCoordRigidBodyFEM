@@ -34,6 +34,7 @@ SoftBody::SoftBody(): m_isInvertible(true), m_isGravity(false), m_isElasticForce
 	m_color << 1.0f, 1.0f, 0.0f;
 	m_isInverted = false;
 	m_isCollisionWithFloor = false;
+	m_isCollided = false;
 	m_npotentialcols = 0;
 }
 
@@ -44,6 +45,7 @@ SoftBody::SoftBody(double density, double young, double poisson, Material materi
 	m_color << 1.0f, 1.0f, 0.0f;
 	m_isInverted = false;
 	m_isCollisionWithFloor = false;
+	m_isCollided = false;
 
 	//m_isGravity = true;
 	m_type = 0;
@@ -625,6 +627,9 @@ VectorXd SoftBody::gatherDDofs(VectorXd &ydot, int nr) {
 }
 
 void SoftBody::scatterDofs(VectorXd &y, int nr) {
+	m_isCollided = false;
+
+
 	// Scatters q and qdot from y
 
 	// Update points
@@ -647,6 +652,7 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 					if (m_nodes[i]->x.y() < m_floor_y && m_nodes[i]->v.y() < 0.0) { //
 						y.segment<3>(idxR).y() = m_floor_y;
 						y.segment<3>(nr + idxR).y() = 0.0;
+						m_isCollided = true;
 					}
 					
 				}
