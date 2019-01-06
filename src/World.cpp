@@ -111,7 +111,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_tspan << 0.0, 5.0;
 		m_t = 0.0;
 		// Inits rigid bodies
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 3; i++) {
 
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
@@ -125,10 +125,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 
-		auto con0 = make_shared<ConstraintPrescJoint>(m_joints[3], REDMAX_EULER);
-		m_nconstraints++;
-		m_constraints.push_back(con0);
-
+		//auto con0 = make_shared<ConstraintPrescJoint>(m_joints[0], REDMAX_EULER);
+		//m_nconstraints++;
+		//m_constraints.push_back(con0);
 		break;
 	}
 	case DIFF_REVOLUTE_AXES:
@@ -1281,6 +1280,67 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
+	case TEST_REDUCED_HYBRID_DYNAMICS:
+	{
+		m_h = 1.0e-2;
+		density = 1.0;
+		m_grav << 0.0, -98, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		//m_nbodies = 5;
+		//m_njoints = 5;
+		m_Hexpected = 10000; // todo
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		// Inits rigid bodies
+		for (int i = 0; i < 3; i++) {
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+			}
+		}
+
+		auto con0 = make_shared<ConstraintPrescJoint>(m_joints[0], REDMAX_EULER);
+		m_nconstraints++;
+		m_constraints.push_back(con0);
+
+
+		break;
+	}
+	case TEST_MAXIMAL_HYBRID_DYNAMICS:
+	{
+		m_h =8.0e-2;
+		density = 1.0;
+		m_grav << 0.0, -0.0, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		//m_nbodies = 5;
+		//m_njoints = 5;
+		m_Hexpected = 10000; // todo
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		// Inits rigid bodies
+		for (int i = 0; i < 4; i++) {
+
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+			}
+		}
+		Vector3i dof;
+		dof << 2, 3, 4;
+		auto con0 = make_shared<ConstraintPrescBody>(m_bodies[3], dof, REDMAX_EULER);
+		m_nconstraints++;
+		m_constraints.push_back(con0);
+		break;
+	}
 
 	default:
 		break;
@@ -1798,6 +1858,8 @@ void World::init() {
 		}
 	}
 
+	
+
 
 	for (int i = 0; i < m_nsoftbodies; i++) {
 		m_softbodies[i]->countDofs(nm, nr);
@@ -1971,9 +2033,9 @@ shared_ptr<Joint> World::getJoint(const string &name) {
 
 void World::sceneCross(double t) {
 
-	m_joints[3]->presc->m_q[0] = 0.0;
-	m_joints[3]->presc->m_qdot[0] = 0.0;
-	m_joints[3]->presc->m_qddot[0] = 0.0;
+	m_joints[0]->presc->m_q[0] = 0.0;
+	m_joints[0]->presc->m_qdot[0] = 0.0;
+	m_joints[0]->presc->m_qddot[0] = 0.0;
 }
 
 void World::sceneStarFish(double t) {
@@ -2119,4 +2181,61 @@ void World::sceneStarFish2(double t) {
 			m_joints[7 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
 		}
 	}
+}
+
+void World::sceneTestReducedHD(double t) {
+	m_joints[0]->presc->m_q[0] = 0.0;
+	m_joints[0]->presc->m_qdot[0] = 0.0;
+	m_joints[0]->presc->m_qddot[0] = 0.0;
+
+}
+
+
+void World::sceneTestMaximalHD(double t) {
+	Matrix4d E = m_bodies[3]->E_wi;
+	Matrix3d R = E.topLeftCorner(3, 3);
+	Vector6d phi = m_bodies[3]->phi;
+	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
+
+	if (t < 2.0) {
+		vt_w.setZero();
+		wt_i << 0.0, 0.0, -t;
+		vtdot_w.setZero();
+		wtdot_i << 0.0, 0.0, -1.0;
+
+	}
+	else if (t < 4.0) {
+		double t_ = t - 4.0;
+		vt_w.setZero();
+		wt_i << 0.0, 0.0, t_;
+		vtdot_w.setZero();
+		wtdot_i << 0.0, 0.0, 1.0;
+
+	}
+	else if (t < 6.0) {
+		double t_ = t - 4.0;
+		vt_w << -2 * t_, 0.0, 0.0;
+		wt_i << 0.0, 0.0, t_;
+		vtdot_w << -2.0, 0.0, 0.0;
+		wtdot_i << 0.0, 0.0, 1.0;
+	}
+	else if (t < 8.0) {
+		double t_ = t - 8.0;
+		vt_w << 2 * t_, 0.0, 0.0;
+		wt_i << 0.0, 0.0, -t_;
+		vtdot_w << 2.0, 0.0, 0.0;
+		wtdot_i << 0.0, 0.0, -1.0;
+	}
+	else {
+		vt_w.setZero();
+		wt_i.setZero();
+		vtdot_w.setZero();
+		wtdot_i.setZero();
+	}
+
+	Vector3d vt_i = R.transpose() * vt_w;
+	m_bodies[3]->presc->m_qdot.segment<3>(0) = wt_i;
+	m_bodies[3]->presc->m_qdot.segment<3>(3) = vt_i;
+	m_bodies[3]->presc->m_qddot.segment<3>(0) = wtdot_i;
+	m_bodies[3]->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
 }

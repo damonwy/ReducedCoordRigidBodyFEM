@@ -177,7 +177,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 	{
 		if (step == 0) {
 			// constant during simulation
-			 isCollided = false;
+			isCollided = false;
 			nr = m_world->nr;
 			nm = m_world->nm;
 			nem = m_world->nem;
@@ -261,26 +261,32 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		}
 		
 		
-		if (meshembedding0->getCoarseMesh()->m_isCollided) {
+		if (meshembedding0->getCoarseMesh()!= nullptr && meshembedding0->getCoarseMesh()->m_isCollided) {
 			isCollided = true;
 		}
 
-
-		if (m_world->m_type == CROSS) {
+		switch (m_world->m_type) {
+		case CROSS:
 			m_world->sceneCross(m_world->getTime());
-		}
-
-		if (m_world->m_type == SERIAL_CHAIN) {
+			break;
+		case SERIAL_CHAIN:
 			m_world->sceneCross(m_world->getTime());
-		}
-
-		if (m_world->m_type == STARFISH) {
+			break;
+		case STARFISH:
 			m_world->sceneStarFish(m_world->getTime());
+			break;
+		case STARFISH_2:
+			if (!isCollided) {
+				m_world->sceneStarFish2(m_world->getTime());
+			}
+			break;
+		case TEST_MAXIMAL_HYBRID_DYNAMICS:
+			m_world->sceneTestMaximalHD(m_world->getTime());
+			break;
+		default:
+			break;
 		}
 
-		if (m_world->m_type == STARFISH_2 && !isCollided) {
-			//m_world->sceneStarFish2(m_world->getTime());
-		}
 			
 		body0->computeGrav(grav, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);

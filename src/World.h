@@ -79,7 +79,9 @@ enum WorldType {
 	CROSS,
 	STARFISH,
 	FREEJOINT,
-	STARFISH_2
+	STARFISH_2,
+	TEST_MAXIMAL_HYBRID_DYNAMICS,
+	TEST_REDUCED_HYBRID_DYNAMICS
 };
 
 struct Floor {
@@ -269,6 +271,8 @@ public:
 	void sceneCross(double t);
 	void sceneStarFish(double t);
 	void sceneStarFish2(double t);
+	void sceneTestReducedHD(double t);
+	void sceneTestMaximalHD(double t);
 
 	Energy computeEnergy();
 
