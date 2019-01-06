@@ -1,6 +1,7 @@
 #include "ConstraintPrescBody.h"
 
 #include "Body.h"
+
 using namespace std;
 using namespace Eigen;
 
@@ -12,7 +13,9 @@ ConstraintPrescBody::ConstraintPrescBody(shared_ptr<Body> body, VectorXi prows, 
 	m_qdot.setZero();
 	m_qddot.setZero();
 }
-
+void ConstraintPrescBody::init_() {
+	m_body->presc = getSelf();
+}
 
 void ConstraintPrescBody::computeJacEqR_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {
 	int row = idxEM;

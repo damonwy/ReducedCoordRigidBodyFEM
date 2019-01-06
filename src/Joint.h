@@ -59,6 +59,7 @@ public:
 	std::shared_ptr<Joint> prev;	// Reverse recursive ordering
 	int idxR;						// Reduced indices
 	Vector3d m_axis;
+	Matrix4d m_Q;
 
 	void countDofs(int &nm, int &nr);
 	int countR(int &nr, int data);
@@ -80,6 +81,7 @@ public:
 	void computeForceDamping(Eigen::VectorXd &fr, Eigen::MatrixXd &Dr);
 	void computeForceDampingSparse(Eigen::VectorXd &fr, std::vector<T> &Dr_);
 	void computeInertia();
+	void reparam();
 
 	void computeEnergies(Vector3d grav, Energy &ener);
 	void gatherDofs(Eigen::VectorXd &y, int nr);
@@ -87,8 +89,9 @@ public:
 	void scatterDofs(Eigen::VectorXd y, int nr);
 	void scatterDDofs(Eigen::VectorXd ydot, int nr);
 	void scatterTauCon(Eigen::VectorXd tauc);
-	virtual void update_() {}
-	Matrix4d m_Q;		
+	virtual void update_() {}	
+	virtual void reparam_() {}	
+
 protected:
 									// Transformation matrix applied about the joint
 	std::shared_ptr<Shape> m_jointShape;				// Joint shape			

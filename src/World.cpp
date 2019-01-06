@@ -8,6 +8,9 @@
 #include "JointNull.h"
 #include "JointFixed.h"
 #include "JointRevolute.h"
+#include "JointSphericalExp.h"
+#include "JointFree.h"
+#include "JointTranslational.h"
 #include "JointSplineCurve.h"
 #include "JointSplineSurface.h"
 
@@ -1161,6 +1164,45 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 	break;
+	case FREEJOINT: {
+		m_h = 1.0e-2;
+		density = 1.0;
+		m_grav << 0.0, -1.0, 0.0;
+		Eigen::from_json(js["cube_sides"], sides);
+		//m_nbodies = 5;
+		//m_njoints = 5;
+		m_Hexpected = 10000; // todo
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		// Inits rigid bodies
+		for (int i = 0; i < 1; i++) {
+
+			auto body = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box_1_1_1.obj");
+
+
+			// Inits joints
+			if (i == 0) {
+				auto joint = make_shared<JointFree>(body);
+				Matrix4d E = Matrix4d::Identity();
+				joint->setJointTransform(E);
+				joint->m_q.setZero();
+				joint->m_qdot << 0.2, 0.4, 0.6, 0.0, 0.0, 3.0;
+				joint->load(RESOURCE_DIR, "sphere2.obj");
+				m_joints.push_back(joint);
+				m_njoints++;
+				
+			}
+			else {
+				
+			}
+		}
+
+		/*auto con0 = make_shared<ConstraintPrescJoint>(m_joints[3], REDMAX_EULER);
+		m_nconstraints++;
+		m_constraints.push_back(con0);*/
+
+		break;
+	}
 	default:
 		break;
 	}

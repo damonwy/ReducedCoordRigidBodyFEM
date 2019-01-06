@@ -76,7 +76,8 @@ enum WorldType {
 	HUMAN_BODY,
 	WORM,
 	CROSS,
-	STARFISH
+	STARFISH,
+	FREEJOINT
 };
 
 struct Floor {

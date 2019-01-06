@@ -58,7 +58,6 @@ m_ndof(ndof)
 }
 
 void Joint::load(const string &RESOURCE_DIR, string joint_shape) {
-
 	m_jointShape = make_shared<Shape>();
 	m_jointShape->loadMesh(RESOURCE_DIR + joint_shape);
 
@@ -147,6 +146,8 @@ void Joint::computeJacobian(MatrixXd &J, MatrixXd &Jdot) {
 		Jdot.block(m_body->idxM, jointA->idxR, 6, jointA->m_ndof) = Ad_ip * Jdot.block(idxM_P, jointA->idxR, 6, jointA->m_ndof) + Addot_ip * J.block(idxM_P, jointA->idxR, 6, jointA->m_ndof);
 		jointA = jointA->getParent();
 	}
+
+
 	if (next != nullptr) {
 		next->computeJacobian(J, Jdot);
 	}
@@ -166,6 +167,13 @@ void Joint::computeInertia() {
 	m_I_j.block<3, 3>(0, 3) = m * pBrac;
 	m_I_j.block<3, 3>(3, 0).noalias() = m * pBrac.transpose();
 	m_I_j.block<3, 3>(3, 3) = m * Matrix3d::Identity();
+}
+
+void Joint::reparam() {
+	reparam_();
+	if (next != nullptr) {
+		next->reparam();
+	}
 }
 
 void Joint::computeForceStiffness(VectorXd &fr, MatrixXd &Kr) {

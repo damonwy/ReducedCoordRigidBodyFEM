@@ -288,7 +288,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		//// First get dense jacobian (only a small part of the matrix)
 		joint0->computeJacobian(J_dense, Jdot_dense);
-
+		cout << J_dense << endl;
+		cout << Jdot_dense << endl;
 		//// Push back the dense part
 		if (step == 0) {
 			for (int i = 0; i < J_dense.rows(); ++i) {
@@ -333,7 +334,14 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		fr_ = Mr_sp * qdot0 + h * (J_t_sp * (fm - Mm_sp * Jdot_sp * qdot0) + fr); 
 		MDKr_sp = Mr_sp + J_t_sp * (h * Dm_sp - hsquare * Km_sp) * J_sp + h * Dr_sp - hsquare * Kr_sp;
-
+		//cout << MatrixXd(MDKr_sp) << endl << endl;
+		cout << "Mr_sp"<< endl << MatrixXd(Mr_sp) << endl << endl;
+		cout << "J_sp" << endl << MatrixXd(J_sp) << endl << endl;
+		cout << "fr_"<< (fr_) << endl << endl;
+		//cout << "qdot0" << qdot0 << endl << endl;
+		cout <<"fm"<< fm << endl << endl;
+		//cout <<"fr"<< fr << endl << endl;
+		
 
 		if (ne > 0) {
 			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
@@ -398,11 +406,14 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		if (ne == 0 && ni == 0) {	// No constraints
 			ConjugateGradient< SparseMatrix<double> > cg;
-			//cg.setMaxIterations(100);
-			cg.setTolerance(1e-3);
+			cg.setMaxIterations(100000);
+			cg.setTolerance(1e-5);
 			cg.compute(MDKr_sp);
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
-
+			std::cout << "#iterations:     " << cg.iterations() << std::endl;
+			std::cout << "estimated error: " << cg.error() << std::endl;
+			
+			cout << qdot1 << endl;
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
 			//int rows = nr + ne;
@@ -705,6 +716,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		joint0->scatterDofs(yk, nr);
 		joint0->scatterDDofs(ydotk, nr);
+		joint0->reparam();
+		joint0->gatherDofs(yk, nr);
+
 
 		deformable0->scatterDofs(yk, nr);
 		deformable0->scatterDDofs(ydotk, nr);

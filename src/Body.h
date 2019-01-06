@@ -20,6 +20,7 @@ class Wrench;
 class Joint;
 class Program;
 class MatrixStack;
+class ConstraintPrescBody;
 
 typedef Eigen::Triplet<double> T;
 
@@ -86,6 +87,8 @@ public:
 	std::shared_ptr<Body> next;			// Next body in traversal order
 
 	std::shared_ptr<Body> m_parent;
+	std::shared_ptr<ConstraintPrescBody> presc;						// Presribed motion constraint
+
 	Vector3f m_attached_color;
 	Vector3f m_sliding_color;
 
