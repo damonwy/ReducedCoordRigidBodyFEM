@@ -9,6 +9,7 @@
 #include "Shape.h"
 #include "MatrixStack.h"
 #include "Program.h"
+#include "ConstraintPrescBody.h"
 
 using namespace std;
 using namespace Eigen;
@@ -45,6 +46,7 @@ m_density(density)
 	m_body_color << 0.8f, 0.7f, 0.7f;
 	m_attached_color << (float)(rand() % 255)/255.0f,(float)(rand() % 255)/255.0f,(float)(rand() % 255)/255.0f;
 	m_sliding_color << (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f;
+	presc = nullptr;
 }
 
 void Body::load(const string &RESOURCE_DIR, string box_shape) {

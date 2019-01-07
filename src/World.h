@@ -24,6 +24,7 @@ class Program;
 class Constraint;
 class ConstraintJointLimit;
 class ConstraintPrescJoint;
+class ConstraintPrescBody;
 class ConstraintNull;
 class Spring;
 class SpringNull;
@@ -46,6 +47,7 @@ class MeshEmbedding;
 class MeshEmbeddingNull;
 class Line;
 class Node;
+class JointFree;
 
 enum WorldType {
 	SERIAL_CHAIN,
@@ -76,8 +78,51 @@ enum WorldType {
 	HUMAN_BODY,
 	WORM,
 	CROSS,
-	STARFISH
+	STARFISH,
+	FREEJOINT,
+	STARFISH_2,
+	TEST_MAXIMAL_HYBRID_DYNAMICS,
+	TEST_REDUCED_HYBRID_DYNAMICS,
+	FINGERS
 };
+
+typedef int BoneIndex_t;
+const BoneIndex_t INVALID_BONEINDEX = -1;
+enum HandSkeletonBone : BoneIndex_t {
+	/*eBone_Root = 0,
+	eBone_Wrist,
+	eBone_Thumb0,
+	eBone_Thumb1,
+	eBone_Thumb2,
+	eBone_Thumb3,*/
+	eBone_IndexFinger0 = 0,
+	eBone_IndexFinger1,
+	eBone_IndexFinger2,
+	eBone_IndexFinger3,
+	eBone_IndexFinger4,
+	eBone_MiddleFinger0,
+	eBone_MiddleFinger1,
+	eBone_MiddleFinger2,
+	eBone_MiddleFinger3,
+	eBone_MiddleFinger4,
+	eBone_RingFinger0,
+	eBone_RingFinger1,
+	eBone_RingFinger2,
+	eBone_RingFinger3,
+	eBone_RingFinger4,
+	eBone_PinkyFinger0,
+	eBone_PinkyFinger1,
+	eBone_PinkyFinger2,
+	eBone_PinkyFinger3,
+	eBone_PinkyFinger4,
+	eBone_Aux_Thumb,
+	eBone_Aux_IndexFinger,
+	eBone_Aux_MiddleFinger,
+	eBone_Aux_RingFinger,
+	eBone_Aux_PinkyFinger,
+	eBone_Count
+};
+
 
 struct Floor {
 	float y;
@@ -121,6 +166,16 @@ public:
 		double q, 
 		std::shared_ptr<Joint> parent = nullptr);
 	
+	std::shared_ptr<JointFree> addJointFree(
+		std::shared_ptr<Body> body,
+		Vector3d p,
+		Matrix3d R,
+		Vector6d q0,
+		Vector6d qdot0,
+		const std::string &RESOURCE_DIR,
+		std::shared_ptr<Joint> parent = nullptr
+	);
+
 	std::shared_ptr<ConstraintJointLimit> addConstraintJointLimit(
 		std::shared_ptr<Joint> joint, 
 		double ql, 
@@ -245,6 +300,11 @@ public:
 	std::shared_ptr<ConstraintPrescJoint> addConstraintPrescJoint(
 		std::shared_ptr<Joint> j);
 
+	std::shared_ptr<ConstraintPrescBody> addConstraintPrescBody(
+		std::shared_ptr<Body> b,
+		Vector3i dof
+	);
+
 	void addSkeleton(
 	Vector3d x0,
 	Vector3d x1,
@@ -255,6 +315,10 @@ public:
 
 	void sceneCross(double t);
 	void sceneStarFish(double t);
+	void sceneStarFish2(double t);
+	void sceneTestReducedHD(double t);
+	void sceneTestMaximalHD(double t);
+	void sceneFingers(double t);
 
 	Energy computeEnergy();
 

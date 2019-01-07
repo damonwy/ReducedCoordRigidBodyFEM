@@ -59,12 +59,15 @@ public:
 	std::shared_ptr<Joint> prev;	// Reverse recursive ordering
 	int idxR;						// Reduced indices
 	Vector3d m_axis;
+	Matrix4d m_Q;
+	double m_draw_radius;
 
 	void countDofs(int &nm, int &nr);
 	int countR(int &nr, int data);
 	void setJointTransform(Matrix4d E);
 	void setStiffness(double K) { m_Kr = K; } // Sets this joint's linear stiffness
 	void setDamping(double D) { m_Dr = D; } // Sets this joint's linear velocity damping
+	void setDrawRadius(double r) { m_draw_radius = r; }
 	void addChild(std::shared_ptr<Joint> joint) { m_children.push_back(joint); }
 
 	std::shared_ptr<Body> getBody() const { return m_body; }
@@ -80,6 +83,7 @@ public:
 	void computeForceDamping(Eigen::VectorXd &fr, Eigen::MatrixXd &Dr);
 	void computeForceDampingSparse(Eigen::VectorXd &fr, std::vector<T> &Dr_);
 	void computeInertia();
+	void reparam();
 
 	void computeEnergies(Vector3d grav, Energy &ener);
 	void gatherDofs(Eigen::VectorXd &y, int nr);
@@ -87,14 +91,15 @@ public:
 	void scatterDofs(Eigen::VectorXd y, int nr);
 	void scatterDDofs(Eigen::VectorXd ydot, int nr);
 	void scatterTauCon(Eigen::VectorXd tauc);
+	virtual void update_() {}	
+	virtual void reparam_() {}	
 
 protected:
-	Matrix4d m_Q;										// Transformation matrix applied about the joint
+									// Transformation matrix applied about the joint
 	std::shared_ptr<Shape> m_jointShape;				// Joint shape			
 	std::shared_ptr<Body> m_body;						// Attached body
 	std::shared_ptr<Joint> m_parent;					// Parent joint
 	std::vector<std::shared_ptr<Joint>> m_children;		// Children joints
-	virtual void update_() {}
 
 private:
 	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);

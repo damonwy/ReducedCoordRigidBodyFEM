@@ -291,6 +291,32 @@ Matrix4d SE3::exp(const Vector6d & phi)
 	return E;
 }
 
+Matrix3d SE3::exp(const Vector3d &phi) {
+	Matrix3d I = Matrix3d::Identity();
+	Vector3d w = phi.segment<3>(0);
+	double wlen = w.norm();
+	Matrix3d R = Matrix3d::Identity();;
+	if (wlen > 1e-9) {
+		w = w / wlen;
+		// Rodrigues forumula ----------------------
+		double wX = w(0);
+		double wY = w(1);
+		double wZ = w(2);
+		double c = cos(wlen);
+		double s = sin(wlen);
+		double c1 = 1 - c;
+		Matrix3d fillR;
+		fillR <<
+			c + wX*wX*c1, -wZ*s + wX*wY*c1, wY*s + wX*wZ*c1,
+			wZ*s + wX*wY*c1, c + wY*wY*c1, -wX*s + wY*wZ*c1,
+			-wY*s + wX*wZ*c1, wX*s + wY*wZ*c1, c + wZ*wZ*c1;
+		R = fillR;
+		//------------------------------------------
+	}
+	return R;
+}
+
+
 Matrix4d SE3::exp(const Matrix4d &phi) {
 	// Convert from skew symmetric matrix to vector
 	Vector6d phi_ = unbracket6(phi);
@@ -327,4 +353,16 @@ Vector6d SE3::log(const Matrix4d & A)
 	}
 
 	return phi;
+}
+
+bool SE3::reparam(VectorXd &w) {
+	bool flag = false;
+	double wnorm = w.norm();
+	while (wnorm > 1.5 * M_PI) {
+		flag = true;
+		double a = (1.0 - 2.0 * M_PI / wnorm);
+		w *= a;
+		wnorm = abs(a * wnorm);
+	}
+	return flag;
 }

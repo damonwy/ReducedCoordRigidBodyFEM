@@ -36,7 +36,7 @@ void JointRevolute::update_() {
 void JointRevolute::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
 	prog->bind();
 
-	float r = 0.5f;
+	
 	if (m_jointShape) {
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, glm::value_ptr(P->topMatrix()));
 		glUniform3f(prog->getUniform("lightPos1"), 66.0f, 25.0f, 25.0f);
@@ -50,7 +50,7 @@ void JointRevolute::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> 
 
 		MV->pushMatrix();
 		MV->multMatrix(eigen_to_glm(E_wj));
-		MV->scale(r);
+		MV->scale(m_draw_radius);
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		m_jointShape->draw(prog);
 		MV->popMatrix();

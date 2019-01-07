@@ -24,7 +24,6 @@
 //#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
 #include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
 #include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
-#include <Eigen/CholmodSupport>
 
 using namespace std;
 using namespace Eigen;
@@ -178,6 +177,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 	{
 		if (step == 0) {
 			// constant during simulation
+			isCollided = false;
 			nr = m_world->nr;
 			nm = m_world->nm;
 			nem = m_world->nem;
@@ -260,18 +260,37 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			Mm_sp.setFromTriplets(Mm_.begin(), Mm_.end());
 		}
 		
-
-		if (m_world->m_type == CROSS) {
-			m_world->sceneCross(m_world->getTime());
+		
+		if (meshembedding0->getCoarseMesh()!= nullptr && meshembedding0->getCoarseMesh()->m_isCollided) {
+			isCollided = true;
 		}
 
-		if (m_world->m_type == SERIAL_CHAIN) {
-			m_world->sceneCross(m_world->getTime());
+		double t_i = m_world->getTime();
+		switch (m_world->m_type) {
+		case CROSS:
+			m_world->sceneCross(t_i);
+			break;
+		case SERIAL_CHAIN:
+			m_world->sceneCross(t_i);
+			break;
+		case STARFISH:
+			m_world->sceneStarFish(t_i);
+			break;
+		case STARFISH_2:
+			if (!isCollided) {
+				m_world->sceneStarFish2(t_i);
+			}
+			break;
+		case TEST_MAXIMAL_HYBRID_DYNAMICS:
+			m_world->sceneTestMaximalHD(t_i);
+			break;
+		case FINGERS:
+			m_world->sceneFingers(t_i);
+			break;
+		default:
+			break;
 		}
 
-		if (m_world->m_type == STARFISH) {
-			m_world->sceneStarFish(m_world->getTime());
-		}
 			
 		body0->computeGrav(grav, fm);
 		body0->computeForceDampingSparse(tmp, Dm_);
@@ -289,7 +308,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		//// First get dense jacobian (only a small part of the matrix)
 		joint0->computeJacobian(J_dense, Jdot_dense);
-
+	
 		//// Push back the dense part
 		if (step == 0) {
 			for (int i = 0; i < J_dense.rows(); ++i) {
@@ -334,12 +353,18 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		fr_ = Mr_sp * qdot0 + h * (J_t_sp * (fm - Mm_sp * Jdot_sp * qdot0) + fr); 
 		MDKr_sp = Mr_sp + J_t_sp * (h * Dm_sp - hsquare * Km_sp) * J_sp + h * Dr_sp - hsquare * Kr_sp;
-
+		//cout << MatrixXd(MDKr_sp) << endl << endl;
+		//cout << "Mr_sp"<< endl << MatrixXd(Mr_sp) << endl << endl;
+		//cout << "J_sp" << endl << MatrixXd(J_sp) << endl << endl;
+		//cout << "fr_"<< (fr_) << endl << endl;
+		//cout <<"fm"<< fm << endl << endl;
+		
 
 		if (ne > 0) {
 			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
+			
 			constraint0->computeJacEqRSparse(Gr_, Grdot_, gr, grdot, grddot);
-
+		
 			Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
 			Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
 			Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
@@ -399,11 +424,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		if (ne == 0 && ni == 0) {	// No constraints
 			ConjugateGradient< SparseMatrix<double> > cg;
-			//cg.setMaxIterations(100);
-			cg.setTolerance(1e-3);
+			cg.setMaxIterations(100000);
+			cg.setTolerance(1e-10);
 			cg.compute(MDKr_sp);
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
-
+			
+			//cout << qdot1 << endl;
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
 			//int rows = nr + ne;
@@ -566,13 +592,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				}
 			case SLDLT:
 				{
-					//SimplicialLDLT<SparseMatrix<double>, Lower, NaturalOrdering<int> > sldlt;
-					//SparseLU<SparseMatrix<double>> sldlt;
+					SimplicialLDLT<SparseMatrix<double>, Lower, NaturalOrdering<int> > sldlt;
 
-					CholmodSimplicialLDLT<SparseMatrix<double>> sldlt;
-
-
-					//PardisoLDLT<Eigen::SparseMatrix<double>> sldlt;
 					sldlt.compute(LHS_sp);
 					qdot1 = sldlt.solve(rhs).segment(0, nr);
 					break;
@@ -595,6 +616,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					qdot1 = solver.solve(rhs).segment(0, nr);
 				}
 				break;
+			case PARDISO_LDLT:
+				{
+					PardisoLDLT<SparseMatrix<double>> pldlt;
+					pldlt.compute(LHS_sp);
+					qdot1 = pldlt.solve(rhs).segment(0, nr);
+					break;
+				}
 			case QR:
 				{
 					SparseQR< SparseMatrix<double>, COLAMDOrdering<int>> sqr(LHS_sp);
@@ -704,6 +732,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		joint0->scatterDofs(yk, nr);
 		joint0->scatterDDofs(ydotk, nr);
+		joint0->reparam();
+		joint0->gatherDofs(yk, nr);
+
 
 		deformable0->scatterDofs(yk, nr);
 		deformable0->scatterDDofs(ydotk, nr);

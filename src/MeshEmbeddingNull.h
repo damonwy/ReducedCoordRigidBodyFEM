@@ -8,7 +8,10 @@
 class MeshEmbeddingNull : public MeshEmbedding {
 
 public:
-	MeshEmbeddingNull() : MeshEmbedding() {}
+	MeshEmbeddingNull() : MeshEmbedding() {
+		m_dense_mesh = nullptr;
+		m_coarse_mesh = nullptr;
+	}
 	void init() {}
 
 	void gatherDofs(Eigen::VectorXd &y, int nr) {}
