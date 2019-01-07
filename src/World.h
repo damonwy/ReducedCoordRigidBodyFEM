@@ -90,12 +90,14 @@ typedef int BoneIndex_t;
 const BoneIndex_t INVALID_BONEINDEX = -1;
 enum HandSkeletonBone : BoneIndex_t {
 	/*eBone_Root = 0,
-	eBone_Wrist,
+	
+	*/
+	eBone_Wrist= 0,
 	eBone_Thumb0,
 	eBone_Thumb1,
 	eBone_Thumb2,
-	eBone_Thumb3,*/
-	eBone_IndexFinger0 = 0,
+	eBone_Thumb3,
+	eBone_IndexFinger0,
 	eBone_IndexFinger1,
 	eBone_IndexFinger2,
 	eBone_IndexFinger3,

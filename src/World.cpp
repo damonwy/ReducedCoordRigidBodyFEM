@@ -1359,27 +1359,88 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_Hexpected = 10000; // todo
 		m_tspan << 0.0, 5.0;
 		m_t = 0.0;
+		
+		double scale = 4.0;
+		double len_thumb0 = 3.5 * scale;
+		double len_thumb1 = 6.0 * scale;
+		double len_thumb2 = 4.0 * scale;
+		double len_thumb3 = 4.0 * scale;
 
-		double len_index_0 = 3.5 * 4;
-		double len_index_1 = 10.0 * 4;
-		double len_index_2 = 5.5 * 4;
-		double len_index_3 = 5.5 * 2;
-		double len_index_4 = 5.5 * 2;
+
+		double len_index_0 = 3.5 * scale;
+		double len_index_1 = 10.0 * scale;
+		double len_index_2 = 5.5 * scale;
+		double len_index_3 = 5.5 / 2 *scale;
+		double len_index_4 = 5.5 /2 * scale;
+
+		double len_ring_0 = len_index_0;
+		double len_ring_1 = 8.0 * scale;
+		double len_ring_2 = len_index_2;
+		double len_ring_3 = len_index_3;
+		double len_ring_4 = len_index_4;
+
+		double len_pinky_1 = 7.0 * scale;
+		double len_pinky_2 = 4.5 * scale;
+		double len_pinky_3 = 2.0 * scale;
+		double len_pinky_4 = len_pinky_3;
+
+		auto wrist = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box_1_1_1.obj");
+		auto j_wrist = addJointFixed(wrist, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+		auto thumb_0 = addBody(density, sides, Vector3d(len_thumb0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_thumb_0 = addJointRevolute(thumb_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0) * SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), -M_PI / 5.0), 0.0, RESOURCE_DIR, j_wrist);
+		auto thumb_1 = addBody(density, sides, Vector3d(len_thumb1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "thumb1.obj");
+		auto j_thumb_1 = addJointRevolute(thumb_1, Vector3d::UnitZ(), Vector3d(len_thumb0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_thumb_0);
+		auto thumb_2 = addBody(density, sides, Vector3d(len_thumb2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "thumb2.obj");
+		auto j_thumb_2 = addJointRevolute(thumb_2, Vector3d::UnitZ(), Vector3d(len_thumb1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_thumb_1);
+		auto thumb_3 = addBody(density, sides, Vector3d(len_thumb3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "thumb3.obj");
+		auto j_thumb_3 = addJointRevolute(thumb_3, Vector3d::UnitZ(), Vector3d(len_thumb2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_thumb_2);
+
 
 		auto index_finger_0 = addBody(density, sides, Vector3d(len_index_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
-		auto j_index_finger_0 = addJointRevolute(index_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR);
-
+		auto j_index_finger_0 = addJointRevolute(index_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR, j_wrist);
 		auto index_finger_1 = addBody(density, sides, Vector3d(len_index_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s4.obj");
 		auto j_index_finger_1 = addJointRevolute(index_finger_1, Vector3d::UnitZ(), Vector3d(len_index_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_index_finger_0);
-
 		auto index_finger_2 = addBody(density, sides, Vector3d(len_index_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
 		auto j_index_finger_2 = addJointRevolute(index_finger_2, Vector3d::UnitZ(), Vector3d(len_index_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_index_finger_1);
-
 		auto index_finger_3 = addBody(density, sides, Vector3d(len_index_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
 		auto j_index_finger_3 = addJointRevolute(index_finger_3, Vector3d::UnitZ(), Vector3d(len_index_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_index_finger_2);
-
 		auto index_finger_4 = addBody(density, sides, Vector3d(len_index_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
 		auto j_index_finger_4 = addJointRevolute(index_finger_4, Vector3d::UnitZ(), Vector3d(len_index_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_index_finger_3);
+
+		auto middle_finger_0 = addBody(density, sides, Vector3d(len_index_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_middle_finger_0 = addJointRevolute(middle_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0) * SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), M_PI / 8.0), 0.0, RESOURCE_DIR, j_wrist);
+		auto middle_finger_1 = addBody(density, sides, Vector3d(len_index_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s4.obj");
+		auto j_middle_finger_1 = addJointRevolute(middle_finger_1, Vector3d::UnitZ(), Vector3d(len_index_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_middle_finger_0);
+		auto middle_finger_2 = addBody(density, sides, Vector3d(len_index_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
+		auto j_middle_finger_2 = addJointRevolute(middle_finger_2, Vector3d::UnitZ(), Vector3d(len_index_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_middle_finger_1);
+		auto middle_finger_3 = addBody(density, sides, Vector3d(len_index_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
+		auto j_middle_finger_3 = addJointRevolute(middle_finger_3, Vector3d::UnitZ(), Vector3d(len_index_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_middle_finger_2);
+		auto middle_finger_4 = addBody(density, sides, Vector3d(len_index_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
+		auto j_middle_finger_4 = addJointRevolute(middle_finger_4, Vector3d::UnitZ(), Vector3d(len_index_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_middle_finger_3);
+
+		auto ring_finger_0 = addBody(density, sides, Vector3d(len_ring_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_ring_finger_0 = addJointRevolute(ring_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0) * SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), 2 * M_PI / 8.0), 0.0, RESOURCE_DIR, j_wrist);
+		auto ring_finger_1 = addBody(density, sides, Vector3d(len_ring_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerRing1.obj");
+		auto j_ring_finger_1 = addJointRevolute(ring_finger_1, Vector3d::UnitZ(), Vector3d(len_ring_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_ring_finger_0);
+		auto ring_finger_2 = addBody(density, sides, Vector3d(len_ring_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
+		auto j_ring_finger_2 = addJointRevolute(ring_finger_2, Vector3d::UnitZ(), Vector3d(len_ring_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_ring_finger_1);
+		auto ring_finger_3 = addBody(density, sides, Vector3d(len_ring_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
+		auto j_ring_finger_3 = addJointRevolute(ring_finger_3, Vector3d::UnitZ(), Vector3d(len_ring_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_ring_finger_2);
+		auto ring_finger_4 = addBody(density, sides, Vector3d(len_ring_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
+		auto j_ring_finger_4 = addJointRevolute(ring_finger_4, Vector3d::UnitZ(), Vector3d(len_ring_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_ring_finger_3);
+
+		auto pinky_finger_0 = addBody(density, sides, Vector3d(len_index_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_pinky_finger_0 = addJointRevolute(pinky_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0) * SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), 3 * M_PI / 8.0), 0.0, RESOURCE_DIR, j_wrist);
+		auto pinky_finger_1 = addBody(density, sides, Vector3d(len_pinky_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerPinky1.obj");
+		auto j_pinky_finger_1 = addJointRevolute(pinky_finger_1, Vector3d::UnitZ(), Vector3d(len_index_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_pinky_finger_0);
+		auto pinky_finger_2 = addBody(density, sides, Vector3d(len_pinky_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerPinky2.obj");
+		auto j_pinky_finger_2 = addJointRevolute(pinky_finger_2, Vector3d::UnitZ(), Vector3d(len_pinky_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_pinky_finger_1);
+		auto pinky_finger_3 = addBody(density, sides, Vector3d(len_pinky_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerPinky3.obj");
+		auto j_pinky_finger_3 = addJointRevolute(pinky_finger_3, Vector3d::UnitZ(), Vector3d(len_pinky_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_pinky_finger_2);
+		auto pinky_finger_4 = addBody(density, sides, Vector3d(len_pinky_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerPinky4.obj");
+		auto j_pinky_finger_4 = addJointRevolute(pinky_finger_4, Vector3d::UnitZ(), Vector3d(len_pinky_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_pinky_finger_3);
+
 
 		for (int i = 0; i < (int)m_joints.size(); ++i) {
 			m_joints[i]->setDrawRadius(3.0);
@@ -2305,46 +2366,7 @@ void World::sceneFingers(double t) {
 	Matrix3d R = E.topLeftCorner(3, 3);
 	Vector6d phi = con_body0->phi;
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
-	cout << t << endl;
-	//if (t < 2.0) {
-	//	vt_w.setZero();
-	//	wt_i << 0.0, 0.0, t;
-	//	vtdot_w.setZero();
-	//	wtdot_i << 0.0, 0.0, 1.0;
-	//	// w_i = 0 0 2
-	//}
-	//else if (t < 4.0) {
-	//	
-	//	double t_ = t - 4.0;
-	//	vt_w.setZero();
-	//	wt_i << 0.0, 0.0, -t_; // start at 0 0 2
-	//	vtdot_w.setZero();
-	//	wtdot_i << 0.0, 0.0, -1.0;
-	//	// wi = 0 0 0 
-	//}
-	//else if (t < 6.0) {
-	//	double t_ = t - 4.0;
-	//	vt_w << -2 * t_, 0.0, 0.0;
-	//	wt_i << 0.0, 0.0, -t_; // start at 0 0 0
-	//	vtdot_w << -2.0, 0.0, 0.0;
-	//	wtdot_i << 0.0, 0.0, -1.0;
-	//	// vi = -4 0 0 
-	//	// wi = 0 0 -2
-	//}
-	//else if (t < 8.0) {
-	//	double t_ = t - 8.0;
-	//	vt_w << 2 * t_, 0.0, 0.0;
-	//	wt_i << 0.0, 0.0, t_; // start at 0 0 -2
-	//	vtdot_w << 2.0, 0.0, 0.0;
-	//	wtdot_i << 0.0, 0.0, 1.0; 
-	//	// 
-	//}
-	//else {
-	//	vt_w.setZero();
-	//	wt_i.setZero();
-	//	vtdot_w.setZero();
-	//	wtdot_i.setZero();
-	//}
+
 	vt_w.setZero();
 	vtdot_w.setZero();
 
@@ -2361,8 +2383,6 @@ void World::sceneFingers(double t) {
 		vtdot_w << -beta, beta, 0.0;
 		//vtdot_w.setZero();
 		wtdot_i << 0.0, 0.0, -alpha;
-
-		//cout << wt_i << endl;
 		//	w_i = 0 0 -alpha * 5
 	}
 	else if (t < 10.0) {
@@ -2375,7 +2395,25 @@ void World::sceneFingers(double t) {
 		//vtdot_w.setZero();
 		wtdot_i << 0.0, 0.0, alpha;
 		// wi = 0 0 0
-		//cout << wt_i << endl;
+	}
+	else if (t < 15.0) {
+		double t_ = t - 10.0;
+		vt_w << beta * t_, -beta * t_, 0.0;
+
+		//vt_w.setZero();
+		wt_i << 0.0, 0.0, alpha * t_;
+		vtdot_w << beta, -beta, 0.0;
+		//vtdot_w.setZero();
+		wtdot_i << 0.0, 0.0, alpha;
+	}
+	else if (t < 20.0) {
+		double t_ = t - 20.0;
+		vt_w << -beta * t_, beta * t_, 0.0;
+
+		wt_i << 0.0, 0.0, -alpha * t_; // start at 0 0 alpha * 5
+		vtdot_w << -beta, beta, 0.0;
+		//vtdot_w.setZero();
+		wtdot_i << 0.0, 0.0, -alpha;
 	}
 	else {
 		vt_w.setZero();
@@ -2391,29 +2429,50 @@ void World::sceneFingers(double t) {
 	con_body0->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
 
 	auto con_joint0 = m_joints[eBone_IndexFinger3];
-	double t0 = 0.0;
-	double t1 = 10.0;
-	double a = 7.0;
-	double b = - M_PI / 4.0;
-	double s = 2 * ((t - t0) / (t1 - t0) - 0.5);
+	if (t < 10.0) {
+		double t0 = 0.0;
+		double t1 = 10.0;
+		double a = 7.0;
+		double b = - M_PI / 4.0;
+		double s = 2 * ((t - t0) / (t1 - t0) - 0.5);
+		double q = b / (1 + exp(-a * s));
+		double T = t - t0;
+		double TT = t0 - t1;
+		double w = 2 * T;
+		double P = w / TT + 1;
+		double e = exp(a * P);
+		double Q = T / TT + 1;
+		double f = exp(a * Q);
+		double dq = -(2*a*b*e) / (TT * (f + 1) *(f + 1));
+		con_joint0->presc->m_q[0] = q;
+		con_joint0->presc->m_qdot[0] = dq;		
 
-	double q = b / (1 + exp(-a * s));
-	double T = t - t0;
-	double TT = t0 - t1;
-	double w = 2 * T;
-	double P = w / TT + 1;
-	double e = exp(a * P);
-	double Q = T / TT + 1;
-	double f = exp(a * Q);
-	double dq = -(2*a*b*e) / (TT * (f + 1) *(f + 1));
-	con_joint0->presc->m_q[0] = q;
-	con_joint0->presc->m_qdot[0] = dq;
-	//con_joint0->presc->m_q[0] = 0.0;
-	//con_joint0->presc->m_qdot[0] = 0.0;
+	}
+	else if (t < 20.0) {
+		double t0 = 10.0;
+		double t1 = 20.0;
+		double a = 7.0;
+		double b = M_PI / 4.0;
+		double s = 2 * ((t - t0) / (t1 - t0) - 0.5);
+		double q = -M_PI / 4.0+ b / (1 + exp(-a * s));
+		double T = t - t0;
+		double TT = t0 - t1;
+		double w = 2 * T;
+		double P = w / TT + 1;
+		double e = exp(a * P);
+		double Q = T / TT + 1;
+		double f = exp(a * Q);
+		double dq = -(2 * a*b*e) / (TT * (f + 1) *(f + 1));
+		con_joint0->presc->m_q[0] = q;
+		con_joint0->presc->m_qdot[0] = dq;
+	}
+	else {
+		con_joint0->presc->m_q[0] = 0.0;
+		con_joint0->presc->m_qdot[0] = 0.0;
+	}
 
 	auto con_joint1 = m_joints[eBone_IndexFinger0];
 	con_joint1->presc->m_q[0] = 0.0;
 	con_joint1->presc->m_qdot[0] = 0.0;
 	con_joint1->presc->m_qddot[0] = 0.0;
-
 }
