@@ -60,12 +60,14 @@ public:
 	int idxR;						// Reduced indices
 	Vector3d m_axis;
 	Matrix4d m_Q;
+	double m_draw_radius;
 
 	void countDofs(int &nm, int &nr);
 	int countR(int &nr, int data);
 	void setJointTransform(Matrix4d E);
 	void setStiffness(double K) { m_Kr = K; } // Sets this joint's linear stiffness
 	void setDamping(double D) { m_Dr = D; } // Sets this joint's linear velocity damping
+	void setDrawRadius(double r) { m_draw_radius = r; }
 	void addChild(std::shared_ptr<Joint> joint) { m_children.push_back(joint); }
 
 	std::shared_ptr<Body> getBody() const { return m_body; }

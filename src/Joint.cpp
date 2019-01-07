@@ -26,7 +26,7 @@ m_ndof(ndof)
 	else {
 		m_name = parent->getBody()->getName() + "-" + body->getName();
 	}
-
+	m_draw_radius = 1.0;
 	m_q.resize(m_ndof);
 	m_qdot.resize(m_ndof);
 	m_qddot.resize(m_ndof);
@@ -366,7 +366,7 @@ void Joint::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, co
 
 		MV->pushMatrix();
 		MV->multMatrix(eigen_to_glm(E_wj));
-
+		MV->scale(m_draw_radius);
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		m_jointShape->draw(prog);
 		MV->popMatrix();

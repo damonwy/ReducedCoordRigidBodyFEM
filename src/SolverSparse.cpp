@@ -265,23 +265,27 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			isCollided = true;
 		}
 
+		double t_i = m_world->getTime();
 		switch (m_world->m_type) {
 		case CROSS:
-			m_world->sceneCross(m_world->getTime());
+			m_world->sceneCross(t_i);
 			break;
 		case SERIAL_CHAIN:
-			m_world->sceneCross(m_world->getTime());
+			m_world->sceneCross(t_i);
 			break;
 		case STARFISH:
-			m_world->sceneStarFish(m_world->getTime());
+			m_world->sceneStarFish(t_i);
 			break;
 		case STARFISH_2:
 			if (!isCollided) {
-				m_world->sceneStarFish2(m_world->getTime());
+				m_world->sceneStarFish2(t_i);
 			}
 			break;
 		case TEST_MAXIMAL_HYBRID_DYNAMICS:
-			m_world->sceneTestMaximalHD(m_world->getTime());
+			m_world->sceneTestMaximalHD(t_i);
+			break;
+		case FINGERS:
+			m_world->sceneFingers(t_i);
 			break;
 		default:
 			break;
