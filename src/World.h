@@ -304,7 +304,7 @@ public:
 
 	std::shared_ptr<ConstraintPrescBody> addConstraintPrescBody(
 		std::shared_ptr<Body> b,
-		Vector3i dof
+		Eigen::VectorXi dof
 	);
 
 	void addSkeleton(

@@ -274,12 +274,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			m_world->sceneCross(t_i);
 			break;
 		case STARFISH:
-			m_world->sceneStarFish(t_i);
+			m_world->sceneStarFish2(t_i);
+
+			//m_world->sceneStarFish(t_i);
 			break;
-		case STARFISH_2:
-			if (!isCollided) {
-				m_world->sceneStarFish2(t_i);
-			}
+		case STARFISH_2:		
+			m_world->sceneStarFish2(t_i);	
 			break;
 		case TEST_MAXIMAL_HYBRID_DYNAMICS:
 			m_world->sceneTestMaximalHD(t_i);
