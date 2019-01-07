@@ -1343,7 +1343,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 	case FINGERS:
 	{
-		m_h = 5.0e-2;
+		m_h = 1.0e-2;
 		density = 1.0;
 		m_grav << 0.0, -0.0, 0.0;
 		Eigen::from_json(js["sides"], sides);
@@ -1352,27 +1352,46 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_tspan << 0.0, 5.0;
 		m_t = 0.0;
 
-		double len_s1 = 5.5 * 4;
-		double len_s2 = 5.5 * 2;
-		double len_s3 = 5.5 * 2;
+		double len_index_0 = 3.5 * 4;
+		double len_index_1 = 10.0 * 4;
+		double len_index_2 = 5.5 * 4;
+		double len_index_3 = 5.5 * 2;
+		double len_index_4 = 5.5 * 2;
 
+		auto index_finger_0 = addBody(density, sides, Vector3d(len_index_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_index_finger_0 = addJointRevolute(index_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR);
+		auto index_finger_1 = addBody(density, sides, Vector3d(len_index_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s4.obj");
+		auto j_index_finger_1 = addJointRevolute(index_finger_1, Vector3d::UnitZ(), Vector3d(len_index_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_index_finger_0);
+
+		auto index_finger_2 = addBody(density, sides, Vector3d(len_index_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
+		auto j_index_finger_2 = addJointRevolute(index_finger_2, Vector3d::UnitZ(), Vector3d(len_index_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_index_finger_1);
+
+		auto index_finger_3 = addBody(density, sides, Vector3d(len_index_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
+		auto j_index_finger_3 = addJointRevolute(index_finger_3, Vector3d::UnitZ(), Vector3d(len_index_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_index_finger_2);
+
+		auto index_finger_4 = addBody(density, sides, Vector3d(len_index_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
+		auto j_index_finger_4 = addJointRevolute(index_finger_4, Vector3d::UnitZ(), Vector3d(len_index_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_index_finger_3);
+
+
+/*
 		auto finger_s1 = addBody(density, sides, Vector3d(len_s1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
 		auto j1 = addJointRevolute(finger_s1, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
 		auto finger_s2 = addBody(density, sides, Vector3d(len_s2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
 		auto j2 = addJointRevolute(finger_s2, Vector3d::UnitZ(), Vector3d(len_s1, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j1);
 		auto finger_s3 = addBody(density, sides, Vector3d(len_s3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
-		auto j3 = addJointRevolute(finger_s3, Vector3d::UnitZ(), Vector3d(len_s2, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j2);
+		auto j3 = addJointRevolute(finger_s3, Vector3d::UnitZ(), Vector3d(len_s2, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j2);*/
 
-		j1->setDrawRadius(3.0);
-		j2->setDrawRadius(3.0);
-		j3->setDrawRadius(3.0);
+		for (int i = 0; i < (int)m_joints.size(); ++i) {
+			m_joints[i]->setDrawRadius(3.0);
+		}
+
 
 		Vector3i dof;
 		dof << 2, 3, 4;
 		
-		auto con1 = addConstraintPrescBody(finger_s3, dof);
-		auto con2 = addConstraintPrescJoint(j2);
-
+		auto con1 = addConstraintPrescBody(index_finger_4, dof);
+		auto con2 = addConstraintPrescJoint(j_index_finger_1);
+		auto con3 = addConstraintPrescJoint(j_index_finger_0);
 
 		break;
 	}
@@ -2282,40 +2301,82 @@ void World::sceneTestMaximalHD(double t) {
 }
 
 void World::sceneFingers(double t) {
-	auto con_body0 = m_bodies[2];
+	auto con_body0 = m_bodies[eBone_IndexFinger4];
 	Matrix4d E = con_body0->E_wi;
 	Matrix3d R = E.topLeftCorner(3, 3);
 	Vector6d phi = con_body0->phi;
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
 
-	if (t < 2.0) {
-		vt_w.setZero();
-		wt_i << 0.0, 0.0, -t;
-		vtdot_w.setZero();
-		wtdot_i << 0.0, 0.0, -1.0;
+	//if (t < 2.0) {
+	//	vt_w.setZero();
+	//	wt_i << 0.0, 0.0, t;
+	//	vtdot_w.setZero();
+	//	wtdot_i << 0.0, 0.0, 1.0;
+	//	// w_i = 0 0 2
+	//}
+	//else if (t < 4.0) {
+	//	
+	//	double t_ = t - 4.0;
+	//	vt_w.setZero();
+	//	wt_i << 0.0, 0.0, -t_; // start at 0 0 2
+	//	vtdot_w.setZero();
+	//	wtdot_i << 0.0, 0.0, -1.0;
+	//	// wi = 0 0 0 
+	//}
+	//else if (t < 6.0) {
+	//	double t_ = t - 4.0;
+	//	vt_w << -2 * t_, 0.0, 0.0;
+	//	wt_i << 0.0, 0.0, -t_; // start at 0 0 0
+	//	vtdot_w << -2.0, 0.0, 0.0;
+	//	wtdot_i << 0.0, 0.0, -1.0;
+	//	// vi = -4 0 0 
+	//	// wi = 0 0 -2
+	//}
+	//else if (t < 8.0) {
+	//	double t_ = t - 8.0;
+	//	vt_w << 2 * t_, 0.0, 0.0;
+	//	wt_i << 0.0, 0.0, t_; // start at 0 0 -2
+	//	vtdot_w << 2.0, 0.0, 0.0;
+	//	wtdot_i << 0.0, 0.0, 1.0; 
+	//	// 
+	//}
+	//else {
+	//	vt_w.setZero();
+	//	wt_i.setZero();
+	//	vtdot_w.setZero();
+	//	wtdot_i.setZero();
+	//}
+	vt_w.setZero();
+	vtdot_w.setZero();
 
-	}
-	else if (t < 4.0) {
-		double t_ = t - 4.0;
-		vt_w.setZero();
-		wt_i << 0.0, 0.0, t_;
-		vtdot_w.setZero();
-		wtdot_i << 0.0, 0.0, 1.0;
+	wt_i.setZero();
+	wtdot_i.setZero();
+	double alpha = 1.0/7.9617/2.0;
 
+	double beta = 0.5;
+	if (t < 5.0) {
+		vt_w << -beta * t, beta * t, 0.0;
+
+		//vt_w.setZero();
+		//wt_i << 0.0, 0.0, -alpha * t;
+		vtdot_w << -beta, beta, 0.0;
+		//vtdot_w.setZero();
+		//wtdot_i << 0.0, 0.0, -alpha;
+
+		//cout << wt_i << endl;
+		//	w_i = 0 0 -alpha * 5
 	}
-	else if (t < 6.0) {
-		double t_ = t - 4.0;
-		vt_w << -2 * t_, 0.0, 0.0;
-		wt_i << 0.0, 0.0, t_;
-		vtdot_w << -2.0, 0.0, 0.0;
-		wtdot_i << 0.0, 0.0, 1.0;
-	}
-	else if (t < 8.0) {
-		double t_ = t - 8.0;
-		vt_w << 2 * t_, 0.0, 0.0;
-		wt_i << 0.0, 0.0, -t_;
-		vtdot_w << 2.0, 0.0, 0.0;
-		wtdot_i << 0.0, 0.0, -1.0;
+	else if (t < 10.0) {
+		double t_ = t - 10.0;
+		vt_w << beta * t_, -beta * t_, 0.0;
+		//vt_w.setZero();
+
+		//wt_i << 0.0, 0.0, alpha * t_; // start at 0 0 -alpha * 5
+		vtdot_w << beta, -beta, 0.0;
+		//vtdot_w.setZero();
+		//wtdot_i << 0.0, 0.0, alpha;
+		// wi = 0 0 0
+		//cout << wt_i << endl;
 	}
 	else {
 		vt_w.setZero();
@@ -2330,22 +2391,30 @@ void World::sceneFingers(double t) {
 	con_body0->presc->m_qddot.segment<3>(0) = wtdot_i;
 	con_body0->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
 
-
+	auto con_joint0 = m_joints[eBone_IndexFinger1];
 	double t0 = 0.0;
 	double t1 = 10.0;
 	double a = 7.0;
-	double b = M_PI / 2.0;
-	double s = 2 * ((t - t0) / (t1 - 10) - 0.5);
+	double b = -M_PI / 2.0;
+	double s = 2 * ((t - t0) / (t1 - t0) - 0.5);
 
 	double q = b / (1 + exp(-a * s));
 	double T = t - t0;
+	double TT = t0 - t1;
 	double w = 2 * T;
-	double P = w / T + 1;
+	double P = w / TT + 1;
 	double e = exp(a * P);
-	double dq = -(2 * a * b * e) / (T * (e + 1) * (e + 1));
+	double Q = T / TT + 1;
+	double f = exp(a * Q);
+	double dq = -(2*a*b*e) / (TT * (f + 1) *(f + 1));
+	con_joint0->presc->m_q[0] = 0;
+	con_joint0->presc->m_qdot[0] = 0;
+	//con_joint0->presc->m_q[0] = 0.0;
+	//con_joint0->presc->m_qdot[0] = 0.0;
 
-	m_joints[1]->presc->m_q[0] = q;
-	m_joints[1]->presc->m_qdot[0] = dq;
-	//m_joints[1]->presc->m_qddot[0] = ddq;
+	auto con_joint1 = m_joints[eBone_IndexFinger0];
+	con_joint1->presc->m_q[0] = 0.0;
+	con_joint1->presc->m_qdot[0] = 0.0;
+	con_joint1->presc->m_qddot[0] = 0.0;
 
 }
