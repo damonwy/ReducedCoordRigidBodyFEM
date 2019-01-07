@@ -321,7 +321,7 @@ public:
 	void sceneTestReducedHD(double t);
 	void sceneTestMaximalHD(double t);
 	void sceneFingers(double t);
-
+	void setMaximalPrescStates(std::shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
 	Energy computeEnergy();
 
 	void load(const std::string &RESOURCE_DIR);

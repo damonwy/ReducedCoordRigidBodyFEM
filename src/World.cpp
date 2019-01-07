@@ -1450,9 +1450,27 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Vector3i dof;
 		dof << 2, 3, 4;
 		
-		auto con1 = addConstraintPrescBody(index_finger_4, dof);
-		auto con2 = addConstraintPrescJoint(j_index_finger_3);
-		auto con3 = addConstraintPrescJoint(j_index_finger_0);
+		addConstraintPrescBody(thumb_3, dof);
+		addConstraintPrescBody(index_finger_4, dof);
+		addConstraintPrescBody(middle_finger_4, dof);
+		addConstraintPrescBody(ring_finger_4, dof);
+		addConstraintPrescBody(pinky_finger_4, dof);
+
+
+		addConstraintPrescJoint(j_index_finger_3);
+		addConstraintPrescJoint(j_index_finger_0);
+
+		//addConstraintPrescJoint(j_thumb_2);
+		addConstraintPrescJoint(j_thumb_0);
+
+		addConstraintPrescJoint(j_middle_finger_3);
+		addConstraintPrescJoint(j_middle_finger_0);
+
+		addConstraintPrescJoint(j_ring_finger_3);
+		addConstraintPrescJoint(j_ring_finger_0);
+
+		addConstraintPrescJoint(j_pinky_finger_3);
+		addConstraintPrescJoint(j_pinky_finger_0);
 
 		break;
 	}
@@ -2361,10 +2379,6 @@ void World::sceneTestMaximalHD(double t) {
 }
 
 void World::sceneFingers(double t) {
-	auto con_body0 = m_bodies[eBone_IndexFinger4];
-	Matrix4d E = con_body0->E_wi;
-	Matrix3d R = E.topLeftCorner(3, 3);
-	Vector6d phi = con_body0->phi;
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
 
 	vt_w.setZero();
@@ -2422,13 +2436,24 @@ void World::sceneFingers(double t) {
 		wtdot_i.setZero();
 	}
 
-	Vector3d vt_i = R.transpose() * vt_w;
-	con_body0->presc->m_qdot.segment<3>(0) = wt_i;
-	con_body0->presc->m_qdot.segment<3>(3) = vt_i;
-	con_body0->presc->m_qddot.segment<3>(0) = wtdot_i;
-	con_body0->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
+	setMaximalPrescStates(m_bodies[eBone_Thumb3], vt_w, vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_IndexFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_MiddleFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_RingFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_PinkyFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
 
-	auto con_joint0 = m_joints[eBone_IndexFinger3];
+	//auto con_body0 = m_bodies[eBone_IndexFinger4];
+	//Matrix4d E = con_body0->E_wi;
+	//Matrix3d R = E.topLeftCorner(3, 3);
+	//Vector6d phi = con_body0->phi;
+
+	//Vector3d vt_i = R.transpose() * vt_w;
+	//con_body0->presc->m_qdot.segment<3>(0) = wt_i;
+	//con_body0->presc->m_qdot.segment<3>(3) = vt_i;
+	//con_body0->presc->m_qddot.segment<3>(0) = wtdot_i;
+	//con_body0->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
+
+	// Reduced Hybrid Dynamics
 	if (t < 10.0) {
 		double t0 = 0.0;
 		double t1 = 10.0;
@@ -2444,9 +2469,14 @@ void World::sceneFingers(double t) {
 		double Q = T / TT + 1;
 		double f = exp(a * Q);
 		double dq = -(2*a*b*e) / (TT * (f + 1) *(f + 1));
-		con_joint0->presc->m_q[0] = q;
-		con_joint0->presc->m_qdot[0] = dq;		
-
+		m_joints[eBone_IndexFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_RingFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = dq;
 	}
 	else if (t < 20.0) {
 		double t0 = 10.0;
@@ -2463,16 +2493,55 @@ void World::sceneFingers(double t) {
 		double Q = T / TT + 1;
 		double f = exp(a * Q);
 		double dq = -(2 * a*b*e) / (TT * (f + 1) *(f + 1));
-		con_joint0->presc->m_q[0] = q;
-		con_joint0->presc->m_qdot[0] = dq;
+		m_joints[eBone_IndexFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_RingFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = dq;
 	}
 	else {
-		con_joint0->presc->m_q[0] = 0.0;
-		con_joint0->presc->m_qdot[0] = 0.0;
+		m_joints[eBone_IndexFinger3]->presc->m_q[0] = 0;
+		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = 0;
+		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = 0;
+		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = 0;
+		m_joints[eBone_RingFinger3]->presc->m_q[0] = 0;
+		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = 0;
+		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = 0;
+		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = 0;
 	}
 
-	auto con_joint1 = m_joints[eBone_IndexFinger0];
-	con_joint1->presc->m_q[0] = 0.0;
-	con_joint1->presc->m_qdot[0] = 0.0;
-	con_joint1->presc->m_qddot[0] = 0.0;
+	m_joints[eBone_Thumb0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_Thumb0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_Thumb0]->presc->m_qddot[0] = 0.0;
+
+	m_joints[eBone_IndexFinger0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_IndexFinger0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_IndexFinger0]->presc->m_qddot[0] = 0.0;
+
+	m_joints[eBone_MiddleFinger0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_MiddleFinger0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_MiddleFinger0]->presc->m_qddot[0] = 0.0;
+
+	m_joints[eBone_RingFinger0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_RingFinger0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_RingFinger0]->presc->m_qddot[0] = 0.0;
+
+	m_joints[eBone_PinkyFinger0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_PinkyFinger0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_PinkyFinger0]->presc->m_qddot[0] = 0.0;
+}
+
+void World::setMaximalPrescStates(shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i) {
+	Matrix4d E = b->E_wi;
+	Matrix3d R = E.topLeftCorner(3, 3);
+	Vector6d phi = b->phi;
+
+	Vector3d vt_i = R.transpose() * vt_w;
+	b->presc->m_qdot.segment<3>(0) = wt_i;
+	b->presc->m_qdot.segment<3>(3) = vt_i;
+	b->presc->m_qddot.segment<3>(0) = wtdot_i;
+	b->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
 }
