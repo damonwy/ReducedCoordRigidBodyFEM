@@ -475,6 +475,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			rhs.segment(0, nr) = fr_;
 			rhs.segment(nr, ne) = rhsG;
 
+			//cout << MatrixXd(LHS_sp) << endl << endl;
+			//cout << rhs << endl << endl;
+
 			//VectorXd sol = LHS.ldlt().solve(rhs);
 			//qdot1 = sol.segment(0, nr);
 			//VectorXd l = sol.segment(nr, sol.rows() - nr);
@@ -721,7 +724,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
 		}
-		
+		//cout << qdot1 << endl << endl;
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		yk.segment(0, nr) = q1;
