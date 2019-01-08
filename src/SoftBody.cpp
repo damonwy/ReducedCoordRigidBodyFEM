@@ -653,16 +653,12 @@ void SoftBody::scatterDofs(VectorXd &y, int nr) {
 						y.segment<3>(idxR).y() = m_floor_y;
 						y.segment<3>(nr + idxR).y() = 0.0;
 						m_isCollided = true;
-					}
-					
-				}
-			
+					}					
+				}			
 			}
 		}
-
 	}
 	
-
 	if (next != nullptr) {
 		next->scatterDofs(y, nr);
 	}
@@ -676,7 +672,7 @@ void SoftBody::scatterDDofs(VectorXd &ydot, int nr) {
 		{
 			if (!m_nodes[i]->fixed) {
 				
-				m_nodes[i]->v = ydot.segment<3>(idxR);
+				//m_nodes[i]->v = ydot.segment<3>(idxR);
 				m_nodes[i]->a = ydot.segment<3>(nr + idxR);
 				if (m_isCollisionWithFloor) {
 					if (m_nodes[i]->x.y() < m_floor_y && m_nodes[i]->v.y() < 0.0) {//
@@ -744,8 +740,7 @@ void SoftBody::computeForce_(Vector3d grav, VectorXd &f) {
 			double m = m_nodes[i]->m;
 			{
 				f.segment<3>(idxM) += m * grav;
-			}
-			
+			}		
 		}
 	}
 

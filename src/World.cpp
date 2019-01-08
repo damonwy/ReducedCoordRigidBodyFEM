@@ -1177,7 +1177,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		starfish->precomputeWeights();
 		starfish->setDamping(mesh_damping);
 		starfish->getDenseMesh()->setColor(starfish_color);
-		starfish->getCoarseMesh()->setFloor(y_floor);
+		starfish->getDenseMesh()->setFloor(y_floor);
 
 	}
 	break;
@@ -2294,7 +2294,7 @@ void World::sceneStarFish(double t) {
 }
 
 void World::sceneStarFish2(double t) {
-
+	cout << t << endl;
 	double sinTheta = M_PI * sin(t);
 	double cosTheta = M_PI * cos(t);
 	double d30 = -1.0 / 6.0;

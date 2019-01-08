@@ -21,6 +21,7 @@ class Surface
 public:
 	Surface() {
 		m_color << 1.0f, 1.0f, 0.0f;
+		m_isCollisionWithFloor = false;
 	}
 
 	virtual ~Surface() {}
@@ -33,9 +34,12 @@ public:
 	void transform(Matrix4d E);
 	inline const std::vector<std::shared_ptr<FaceTriangle> > & getFaces() const { return m_trifaces; }
 	inline const std::vector<std::shared_ptr<Node> > & getNodes() const { return m_nodes; }
-
+	inline void setFloor(double floor_y) { m_floor_y = floor_y; m_isCollisionWithFloor = true; }
+	bool m_isCollisionWithFloor;
+	double m_floor_y;
 protected:
 	Vector3f m_color;
+
 
 	std::vector<std::shared_ptr<Node> > m_nodes;
 	std::vector<std::shared_ptr<FaceTriangle> > m_trifaces;
@@ -49,5 +53,4 @@ protected:
 	unsigned posBufID;
 	unsigned norBufID;
 	unsigned texBufID;
-
 };

@@ -31,10 +31,8 @@ MeshEmbedding::MeshEmbedding(double density, double young, double possion, Mater
 		//m_dense_mesh = make_shared<SoftBody>(density, young, possion, material);
 		m_coarse_mesh = make_shared<SoftBody>(density, young, possion, material);
 	}
-
 	m_isDenseMesh = true;
 	m_isCoarseMesh = false;
-
 }
 
 void MeshEmbedding::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
@@ -53,11 +51,8 @@ void MeshEmbedding::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> p
 }
 
 void MeshEmbedding::load(const string &RESOURCE_DIR, const string &COARSE_MESH_NAME, const string &TETGEN_FLAGS_0, const string &DENSE_MESH_NAME, const string &TETGEN_FLAGS_1) {
-
-	
 	m_coarse_mesh->load(RESOURCE_DIR, COARSE_MESH_NAME, TETGEN_FLAGS_0);
 	m_dense_mesh->load(RESOURCE_DIR, DENSE_MESH_NAME, TETGEN_FLAGS_1);
-
 }
 
 void MeshEmbedding::init() {
@@ -83,7 +78,6 @@ void MeshEmbedding::computeJacobianSparse(vector<T> &J_) {
 
 void MeshEmbedding::computeForce(Vector3d grav, VectorXd &f) {
 	m_coarse_mesh->computeForce(grav, f);
-
 	if (next != nullptr) {
 		next->computeForce(grav, f);
 	}
@@ -99,7 +93,6 @@ void MeshEmbedding::computeForceDamping(VectorXd &f, MatrixXd &D) {
 
 void MeshEmbedding::computeForceDampingSparse(VectorXd &f, vector<T> &D_) {
 	m_coarse_mesh->computeForceDampingSparse(f, D_);
-
 	if (next != nullptr) {
 		next->computeForceDampingSparse(f, D_);
 	}
@@ -107,7 +100,6 @@ void MeshEmbedding::computeForceDampingSparse(VectorXd &f, vector<T> &D_) {
 
 void MeshEmbedding::computeStiffnessSparse(vector<T> &K_) {
 	m_coarse_mesh->computeStiffnessSparse(K_);
-
 	if (next != nullptr) {
 		next->computeStiffnessSparse(K_);
 	}
@@ -115,6 +107,62 @@ void MeshEmbedding::computeStiffnessSparse(vector<T> &K_) {
 
 void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 	m_coarse_mesh->scatterDofs(y, nr);
+
+	const vector<std::shared_ptr<Tetrahedron> > &coarse_mesh_tets = m_coarse_mesh->getTets();
+	bool isCheckingCollision = m_dense_mesh->m_isCollisionWithFloor;
+
+	// update dense mesh using coarse mesh
+	for (int i = 0; i < (int)coarse_mesh_tets.size(); i++) {
+		auto tet = coarse_mesh_tets[i];
+		int num_enclosed = tet->m_enclosed_points.size();
+		for (int j = 0; j < num_enclosed; j++) {
+			// update nodes
+			auto node = tet->m_enclosed_points[j];
+			node->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[j]);
+			if (isCheckingCollision) {
+
+				if (node->x.y() < m_dense_mesh->m_floor_y) {
+					// there is collision!
+
+					// compute the penetration
+					double deep_inside = m_dense_mesh->m_floor_y - node->x.y();
+
+					// find the lowest node in the coarse tet
+					double y_lowest = 1000.0;
+					int update_id = -1;
+					for (int t = 0; t < 4; t++) {
+						auto pt = tet->m_nodes[t];
+						double ypos = pt->x.y();
+						if (ypos < y_lowest) {
+							y_lowest = ypos;
+							update_id = t;
+						}
+					}
+
+					assert(update_id > -1);
+					// push up that lowest node and kill its velocity
+					tet->m_nodes[update_id]->x.y() += deep_inside;
+					tet->m_nodes[update_id]->v.y() = 0.0;
+
+					
+					// kill coarse y velocity in y vector
+					int idxR = tet->m_nodes[update_id]->idxR;
+					y.segment<3>(idxR).y() += deep_inside;
+					y.segment<3>(nr + idxR).y() = 0.0;
+
+					// update the node in dense mesh that collides with floor and all the points before that
+					//node->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[j]);
+
+					for (int k = 0; k < j+1; k++) {
+						auto node_update = tet->m_enclosed_points[k];
+						  node_update->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[k]);
+					}
+				}
+			}
+		}
+	}
+
+
 
 
 	if (next != nullptr) {
@@ -125,22 +173,20 @@ void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 void MeshEmbedding::scatterDDofs(VectorXd &ydot, int nr) {
 
 	m_coarse_mesh->scatterDDofs(ydot, nr);
-
-	const vector<std::shared_ptr<Tetrahedron> > &coarse_mesh_tets = m_coarse_mesh->getTets();
-
-	// update dense mesh using coarse mesh
-	for (int i = 0; i < (int)coarse_mesh_tets.size(); i++) {
-		auto tet = coarse_mesh_tets[i];
-		int num_enclosed = tet->m_enclosed_points.size();
-		for (int j = 0; j < num_enclosed; j++) {
-			// update nodes
-			auto node = tet->m_enclosed_points[j];
-			node->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[j]);
-		}
-	}
+	//const vector<std::shared_ptr<Tetrahedron> > &coarse_mesh_tets = m_coarse_mesh->getTets();
+	//bool isCheckingCollision = m_dense_mesh->m_isCollisionWithFloor;
+	//// update dense mesh using coarse mesh
+	//for (int i = 0; i < (int)coarse_mesh_tets.size(); i++) {
+	//	auto tet = coarse_mesh_tets[i];
+	//	int num_enclosed = tet->m_enclosed_points.size();
+	//	for (int j = 0; j < num_enclosed; j++) {
+	//		// update nodes
+	//		auto node = tet->m_enclosed_points[j];
+	//		node->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[j]);
+	//	}
+	//}
 
 	m_dense_mesh->updatePosNor();
-
 	if (next != nullptr) {
 		next->scatterDDofs(ydot, nr);
 	}
@@ -185,9 +231,6 @@ void MeshEmbedding::precomputeWeights() {
 			}			
 		}
 	}
-
-
-
 }
 
 void MeshEmbedding::transformCoarseMesh(Matrix4d E) {
@@ -199,15 +242,11 @@ void MeshEmbedding::transformDenseMesh(Matrix4d E) {
 }
 void MeshEmbedding::countDofs(int &nm, int &nr) {
 	m_coarse_mesh->countDofs(nm, nr);
-
-
 }
 
 void MeshEmbedding::updatePosNor() {
-
 	m_dense_mesh->updatePosNor();
 	m_coarse_mesh->updatePosNor();
-
 }
 
 void MeshEmbedding::setAttachmentsByYZCircle(double x, double range, Vector2d O, double r, shared_ptr<Body> body) {
