@@ -2318,6 +2318,11 @@ void World::sceneStarFish2(double t) {
 
 	double beta = 1.4;
 	if (t < 6.0) {
+		m_joints[1]->presc->setInactive();
+		m_joints[5]->presc->setInactive();
+		m_joints[9]->presc->setInactive();
+		m_joints[13]->presc->setInactive();
+		m_joints[17]->presc->setInactive();
 		//vt_w <<0.0, beta * t, 0.0;
 
 		//vt_w.setZero();
@@ -2327,25 +2332,25 @@ void World::sceneStarFish2(double t) {
 		//wtdot_i << 0.0, 0.0, -alpha;
 		//	w_i = 0 0 -alpha * 5
 		
-		m_joints[1]->presc->m_q[0] = 0.0;
+		/*m_joints[1]->presc->m_q[0] = 0.0;
 		m_joints[1]->presc->m_qdot[0] = 0.0;
-		m_joints[1]->presc->m_qddot[0] = 0.0;
+		m_joints[1]->presc->m_qddot[0] = 0.0;*/
 
-		m_joints[5]->presc->m_q[0] = 0.0;
-		m_joints[5]->presc->m_qdot[0] = 0.0;
-		m_joints[5]->presc->m_qddot[0] = 0.0;
+		//m_joints[5]->presc->m_q[0] = 0.0;
+		//m_joints[5]->presc->m_qdot[0] = 0.0;
+		//m_joints[5]->presc->m_qddot[0] = 0.0;
 
-		m_joints[9]->presc->m_q[0] = 0.0;
-		m_joints[9]->presc->m_qdot[0] = 0.0;
-		m_joints[9]->presc->m_qddot[0] = 0.0;
+		//m_joints[9]->presc->m_q[0] = 0.0;
+		//m_joints[9]->presc->m_qdot[0] = 0.0;
+		//m_joints[9]->presc->m_qddot[0] = 0.0;
 
-		m_joints[13]->presc->m_q[0] = 0.0;
-		m_joints[13]->presc->m_qdot[0] = 0.0;
-		m_joints[13]->presc->m_qddot[0] = 0.0;
+		//m_joints[13]->presc->m_q[0] = 0.0;
+		//m_joints[13]->presc->m_qdot[0] = 0.0;
+		//m_joints[13]->presc->m_qddot[0] = 0.0;
 
-		m_joints[17]->presc->m_q[0] = 0.0;
-		m_joints[17]->presc->m_qdot[0] = 0.0;
-		m_joints[17]->presc->m_qddot[0] = 0.0;
+		//m_joints[17]->presc->m_q[0] = 0.0;
+		//m_joints[17]->presc->m_qdot[0] = 0.0;
+		//m_joints[17]->presc->m_qddot[0] = 0.0;
 	}
 	else if (t < 16.0) {
 		double t_ = t - 6.0;
@@ -2475,6 +2480,13 @@ void World::sceneStarFish2(double t) {
 	}
 
 	setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+	m_joints[1]->presc->setInactive();
+	m_joints[5]->presc->setInactive();
+	m_joints[9]->presc->setInactive();
+	m_joints[13]->presc->setInactive();
+	m_joints[17]->presc->setInactive();
+	m_bodies[8]->presc->setInactive();
+
 }
 
 void World::sceneTestReducedHD(double t) {

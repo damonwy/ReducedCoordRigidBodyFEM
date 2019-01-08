@@ -41,6 +41,9 @@ public:
 
 	void init();
 	void countDofs(int &nem, int &ner, int &nim, int &nir);
+	virtual void setActive() {}
+	virtual void setInactive() {}
+
 	void getActiveList(std::vector<int> &listM, std::vector<int> &listR);
 
 	void getEqActiveList(std::vector<int> &listEqM, std::vector<int> &listEqR);
