@@ -274,12 +274,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			m_world->sceneCross(t_i);
 			break;
 		case STARFISH:
-			m_world->sceneStarFish(t_i);
+			m_world->sceneStarFish2(t_i);
+
+			//m_world->sceneStarFish(t_i);
 			break;
-		case STARFISH_2:
-			if (!isCollided) {
-				m_world->sceneStarFish2(t_i);
-			}
+		case STARFISH_2:		
+			m_world->sceneStarFish2(t_i);	
 			break;
 		case TEST_MAXIMAL_HYBRID_DYNAMICS:
 			m_world->sceneTestMaximalHD(t_i);
@@ -474,6 +474,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			
 			rhs.segment(0, nr) = fr_;
 			rhs.segment(nr, ne) = rhsG;
+
+			//cout << MatrixXd(LHS_sp) << endl << endl;
+			//cout << rhs << endl << endl;
 
 			//VectorXd sol = LHS.ldlt().solve(rhs);
 			//qdot1 = sol.segment(0, nr);
@@ -721,7 +724,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
 		}
-		
+		//cout << qdot1 << endl << endl;
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		yk.segment(0, nr) = q1;

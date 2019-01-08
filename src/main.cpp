@@ -346,16 +346,16 @@ int main(int argc, char **argv)
 	init();
 	// Start simulation thread.
 	
-	thread stepperThread(stepperFunc);
+	//thread stepperThread(stepperFunc);
 	for (int i = 0; i < 100; i++) {
 		//scene->step();
 	}	
 
 	//// Loop until the user closes the window.
 	while(!glfwWindowShouldClose(window)) {
-		if (RECORD_VIDEO == 1) {
-			//stepWorld();
-		}
+		
+		stepWorld();
+	
 		
 		// Render scene.
 		render();
@@ -366,10 +366,8 @@ int main(int argc, char **argv)
 		glfwPollEvents();
 	}
 	// Quit program.
-	if (RECORD_VIDEO == 0) {
-		
-	}
-	stepperThread.detach();
+
+	//stepperThread.detach();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

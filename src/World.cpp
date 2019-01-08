@@ -1094,23 +1094,33 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
-		m_grav << 0.0, -1.0, 0.0;
+		m_grav << 0.0, -980.0, 0.0;
 		Eigen::from_json(js["sides"], sides);
 		double young = 1e4;
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
 		double mesh_damping = 1.0;
-		double y_floor = -100.0;
+		double y_floor = -30.0;
 		nlegs = 5;
-		nsegments = 8;
+		nsegments = 4;
 		double rotation = 360.0 / nlegs;
 		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
 		starfish_color /= 255.0f;
 		std::string coarse_file_name = "starfish_coarse3";//starfishco
 		std::string dense_file_name = "starfish2";
 
-		double len_segment = 10.0;
+		double len_segment = 20.0;
+		Vector3d root_sides;
+		Eigen::from_json(js["cube_sides"], root_sides);
+		auto root_body = addBody(density, root_sides, Vector3d::Zero(), Matrix3d::Identity(), RESOURCE_DIR, "box_1_1_1.obj");
+		/*	VectorXi dof(1);
+		dof << 4;
+		addConstraintPrescBody(root_body, dof);*/
+		//body->setDrawingOption(false);
+		Vector6d qdot0;
+		qdot0 << 0.0, 0.0, 0.0, 0.0, 6.0, 0.0;
+		auto root_joint = addJointFree(root_body, Vector3d::Zero(), Matrix3d::Identity(), Vector6d::Zero(), qdot0, RESOURCE_DIR);
 
 		for (int k = 0; k < nlegs; ++k) {
 			for (int i = 0; i < nsegments; i++) {
@@ -1122,25 +1132,30 @@ void World::load(const std::string &RESOURCE_DIR) {
 					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
 					Vector6d q0;
 					q0 << 0.0, 0.0, 0.0, 0.0, 5.0, 0.0;
-					joint = addJointFree(body, Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k) / 180.0 * M_PI),  Vector6d::Zero(), q0, RESOURCE_DIR);
-					//joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k)/180.0 * M_PI), 0.0, RESOURCE_DIR);
+					//joint = addJointFree(body, Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k) / 180.0 * M_PI),  Vector6d::Zero(), q0, RESOURCE_DIR);
+					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k)/180.0 * M_PI), 0.0, RESOURCE_DIR, root_joint);
+					addConstraintPrescJoint(joint);
+				
 				}
 				else {
-					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1]);
-					addConstraintPrescJoint(joint);
+					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1 + 1]);
+					//addConstraintPrescJoint(joint);
 
 				}
 				//addConstraintPrescJoint(joint);
 				//m_joints[i]->setStiffness(m_stiffness);
-				//m_joints[i]->setDamping(m_damping);
+				m_joints[i]->setDamping(1.0);
 			}
 		}
+		VectorXi dof(3);
+		dof << 3, 4, 5;
+		addConstraintPrescBody(m_bodies[8], dof);
 
 		double len_skeleton = nsegments * len_segment;
 		int nsamples = 4;
 
 		vector<std::shared_ptr<Node>> additional_nodes;
-		int idx_body = 0;
+		int idx_body = 1;
 		Vector3d end_pt;
 		for (int i = 0; i < nlegs; ++i) {
 			double theta = (18.0 + rotation * i) / 180.0 * M_PI;
@@ -1164,7 +1179,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		starfish->precomputeWeights();
 		starfish->setDamping(mesh_damping);
 		starfish->getDenseMesh()->setColor(starfish_color);
-		//starfish->getCoarseMesh()->setFloor(y_floor);
+		starfish->getDenseMesh()->setFloor(y_floor);
 
 	}
 	break;
@@ -1198,20 +1213,20 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 	case STARFISH_2:
 	{
-		m_h = 1.0e-1;
+		m_h = 1.0e-2;
 		m_tspan << 0.0, 50.0;
 		m_t = 0.0;
 		density = 1.0;
-		m_grav << 0.0, -98.0, 0.0;
+		m_grav << 0.0, 0.0, 0.0;
 		Eigen::from_json(js["sides"], sides);
 		Vector3d root_sides;
 		Eigen::from_json(js["cube_sides"], root_sides);
 		double young = 1e4;
 		double possion = 0.35;
-		m_stiffness = 1.0e4;
+		m_stiffness = 1.0e1;
 		m_damping = 1.0e3;
 		double mesh_damping = 1.0;
-		double y_floor = -20.0;
+		double y_floor = -40.0;
 		nlegs = 5;
 		nsegments = 8;
 		double rotation = 360.0 / nlegs;
@@ -1222,11 +1237,14 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		double len_segment = 10.0;
 		auto root_body = addBody(density, root_sides, Vector3d::Zero(), Matrix3d::Identity(), RESOURCE_DIR, "box_1_1_1.obj");
-
+	/*	VectorXi dof(1);
+		dof << 4;
+		addConstraintPrescBody(root_body, dof);*/
+		//body->setDrawingOption(false);
 		Vector6d qdot0;
-		qdot0 << 0.0, 0.0, 0.0, 0.0, 10.0, 0.0;
+		qdot0 << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 		auto root_joint = addJointFree(root_body, Vector3d::Zero(), Matrix3d::Identity(), Vector6d::Zero(), qdot0, RESOURCE_DIR);
-
+		//auto root_joint = addJointFixed(root_body, Vector3d::Zero(), Matrix3d::Identity(), 0.0);
 		for (int k = 0; k < nlegs; ++k) {
 			for (int i = 0; i < nsegments; i++) {
 				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
@@ -1241,6 +1259,13 @@ void World::load(const std::string &RESOURCE_DIR) {
 					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1 + 1]);
 					//addConstraintPrescJoint(joint);
 
+				}
+				
+				if (k * nsegments + i == 7) {
+					VectorXi dof(1);
+					dof << 4;
+					addConstraintPrescBody(body, dof);
+					body->setDrawingOption(false);
 				}
 				//addConstraintPrescJoint(joint);
 				//m_joints[i]->setStiffness(m_stiffness);
@@ -1313,9 +1338,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 	case TEST_MAXIMAL_HYBRID_DYNAMICS:
 	{
-		m_h =8.0e-2;
+		m_h = 5.0e-2;
 		density = 1.0;
-		m_grav << 0.0, -0.0, 0.0;
+		m_grav << 0.0, -980, 0.0;
 		Eigen::from_json(js["sides"], sides);
 		//m_nbodies = 5;
 		//m_njoints = 5;
@@ -1328,10 +1353,18 @@ void World::load(const std::string &RESOURCE_DIR) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 			// Inits joints
 			if (i == 0) {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 2.0), 0.0, RESOURCE_DIR);
+			}
+			else if (i == 1) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+			else if (i == 2) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+				
 			}
 			else {
-				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 		}
 		Vector3i dof;
@@ -1345,41 +1378,94 @@ void World::load(const std::string &RESOURCE_DIR) {
 	{
 		m_h = 1.0e-2;
 		density = 1.0;
-		m_grav << 0.0, -0.0, 0.0;
+		m_grav << 0.0, 980.0, 0.0;
 		Eigen::from_json(js["sides"], sides);
 
 		m_Hexpected = 10000; // todo
 		m_tspan << 0.0, 5.0;
 		m_t = 0.0;
+		
+		double scale = 4.0;
+		double len_thumb0 = 3.5 * scale;
+		double len_thumb1 = 6.0 * scale;
+		double len_thumb2 = 4.0 * scale;
+		double len_thumb3 = 4.0 * scale;
 
-		double len_index_0 = 3.5 * 4;
-		double len_index_1 = 10.0 * 4;
-		double len_index_2 = 5.5 * 4;
-		double len_index_3 = 5.5 * 2;
-		double len_index_4 = 5.5 * 2;
+
+		double len_index_0 = 3.5 * scale;
+		double len_index_1 = 10.0 * scale;
+		double len_index_2 = 5.5 * scale;
+		double len_index_3 = 5.5 / 2 *scale;
+		double len_index_4 = 5.5 /2 * scale;
+
+		double len_ring_0 = len_index_0;
+		double len_ring_1 = 8.0 * scale;
+		double len_ring_2 = len_index_2;
+		double len_ring_3 = len_index_3;
+		double len_ring_4 = len_index_4;
+
+		double len_pinky_1 = 7.0 * scale;
+		double len_pinky_2 = 4.5 * scale;
+		double len_pinky_3 = 2.0 * scale;
+		double len_pinky_4 = len_pinky_3;
+
+		auto wrist = addBody(density, sides, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box_1_1_1.obj");
+		auto j_wrist = addJointFixed(wrist, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+
+		auto thumb_0 = addBody(density, sides, Vector3d(len_thumb0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_thumb_0 = addJointRevolute(thumb_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0) * SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), -M_PI / 5.0), 0.0, RESOURCE_DIR, j_wrist);
+		auto thumb_1 = addBody(density, sides, Vector3d(len_thumb1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "thumb1.obj");
+		auto j_thumb_1 = addJointRevolute(thumb_1, Vector3d::UnitZ(), Vector3d(len_thumb0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_thumb_0);
+		auto thumb_2 = addBody(density, sides, Vector3d(len_thumb2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "thumb2.obj");
+		auto j_thumb_2 = addJointRevolute(thumb_2, Vector3d::UnitZ(), Vector3d(len_thumb1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_thumb_1);
+		auto thumb_3 = addBody(density, sides, Vector3d(len_thumb3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "thumb3.obj");
+		auto j_thumb_3 = addJointRevolute(thumb_3, Vector3d::UnitZ(), Vector3d(len_thumb2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_thumb_2);
+
 
 		auto index_finger_0 = addBody(density, sides, Vector3d(len_index_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
-		auto j_index_finger_0 = addJointRevolute(index_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR);
+		auto j_index_finger_0 = addJointRevolute(index_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR, j_wrist);
 		auto index_finger_1 = addBody(density, sides, Vector3d(len_index_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s4.obj");
 		auto j_index_finger_1 = addJointRevolute(index_finger_1, Vector3d::UnitZ(), Vector3d(len_index_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_index_finger_0);
-
 		auto index_finger_2 = addBody(density, sides, Vector3d(len_index_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
 		auto j_index_finger_2 = addJointRevolute(index_finger_2, Vector3d::UnitZ(), Vector3d(len_index_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_index_finger_1);
-
 		auto index_finger_3 = addBody(density, sides, Vector3d(len_index_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
 		auto j_index_finger_3 = addJointRevolute(index_finger_3, Vector3d::UnitZ(), Vector3d(len_index_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_index_finger_2);
-
 		auto index_finger_4 = addBody(density, sides, Vector3d(len_index_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
 		auto j_index_finger_4 = addJointRevolute(index_finger_4, Vector3d::UnitZ(), Vector3d(len_index_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_index_finger_3);
 
+		auto middle_finger_0 = addBody(density, sides, Vector3d(len_index_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_middle_finger_0 = addJointRevolute(middle_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0) * SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), M_PI / 8.0), 0.0, RESOURCE_DIR, j_wrist);
+		auto middle_finger_1 = addBody(density, sides, Vector3d(len_index_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s4.obj");
+		auto j_middle_finger_1 = addJointRevolute(middle_finger_1, Vector3d::UnitZ(), Vector3d(len_index_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_middle_finger_0);
+		auto middle_finger_2 = addBody(density, sides, Vector3d(len_index_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
+		auto j_middle_finger_2 = addJointRevolute(middle_finger_2, Vector3d::UnitZ(), Vector3d(len_index_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_middle_finger_1);
+		auto middle_finger_3 = addBody(density, sides, Vector3d(len_index_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
+		auto j_middle_finger_3 = addJointRevolute(middle_finger_3, Vector3d::UnitZ(), Vector3d(len_index_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_middle_finger_2);
+		auto middle_finger_4 = addBody(density, sides, Vector3d(len_index_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
+		auto j_middle_finger_4 = addJointRevolute(middle_finger_4, Vector3d::UnitZ(), Vector3d(len_index_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_middle_finger_3);
 
-/*
-		auto finger_s1 = addBody(density, sides, Vector3d(len_s1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
-		auto j1 = addJointRevolute(finger_s1, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
-		auto finger_s2 = addBody(density, sides, Vector3d(len_s2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
-		auto j2 = addJointRevolute(finger_s2, Vector3d::UnitZ(), Vector3d(len_s1, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j1);
-		auto finger_s3 = addBody(density, sides, Vector3d(len_s3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
-		auto j3 = addJointRevolute(finger_s3, Vector3d::UnitZ(), Vector3d(len_s2, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, j2);*/
+		auto ring_finger_0 = addBody(density, sides, Vector3d(len_ring_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_ring_finger_0 = addJointRevolute(ring_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0) * SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), 2 * M_PI / 8.0), 0.0, RESOURCE_DIR, j_wrist);
+		auto ring_finger_1 = addBody(density, sides, Vector3d(len_ring_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerRing1.obj");
+		auto j_ring_finger_1 = addJointRevolute(ring_finger_1, Vector3d::UnitZ(), Vector3d(len_ring_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_ring_finger_0);
+		auto ring_finger_2 = addBody(density, sides, Vector3d(len_ring_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s1.obj");
+		auto j_ring_finger_2 = addJointRevolute(ring_finger_2, Vector3d::UnitZ(), Vector3d(len_ring_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_ring_finger_1);
+		auto ring_finger_3 = addBody(density, sides, Vector3d(len_ring_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s2.obj");
+		auto j_ring_finger_3 = addJointRevolute(ring_finger_3, Vector3d::UnitZ(), Vector3d(len_ring_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_ring_finger_2);
+		auto ring_finger_4 = addBody(density, sides, Vector3d(len_ring_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s3.obj");
+		auto j_ring_finger_4 = addJointRevolute(ring_finger_4, Vector3d::UnitZ(), Vector3d(len_ring_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_ring_finger_3);
+
+		auto pinky_finger_0 = addBody(density, sides, Vector3d(len_index_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "finger_s5.obj");
+		auto j_pinky_finger_0 = addJointRevolute(pinky_finger_0, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0) * SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), 3 * M_PI / 8.0), 0.0, RESOURCE_DIR, j_wrist);
+		auto pinky_finger_1 = addBody(density, sides, Vector3d(len_pinky_1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerPinky1.obj");
+		auto j_pinky_finger_1 = addJointRevolute(pinky_finger_1, Vector3d::UnitZ(), Vector3d(len_index_0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_pinky_finger_0);
+		auto pinky_finger_2 = addBody(density, sides, Vector3d(len_pinky_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerPinky2.obj");
+		auto j_pinky_finger_2 = addJointRevolute(pinky_finger_2, Vector3d::UnitZ(), Vector3d(len_pinky_1, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 4.0), 0.0, RESOURCE_DIR, j_pinky_finger_1);
+		auto pinky_finger_3 = addBody(density, sides, Vector3d(len_pinky_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerPinky3.obj");
+		auto j_pinky_finger_3 = addJointRevolute(pinky_finger_3, Vector3d::UnitZ(), Vector3d(len_pinky_2, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_pinky_finger_2);
+		auto pinky_finger_4 = addBody(density, sides, Vector3d(len_pinky_4 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "fingerPinky4.obj");
+		auto j_pinky_finger_4 = addJointRevolute(pinky_finger_4, Vector3d::UnitZ(), Vector3d(len_pinky_3, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 6.0), 0.0, RESOURCE_DIR, j_pinky_finger_3);
+
 
 		for (int i = 0; i < (int)m_joints.size(); ++i) {
 			m_joints[i]->setDrawRadius(3.0);
@@ -1389,9 +1475,29 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Vector3i dof;
 		dof << 2, 3, 4;
 		
-		auto con1 = addConstraintPrescBody(index_finger_4, dof);
-		auto con2 = addConstraintPrescJoint(j_index_finger_1);
-		auto con3 = addConstraintPrescJoint(j_index_finger_0);
+		//addConstraintPrescBody(thumb_3, dof);
+		addConstraintPrescBody(index_finger_4, dof);
+		addConstraintPrescBody(middle_finger_4, dof);
+		addConstraintPrescBody(ring_finger_4, dof);
+		addConstraintPrescBody(pinky_finger_4, dof);
+
+
+		addConstraintPrescJoint(j_index_finger_3);
+		addConstraintPrescJoint(j_index_finger_0);
+
+		addConstraintPrescJoint(j_thumb_0);
+		addConstraintPrescJoint(j_thumb_1);
+		addConstraintPrescJoint(j_thumb_2);
+		addConstraintPrescJoint(j_thumb_3);
+
+		addConstraintPrescJoint(j_middle_finger_3);
+		addConstraintPrescJoint(j_middle_finger_0);
+
+		addConstraintPrescJoint(j_ring_finger_3);
+		addConstraintPrescJoint(j_ring_finger_0);
+
+		addConstraintPrescJoint(j_pinky_finger_3);
+		addConstraintPrescJoint(j_pinky_finger_0);
 
 		break;
 	}
@@ -1407,7 +1513,7 @@ shared_ptr<ConstraintPrescJoint> World::addConstraintPrescJoint(shared_ptr<Joint
 	return con;
 }
 
-shared_ptr<ConstraintPrescBody> World::addConstraintPrescBody(shared_ptr<Body> b, Vector3i dof) {
+shared_ptr<ConstraintPrescBody> World::addConstraintPrescBody(shared_ptr<Body> b, Eigen::VectorXi dof) {
 	auto con = make_shared<ConstraintPrescBody>(b, dof, REDMAX_EULER);
 	m_nconstraints++;
 	m_constraints.push_back(con);
@@ -2112,85 +2218,85 @@ void World::sceneStarFish(double t) {
 	double d18 = 1.0 / 10.0;
 	double d20 = 1.0 / 9.0;
 	double d22 = 1.0 / 8.0;
-	
-	for (int i = 0; i < nlegs; i++) {
-		if (i > -1) {
-			//m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
-			//m_joints[0 + nsegments * i]->presc->m_qdot[0] = d60 * cosTheta;
-			//m_joints[0 + nsegments * i]->presc->m_qddot[0] = -d60 * sinTheta;
+	//
+	//for (int i = 0; i < nlegs; i++) {
+	//	if (i > -1) {
+	//		//m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
+	//		//m_joints[0 + nsegments * i]->presc->m_qdot[0] = d60 * cosTheta;
+	//		//m_joints[0 + nsegments * i]->presc->m_qddot[0] = -d60 * sinTheta;
 
 
-			m_joints[1 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[1 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[1 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
+	//		m_joints[1 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+	//		m_joints[1 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+	//		m_joints[1 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
-			m_joints[2 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[2 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[2 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
+	//		m_joints[2 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+	//		m_joints[2 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+	//		m_joints[2 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
-			m_joints[3 + nsegments * i]->presc->m_q[0] = -d22 * sinTheta;
-			m_joints[3 + nsegments * i]->presc->m_qdot[0] = -d22 * cosTheta;
-			m_joints[3 + nsegments * i]->presc->m_qddot[0] = d22 * sinTheta;
+	//		m_joints[3 + nsegments * i]->presc->m_q[0] = -d22 * sinTheta;
+	//		m_joints[3 + nsegments * i]->presc->m_qdot[0] = -d22 * cosTheta;
+	//		m_joints[3 + nsegments * i]->presc->m_qddot[0] = d22 * sinTheta;
 
-			m_joints[4 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[4 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[4 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
-
-
-			m_joints[5 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[5 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[5 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
-
-			m_joints[6 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[6 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[6 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
-
-			m_joints[7 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[7 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[7 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
-
-		}
-		else {
-			m_joints[0 + 8 * i]->presc->m_q[0] = -1.0 / 6.0 * sinTheta;
-			m_joints[0 + 8 * i]->presc->m_qdot[0] = -1.0 / 6.0 * cosTheta;
-			m_joints[0 + 8 * i]->presc->m_qddot[0] = 1.0 / 6.0 * sinTheta;
+	//		m_joints[4 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+	//		m_joints[4 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+	//		m_joints[4 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
 
-			m_joints[1 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
-			m_joints[1 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
-			m_joints[1 + 8 * i]->presc->m_qddot[0] = -1.0 / 18.0 * sinTheta;
+	//		m_joints[5 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+	//		m_joints[5 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+	//		m_joints[5 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
-			m_joints[2 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
-			m_joints[2 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
-			m_joints[2 + 8 * i]->presc->m_qddot[0] = -1.0 /18.0 * sinTheta;
+	//		m_joints[6 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+	//		m_joints[6 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+	//		m_joints[6 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
-			m_joints[3 + 8 * i]->presc->m_q[0] = 1.0 / 15.0 * sinTheta;
-			m_joints[3 + 8 * i]->presc->m_qdot[0] = 1.0 / 15.0 * cosTheta;
-			m_joints[3 + 8 * i]->presc->m_qddot[0] = -1.0 / 15.0 * sinTheta;
+	//		m_joints[7 + nsegments * i]->presc->m_q[0] = -d30 * sinTheta;
+	//		m_joints[7 + nsegments * i]->presc->m_qdot[0] = -d30 * cosTheta;
+	//		m_joints[7 + nsegments * i]->presc->m_qddot[0] = d30 * sinTheta;
 
-			m_joints[4 + 8 * i]->presc->m_q[0] = 1.0 / 12.0 * sinTheta;
-			m_joints[4 + 8 * i]->presc->m_qdot[0] = 1.0 / 12.0 * cosTheta;
-			m_joints[4 + 8 * i]->presc->m_qddot[0] = -1.0 / 12.0 * sinTheta;
+	//	}
+	//	else {
+	//		m_joints[0 + 8 * i]->presc->m_q[0] = -1.0 / 6.0 * sinTheta;
+	//		m_joints[0 + 8 * i]->presc->m_qdot[0] = -1.0 / 6.0 * cosTheta;
+	//		m_joints[0 + 8 * i]->presc->m_qddot[0] = 1.0 / 6.0 * sinTheta;
 
 
-			m_joints[5 + 8 * i]->presc->m_q[0] =1.0 / 15.0 * sinTheta;
-			m_joints[5 + 8 * i]->presc->m_qdot[0] = 1.0 / 15.0 * cosTheta;
-			m_joints[5 + 8 * i]->presc->m_qddot[0] =- 1.0 / 15.0 * sinTheta;
+	//		m_joints[1 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
+	//		m_joints[1 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
+	//		m_joints[1 + 8 * i]->presc->m_qddot[0] = -1.0 / 18.0 * sinTheta;
 
-			m_joints[6 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
-			m_joints[6 + 8 * i]->presc->m_qdot[0] = 1.0 /18.0 * cosTheta;
-			m_joints[6 + 8 * i]->presc->m_qddot[0] =- 1.0 / 18.0 * sinTheta;
+	//		m_joints[2 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
+	//		m_joints[2 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
+	//		m_joints[2 + 8 * i]->presc->m_qddot[0] = -1.0 /18.0 * sinTheta;
 
-			m_joints[7 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
-			m_joints[7 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
-			m_joints[7 + 8 * i]->presc->m_qddot[0] =-1.0 / 18.0 * sinTheta;
+	//		m_joints[3 + 8 * i]->presc->m_q[0] = 1.0 / 15.0 * sinTheta;
+	//		m_joints[3 + 8 * i]->presc->m_qdot[0] = 1.0 / 15.0 * cosTheta;
+	//		m_joints[3 + 8 * i]->presc->m_qddot[0] = -1.0 / 15.0 * sinTheta;
 
-		}	
-	}
+	//		m_joints[4 + 8 * i]->presc->m_q[0] = 1.0 / 12.0 * sinTheta;
+	//		m_joints[4 + 8 * i]->presc->m_qdot[0] = 1.0 / 12.0 * cosTheta;
+	//		m_joints[4 + 8 * i]->presc->m_qddot[0] = -1.0 / 12.0 * sinTheta;
+
+
+	//		m_joints[5 + 8 * i]->presc->m_q[0] =1.0 / 15.0 * sinTheta;
+	//		m_joints[5 + 8 * i]->presc->m_qdot[0] = 1.0 / 15.0 * cosTheta;
+	//		m_joints[5 + 8 * i]->presc->m_qddot[0] =- 1.0 / 15.0 * sinTheta;
+
+	//		m_joints[6 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
+	//		m_joints[6 + 8 * i]->presc->m_qdot[0] = 1.0 /18.0 * cosTheta;
+	//		m_joints[6 + 8 * i]->presc->m_qddot[0] =- 1.0 / 18.0 * sinTheta;
+
+	//		m_joints[7 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
+	//		m_joints[7 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
+	//		m_joints[7 + 8 * i]->presc->m_qddot[0] =-1.0 / 18.0 * sinTheta;
+
+	//	}	
+	//}
 }
 
 void World::sceneStarFish2(double t) {
-
+	cout << t << endl;
 	double sinTheta = M_PI * sin(t);
 	double cosTheta = M_PI * cos(t);
 	double d30 = -1.0 / 6.0;
@@ -2204,43 +2310,163 @@ void World::sceneStarFish2(double t) {
 	double d20 = -1.0 / 9.0;
 	double d22 = -1.0 / 8.0;
 
-	for (int i = 0; i < nlegs; i++) {
-		if (i < -1) {
-			m_joints[0 + nsegments * i + 1]->presc->m_q[0] = d60 * sinTheta;
-			m_joints[0 + nsegments * i + 1]->presc->m_qdot[0] = d60 * cosTheta;
-			m_joints[0 + nsegments * i + 1]->presc->m_qddot[0] = -d60 * sinTheta;
+	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
+
+	vt_w.setZero();
+	vtdot_w.setZero();
+
+	wt_i.setZero();
+	wtdot_i.setZero();
+	double alpha = 1.0 / 7.9617 / 2.0;
+
+	double beta = 1.5;
+	if (t < 6.0) {
+		//vt_w <<0.0, beta * t, 0.0;
+
+		//vt_w.setZero();
+		//wt_i << 0.0, 0.0, -alpha * t;
+		//vtdot_w <<0.0, beta, 0.0;
+		//vtdot_w.setZero();
+		//wtdot_i << 0.0, 0.0, -alpha;
+		//	w_i = 0 0 -alpha * 5
+		
+		m_joints[1]->presc->m_q[0] = 0.0;
+		m_joints[1]->presc->m_qdot[0] = 0.0;
+		m_joints[1]->presc->m_qddot[0] = 0.0;
+
+		m_joints[5]->presc->m_q[0] = 0.0;
+		m_joints[5]->presc->m_qdot[0] = 0.0;
+		m_joints[5]->presc->m_qddot[0] = 0.0;
+
+		m_joints[9]->presc->m_q[0] = 0.0;
+		m_joints[9]->presc->m_qdot[0] = 0.0;
+		m_joints[9]->presc->m_qddot[0] = 0.0;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = 0.0;
+		m_joints[17]->presc->m_qdot[0] = 0.0;
+		m_joints[17]->presc->m_qddot[0] = 0.0;
 
 
-			m_joints[1 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[1 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[1 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
-
-			m_joints[2 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[2 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[2 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
-
-			m_joints[3 + nsegments * i + 1]->presc->m_q[0] = -d22 * sinTheta;
-			m_joints[3 + nsegments * i + 1]->presc->m_qdot[0] = -d22 * cosTheta;
-			m_joints[3 + nsegments * i + 1]->presc->m_qddot[0] = d22 * sinTheta;
-
-			m_joints[4 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[4 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[4 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
-
-
-			m_joints[5 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[5 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[5 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
-
-			m_joints[6 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[6 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[6 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
-
-			m_joints[7 + nsegments * i + 1]->presc->m_q[0] = -d30 * sinTheta;
-			m_joints[7 + nsegments * i + 1]->presc->m_qdot[0] = -d30 * cosTheta;
-			m_joints[7 + nsegments * i + 1]->presc->m_qddot[0] = d30 * sinTheta;
-		}
 	}
+	else if (t < 16.0) {
+		double t_ = t - 6.0;
+		vt_w << 0.0, beta * t_, 0.0;
+		//vt_w.setZero();
+		//wt_i << 0.0, 0.0, alpha * t_; // start at 0 0 -alpha * 5
+		vtdot_w << 0.0, beta, 0.0;
+		//vtdot_w.setZero();
+		//wtdot_i << 0.0, 0.0, alpha;
+		// wi = 0 0 0
+
+		m_joints[1]->presc->m_q[0] = 0.0;
+		m_joints[1]->presc->m_qdot[0] = 0.0;
+		m_joints[1]->presc->m_qddot[0] = 0.0;
+
+		m_joints[5]->presc->m_q[0] = 0.0;
+		m_joints[5]->presc->m_qdot[0] = 0.0;
+		m_joints[5]->presc->m_qddot[0] = 0.0;
+
+		m_joints[9]->presc->m_q[0] = 0.0;
+		m_joints[9]->presc->m_qdot[0] = 0.0;
+		m_joints[9]->presc->m_qddot[0] = 0.0;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = 0.0;
+		m_joints[17]->presc->m_qdot[0] = 0.0;
+		m_joints[17]->presc->m_qddot[0] = 0.0;
+	}
+	else if (t < 26.0) {
+		double t_ = t - 26.0;
+		vt_w << 0.0, -beta * t_, 0.0; // 0, 10beta, 0
+		vtdot_w << 0.0, -beta, 0.0;
+		m_joints[1]->presc->m_q[0] = 0.0;
+		m_joints[1]->presc->m_qdot[0] = 0.0;
+		m_joints[1]->presc->m_qddot[0] = 0.0;
+
+		m_joints[5]->presc->m_q[0] = 0.0;
+		m_joints[5]->presc->m_qdot[0] = 0.0;
+		m_joints[5]->presc->m_qddot[0] = 0.0;
+
+		m_joints[9]->presc->m_q[0] = 0.0;
+		m_joints[9]->presc->m_qdot[0] = 0.0;
+		m_joints[9]->presc->m_qddot[0] = 0.0;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = 0.0;
+		m_joints[17]->presc->m_qdot[0] = 0.0;
+		m_joints[17]->presc->m_qddot[0] = 0.0;
+	}
+	else if (t < 100.0) {
+		double t_ = t - 26.0;
+		//vt_w << 0.0, -beta * t_, 0.0;
+		double sinTheta = M_PI * sin(t_);
+		double cosTheta = M_PI * cos(t_);
+		double d30 = -1.0 / 6.0;
+		double d45 = -1.0 / 4.0;
+		double d15 = -1.0 / 12.0;
+		double d60 = -1.0 / 3.0;
+		double d90 = -1.0 / 2.0;
+		double d10 = -1.0 / 18.0;
+		double d12 = -1.0 / 15.0;
+		double d18 = -1.0 / 10.0;
+		double d20 = -1.0 / 9.0;
+		double d22 = -1.0 / 8.0;
+		vt_w.setZero();
+		//wt_i << 0.0, 0.0, alpha * t_;
+		//vtdot_w << 0.0, -beta, 0.0;
+		vtdot_w.setZero();
+		//wtdot_i << 0.0, 0.0, alpha;
+		//m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
+		//		//m_joints[0 + nsegments * i]->presc->m_qdot[0] = d60 * cosTheta;
+		//		//m_joints[0 + nsegments * i]->presc->m_qddot[0] = -d60 * sinTheta;
+		//m_joints[1]->presc->m_q[0] = d60 * sinTheta;
+		//m_joints[1]->presc->m_qdot[0] = d60 * cosTheta;
+		//m_joints[1]->presc->m_qddot[0] = -d60 * sinTheta;
+
+		m_joints[5]->presc->m_q[0] = -d10 * sinTheta;
+		m_joints[5]->presc->m_qdot[0] = -d10 * cosTheta;
+		m_joints[5]->presc->m_qddot[0] = d10 * sinTheta;
+
+		m_joints[9]->presc->m_q[0] = d10 * sinTheta;
+		m_joints[9]->presc->m_qdot[0] = d10 * cosTheta;
+		m_joints[9]->presc->m_qddot[0] = -d10 * sinTheta;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = d10 * sinTheta;
+		m_joints[17]->presc->m_qdot[0] = d10 * cosTheta;
+		m_joints[17]->presc->m_qddot[0] = -d10 * sinTheta;
+
+	}
+	else if (t < 150.0) {
+		double t_ = t - 20.0;
+		//vt_w << 0.0, beta * t_, 0.0;
+
+		//wt_i << 0.0, 0.0, -alpha * t_; // start at 0 0 alpha * 5
+		//vtdot_w << 0.0, beta, 0.0;
+		//vtdot_w.setZero();
+		//wtdot_i << 0.0, 0.0, -alpha;
+	}
+	else {
+		vt_w.setZero();
+		wt_i.setZero();
+		vtdot_w.setZero();
+		wtdot_i.setZero();
+	}
+
+	setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
 }
 
 void World::sceneTestReducedHD(double t) {
@@ -2250,7 +2476,6 @@ void World::sceneTestReducedHD(double t) {
 
 }
 
-
 void World::sceneTestMaximalHD(double t) {
 	Matrix4d E = m_bodies[3]->E_wi;
 	Matrix3d R = E.topLeftCorner(3, 3);
@@ -2259,32 +2484,32 @@ void World::sceneTestMaximalHD(double t) {
 
 	if (t < 2.0) {
 		vt_w.setZero();
-		wt_i << 0.0, 0.0, -t;
+		wt_i << 0.0, 0.0, t;
 		vtdot_w.setZero();
-		wtdot_i << 0.0, 0.0, -1.0;
+		wtdot_i << 0.0, 0.0, 1.0;
 
 	}
 	else if (t < 4.0) {
 		double t_ = t - 4.0;
 		vt_w.setZero();
-		wt_i << 0.0, 0.0, t_;
+		wt_i << 0.0, 0.0, -t_;
 		vtdot_w.setZero();
-		wtdot_i << 0.0, 0.0, 1.0;
+		wtdot_i << 0.0, 0.0, -1.0;
 
 	}
 	else if (t < 6.0) {
 		double t_ = t - 4.0;
 		vt_w << -2 * t_, 0.0, 0.0;
-		wt_i << 0.0, 0.0, t_;
+		wt_i << 0.0, 0.0, -t_;
 		vtdot_w << -2.0, 0.0, 0.0;
-		wtdot_i << 0.0, 0.0, 1.0;
+		wtdot_i << 0.0, 0.0, -1.0;
 	}
 	else if (t < 8.0) {
 		double t_ = t - 8.0;
 		vt_w << 2 * t_, 0.0, 0.0;
-		wt_i << 0.0, 0.0, -t_;
+		wt_i << 0.0, 0.0, t_;
 		vtdot_w << 2.0, 0.0, 0.0;
-		wtdot_i << 0.0, 0.0, -1.0;
+		wtdot_i << 0.0, 0.0, 1.0;
 	}
 	else {
 		vt_w.setZero();
@@ -2301,51 +2526,8 @@ void World::sceneTestMaximalHD(double t) {
 }
 
 void World::sceneFingers(double t) {
-	auto con_body0 = m_bodies[eBone_IndexFinger4];
-	Matrix4d E = con_body0->E_wi;
-	Matrix3d R = E.topLeftCorner(3, 3);
-	Vector6d phi = con_body0->phi;
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
 
-	//if (t < 2.0) {
-	//	vt_w.setZero();
-	//	wt_i << 0.0, 0.0, t;
-	//	vtdot_w.setZero();
-	//	wtdot_i << 0.0, 0.0, 1.0;
-	//	// w_i = 0 0 2
-	//}
-	//else if (t < 4.0) {
-	//	
-	//	double t_ = t - 4.0;
-	//	vt_w.setZero();
-	//	wt_i << 0.0, 0.0, -t_; // start at 0 0 2
-	//	vtdot_w.setZero();
-	//	wtdot_i << 0.0, 0.0, -1.0;
-	//	// wi = 0 0 0 
-	//}
-	//else if (t < 6.0) {
-	//	double t_ = t - 4.0;
-	//	vt_w << -2 * t_, 0.0, 0.0;
-	//	wt_i << 0.0, 0.0, -t_; // start at 0 0 0
-	//	vtdot_w << -2.0, 0.0, 0.0;
-	//	wtdot_i << 0.0, 0.0, -1.0;
-	//	// vi = -4 0 0 
-	//	// wi = 0 0 -2
-	//}
-	//else if (t < 8.0) {
-	//	double t_ = t - 8.0;
-	//	vt_w << 2 * t_, 0.0, 0.0;
-	//	wt_i << 0.0, 0.0, t_; // start at 0 0 -2
-	//	vtdot_w << 2.0, 0.0, 0.0;
-	//	wtdot_i << 0.0, 0.0, 1.0; 
-	//	// 
-	//}
-	//else {
-	//	vt_w.setZero();
-	//	wt_i.setZero();
-	//	vtdot_w.setZero();
-	//	wtdot_i.setZero();
-	//}
 	vt_w.setZero();
 	vtdot_w.setZero();
 
@@ -2358,12 +2540,10 @@ void World::sceneFingers(double t) {
 		vt_w << -beta * t, beta * t, 0.0;
 
 		//vt_w.setZero();
-		//wt_i << 0.0, 0.0, -alpha * t;
+		wt_i << 0.0, 0.0, -alpha * t;
 		vtdot_w << -beta, beta, 0.0;
 		//vtdot_w.setZero();
-		//wtdot_i << 0.0, 0.0, -alpha;
-
-		//cout << wt_i << endl;
+		wtdot_i << 0.0, 0.0, -alpha;
 		//	w_i = 0 0 -alpha * 5
 	}
 	else if (t < 10.0) {
@@ -2371,12 +2551,30 @@ void World::sceneFingers(double t) {
 		vt_w << beta * t_, -beta * t_, 0.0;
 		//vt_w.setZero();
 
-		//wt_i << 0.0, 0.0, alpha * t_; // start at 0 0 -alpha * 5
+		wt_i << 0.0, 0.0, alpha * t_; // start at 0 0 -alpha * 5
 		vtdot_w << beta, -beta, 0.0;
 		//vtdot_w.setZero();
-		//wtdot_i << 0.0, 0.0, alpha;
+		wtdot_i << 0.0, 0.0, alpha;
 		// wi = 0 0 0
-		//cout << wt_i << endl;
+	}
+	else if (t < 15.0) {
+		double t_ = t - 10.0;
+		vt_w << beta * t_, -beta * t_, 0.0;
+
+		//vt_w.setZero();
+		wt_i << 0.0, 0.0, alpha * t_;
+		vtdot_w << beta, -beta, 0.0;
+		//vtdot_w.setZero();
+		wtdot_i << 0.0, 0.0, alpha;
+	}
+	else if (t < 20.0) {
+		double t_ = t - 20.0;
+		vt_w << -beta * t_, beta * t_, 0.0;
+
+		wt_i << 0.0, 0.0, -alpha * t_; // start at 0 0 alpha * 5
+		vtdot_w << -beta, beta, 0.0;
+		//vtdot_w.setZero();
+		wtdot_i << 0.0, 0.0, -alpha;
 	}
 	else {
 		vt_w.setZero();
@@ -2385,20 +2583,115 @@ void World::sceneFingers(double t) {
 		wtdot_i.setZero();
 	}
 
+	setMaximalPrescStates(m_bodies[eBone_IndexFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_MiddleFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_RingFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_PinkyFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
+
+	double q, dq;
+
+	// Reduced Hybrid Dynamics
+	if (t < 10.0) {
+		computeTargetQ(0.0, 10.0, t, -M_PI / 4.0, 0.0, q, dq);
+		m_joints[eBone_IndexFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_RingFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = dq;
+
+
+		computeTargetQ(0.0, 10.0, t, -M_PI / 12.0, 0.0, q, dq);
+		m_joints[eBone_Thumb1]->presc->m_q[0] = q;
+		m_joints[eBone_Thumb1]->presc->m_qdot[0] = dq;
+		m_joints[eBone_Thumb2]->presc->m_q[0] = q;
+		m_joints[eBone_Thumb2]->presc->m_qdot[0] = dq;
+	
+		computeTargetQ(0.0, 10.0, t, -M_PI / 2.0, 0.0, q, dq);
+		m_joints[eBone_Thumb3]->presc->m_q[0] = q;
+		m_joints[eBone_Thumb3]->presc->m_qdot[0] = dq;
+	}
+	else if (t < 20.0) {
+		computeTargetQ(10.0, 20.0, t, M_PI / 4.0, - M_PI / 4.0, q, dq);
+		m_joints[eBone_IndexFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_RingFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = dq;
+		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = q;
+		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = dq;
+
+		computeTargetQ(10.0, 20.0, t, M_PI / 12.0, -M_PI / 12.0, q, dq);
+		m_joints[eBone_Thumb1]->presc->m_q[0] = q;
+		m_joints[eBone_Thumb1]->presc->m_qdot[0] = dq;
+		m_joints[eBone_Thumb2]->presc->m_q[0] = q;
+		m_joints[eBone_Thumb2]->presc->m_qdot[0] = dq;
+		
+		computeTargetQ(10.0, 20.0, t, M_PI / 2.0, -M_PI / 2.0, q, dq);
+		m_joints[eBone_Thumb3]->presc->m_q[0] = q;
+		m_joints[eBone_Thumb3]->presc->m_qdot[0] = dq;
+
+	}
+	else {
+		m_joints[eBone_Thumb1]->presc->m_q[0] = 0;
+		m_joints[eBone_Thumb1]->presc->m_qdot[0] = 0;
+		m_joints[eBone_Thumb2]->presc->m_q[0] = 0;
+		m_joints[eBone_Thumb2]->presc->m_qdot[0] = 0;
+		m_joints[eBone_Thumb3]->presc->m_q[0] = 0;
+		m_joints[eBone_Thumb3]->presc->m_qdot[0] = 0;
+
+		m_joints[eBone_IndexFinger3]->presc->m_q[0] = 0;
+		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = 0;
+		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = 0;
+		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = 0;
+		m_joints[eBone_RingFinger3]->presc->m_q[0] = 0;
+		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = 0;
+		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = 0;
+		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = 0;
+	}
+
+	m_joints[eBone_Thumb0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_Thumb0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_Thumb0]->presc->m_qddot[0] = 0.0;
+
+	m_joints[eBone_IndexFinger0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_IndexFinger0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_IndexFinger0]->presc->m_qddot[0] = 0.0;
+
+	m_joints[eBone_MiddleFinger0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_MiddleFinger0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_MiddleFinger0]->presc->m_qddot[0] = 0.0;
+
+	m_joints[eBone_RingFinger0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_RingFinger0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_RingFinger0]->presc->m_qddot[0] = 0.0;
+
+	m_joints[eBone_PinkyFinger0]->presc->m_q[0] = 0.0;
+	m_joints[eBone_PinkyFinger0]->presc->m_qdot[0] = 0.0;
+	m_joints[eBone_PinkyFinger0]->presc->m_qddot[0] = 0.0;
+}
+
+void World::setMaximalPrescStates(shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i) {
+	Matrix4d E = b->E_wi;
+	Matrix3d R = E.topLeftCorner(3, 3);
+	Vector6d phi = b->phi;
+
 	Vector3d vt_i = R.transpose() * vt_w;
-	con_body0->presc->m_qdot.segment<3>(0) = wt_i;
-	con_body0->presc->m_qdot.segment<3>(3) = vt_i;
-	con_body0->presc->m_qddot.segment<3>(0) = wtdot_i;
-	con_body0->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
+	b->presc->m_qdot.segment<3>(0) = wt_i;
+	b->presc->m_qdot.segment<3>(3) = vt_i;
+	b->presc->m_qddot.segment<3>(0) = wtdot_i;
+	b->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
+}
 
-	auto con_joint0 = m_joints[eBone_IndexFinger1];
-	double t0 = 0.0;
-	double t1 = 10.0;
+void World::computeTargetQ(double t0, double t1, double t, double angle, double q0, double &q, double &dq) {
+
 	double a = 7.0;
-	double b = -M_PI / 2.0;
+	double b = angle;
 	double s = 2 * ((t - t0) / (t1 - t0) - 0.5);
-
-	double q = b / (1 + exp(-a * s));
+	q = q0 + b / (1 + exp(-a * s));
 	double T = t - t0;
 	double TT = t0 - t1;
 	double w = 2 * T;
@@ -2406,15 +2699,5 @@ void World::sceneFingers(double t) {
 	double e = exp(a * P);
 	double Q = T / TT + 1;
 	double f = exp(a * Q);
-	double dq = -(2*a*b*e) / (TT * (f + 1) *(f + 1));
-	con_joint0->presc->m_q[0] = 0;
-	con_joint0->presc->m_qdot[0] = 0;
-	//con_joint0->presc->m_q[0] = 0.0;
-	//con_joint0->presc->m_qdot[0] = 0.0;
-
-	auto con_joint1 = m_joints[eBone_IndexFinger0];
-	con_joint1->presc->m_q[0] = 0.0;
-	con_joint1->presc->m_qdot[0] = 0.0;
-	con_joint1->presc->m_qddot[0] = 0.0;
-
+	dq = -(2 * a*b*e) / (TT * (f + 1) *(f + 1));
 }

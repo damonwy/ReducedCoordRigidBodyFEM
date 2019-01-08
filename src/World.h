@@ -90,12 +90,14 @@ typedef int BoneIndex_t;
 const BoneIndex_t INVALID_BONEINDEX = -1;
 enum HandSkeletonBone : BoneIndex_t {
 	/*eBone_Root = 0,
-	eBone_Wrist,
+	
+	*/
+	eBone_Wrist= 0,
 	eBone_Thumb0,
 	eBone_Thumb1,
 	eBone_Thumb2,
-	eBone_Thumb3,*/
-	eBone_IndexFinger0 = 0,
+	eBone_Thumb3,
+	eBone_IndexFinger0,
 	eBone_IndexFinger1,
 	eBone_IndexFinger2,
 	eBone_IndexFinger3,
@@ -302,7 +304,7 @@ public:
 
 	std::shared_ptr<ConstraintPrescBody> addConstraintPrescBody(
 		std::shared_ptr<Body> b,
-		Vector3i dof
+		Eigen::VectorXi dof
 	);
 
 	void addSkeleton(
@@ -319,7 +321,9 @@ public:
 	void sceneTestReducedHD(double t);
 	void sceneTestMaximalHD(double t);
 	void sceneFingers(double t);
-
+	void setMaximalPrescStates(std::shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
+	void computeTargetQ(double t0, double t1, double t, double angle, double q0, double &q, double &dq);
+	
 	Energy computeEnergy();
 
 	void load(const std::string &RESOURCE_DIR);
