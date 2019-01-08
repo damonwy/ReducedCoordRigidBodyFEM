@@ -113,6 +113,8 @@ void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 
 	// update dense mesh using coarse mesh
 	for (int i = 0; i < (int)coarse_mesh_tets.size(); i++) {
+		int update_id = -1;
+		double deep_inside;
 		auto tet = coarse_mesh_tets[i];
 		int num_enclosed = tet->m_enclosed_points.size();
 		for (int j = 0; j < num_enclosed; j++) {
@@ -120,16 +122,14 @@ void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 			auto node = tet->m_enclosed_points[j];
 			node->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[j]);
 			if (isCheckingCollision) {
-
 				if (node->x.y() < m_dense_mesh->m_floor_y) {
 					// there is collision!
-
 					// compute the penetration
-					double deep_inside = m_dense_mesh->m_floor_y - node->x.y();
+					deep_inside = m_dense_mesh->m_floor_y - node->x.y();
 
 					// find the lowest node in the coarse tet
 					double y_lowest = 1000.0;
-					int update_id = -1;
+
 					for (int t = 0; t < 4; t++) {
 						auto pt = tet->m_nodes[t];
 						double ypos = pt->x.y();
@@ -138,31 +138,46 @@ void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 							update_id = t;
 						}
 					}
-
-					assert(update_id > -1);
 					// push up that lowest node and kill its velocity
 					tet->m_nodes[update_id]->x.y() += deep_inside;
 					tet->m_nodes[update_id]->v.y() = 0.0;
 
-					
 					// kill coarse y velocity in y vector
 					int idxR = tet->m_nodes[update_id]->idxR;
 					y.segment<3>(idxR).y() += deep_inside;
 					y.segment<3>(nr + idxR).y() = 0.0;
 
+					if (update_id == -1) {
+						//y.segment<3>(idxR).y() += deep_inside;
+						//y.segment<3>(nr + idxR).y() = 0.0;
+
+					}
+					
 					// update the node in dense mesh that collides with floor and all the points before that
 					//node->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[j]);
 
-					for (int k = 0; k < j+1; k++) {
+					for (int k = 0; k < j + 1; k++) {
 						auto node_update = tet->m_enclosed_points[k];
-						  node_update->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[k]);
+						node_update->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[k]);
 					}
+
+					// update this one tet is not enough, neighbor tets that touch this updated node is affected, 
+					// need to update them all?
 				}
 			}
 		}
+
+		/*if (update_id != -1) {
+			tet->m_nodes[update_id]->x.y() += deep_inside;
+			tet->m_nodes[update_id]->v.y() = 0.0;
+			int idxR = tet->m_nodes[update_id]->idxR;
+			y.segment<3>(idxR).y() += deep_inside;
+
+			y.segment<3>(nr + idxR).y() = 0.0;
+
+		}*/
+
 	}
-
-
 
 
 	if (next != nullptr) {

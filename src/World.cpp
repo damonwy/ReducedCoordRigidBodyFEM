@@ -1134,6 +1134,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 					q0 << 0.0, 0.0, 0.0, 0.0, 5.0, 0.0;
 					//joint = addJointFree(body, Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k) / 180.0 * M_PI),  Vector6d::Zero(), q0, RESOURCE_DIR);
 					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k)/180.0 * M_PI), 0.0, RESOURCE_DIR, root_joint);
+					addConstraintPrescJoint(joint);
+				
 				}
 				else {
 					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1 + 1]);
@@ -1142,7 +1144,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				}
 				//addConstraintPrescJoint(joint);
 				//m_joints[i]->setStiffness(m_stiffness);
-				//m_joints[i]->setDamping(m_damping);
+				m_joints[i]->setDamping(1.0);
 			}
 		}
 		VectorXi dof(3);
@@ -2317,8 +2319,8 @@ void World::sceneStarFish2(double t) {
 	wtdot_i.setZero();
 	double alpha = 1.0 / 7.9617 / 2.0;
 
-	double beta = 0.5;
-	if (t < 5.0) {
+	double beta = 1.5;
+	if (t < 6.0) {
 		//vt_w <<0.0, beta * t, 0.0;
 
 		//vt_w.setZero();
@@ -2327,29 +2329,128 @@ void World::sceneStarFish2(double t) {
 		//vtdot_w.setZero();
 		//wtdot_i << 0.0, 0.0, -alpha;
 		//	w_i = 0 0 -alpha * 5
-	}
-	else if (t < 10.0) {
-		double t_ = t - 10.0;
-		//vt_w << 0.0, -beta * t_, 0.0;
-		//vt_w.setZero();
+		
+		m_joints[1]->presc->m_q[0] = 0.0;
+		m_joints[1]->presc->m_qdot[0] = 0.0;
+		m_joints[1]->presc->m_qddot[0] = 0.0;
 
+		m_joints[5]->presc->m_q[0] = 0.0;
+		m_joints[5]->presc->m_qdot[0] = 0.0;
+		m_joints[5]->presc->m_qddot[0] = 0.0;
+
+		m_joints[9]->presc->m_q[0] = 0.0;
+		m_joints[9]->presc->m_qdot[0] = 0.0;
+		m_joints[9]->presc->m_qddot[0] = 0.0;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = 0.0;
+		m_joints[17]->presc->m_qdot[0] = 0.0;
+		m_joints[17]->presc->m_qddot[0] = 0.0;
+
+
+	}
+	else if (t < 16.0) {
+		double t_ = t - 6.0;
+		vt_w << 0.0, beta * t_, 0.0;
+		//vt_w.setZero();
 		//wt_i << 0.0, 0.0, alpha * t_; // start at 0 0 -alpha * 5
-		//vtdot_w <<0.0, -beta, 0.0;
+		vtdot_w << 0.0, beta, 0.0;
 		//vtdot_w.setZero();
 		//wtdot_i << 0.0, 0.0, alpha;
 		// wi = 0 0 0
-	}
-	else if (t < 15.0) {
-		double t_ = t - 10.0;
-		//vt_w << 0.0, -beta * t_, 0.0;
 
-		//vt_w.setZero();
+		m_joints[1]->presc->m_q[0] = 0.0;
+		m_joints[1]->presc->m_qdot[0] = 0.0;
+		m_joints[1]->presc->m_qddot[0] = 0.0;
+
+		m_joints[5]->presc->m_q[0] = 0.0;
+		m_joints[5]->presc->m_qdot[0] = 0.0;
+		m_joints[5]->presc->m_qddot[0] = 0.0;
+
+		m_joints[9]->presc->m_q[0] = 0.0;
+		m_joints[9]->presc->m_qdot[0] = 0.0;
+		m_joints[9]->presc->m_qddot[0] = 0.0;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = 0.0;
+		m_joints[17]->presc->m_qdot[0] = 0.0;
+		m_joints[17]->presc->m_qddot[0] = 0.0;
+	}
+	else if (t < 26.0) {
+		double t_ = t - 26.0;
+		vt_w << 0.0, -beta * t_, 0.0; // 0, 10beta, 0
+		vtdot_w << 0.0, -beta, 0.0;
+		m_joints[1]->presc->m_q[0] = 0.0;
+		m_joints[1]->presc->m_qdot[0] = 0.0;
+		m_joints[1]->presc->m_qddot[0] = 0.0;
+
+		m_joints[5]->presc->m_q[0] = 0.0;
+		m_joints[5]->presc->m_qdot[0] = 0.0;
+		m_joints[5]->presc->m_qddot[0] = 0.0;
+
+		m_joints[9]->presc->m_q[0] = 0.0;
+		m_joints[9]->presc->m_qdot[0] = 0.0;
+		m_joints[9]->presc->m_qddot[0] = 0.0;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = 0.0;
+		m_joints[17]->presc->m_qdot[0] = 0.0;
+		m_joints[17]->presc->m_qddot[0] = 0.0;
+	}
+	else if (t < 100.0) {
+		double t_ = t - 26.0;
+		//vt_w << 0.0, -beta * t_, 0.0;
+		double sinTheta = M_PI * sin(t_);
+		double cosTheta = M_PI * cos(t_);
+		double d30 = -1.0 / 6.0;
+		double d45 = -1.0 / 4.0;
+		double d15 = -1.0 / 12.0;
+		double d60 = -1.0 / 3.0;
+		double d90 = -1.0 / 2.0;
+		double d10 = -1.0 / 18.0;
+		double d12 = -1.0 / 15.0;
+		double d18 = -1.0 / 10.0;
+		double d20 = -1.0 / 9.0;
+		double d22 = -1.0 / 8.0;
+		vt_w.setZero();
 		//wt_i << 0.0, 0.0, alpha * t_;
 		//vtdot_w << 0.0, -beta, 0.0;
-		//vtdot_w.setZero();
+		vtdot_w.setZero();
 		//wtdot_i << 0.0, 0.0, alpha;
+		//m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
+		//		//m_joints[0 + nsegments * i]->presc->m_qdot[0] = d60 * cosTheta;
+		//		//m_joints[0 + nsegments * i]->presc->m_qddot[0] = -d60 * sinTheta;
+		//m_joints[1]->presc->m_q[0] = d60 * sinTheta;
+		//m_joints[1]->presc->m_qdot[0] = d60 * cosTheta;
+		//m_joints[1]->presc->m_qddot[0] = -d60 * sinTheta;
+
+		m_joints[5]->presc->m_q[0] = -d10 * sinTheta;
+		m_joints[5]->presc->m_qdot[0] = -d10 * cosTheta;
+		m_joints[5]->presc->m_qddot[0] = d10 * sinTheta;
+
+		m_joints[9]->presc->m_q[0] = d10 * sinTheta;
+		m_joints[9]->presc->m_qdot[0] = d10 * cosTheta;
+		m_joints[9]->presc->m_qddot[0] = -d10 * sinTheta;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = d10 * sinTheta;
+		m_joints[17]->presc->m_qdot[0] = d10 * cosTheta;
+		m_joints[17]->presc->m_qddot[0] = -d10 * sinTheta;
+
 	}
-	else if (t < 20.0) {
+	else if (t < 150.0) {
 		double t_ = t - 20.0;
 		//vt_w << 0.0, beta * t_, 0.0;
 
