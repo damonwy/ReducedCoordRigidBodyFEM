@@ -2297,8 +2297,6 @@ void World::sceneStarFish(double t) {
 
 void World::sceneStarFish2(double t) {
 	cout << t << endl;
-	double sinTheta = M_PI * sin(t);
-	double cosTheta = M_PI * cos(t);
 	double d30 = -1.0 / 6.0;
 	double d45 = -1.0 / 4.0;
 	double d15 = -1.0 / 12.0;
@@ -2309,7 +2307,6 @@ void World::sceneStarFish2(double t) {
 	double d18 = -1.0 / 10.0;
 	double d20 = -1.0 / 9.0;
 	double d22 = -1.0 / 8.0;
-
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
 
 	vt_w.setZero();
@@ -2319,7 +2316,7 @@ void World::sceneStarFish2(double t) {
 	wtdot_i.setZero();
 	double alpha = 1.0 / 7.9617 / 2.0;
 
-	double beta = 1.5;
+	double beta = 1.4;
 	if (t < 6.0) {
 		//vt_w <<0.0, beta * t, 0.0;
 
@@ -2349,8 +2346,6 @@ void World::sceneStarFish2(double t) {
 		m_joints[17]->presc->m_q[0] = 0.0;
 		m_joints[17]->presc->m_qdot[0] = 0.0;
 		m_joints[17]->presc->m_qddot[0] = 0.0;
-
-
 	}
 	else if (t < 16.0) {
 		double t_ = t - 6.0;
@@ -2381,10 +2376,11 @@ void World::sceneStarFish2(double t) {
 		m_joints[17]->presc->m_q[0] = 0.0;
 		m_joints[17]->presc->m_qdot[0] = 0.0;
 		m_joints[17]->presc->m_qddot[0] = 0.0;
+		// vt_w = 0 10beta 0
 	}
 	else if (t < 26.0) {
-		double t_ = t - 26.0;
-		vt_w << 0.0, -beta * t_, 0.0; // 0, 10beta, 0
+		double t_ = t - 26.0; // t_ = [-10, 0]
+		vt_w << 0.0, -beta * t_, 0.0; 
 		vtdot_w << 0.0, -beta, 0.0;
 		m_joints[1]->presc->m_q[0] = 0.0;
 		m_joints[1]->presc->m_qdot[0] = 0.0;
@@ -2405,22 +2401,15 @@ void World::sceneStarFish2(double t) {
 		m_joints[17]->presc->m_q[0] = 0.0;
 		m_joints[17]->presc->m_qdot[0] = 0.0;
 		m_joints[17]->presc->m_qddot[0] = 0.0;
+		// vt_w = 0 0 0
 	}
-	else if (t < 100.0) {
-		double t_ = t - 26.0;
+	else if (t < 36.0) {
+		double t_ = t - 26.0; // t_ = [0, 10]
 		//vt_w << 0.0, -beta * t_, 0.0;
-		double sinTheta = M_PI * sin(t_);
-		double cosTheta = M_PI * cos(t_);
-		double d30 = -1.0 / 6.0;
-		double d45 = -1.0 / 4.0;
-		double d15 = -1.0 / 12.0;
-		double d60 = -1.0 / 3.0;
-		double d90 = -1.0 / 2.0;
-		double d10 = -1.0 / 18.0;
-		double d12 = -1.0 / 15.0;
-		double d18 = -1.0 / 10.0;
-		double d20 = -1.0 / 9.0;
-		double d22 = -1.0 / 8.0;
+		double alpha = 2 * M_PI / (36.0 - 26.0);
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+		
 		vt_w.setZero();
 		//wt_i << 0.0, 0.0, alpha * t_;
 		//vtdot_w << 0.0, -beta, 0.0;
@@ -2434,24 +2423,43 @@ void World::sceneStarFish2(double t) {
 		//m_joints[1]->presc->m_qddot[0] = -d60 * sinTheta;
 
 		m_joints[5]->presc->m_q[0] = -d10 * sinTheta;
-		m_joints[5]->presc->m_qdot[0] = -d10 * cosTheta;
-		m_joints[5]->presc->m_qddot[0] = d10 * sinTheta;
+		m_joints[5]->presc->m_qdot[0] = -d10 * alpha * cosTheta;
+		m_joints[5]->presc->m_qddot[0] = d10 * alpha * alpha * sinTheta;
 
 		m_joints[9]->presc->m_q[0] = d10 * sinTheta;
-		m_joints[9]->presc->m_qdot[0] = d10 * cosTheta;
-		m_joints[9]->presc->m_qddot[0] = -d10 * sinTheta;
+		m_joints[9]->presc->m_qdot[0] = d10 * alpha * cosTheta;
+		m_joints[9]->presc->m_qddot[0] = -d10 * alpha * alpha * sinTheta;
 
 		m_joints[13]->presc->m_q[0] = 0.0;
 		m_joints[13]->presc->m_qdot[0] = 0.0;
 		m_joints[13]->presc->m_qddot[0] = 0.0;
 
 		m_joints[17]->presc->m_q[0] = d10 * sinTheta;
-		m_joints[17]->presc->m_qdot[0] = d10 * cosTheta;
-		m_joints[17]->presc->m_qddot[0] = -d10 * sinTheta;
-
+		m_joints[17]->presc->m_qdot[0] = d10 * alpha * cosTheta;
+		m_joints[17]->presc->m_qddot[0] = -d10 * alpha * alpha * sinTheta;
+		//
 	}
 	else if (t < 150.0) {
 		double t_ = t - 20.0;
+		m_joints[1]->presc->m_q[0] = 0.0;
+		m_joints[1]->presc->m_qdot[0] = 0.0;
+		m_joints[1]->presc->m_qddot[0] = 0.0;
+
+		m_joints[5]->presc->m_q[0] = 0.0;
+		m_joints[5]->presc->m_qdot[0] = 0.0;
+		m_joints[5]->presc->m_qddot[0] = 0.0;
+
+		m_joints[9]->presc->m_q[0] = 0.0;
+		m_joints[9]->presc->m_qdot[0] = 0.0;
+		m_joints[9]->presc->m_qddot[0] = 0.0;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = 0.0;
+		m_joints[17]->presc->m_qdot[0] = 0.0;
+		m_joints[17]->presc->m_qddot[0] = 0.0;
 		//vt_w << 0.0, beta * t_, 0.0;
 
 		//wt_i << 0.0, 0.0, -alpha * t_; // start at 0 0 alpha * 5

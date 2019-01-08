@@ -361,27 +361,64 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		
 
 		if (ne > 0) {
-			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
-			
+			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);		
 			constraint0->computeJacEqRSparse(Gr_, Grdot_, gr, grdot, grddot);
-		
-			Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
-			Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
-			Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
-			Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
+			
+			rowsEM.clear();
+			rowsER.clear();
+			constraint0->getEqActiveList(rowsEM, rowsER);
+			nem = rowsEM.size();
+			ner = rowsER.size();
+			ne = nem + ner;
+
+			if (ne > 0) {
+				Eigen::VectorXi m_rowsEM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsEM.data(), rowsEM.size());
+				Eigen::VectorXi m_rowsER = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsER.data(), rowsER.size());
+				Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
+				Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
+				Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
+				Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
+
+				MatrixXd m_Gm = MatrixXd(Gm_sp)(m_rowsEM, Eigen::placeholders::all);
+				MatrixXd m_Gr = MatrixXd(Gr_sp)(m_rowsER, Eigen::placeholders::all);
+				VectorXd m_gm = gm(m_rowsEM);
+				VectorXd m_gr = gr(m_rowsER);
+				VectorXd m_gmdot = gmdot(m_rowsEM);
+				VectorXd m_grdot = grdot(m_rowsER);
+				VectorXd m_gmddot = gmddot(m_rowsEM);
+				VectorXd m_grddot = grddot(m_rowsER);
+				MatrixXd GmJ = m_Gm * MatrixXd(J_sp);
+				G.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
+				G_sp.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
+				G << GmJ, m_Gr;
+				G_sp = G.sparseView();
+				rhsG.resize(G.rows());
+				VectorXd g(G.rows());
+				g << m_gm, m_gr;
+				VectorXd gdot(G.rows());
+				gdot << m_gmdot, m_grdot;
+				rhsG = -gdot - 5.0 * g;
+
+
+			}
+
+			//Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
+			//Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
+			//Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
+			//Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
 
 			//sparse_to_file_as_dense(Gm_sp * J_sp, "Gm_sp * J_sp");
-			G_sp.topRows(nem) = Gm_sp * J_sp;
-			G_sp.bottomRows(ner) = Gr_sp;
+			//G_sp.topRows(nem) = Gm_sp * J_sp;
+			//G_sp.bottomRows(ner) = Gr_sp;
 			
 			//sparse_to_file_as_dense(G_sp, "G_sp");
-			g.segment(0, nem) = gm;
+			/*g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
 			gdot.segment(0, nem) = gmdot;
 			gdot.segment(nem, ner) = grdot;
 			gddot.segment(0, nem) = gmddot;
 			gddot.segment(nem, ner) = grddot;
-			rhsG = - gdot - 5.0 * g ;
+			rhsG = - gdot - 5.0 * g ;*/
 		}
 
 		if (ni > 0) {

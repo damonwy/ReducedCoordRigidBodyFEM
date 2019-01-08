@@ -18,7 +18,9 @@ nconER(_nconER),
 nconIM(_nconIM),
 nconIR(_nconIR),
 activeM(false),
-activeR(false)
+activeR(false),
+activeEM(true),
+activeER(true)
 {
 
 }
@@ -54,6 +56,24 @@ void Constraint::getActiveList(std::vector<int> &listM, std::vector<int> &listR)
 	if (next != nullptr) {
 		next->getActiveList(listM, listR);
 	}
+}
+
+void Constraint::getEqActiveList(vector<int> &listEqM, vector<int> &listEqR) {
+	// Gets list of active equality indices
+	if (activeEM) {
+		for (int i = 0; i < nconEM; i++) {
+			listEqM.push_back(idxEM + i);
+		}		
+	}
+	if (activeER) {
+		for (int i = 0; i < nconER; i++) {
+			listEqR.push_back(idxER + i);
+		}
+	}
+	if (next != nullptr) {
+		next->getEqActiveList(listEqM, listEqR);
+	}
+
 }
 
 void Constraint::computeJacEqM(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd &gm, VectorXd &gmdot, VectorXd &gmddot) {

@@ -12,7 +12,6 @@ public:
 	Vector6d m_q;
 	Vector6d m_qdot;
 	Vector6d m_qddot;	
-
 protected:
 	void computeJacEqM_(Eigen::MatrixXd &Gr, Eigen::MatrixXd &Grdot, Eigen::VectorXd &gr, Eigen::VectorXd &grdot, Eigen::VectorXd &grddot);
 	void computeJacEqMSparse_(std::vector<T> &Gr, std::vector<T> &Grdot, Eigen::VectorXd &gr, Eigen::VectorXd &grdot, Eigen::VectorXd &grddot);
