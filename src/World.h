@@ -83,7 +83,8 @@ enum WorldType {
 	STARFISH_2,
 	TEST_MAXIMAL_HYBRID_DYNAMICS,
 	TEST_REDUCED_HYBRID_DYNAMICS,
-	FINGERS
+	FINGERS,
+	STARFISH3
 };
 
 typedef int BoneIndex_t;
@@ -318,6 +319,7 @@ public:
 	void sceneCross(double t);
 	void sceneStarFish(double t);
 	void sceneStarFish2(double t);
+	void sceneStarFishJump(double t);
 	void sceneTestReducedHD(double t);
 	void sceneTestMaximalHD(double t);
 	void sceneFingers(double t);

@@ -139,12 +139,12 @@ void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 						}
 					}
 					// push up that lowest node and kill its velocity
-					tet->m_nodes[update_id]->x.y() += deep_inside;
+					//tet->m_nodes[update_id]->x.y() += deep_inside;
 					tet->m_nodes[update_id]->v.y() = 0.0;
 
 					// kill coarse y velocity in y vector
 					int idxR = tet->m_nodes[update_id]->idxR;
-					y.segment<3>(idxR).y() += deep_inside;
+					//y.segment<3>(idxR).y() += deep_inside;
 					y.segment<3>(nr + idxR).y() = 0.0;
 
 					if (update_id == -1) {
@@ -157,8 +157,8 @@ void MeshEmbedding::scatterDofs(VectorXd &y, int nr) {
 					//node->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[j]);
 
 					for (int k = 0; k < j + 1; k++) {
-						auto node_update = tet->m_enclosed_points[k];
-						node_update->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[k]);
+						//auto node_update = tet->m_enclosed_points[k];
+						//node_update->x = tet->computePositionByBarycentricWeight(tet->m_barycentric_weights[k]);
 					}
 
 					// update this one tet is not enough, neighbor tets that touch this updated node is affected, 

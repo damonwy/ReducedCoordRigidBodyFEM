@@ -1044,9 +1044,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 		}
 		//auto con0 = make_shared<ConstraintPrescBody>(m_bodies[3], Vector3d(1, 3, 5), REDMAX_EULER);
-		auto con0 = make_shared<ConstraintPrescJoint>(m_joints[3], REDMAX_EULER);
-		m_nconstraints++;
-		m_constraints.push_back(con0);
+		//auto con0 = make_shared<ConstraintPrescJoint>(m_joints[3], REDMAX_EULER);
+		//m_nconstraints++;
+		//m_constraints.push_back(con0);
 		//scene.constraints{ end + 1 } = reduced.ConstraintPrescBody(scene.bodies{ end }, [2 4 6], vel);
 		//scene.constraints{ end + 1 } = reduced.ConstraintPrescJoint(scene.joints{ 3 }, vel);
 
@@ -1100,15 +1100,17 @@ void World::load(const std::string &RESOURCE_DIR) {
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
-		double mesh_damping = 1.0;
-		double y_floor = -30.0;
+		double mesh_damping = 100.0;
+		double y_floor = -40.0;
 		nlegs = 5;
 		nsegments = 4;
 		double rotation = 360.0 / nlegs;
 		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
 		starfish_color /= 255.0f;
-		std::string coarse_file_name = "starfish_coarse3";//starfishco
-		std::string dense_file_name = "starfish2";
+		//std::string coarse_file_name = "starfish_coarse3";//starfishco
+		//std::string dense_file_name = "starfish2";
+		std::string coarse_file_name = "starfish_coarse_new0";//starfishcostarfish_extrude_0
+		std::string dense_file_name = "SFdense";
 
 		double len_segment = 20.0;
 		Vector3d root_sides;
@@ -1134,7 +1136,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 					q0 << 0.0, 0.0, 0.0, 0.0, 5.0, 0.0;
 					//joint = addJointFree(body, Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k) / 180.0 * M_PI),  Vector6d::Zero(), q0, RESOURCE_DIR);
 					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k)/180.0 * M_PI), 0.0, RESOURCE_DIR, root_joint);
-					addConstraintPrescJoint(joint);
+					//addConstraintPrescJoint(joint);
 				
 				}
 				else {
@@ -1142,14 +1144,24 @@ void World::load(const std::string &RESOURCE_DIR) {
 					//addConstraintPrescJoint(joint);
 
 				}
-				//addConstraintPrescJoint(joint);
+				addConstraintPrescJoint(joint);
 				//m_joints[i]->setStiffness(m_stiffness);
-				m_joints[i]->setDamping(1.0);
+				m_joints[i]->setDamping(4.0);
 			}
 		}
-		VectorXi dof(3);
-		dof << 3, 4, 5;
+		VectorXi dof(6);
+		dof << 0, 1, 2, 3, 4, 5;
+		VectorXi dof3(3);
+		dof3 << 3, 4, 5;
+
+		VectorXi dof_(1);
+		dof_ <<4;
 		addConstraintPrescBody(m_bodies[8], dof);
+		addConstraintPrescBody(m_bodies[16], dof_);
+		addConstraintPrescBody(m_bodies[0], dof);
+		addConstraintPrescBody(m_bodies[20], dof3);
+		addConstraintPrescBody(m_bodies[4], dof_);
+		addConstraintPrescBody(m_bodies[12], dof_);
 
 		double len_skeleton = nsegments * len_segment;
 		int nsamples = 4;
@@ -1175,11 +1187,13 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziYV", "pqz", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
+		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziVY", "pq1.4a40.0z", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
 		starfish->precomputeWeights();
 		starfish->setDamping(mesh_damping);
+		//starfish->toggleDrawingDenseMesh(false);
 		starfish->getDenseMesh()->setColor(starfish_color);
-		starfish->getDenseMesh()->setFloor(y_floor);
+		//starfish->getDenseMesh()->setFloor(y_floor);
+		starfish->getCoarseMesh()->setFloor(y_floor );
 
 	}
 	break;
@@ -1297,7 +1311,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziYV", "pqz", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
+		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziYV", "pqz", dense_file_name, dense_file_name, SOFT_INVERTIBLE);
 		starfish->precomputeWeights();
 		starfish->setDamping(mesh_damping);
 		starfish->getDenseMesh()->setColor(starfish_color);
@@ -1501,7 +1515,105 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		break;
 	}
-	default:
+	case STARFISH3:
+	{
+		m_h = 1.0e-1;
+		m_tspan << 0.0, 50.0;
+		m_t = 0.0;
+		density = 1.0;
+		m_grav << 0.0, -980.0, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		double young = 1e4;
+		double possion = 0.35;
+		m_stiffness = 1.0e4;
+		m_damping = 1.0e3;
+		double mesh_damping = 10.0;
+		double y_floor = -40.0;
+		nlegs = 5;
+		nsegments = 4;
+		double rotation = 360.0 / nlegs;
+		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
+		starfish_color /= 255.0f;
+
+		std::string dense_file_name = "SFdense";
+
+		double len_segment = 20.0;
+		Vector3d root_sides;
+		Eigen::from_json(js["cube_sides"], root_sides);
+		auto root_body = addBody(density, root_sides, Vector3d::Zero(), Matrix3d::Identity(), RESOURCE_DIR, "box_1_1_1.obj");
+		/*	VectorXi dof(1);
+		dof << 4;
+		addConstraintPrescBody(root_body, dof);*/
+		//body->setDrawingOption(false);
+		Vector6d qdot0;
+		qdot0 << 0.0, 0.0, 0.0, 0.0, 6.0, 0.0;
+		auto root_joint = addJointFree(root_body, Vector3d::Zero(), Matrix3d::Identity(), Vector6d::Zero(), qdot0, RESOURCE_DIR);
+
+		for (int k = 0; k < nlegs; ++k) {
+			for (int i = 0; i < nsegments; i++) {
+				auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
+				body->setDrawingOption(false);
+
+				shared_ptr<Joint> joint;
+				if (i == 0) {
+					//addJointFixed(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0);
+					Vector6d q0;
+					q0 << 0.0, 0.0, 0.0, 0.0, 5.0, 0.0;
+					//joint = addJointFree(body, Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (18.0 + rotation * k) / 180.0 * M_PI),  Vector6d::Zero(), q0, RESOURCE_DIR);
+					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d::Zero(), SE3::aaToMat(Vector3d(0.0, 1.0, 0.0), (15.0 + rotation * k) / 180.0 * M_PI), 0.0, RESOURCE_DIR, root_joint);
+					//addConstraintPrescJoint(joint);
+
+				}
+				else {
+					joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(len_segment, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[nsegments * k + i - 1 + 1]);
+					//addConstraintPrescJoint(joint);
+
+				}
+				addConstraintPrescJoint(joint);
+				m_joints[i]->setStiffness(m_stiffness);
+				m_joints[i]->setDamping(4.0);
+			}
+		}
+		VectorXi dof(6);
+		dof << 0, 1, 2, 3, 4, 5;
+		VectorXi dof_(1);
+		dof_ << 4;
+		addConstraintPrescBody(m_bodies[8], dof_);
+		addConstraintPrescBody(m_bodies[16], dof_);
+		addConstraintPrescBody(m_bodies[0], dof);
+		addConstraintPrescBody(m_bodies[20], dof_);
+		addConstraintPrescBody(m_bodies[4], dof_);
+		addConstraintPrescBody(m_bodies[12], dof_);
+
+		double len_skeleton = nsegments * len_segment;
+		int nsamples = 4;
+
+		vector<std::shared_ptr<Node>> additional_nodes;
+		int idx_body = 1;
+		Vector3d end_pt;
+		for (int i = 0; i < nlegs; ++i) {
+			double theta = (15.0 + rotation * i) / 180.0 * M_PI;
+			end_pt = len_skeleton * Vector3d(cos(theta), 0.0, -sin(theta));
+			addSkeleton(Vector3d::Zero(), end_pt, nsegments, nsamples, idx_body, additional_nodes);
+		}
+
+		TetgenHelper::createNodeFile(additional_nodes, (char *)(RESOURCE_DIR + dense_file_name + ".a.node").c_str());
+
+		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
+		m_floors.push_back(f0);
+		auto starfish = addSoftBodyInvertibleFEM(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziV", dense_file_name);
+		//auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziVY", "pqz", dense_file_name, dense_file_name, SOFT_INVERTIBLE);
+		//starfish->precomputeWeights();
+		starfish->setDamping(mesh_damping);
+		//starfish->toggleDrawingDenseMesh(false);
+		starfish->setColor(starfish_color);
+		//starfish->getDenseMesh()->setFloor(y_floor);
+		starfish->setFloor(y_floor);
+
+	}
+	break;
+
+default:
 		break;
 	}
 }
@@ -2023,7 +2135,11 @@ void World::init() {
 			m_meshembeddings[0]->setAttachmentsByLine(m_lines[i]);
 		}
 	}
-
+	if (m_type == STARFISH3) {
+		for (int i = 0; i < (int)m_lines.size(); ++i) {
+			m_softbodies[0]->setAttachmentsByLine(m_lines[i]);
+		}
+	}
 	
 
 
@@ -2198,10 +2314,10 @@ shared_ptr<Joint> World::getJoint(const string &name) {
 }
 
 void World::sceneCross(double t) {
-
-	m_joints[0]->presc->m_q[0] = 0.0;
-	m_joints[0]->presc->m_qdot[0] = 0.0;
-	m_joints[0]->presc->m_qddot[0] = 0.0;
+	//m_joints[0]->presc->setActive();
+	//m_joints[0]->presc->m_q[0] = 0.0;
+	//m_joints[0]->presc->m_qdot[0] = 0.0;
+	//m_joints[0]->presc->m_qddot[0] = 0.0;
 }
 
 void World::sceneStarFish(double t) {
@@ -2308,186 +2424,643 @@ void World::sceneStarFish2(double t) {
 	double d20 = -1.0 / 9.0;
 	double d22 = -1.0 / 8.0;
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
-
+	
 	vt_w.setZero();
 	vtdot_w.setZero();
-
 	wt_i.setZero();
 	wtdot_i.setZero();
+
 	double alpha = 1.0 / 7.9617 / 2.0;
 
 	double beta = 1.4;
 	if (t < 6.0) {
+		// Hold one arm still and let the starfish falls down to floor and collides with floor
+
+		m_bodies[8]->presc->setActive();
+		vt_w.setZero();
+		vtdot_w.setZero();
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+	}
+	else if (t < 16.0) {
+		// Lift an arm of the starfish to make it off the floor, velocity increases
+		double t_ = t - 6.0;
+		vt_w << 0.0, beta * t_, 0.0;
+		vtdot_w << 0.0, beta, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		//m_bodies[8]->presc->setInactive();
+		// wi = 0 0 0
+		// vt_w = 0 10beta 0
+	}
+	else if (t < 26.0) {
+		// Still lifting, velocity decreases to zero
+
+		double t_ = t - 26.0; // t_ = [-10, 0]
+		vt_w << 0.0, -beta * t_, 0.0; 
+		vtdot_w << 0.0, -beta, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		// vt_w = 0 0 0
+	}
+	else if (t < 46.0) {
+		// Starfish starts to wiggle and then stop wiggling
+		double t0 = 26.0;
+		double t_ = t - t0; // t_ = [0, 20]
+		
+		double t1 = 46.0;
+
+		double alpha = 6 * M_PI / (t1 - t0);
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+		
+		// Hold one point
+		vt_w.setZero();
+		vtdot_w.setZero();
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		m_joints[1]->presc->setActive();
+		m_joints[5]->presc->setActive();
+		m_joints[9]->presc->setActive();
+		m_joints[13]->presc->setActive();
+		m_joints[17]->presc->setActive();
+
+		m_joints[5]->presc->m_q[0] = -d30 * sinTheta;
+		m_joints[5]->presc->m_qdot[0] = -d30 * alpha * cosTheta;
+		m_joints[5]->presc->m_qddot[0] = d30 * alpha * alpha * sinTheta;
+
+		m_joints[9]->presc->m_q[0] = d20 * sinTheta;
+		m_joints[9]->presc->m_qdot[0] = d20 * alpha * cosTheta;
+		m_joints[9]->presc->m_qddot[0] = -d20 * alpha * alpha * sinTheta;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = d30 * sinTheta;
+		m_joints[17]->presc->m_qdot[0] = d30 * alpha * cosTheta;
+		m_joints[17]->presc->m_qddot[0] = -d30 * alpha * alpha * sinTheta;
+
+	}
+	else if (t < 62.0) {
+		// Use two handles to put it down on the floor again
+		m_bodies[8]->presc->setInactive();
+		double t_ = t - 46.0;	// t_ = [0, 20]
+		vt_w << 0.0, -beta * t_, 0.0;
+		vtdot_w << 0.0, -beta, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		/*m_bodies[16]->presc->setActive();
+		vt_w << -beta/2.0 * t_, beta/2.0 * t_, 0.0;
+		vtdot_w << -beta/2.0, beta/2.0, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);*/
+
 		m_joints[1]->presc->setInactive();
 		m_joints[5]->presc->setInactive();
 		m_joints[9]->presc->setInactive();
 		m_joints[13]->presc->setInactive();
 		m_joints[17]->presc->setInactive();
-		//vt_w <<0.0, beta * t, 0.0;
 
-		//vt_w.setZero();
-		//wt_i << 0.0, 0.0, -alpha * t;
-		//vtdot_w <<0.0, beta, 0.0;
-		//vtdot_w.setZero();
-		//wtdot_i << 0.0, 0.0, -alpha;
-		//	w_i = 0 0 -alpha * 5
-		
-		/*m_joints[1]->presc->m_q[0] = 0.0;
-		m_joints[1]->presc->m_qdot[0] = 0.0;
-		m_joints[1]->presc->m_qddot[0] = 0.0;*/
+		//m_bodies[8]->presc->setInactive();
 
-		//m_joints[5]->presc->m_q[0] = 0.0;
-		//m_joints[5]->presc->m_qdot[0] = 0.0;
-		//m_joints[5]->presc->m_qddot[0] = 0.0;
-
-		//m_joints[9]->presc->m_q[0] = 0.0;
-		//m_joints[9]->presc->m_qdot[0] = 0.0;
-		//m_joints[9]->presc->m_qddot[0] = 0.0;
-
-		//m_joints[13]->presc->m_q[0] = 0.0;
-		//m_joints[13]->presc->m_qdot[0] = 0.0;
-		//m_joints[13]->presc->m_qddot[0] = 0.0;
-
-		//m_joints[17]->presc->m_q[0] = 0.0;
-		//m_joints[17]->presc->m_qdot[0] = 0.0;
-		//m_joints[17]->presc->m_qddot[0] = 0.0;
 	}
-	else if (t < 16.0) {
-		double t_ = t - 6.0;
-		vt_w << 0.0, beta * t_, 0.0;
-		//vt_w.setZero();
-		//wt_i << 0.0, 0.0, alpha * t_; // start at 0 0 -alpha * 5
-		vtdot_w << 0.0, beta, 0.0;
-		//vtdot_w.setZero();
-		//wtdot_i << 0.0, 0.0, alpha;
-		// wi = 0 0 0
-
-		m_joints[1]->presc->m_q[0] = 0.0;
-		m_joints[1]->presc->m_qdot[0] = 0.0;
-		m_joints[1]->presc->m_qddot[0] = 0.0;
-
-		m_joints[5]->presc->m_q[0] = 0.0;
-		m_joints[5]->presc->m_qdot[0] = 0.0;
-		m_joints[5]->presc->m_qddot[0] = 0.0;
-
-		m_joints[9]->presc->m_q[0] = 0.0;
-		m_joints[9]->presc->m_qdot[0] = 0.0;
-		m_joints[9]->presc->m_qddot[0] = 0.0;
-
-		m_joints[13]->presc->m_q[0] = 0.0;
-		m_joints[13]->presc->m_qdot[0] = 0.0;
-		m_joints[13]->presc->m_qddot[0] = 0.0;
-
-		m_joints[17]->presc->m_q[0] = 0.0;
-		m_joints[17]->presc->m_qdot[0] = 0.0;
-		m_joints[17]->presc->m_qddot[0] = 0.0;
-		// vt_w = 0 10beta 0
-	}
-	else if (t < 26.0) {
-		double t_ = t - 26.0; // t_ = [-10, 0]
-		vt_w << 0.0, -beta * t_, 0.0; 
-		vtdot_w << 0.0, -beta, 0.0;
-		m_joints[1]->presc->m_q[0] = 0.0;
-		m_joints[1]->presc->m_qdot[0] = 0.0;
-		m_joints[1]->presc->m_qddot[0] = 0.0;
-
-		m_joints[5]->presc->m_q[0] = 0.0;
-		m_joints[5]->presc->m_qdot[0] = 0.0;
-		m_joints[5]->presc->m_qddot[0] = 0.0;
-
-		m_joints[9]->presc->m_q[0] = 0.0;
-		m_joints[9]->presc->m_qdot[0] = 0.0;
-		m_joints[9]->presc->m_qddot[0] = 0.0;
-
-		m_joints[13]->presc->m_q[0] = 0.0;
-		m_joints[13]->presc->m_qdot[0] = 0.0;
-		m_joints[13]->presc->m_qddot[0] = 0.0;
-
-		m_joints[17]->presc->m_q[0] = 0.0;
-		m_joints[17]->presc->m_qdot[0] = 0.0;
-		m_joints[17]->presc->m_qddot[0] = 0.0;
-		// vt_w = 0 0 0
-	}
-	else if (t < 36.0) {
-		double t_ = t - 26.0; // t_ = [0, 10]
+	else if (t < 100.0) {
+		//double t_ = t - 46.0;	// t_ = [0, 10]
 		//vt_w << 0.0, -beta * t_, 0.0;
-		double alpha = 2 * M_PI / (36.0 - 26.0);
+		//vtdot_w << 0.0, -beta, 0.0;
+		//wt_i.setZero();
+		//wtdot_i.setZero();
+		//setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		//m_bodies[16]->presc->setActive();
+		//vt_w << -beta / 2.0 * t_, beta / 2.0 * t_, 0.0;
+		//vtdot_w << -beta / 2.0, beta / 2.0, 0.0;
+		//wt_i.setZero();
+		//wtdot_i.setZero();
+		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
+		m_bodies[8]->presc->setInactive();
+		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
+	}
+	else if (t < 120.0) {
+		double t0 = 100.0;
+		double t_ = t - t0; // t_ = [0, 20]
+
+		double t1 = 120.0;
+
+		double alpha =  M_PI / 2.0 / (t1 - t0);
 		double sinTheta = M_PI * sin(alpha * t_);
 		double cosTheta = M_PI * cos(alpha * t_);
+
+		m_joints[1]->presc->setActive();
+		m_joints[5]->presc->setActive();
+		m_joints[9]->presc->setActive();
+		m_joints[13]->presc->setActive();
+		m_joints[17]->presc->setActive();
+
+		m_joints[1]->presc->m_q[0] = d30 * sinTheta;
+		m_joints[1]->presc->m_qdot[0] = d30 * alpha * cosTheta;
+
+		m_joints[5]->presc->m_q[0] = d30 * sinTheta;
+		m_joints[5]->presc->m_qdot[0] = d30 * alpha * cosTheta;
+
+		m_joints[9]->presc->m_q[0] = d20 * sinTheta;
+		m_joints[9]->presc->m_qdot[0] = d20 * alpha * cosTheta;
+
+		m_joints[13]->presc->m_q[0] = d60 * sinTheta;
+		m_joints[13]->presc->m_qdot[0] = d60 * alpha * cosTheta;
+
+		m_joints[17]->presc->m_q[0] = d30 * sinTheta;
+		m_joints[17]->presc->m_qdot[0] = d30 * alpha * cosTheta;
+
+
+		m_joints[2]->presc->setActive();
+		m_joints[6]->presc->setActive();
+		m_joints[10]->presc->setActive();
+		m_joints[14]->presc->setActive();
+		m_joints[18]->presc->setActive();
+
+		m_joints[2]->presc->m_q[0] = d30 * sinTheta;
+		m_joints[2]->presc->m_qdot[0] = d30 * alpha * cosTheta;
+
+		m_joints[6]->presc->m_q[0] = d45 * sinTheta;
+		m_joints[6]->presc->m_qdot[0] = d45 * alpha * cosTheta;
+
+		m_joints[10]->presc->m_q[0] = d45 * sinTheta;
+		m_joints[10]->presc->m_qdot[0] = d45 * alpha * cosTheta;
+
+		m_joints[14]->presc->m_q[0] = -d45 * sinTheta;
+		m_joints[14]->presc->m_qdot[0] = -d45 * alpha * cosTheta;
+
+		m_joints[18]->presc->m_q[0] = d30 * sinTheta;
+		m_joints[18]->presc->m_qdot[0] = d30 * alpha * cosTheta;
+
 		
-		vt_w.setZero();
-		//wt_i << 0.0, 0.0, alpha * t_;
-		//vtdot_w << 0.0, -beta, 0.0;
-		vtdot_w.setZero();
-		//wtdot_i << 0.0, 0.0, alpha;
-		//m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
-		//		//m_joints[0 + nsegments * i]->presc->m_qdot[0] = d60 * cosTheta;
-		//		//m_joints[0 + nsegments * i]->presc->m_qddot[0] = -d60 * sinTheta;
-		//m_joints[1]->presc->m_q[0] = d60 * sinTheta;
-		//m_joints[1]->presc->m_qdot[0] = d60 * cosTheta;
-		//m_joints[1]->presc->m_qddot[0] = -d60 * sinTheta;
+		m_joints[15]->presc->setActive();
+		m_joints[16]->presc->setActive();
 
-		m_joints[5]->presc->m_q[0] = -d10 * sinTheta;
-		m_joints[5]->presc->m_qdot[0] = -d10 * alpha * cosTheta;
-		m_joints[5]->presc->m_qddot[0] = d10 * alpha * alpha * sinTheta;
+		m_joints[15]->presc->m_q[0] = -d45 * sinTheta;
+		m_joints[15]->presc->m_qdot[0] = -d45 * alpha * cosTheta;
 
-		m_joints[9]->presc->m_q[0] = d10 * sinTheta;
-		m_joints[9]->presc->m_qdot[0] = d10 * alpha * cosTheta;
-		m_joints[9]->presc->m_qddot[0] = -d10 * alpha * alpha * sinTheta;
+		m_joints[16]->presc->m_q[0] = -d30 * sinTheta;
+		m_joints[16]->presc->m_qdot[0] =- d30 * alpha * cosTheta;
 
-		m_joints[13]->presc->m_q[0] = 0.0;
-		m_joints[13]->presc->m_qdot[0] = 0.0;
-		m_joints[13]->presc->m_qddot[0] = 0.0;
 
-		m_joints[17]->presc->m_q[0] = d10 * sinTheta;
-		m_joints[17]->presc->m_qdot[0] = d10 * alpha * cosTheta;
-		m_joints[17]->presc->m_qddot[0] = -d10 * alpha * alpha * sinTheta;
-		//
+		//m_bodies[20]->presc->setActive();
+
+		vt_w << 0.0, beta/5.0 * t_, 0.0;
+		vtdot_w << 0.0, beta/5.0, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[20], vt_w, vtdot_w, wt_i, wtdot_i);
+
 	}
-	else if (t < 150.0) {
-		double t_ = t - 20.0;
-		m_joints[1]->presc->m_q[0] = 0.0;
-		m_joints[1]->presc->m_qdot[0] = 0.0;
-		m_joints[1]->presc->m_qddot[0] = 0.0;
+	else if (t < 130) {
+		double t_ = t - 120;
+		m_joints[1]->presc->setInactive();
+		m_joints[5]->presc->setInactive();
+		m_joints[9]->presc->setInactive();
+		m_joints[13]->presc->setInactive();
+		m_joints[17]->presc->setInactive();
 
-		m_joints[5]->presc->m_q[0] = 0.0;
-		m_joints[5]->presc->m_qdot[0] = 0.0;
-		m_joints[5]->presc->m_qddot[0] = 0.0;
+		m_joints[2]->presc->setInactive();
+		m_joints[6]->presc->setInactive();
+		m_joints[10]->presc->setInactive();
+		m_joints[14]->presc->setInactive();
+		m_joints[18]->presc->setInactive();
+		m_joints[16]->presc->setInactive();
 
-		m_joints[9]->presc->m_q[0] = 0.0;
-		m_joints[9]->presc->m_qdot[0] = 0.0;
-		m_joints[9]->presc->m_qddot[0] = 0.0;
+		m_bodies[4]->presc->setActive();
+		m_bodies[8]->presc->setActive();
+		//m_bodies[12]->presc->setActive();
+		//m_bodies[16]->presc->setActive();
+		m_bodies[0]->presc->setActive();
 
-		m_joints[13]->presc->m_q[0] = 0.0;
-		m_joints[13]->presc->m_qdot[0] = 0.0;
-		m_joints[13]->presc->m_qddot[0] = 0.0;
+		vt_w.setZero();
+		vtdot_w.setZero();
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[4], vt_w, vtdot_w, wt_i, wtdot_i);
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		//setMaximalPrescStates(m_bodies[12], vt_w, vtdot_w, wt_i, wtdot_i);
+		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
 
-		m_joints[17]->presc->m_q[0] = 0.0;
-		m_joints[17]->presc->m_qdot[0] = 0.0;
-		m_joints[17]->presc->m_qddot[0] = 0.0;
-		//vt_w << 0.0, beta * t_, 0.0;
+		vt_w << 0.0, beta / 5.0 * t_, 0.0;
+		vtdot_w << 0.0, beta/5.0, 0.0;
+		//wt_i.setZero();
+		//wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);
 
-		//wt_i << 0.0, 0.0, -alpha * t_; // start at 0 0 alpha * 5
-		//vtdot_w << 0.0, beta, 0.0;
-		//vtdot_w.setZero();
-		//wtdot_i << 0.0, 0.0, -alpha;
 	}
 	else {
+
+	}
+}
+
+void World::sceneStarFishJump(double t) {
+	cout << t << endl;
+	double d30 = -1.0 / 6.0;
+	double d45 = -1.0 / 4.0;
+	double d15 = -1.0 / 12.0;
+	double d60 = -1.0 / 3.0;
+	double d50 = -5.0 / 18.0;
+	double d90 = -1.0 / 2.0;
+	double d10 = -1.0 / 18.0;
+	double d12 = -1.0 / 15.0;
+	double d18 = -1.0 / 10.0;
+	double d20 = -1.0 / 9.0;
+	double d22 = -1.0 / 8.0;
+	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
+	double q, dq;
+
+	vt_w.setZero();
+	vtdot_w.setZero();
+	wt_i.setZero();
+	wtdot_i.setZero();
+	double beta = 5.0;
+	double gamma = 4.0;
+	double sigma = 0.25;
+	if (t < 5.0) {
+		double t0 = 0.0;
+		double t_ = t - t0;
+		double t1 = 5.0;
+
+		double alpha = M_PI / (t1 - t0);
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+
+		m_bodies[0]->presc->setActive();
+
+		vt_w << -gamma * sinTheta, beta * sinTheta, 0.0;
+		vtdot_w << - gamma * alpha * cosTheta, beta * alpha * cosTheta, 0.0;
+		wt_i << 0.0, sigma * sinTheta, 0.0;
+		wtdot_i << 0.0, sigma * alpha *cosTheta, 0.0;
+
+		//wt_i.setZero();
+		//wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		m_bodies[4]->presc->setActive();
+		m_bodies[8]->presc->setActive();
+		m_bodies[16]->presc->setActive();
+		m_bodies[20]->presc->setActive();
+		m_bodies[12]->presc->setActive();
+
+		vt_w.setZero();
+		vtdot_w.setZero();
+		wt_i << 0.0, 0.0, 0.0;
+		wtdot_i << 0.0, 0.0, 0.0;
+
+		//wt_i.setZero();
+		//wtdot_i.setZero();
+
+		setMaximalPrescStates(m_bodies[4], vt_w, vtdot_w, wt_i, wtdot_i);
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
+		setMaximalPrescStates(m_bodies[20], vt_w, vtdot_w, wt_i, wtdot_i);
+		setMaximalPrescStates(m_bodies[12], vt_w, vtdot_w, wt_i, wtdot_i);
+
+
+
+
+		//m_joints[1]->presc->setActive();
+		//m_joints[5]->presc->setActive();
+		//m_joints[9]->presc->setActive();
+		//m_joints[13]->presc->setActive();
+		//m_joints[17]->presc->setActive();
+
+		//q = d30 * sinTheta;
+		//dq = d30 * alpha * cosTheta;
+
+		////computeTargetQ(t0, t1, t, d45 * M_PI, 0.0, q, dq);
+
+		//m_joints[1]->presc->m_q[0] = q;
+		//m_joints[1]->presc->m_qdot[0] = dq;
+
+		//m_joints[5]->presc->m_q[0] = q;
+		//m_joints[5]->presc->m_qdot[0] = dq;
+
+		//m_joints[9]->presc->m_q[0] = q;
+		//m_joints[9]->presc->m_qdot[0] = dq;
+
+		//m_joints[13]->presc->m_q[0] = q;
+		//m_joints[13]->presc->m_qdot[0] = dq;
+
+		//m_joints[17]->presc->m_q[0] = q;
+		//m_joints[17]->presc->m_qdot[0] = dq;
+
+		//m_joints[2]->presc->setActive();
+		//m_joints[6]->presc->setActive();
+		//m_joints[10]->presc->setActive();
+		//m_joints[14]->presc->setActive();
+		//m_joints[18]->presc->setActive();
+
+		////computeTargetQ(t0, t1, t, d30 * M_PI, 0.0, q, dq);
+
+
+
+		//m_joints[2]->presc->m_q[0] = q;
+		//m_joints[2]->presc->m_qdot[0] = dq;
+		//m_joints[6]->presc->m_q[0] = q;
+		//m_joints[6]->presc->m_qdot[0] = dq;		
+
+		//m_joints[10]->presc->m_q[0] = d20 * sinTheta;
+		//m_joints[10]->presc->m_qdot[0] = d20 * alpha * cosTheta;
+
+
+		//m_joints[14]->presc->m_q[0] = q;
+		//m_joints[14]->presc->m_qdot[0] = dq;
+
+
+		//m_joints[18]->presc->m_q[0] = q;
+		//m_joints[18]->presc->m_qdot[0] = dq;
+
+		//m_joints[3]->presc->setActive();
+		//m_joints[7]->presc->setActive();
+		//m_joints[11]->presc->setActive();
+		//m_joints[15]->presc->setActive();
+		//m_joints[19]->presc->setActive();
+
+		////computeTargetQ(t0, t1, t, d10 * M_PI, 0.0, q, dq);
+
+		//m_joints[3]->presc->m_q[0] = q;
+		//m_joints[3]->presc->m_qdot[0] = dq;
+		//m_joints[7]->presc->m_q[0] = q;
+		//m_joints[7]->presc->m_qdot[0] = dq;
+		//m_joints[11]->presc->m_q[0] = q;
+		//m_joints[11]->presc->m_qdot[0] = dq;
+		//m_joints[15]->presc->m_q[0] = q;
+		//m_joints[15]->presc->m_qdot[0] = dq;
+		//m_joints[19]->presc->m_q[0] = q;
+		//m_joints[19]->presc->m_qdot[0] = dq;
+
+		//m_joints[4]->presc->setActive();
+		//m_joints[8]->presc->setActive();
+		//m_joints[12]->presc->setActive();
+		//m_joints[16]->presc->setActive();
+		//m_joints[20]->presc->setActive();
+		////computeTargetQ(t0, t1, t, d10 * M_PI, 0.0, q, dq);
+
+		//m_joints[4]->presc->m_q[0] = q;
+		//m_joints[4]->presc->m_qdot[0] = dq;
+
+		//m_joints[8]->presc->m_q[0] = q;
+		//m_joints[8]->presc->m_qdot[0] = dq;
+		//m_joints[12]->presc->m_q[0] = q;
+		//m_joints[12]->presc->m_qdot[0] = dq;
+		//m_joints[16]->presc->m_q[0] = q;
+		//m_joints[16]->presc->m_qdot[0] = dq;
+		//m_joints[20]->presc->m_q[0] = q;
+		//m_joints[20]->presc->m_qdot[0] = dq;
+
+
+
+	}
+	else if (t < 10.0) {
+
+		m_bodies[4]->presc->setInactive();
+		m_bodies[8]->presc->setInactive();
+		m_bodies[16]->presc->setInactive();
+		m_bodies[20]->presc->setInactive();
+		m_bodies[12]->presc->setInactive();
+
+
+		double t0 = 5.0;
+		double t1 = 10.0;
+		double t_ = t - t0; 
+		
+		double alpha = M_PI / (t1 - t0);
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				m_joints[1 + i*4 + j]->presc->m_q[0] = 0;
+				m_joints[1 + i * 4 + j]->presc->m_qdot[0] = 0;
+				//m_joints[5 + i]->presc->m_qdot[0] = 0;
+				//m_joints[9 + i]->presc->setInactive();
+				//m_joints[13 + i]->presc->setInactive();
+				//m_joints[17 + i]->presc->setInactive();
+			}
+
+		}
+
+		vt_w << -gamma * sinTheta, - 1.3* beta * sinTheta, 0.0;
+		vtdot_w << -gamma * alpha * cosTheta, - 1.3 *beta * alpha * cosTheta, 0.0;
+		wt_i << 0.0, sigma * sinTheta, 0.0;
+		wtdot_i << 0.0, sigma * alpha *cosTheta, 0.0;
+		//m_bodies[0]->presc->setInactive();
+		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);
+
+
+		/*vt_w << 0.0, beta * sinTheta, 0.0;
+		vtdot_w << 0.0, beta * cosTheta, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		computeTargetQ(t0, t1, t, -d45 * M_PI, d45 * M_PI, q, dq);
+		m_joints[1]->presc->m_q[0] = q;
+		m_joints[1]->presc->m_qdot[0] = dq;
+		m_joints[5]->presc->m_q[0] = q;
+		m_joints[5]->presc->m_qdot[0] = dq;
+		m_joints[9]->presc->m_q[0] = q;
+		m_joints[9]->presc->m_qdot[0] = dq;
+		m_joints[13]->presc->m_q[0] = q;
+		m_joints[13]->presc->m_qdot[0] = dq;
+		m_joints[17]->presc->m_q[0] = q;
+		m_joints[17]->presc->m_qdot[0] = dq;
+
+		computeTargetQ(t0, t1, t, -d30 * M_PI, d30 * M_PI, q, dq);
+		m_joints[2]->presc->m_q[0] = q;
+		m_joints[2]->presc->m_qdot[0] = dq;
+		m_joints[6]->presc->m_q[0] = q;
+		m_joints[6]->presc->m_qdot[0] = dq;
+		m_joints[10]->presc->m_q[0] = q;
+		m_joints[10]->presc->m_qdot[0] = dq;
+		m_joints[14]->presc->m_q[0] = q;
+		m_joints[14]->presc->m_qdot[0] = dq;
+		m_joints[18]->presc->m_q[0] = q;
+		m_joints[18]->presc->m_qdot[0] = dq;
+
+		computeTargetQ(t0, t1, t, -d10 * M_PI, d10 * M_PI, q, dq);
+		m_joints[3]->presc->m_q[0] = q;
+		m_joints[3]->presc->m_qdot[0] = dq;
+		m_joints[7]->presc->m_q[0] = q;
+		m_joints[7]->presc->m_qdot[0] = dq;
+		m_joints[11]->presc->m_q[0] = q;
+		m_joints[11]->presc->m_qdot[0] = dq;
+		m_joints[15]->presc->m_q[0] = q;
+		m_joints[15]->presc->m_qdot[0] = dq;
+		m_joints[19]->presc->m_q[0] = q;
+		m_joints[19]->presc->m_qdot[0] = dq;*/
+
+	}
+	else if (t < 15.0) {
+		double t0 = 10.0;
+		double t1 = 15.0;
+		double t_ = t - t0;
+		/*vt_w << 0.0, 0.0, 0.0;
+		vtdot_w << 0.0, 0.0, 0.0;
+		wt_i << 0.0, 0.0, 0.0;
+		wtdot_i << 0.0, 0.0, 0.0;
+		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);*/
+		m_bodies[0]->presc->setInactive();
+
+
+		//m_bodies[4]->presc->setActive();
+		//m_bodies[8]->presc->setActive();
+		//m_bodies[16]->presc->setActive();
+		//m_bodies[20]->presc->setActive();
+		//m_bodies[12]->presc->setActive();
+
+		vt_w << 0.0, 10 * beta * t_, 0.0;
+		vtdot_w << 0.0, 10 * beta, 0.0;
+		wt_i << 0.0, 0.0, 0.0;
+		wtdot_i << 0.0, 0.0, 0.0;
+
+		//wt_i.setZero();
+		//wtdot_i.setZero();
+
+		//setMaximalPrescStates(m_bodies[4], vt_w, vtdot_w, wt_i, wtdot_i);
+		//setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
+		//setMaximalPrescStates(m_bodies[20], vt_w, vtdot_w, wt_i, wtdot_i);
+		//setMaximalPrescStates(m_bodies[12], vt_w, vtdot_w, wt_i, wtdot_i);
+
+
+		//m_bodies[0]->presc->setInactive();
+		//setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);
+		vt_w << 0.0, -beta * t_, 0.0;
+		vtdot_w << 0.0, -beta, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		//setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		// vt_w = 0 0 0
+	}
+	else if (t < 20.0) {
+		// Starfish starts to wiggle and then stop wiggling
+		double t0 = 15.0;
+		double t_ = t - t0; // t_ = [0, 20]
+
+		double t1 = 20.0;
+
+		double alpha = 6 * M_PI / (t1 - t0);
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+		vt_w << 0.0, beta * t_, 0.0;
+		vtdot_w << 0.0, beta, 0.0;
+		wt_i << 0.0, 0.0, 0.0;
+		wtdot_i << 0.0, 0.0, 0.0;
+
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		/*m_joints[1]->presc->setActive();
+		m_joints[5]->presc->setActive();
+		m_joints[9]->presc->setActive();
+		m_joints[13]->presc->setActive();
+		m_joints[17]->presc->setActive();
+
+		m_joints[5]->presc->m_q[0] = -d20 * sinTheta;
+		m_joints[5]->presc->m_qdot[0] = -d20 * alpha * cosTheta;
+		m_joints[5]->presc->m_qddot[0] = d20 * alpha * alpha * sinTheta;
+
+		m_joints[9]->presc->m_q[0] = d20 * sinTheta;
+		m_joints[9]->presc->m_qdot[0] = d20 * alpha * cosTheta;
+		m_joints[9]->presc->m_qddot[0] = -d20 * alpha * alpha * sinTheta;
+
+		m_joints[13]->presc->m_q[0] = 0.0;
+		m_joints[13]->presc->m_qdot[0] = 0.0;
+		m_joints[13]->presc->m_qddot[0] = 0.0;
+
+		m_joints[17]->presc->m_q[0] = d20 * sinTheta;
+		m_joints[17]->presc->m_qdot[0] = d20 * alpha * cosTheta;
+		m_joints[17]->presc->m_qddot[0] = -d20 * alpha * alpha * sinTheta;*/
+
+	}
+	else if (t < 25.0) {
+		// Use two handles to put it down on the floor again
+
+		double t_ = t - 20.0;	// t_ = [0, 5]
+
+
+		vt_w << 0.0, beta * t_, 0.0;
+		vtdot_w << 0.0, beta, 0.0;
+		wt_i << 0.0, 0.0, 0.0;
+		wtdot_i << 0.0, 0.0, 0.0;
+
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		/*vt_w << 0.0, -beta * t_, 0.0;
+		vtdot_w << 0.0, -beta, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);*/
+
+		/*m_bodies[16]->presc->setActive();
+		vt_w << -beta/2.0 * t_, beta/2.0 * t_, 0.0;
+		vtdot_w << -beta/2.0, beta/2.0, 0.0;
+		wt_i.setZero();
+		wtdot_i.setZero();
+		setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);*/
+
+		m_joints[1]->presc->setInactive();
+		m_joints[5]->presc->setInactive();
+		m_joints[9]->presc->setInactive();
+		m_joints[13]->presc->setInactive();
+		m_joints[17]->presc->setInactive();
+
+		//m_bodies[8]->presc->setInactive();
+
+	}
+	else if (t < 30.0) {
+
+		double t_ = t - 25.0;	// t_ = [0, 5]
+
+
+		vt_w << 0.0, beta * t_, 0.0;
+		vtdot_w << 0.0, beta, 0.0;
+		wt_i << 0.0, 0.0, 0.0;
+		wtdot_i << 0.0, 0.0, 0.0;
+
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+
+
+		//double t_ = t - 46.0;	// t_ = [0, 10]
+		//vt_w << 0.0, -beta * t_, 0.0;
+		//vtdot_w << 0.0, -beta, 0.0;
+		//wt_i.setZero();
+		//wtdot_i.setZero();
+		//setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		//m_bodies[16]->presc->setActive();
+		//vt_w << -beta / 2.0 * t_, beta / 2.0 * t_, 0.0;
+		//vtdot_w << -beta / 2.0, beta / 2.0, 0.0;
+		//wt_i.setZero();
+		//wtdot_i.setZero();
+		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
+
+		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
+	}
+	else {
+		m_bodies[8]->presc->setInactive();
 		vt_w.setZero();
 		wt_i.setZero();
 		vtdot_w.setZero();
 		wtdot_i.setZero();
+
 	}
-
-	setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
-	m_joints[1]->presc->setInactive();
-	m_joints[5]->presc->setInactive();
-	m_joints[9]->presc->setInactive();
-	m_joints[13]->presc->setInactive();
-	m_joints[17]->presc->setInactive();
-	m_bodies[8]->presc->setInactive();
-
 }
+
 
 void World::sceneTestReducedHD(double t) {
 	m_joints[0]->presc->m_q[0] = 0.0;
