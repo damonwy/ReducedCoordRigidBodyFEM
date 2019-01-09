@@ -1187,7 +1187,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
 		m_floors.push_back(f0);
 
-		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziVY", "pq1.4a40.0z", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
+		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziVY", "pq1.4a60.0z", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
 		starfish->precomputeWeights();
 		starfish->setDamping(mesh_damping);
 		//starfish->toggleDrawingDenseMesh(false);
@@ -2429,31 +2429,34 @@ void World::sceneStarFish2(double t) {
 	vtdot_w.setZero();
 	wt_i.setZero();
 	wtdot_i.setZero();
+	Vector3d Zero = Vector3d::Zero();
 
 	double alpha = 1.0 / 7.9617 / 2.0;
 
 	double beta = 1.4;
+	double q, dq;
+
 	if (t < 6.0) {
 		// Hold one arm still and let the starfish falls down to floor and collides with floor
+		setMaximalPrescStates(m_bodies[8], Zero, Zero, Zero, Zero);
 
-		m_bodies[8]->presc->setActive();
-		vt_w.setZero();
-		vtdot_w.setZero();
-		wt_i.setZero();
-		wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		// Active:
+		// mcon: 8
+		// rcon: null
 	}
 	else if (t < 16.0) {
 		// Lift an arm of the starfish to make it off the floor, velocity increases
+
 		double t_ = t - 6.0;
 		vt_w << 0.0, beta * t_, 0.0;
 		vtdot_w << 0.0, beta, 0.0;
-		wt_i.setZero();
-		wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
-		//m_bodies[8]->presc->setInactive();
-		// wi = 0 0 0
-		// vt_w = 0 10beta 0
+
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, Zero, Zero);
+
+		// Active:
+		// mcon: 8
+		// rcon: null
+
 	}
 	else if (t < 26.0) {
 		// Still lifting, velocity decreases to zero
@@ -2461,205 +2464,99 @@ void World::sceneStarFish2(double t) {
 		double t_ = t - 26.0; // t_ = [-10, 0]
 		vt_w << 0.0, -beta * t_, 0.0; 
 		vtdot_w << 0.0, -beta, 0.0;
-		wt_i.setZero();
-		wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, Zero, Zero);
 
-		// vt_w = 0 0 0
+		// Active:
+		// mcon: 8
+		// rcon: null
 	}
 	else if (t < 46.0) {
 		// Starfish starts to wiggle and then stop wiggling
+
+		// Hold one point
+		setMaximalPrescStates(m_bodies[8], Zero, Zero, Zero, Zero);
+		
 		double t0 = 26.0;
 		double t_ = t - t0; // t_ = [0, 20]
-		
 		double t1 = 46.0;
 
 		double alpha = 6 * M_PI / (t1 - t0);
 		double sinTheta = M_PI * sin(alpha * t_);
 		double cosTheta = M_PI * cos(alpha * t_);
 		
-		// Hold one point
-		vt_w.setZero();
-		vtdot_w.setZero();
-		wt_i.setZero();
-		wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		computeTargetQ(t0, t1, t, 0, 0, q, dq);
+		setReducedPrescStates(m_joints[13], q, dq);
 
-		m_joints[1]->presc->setActive();
-		m_joints[5]->presc->setActive();
-		m_joints[9]->presc->setActive();
-		m_joints[13]->presc->setActive();
-		m_joints[17]->presc->setActive();
+		setReducedPrescStates(m_joints[5], -d30 * sinTheta, -d30 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[17], d30 * sinTheta, d30 * alpha * cosTheta);
 
-		m_joints[5]->presc->m_q[0] = -d30 * sinTheta;
-		m_joints[5]->presc->m_qdot[0] = -d30 * alpha * cosTheta;
-		m_joints[5]->presc->m_qddot[0] = d30 * alpha * alpha * sinTheta;
-
-		m_joints[9]->presc->m_q[0] = d20 * sinTheta;
-		m_joints[9]->presc->m_qdot[0] = d20 * alpha * cosTheta;
-		m_joints[9]->presc->m_qddot[0] = -d20 * alpha * alpha * sinTheta;
-
-		m_joints[13]->presc->m_q[0] = 0.0;
-		m_joints[13]->presc->m_qdot[0] = 0.0;
-		m_joints[13]->presc->m_qddot[0] = 0.0;
-
-		m_joints[17]->presc->m_q[0] = d30 * sinTheta;
-		m_joints[17]->presc->m_qdot[0] = d30 * alpha * cosTheta;
-		m_joints[17]->presc->m_qddot[0] = -d30 * alpha * alpha * sinTheta;
-
-	}
-	else if (t < 62.0) {
-		// Use two handles to put it down on the floor again
-		m_bodies[8]->presc->setInactive();
-		double t_ = t - 46.0;	// t_ = [0, 20]
-		vt_w << 0.0, -beta * t_, 0.0;
-		vtdot_w << 0.0, -beta, 0.0;
-		wt_i.setZero();
-		wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
-
-		/*m_bodies[16]->presc->setActive();
-		vt_w << -beta/2.0 * t_, beta/2.0 * t_, 0.0;
-		vtdot_w << -beta/2.0, beta/2.0, 0.0;
-		wt_i.setZero();
-		wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);*/
-
-		m_joints[1]->presc->setInactive();
-		m_joints[5]->presc->setInactive();
-		m_joints[9]->presc->setInactive();
-		m_joints[13]->presc->setInactive();
-		m_joints[17]->presc->setInactive();
-
-		//m_bodies[8]->presc->setInactive();
-
+		// Active:
+		// mcon: 8
+		// ncon: 5 9 13 17 
 	}
 	else if (t < 100.0) {
-		//double t_ = t - 46.0;	// t_ = [0, 10]
-		//vt_w << 0.0, -beta * t_, 0.0;
-		//vtdot_w << 0.0, -beta, 0.0;
-		//wt_i.setZero();
-		//wtdot_i.setZero();
-		//setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
+		// Use two handles to put it down on the floor again
+		VectorXd mcon(1);	
+		Vector4d ncon;
+		mcon << 8.0;
+		ncon << 5, 9, 13, 17;
+		deactivateListOfPrescConstraints(mcon, ncon);
 
-		//m_bodies[16]->presc->setActive();
-		//vt_w << -beta / 2.0 * t_, beta / 2.0 * t_, 0.0;
-		//vtdot_w << -beta / 2.0, beta / 2.0, 0.0;
-		//wt_i.setZero();
-		//wtdot_i.setZero();
-		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
-		m_bodies[8]->presc->setInactive();
-		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
+		// Active:
+		// mcon: null
+		// ncon: null
+	}else if (t < 110) {
+		double t0 = 100.0;
+		double t_ = t - t0;	// t_ = [0, 10]
+		double t1 = 110.0;
+
+		computeTargetQ(t0, t1, t, d45 * M_PI, 0, q, dq);
+		setReducedPrescStates(m_joints[1], q, dq);
+		computeTargetQ(t0, t1, t, d45 * M_PI, 0, q, dq);
+		setReducedPrescStates(m_joints[2], q, dq);
+		computeTargetQ(t0, t1, t, d45 * M_PI, 0, q, dq);
+		setReducedPrescStates(m_joints[3], q, dq);
+		computeTargetQ(t0, t1, t, d45 * M_PI, 0, q, dq);
+		setReducedPrescStates(m_joints[4], q, dq);
+
+		computeTargetQ(t0, t1, t, d45 * M_PI, 0, q, dq);
+		setReducedPrescStates(m_joints[6], q, dq);
+		computeTargetQ(t0, t1, t, d45 * M_PI, 0, q, dq);
+		setReducedPrescStates(m_joints[7], q, dq);
+
+		double p = 0.1;
+		vt_w << 0.0, p * t_, 0.0;
+		vtdot_w << 0.0, p, 0.0;
+		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, Zero, Zero);
+
+		// Active: 
+		// mcon: 0
+		// ncon: 1 2 3 4 6 7
 	}
 	else if (t < 120.0) {
-		double t0 = 100.0;
-		double t_ = t - t0; // t_ = [0, 20]
+		VectorXi ncon(1);
+		VectorXi mcon(1);
+		ncon << -2;
+		mcon << 0;
+		deactivateListOfPrescConstraints(mcon, ncon);
 
+
+		double t0 = 110.0;
+		double t_ = t - t0;	// t_ = [0, 10]
 		double t1 = 120.0;
 
-		double alpha =  M_PI / 2.0 / (t1 - t0);
-		double sinTheta = M_PI * sin(alpha * t_);
-		double cosTheta = M_PI * cos(alpha * t_);
+		double p = 0.2;
+		vt_w << p * t_, 0.0, 0.0;
+		vtdot_w << p, 0.0, 0.0;
 
-		m_joints[1]->presc->setActive();
-		m_joints[5]->presc->setActive();
-		m_joints[9]->presc->setActive();
-		m_joints[13]->presc->setActive();
-		m_joints[17]->presc->setActive();
+		setMaximalPrescStates(m_bodies[4], vt_w, vtdot_w, Zero, Zero);
 
-		m_joints[1]->presc->m_q[0] = d30 * sinTheta;
-		m_joints[1]->presc->m_qdot[0] = d30 * alpha * cosTheta;
+	
 
-		m_joints[5]->presc->m_q[0] = d30 * sinTheta;
-		m_joints[5]->presc->m_qdot[0] = d30 * alpha * cosTheta;
-
-		m_joints[9]->presc->m_q[0] = d20 * sinTheta;
-		m_joints[9]->presc->m_qdot[0] = d20 * alpha * cosTheta;
-
-		m_joints[13]->presc->m_q[0] = d60 * sinTheta;
-		m_joints[13]->presc->m_qdot[0] = d60 * alpha * cosTheta;
-
-		m_joints[17]->presc->m_q[0] = d30 * sinTheta;
-		m_joints[17]->presc->m_qdot[0] = d30 * alpha * cosTheta;
-
-
-		m_joints[2]->presc->setActive();
-		m_joints[6]->presc->setActive();
-		m_joints[10]->presc->setActive();
-		m_joints[14]->presc->setActive();
-		m_joints[18]->presc->setActive();
-
-		m_joints[2]->presc->m_q[0] = d30 * sinTheta;
-		m_joints[2]->presc->m_qdot[0] = d30 * alpha * cosTheta;
-
-		m_joints[6]->presc->m_q[0] = d45 * sinTheta;
-		m_joints[6]->presc->m_qdot[0] = d45 * alpha * cosTheta;
-
-		m_joints[10]->presc->m_q[0] = d45 * sinTheta;
-		m_joints[10]->presc->m_qdot[0] = d45 * alpha * cosTheta;
-
-		m_joints[14]->presc->m_q[0] = -d45 * sinTheta;
-		m_joints[14]->presc->m_qdot[0] = -d45 * alpha * cosTheta;
-
-		m_joints[18]->presc->m_q[0] = d30 * sinTheta;
-		m_joints[18]->presc->m_qdot[0] = d30 * alpha * cosTheta;
-
-		
-		m_joints[15]->presc->setActive();
-		m_joints[16]->presc->setActive();
-
-		m_joints[15]->presc->m_q[0] = -d45 * sinTheta;
-		m_joints[15]->presc->m_qdot[0] = -d45 * alpha * cosTheta;
-
-		m_joints[16]->presc->m_q[0] = -d30 * sinTheta;
-		m_joints[16]->presc->m_qdot[0] =- d30 * alpha * cosTheta;
-
-
-		//m_bodies[20]->presc->setActive();
-
-		vt_w << 0.0, beta/5.0 * t_, 0.0;
-		vtdot_w << 0.0, beta/5.0, 0.0;
-		wt_i.setZero();
-		wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[20], vt_w, vtdot_w, wt_i, wtdot_i);
-
-	}
-	else if (t < 130) {
-		double t_ = t - 120;
-		m_joints[1]->presc->setInactive();
-		m_joints[5]->presc->setInactive();
-		m_joints[9]->presc->setInactive();
-		m_joints[13]->presc->setInactive();
-		m_joints[17]->presc->setInactive();
-
-		m_joints[2]->presc->setInactive();
-		m_joints[6]->presc->setInactive();
-		m_joints[10]->presc->setInactive();
-		m_joints[14]->presc->setInactive();
-		m_joints[18]->presc->setInactive();
-		m_joints[16]->presc->setInactive();
-
-		m_bodies[4]->presc->setActive();
-		m_bodies[8]->presc->setActive();
-		//m_bodies[12]->presc->setActive();
-		//m_bodies[16]->presc->setActive();
-		m_bodies[0]->presc->setActive();
-
-		vt_w.setZero();
-		vtdot_w.setZero();
-		wt_i.setZero();
-		wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[4], vt_w, vtdot_w, wt_i, wtdot_i);
-		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
-		//setMaximalPrescStates(m_bodies[12], vt_w, vtdot_w, wt_i, wtdot_i);
-		//setMaximalPrescStates(m_bodies[16], vt_w, vtdot_w, wt_i, wtdot_i);
-
-		vt_w << 0.0, beta / 5.0 * t_, 0.0;
-		vtdot_w << 0.0, beta/5.0, 0.0;
-		//wt_i.setZero();
-		//wtdot_i.setZero();
-		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);
-
+		// Active: 
+		// mcon: 4
+		// ncon: 1 2 3 4 6 7
 	}
 	else {
 
@@ -3268,6 +3165,7 @@ void World::sceneFingers(double t) {
 }
 
 void World::setMaximalPrescStates(shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i) {
+	b->presc->setActive();
 	Matrix4d E = b->E_wi;
 	Matrix3d R = E.topLeftCorner(3, 3);
 	Vector6d phi = b->phi;
@@ -3277,6 +3175,13 @@ void World::setMaximalPrescStates(shared_ptr<Body> b, Vector3d vt_w, Vector3d vt
 	b->presc->m_qdot.segment<3>(3) = vt_i;
 	b->presc->m_qddot.segment<3>(0) = wtdot_i;
 	b->presc->m_qddot.segment<3>(3) = R.transpose() * vtdot_w - phi.segment<3>(0).cross(vt_i);
+}
+
+void World::setReducedPrescStates(shared_ptr<Joint> j, double q, double dq) {
+	j->presc->setActive();
+	j->presc->m_q(0) = q;
+	j->presc->m_qdot(0) = dq;
+
 }
 
 void World::computeTargetQ(double t0, double t1, double t, double angle, double q0, double &q, double &dq) {
@@ -3293,4 +3198,32 @@ void World::computeTargetQ(double t0, double t1, double t, double angle, double 
 	double Q = T / TT + 1;
 	double f = exp(a * Q);
 	dq = -(2 * a*b*e) / (TT * (f + 1) *(f + 1));
+}
+
+void World::deactivateListOfPrescConstraints(Eigen::VectorXi mcon, Eigen::VectorXi rcon) {
+
+	for (int i = 0; i < (int)mcon.size(); ++i) {
+		if (mcon(i) > -1) {
+			m_bodies[mcon(i)]->presc->setInactive();
+		}	
+	}
+
+	for (int i = 0; i < (int)rcon.size(); ++i) {
+		if (mcon(i) > -1) {
+			m_joints[rcon(i)]->presc->setInactive();
+		}	
+	}
+}
+
+void World::setListOfReducedPrescStates(Eigen::VectorXi rcon, double q, double dq) {
+	for (int i = 0; i < (int)rcon.size(); ++i) {
+		setReducedPrescStates(m_joints[rcon(i)], q, dq);
+	}
+}
+
+
+void World::setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i) {
+	for (int i = 0; i < (int)mcon.size(); ++i) {
+		setMaximalPrescStates(m_bodies[mcon(i)], vt_w, vtdot_w, wt_i, wtdot_i);
+	}
 }

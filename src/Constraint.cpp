@@ -63,7 +63,7 @@ void Constraint::getEqActiveList(vector<int> &listEqM, vector<int> &listEqR) {
 	if (activeEM) {
 		for (int i = 0; i < nconEM; i++) {
 			listEqM.push_back(idxEM + i);
-		}		
+		}
 	}
 	if (activeER) {
 		for (int i = 0; i < nconER; i++) {
