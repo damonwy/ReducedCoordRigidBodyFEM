@@ -3187,85 +3187,49 @@ void World::sceneFingers(double t) {
 	// Reduced Hybrid Dynamics
 	if (t < 10.0) {
 		computeTargetQ(0.0, 10.0, t, -M_PI / 4.0, 0.0, q, dq);
-		m_joints[eBone_IndexFinger3]->presc->m_q[0] = q;
-		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = dq;
-		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = q;
-		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = dq;
-		m_joints[eBone_RingFinger3]->presc->m_q[0] = q;
-		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = dq;
-		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = q;
-		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = dq;
-
+		setReducedPrescStates(m_joints[eBone_IndexFinger3], q, dq);
+		setReducedPrescStates(m_joints[eBone_MiddleFinger3], q, dq);
+		setReducedPrescStates(m_joints[eBone_RingFinger3], q, dq);
+		setReducedPrescStates(m_joints[eBone_PinkyFinger3], q, dq);
 
 		computeTargetQ(0.0, 10.0, t, -M_PI / 12.0, 0.0, q, dq);
-		m_joints[eBone_Thumb1]->presc->m_q[0] = q;
-		m_joints[eBone_Thumb1]->presc->m_qdot[0] = dq;
-		m_joints[eBone_Thumb2]->presc->m_q[0] = q;
-		m_joints[eBone_Thumb2]->presc->m_qdot[0] = dq;
+		setReducedPrescStates(m_joints[eBone_Thumb1], q, dq);
+		setReducedPrescStates(m_joints[eBone_Thumb2], q, dq);
 	
 		computeTargetQ(0.0, 10.0, t, -M_PI / 2.0, 0.0, q, dq);
-		m_joints[eBone_Thumb3]->presc->m_q[0] = q;
-		m_joints[eBone_Thumb3]->presc->m_qdot[0] = dq;
+		setReducedPrescStates(m_joints[eBone_Thumb3], q, dq);
 	}
 	else if (t < 20.0) {
 		computeTargetQ(10.0, 20.0, t, M_PI / 4.0, - M_PI / 4.0, q, dq);
-		m_joints[eBone_IndexFinger3]->presc->m_q[0] = q;
-		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = dq;
-		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = q;
-		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = dq;
-		m_joints[eBone_RingFinger3]->presc->m_q[0] = q;
-		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = dq;
-		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = q;
-		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = dq;
+		setReducedPrescStates(m_joints[eBone_IndexFinger3], q, dq);
+		setReducedPrescStates(m_joints[eBone_MiddleFinger3], q, dq);
+		setReducedPrescStates(m_joints[eBone_RingFinger3], q, dq);
+		setReducedPrescStates(m_joints[eBone_PinkyFinger3], q, dq);
 
 		computeTargetQ(10.0, 20.0, t, M_PI / 12.0, -M_PI / 12.0, q, dq);
-		m_joints[eBone_Thumb1]->presc->m_q[0] = q;
-		m_joints[eBone_Thumb1]->presc->m_qdot[0] = dq;
-		m_joints[eBone_Thumb2]->presc->m_q[0] = q;
-		m_joints[eBone_Thumb2]->presc->m_qdot[0] = dq;
+		setReducedPrescStates(m_joints[eBone_Thumb1], q, dq);
+		setReducedPrescStates(m_joints[eBone_Thumb2], q, dq);
 		
 		computeTargetQ(10.0, 20.0, t, M_PI / 2.0, -M_PI / 2.0, q, dq);
-		m_joints[eBone_Thumb3]->presc->m_q[0] = q;
-		m_joints[eBone_Thumb3]->presc->m_qdot[0] = dq;
+		setReducedPrescStates(m_joints[eBone_Thumb3], q, dq);
 
 	}
 	else {
-		m_joints[eBone_Thumb1]->presc->m_q[0] = 0;
-		m_joints[eBone_Thumb1]->presc->m_qdot[0] = 0;
-		m_joints[eBone_Thumb2]->presc->m_q[0] = 0;
-		m_joints[eBone_Thumb2]->presc->m_qdot[0] = 0;
-		m_joints[eBone_Thumb3]->presc->m_q[0] = 0;
-		m_joints[eBone_Thumb3]->presc->m_qdot[0] = 0;
+		setReducedPrescStates(m_joints[eBone_Thumb1], 0.0, 0.0);
+		setReducedPrescStates(m_joints[eBone_Thumb2], 0.0, 0.0);
+		setReducedPrescStates(m_joints[eBone_Thumb3], 0.0, 0.0);
 
-		m_joints[eBone_IndexFinger3]->presc->m_q[0] = 0;
-		m_joints[eBone_IndexFinger3]->presc->m_qdot[0] = 0;
-		m_joints[eBone_MiddleFinger3]->presc->m_q[0] = 0;
-		m_joints[eBone_MiddleFinger3]->presc->m_qdot[0] = 0;
-		m_joints[eBone_RingFinger3]->presc->m_q[0] = 0;
-		m_joints[eBone_RingFinger3]->presc->m_qdot[0] = 0;
-		m_joints[eBone_PinkyFinger3]->presc->m_q[0] = 0;
-		m_joints[eBone_PinkyFinger3]->presc->m_qdot[0] = 0;
+		setReducedPrescStates(m_joints[eBone_IndexFinger3], 0.0, 0.0);
+		setReducedPrescStates(m_joints[eBone_MiddleFinger3], 0.0, 0.0);
+		setReducedPrescStates(m_joints[eBone_RingFinger3], 0.0, 0.0);
+		setReducedPrescStates(m_joints[eBone_PinkyFinger3], 0.0, 0.0);
 	}
 
-	m_joints[eBone_Thumb0]->presc->m_q[0] = 0.0;
-	m_joints[eBone_Thumb0]->presc->m_qdot[0] = 0.0;
-	m_joints[eBone_Thumb0]->presc->m_qddot[0] = 0.0;
-
-	m_joints[eBone_IndexFinger0]->presc->m_q[0] = 0.0;
-	m_joints[eBone_IndexFinger0]->presc->m_qdot[0] = 0.0;
-	m_joints[eBone_IndexFinger0]->presc->m_qddot[0] = 0.0;
-
-	m_joints[eBone_MiddleFinger0]->presc->m_q[0] = 0.0;
-	m_joints[eBone_MiddleFinger0]->presc->m_qdot[0] = 0.0;
-	m_joints[eBone_MiddleFinger0]->presc->m_qddot[0] = 0.0;
-
-	m_joints[eBone_RingFinger0]->presc->m_q[0] = 0.0;
-	m_joints[eBone_RingFinger0]->presc->m_qdot[0] = 0.0;
-	m_joints[eBone_RingFinger0]->presc->m_qddot[0] = 0.0;
-
-	m_joints[eBone_PinkyFinger0]->presc->m_q[0] = 0.0;
-	m_joints[eBone_PinkyFinger0]->presc->m_qdot[0] = 0.0;
-	m_joints[eBone_PinkyFinger0]->presc->m_qddot[0] = 0.0;
+	setReducedPrescStates(m_joints[eBone_Thumb0], 0.0, 0.0);
+	setReducedPrescStates(m_joints[eBone_IndexFinger0], 0.0, 0.0);
+	setReducedPrescStates(m_joints[eBone_MiddleFinger0], 0.0, 0.0);
+	setReducedPrescStates(m_joints[eBone_RingFinger0], 0.0, 0.0);
+	setReducedPrescStates(m_joints[eBone_PinkyFinger0], 0.0, 0.0);
 }
 
 void World::setMaximalPrescStates(shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i) {
@@ -3332,6 +3296,8 @@ void World::setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vec
 	}
 }
 
+
+// Final Version of Starfish
 void World::sceneStarFish3(double t) {
 	//cout << t << endl;
 	double d30 = -1.0 / 6.0;
