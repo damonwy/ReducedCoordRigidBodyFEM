@@ -319,6 +319,7 @@ public:
 	void sceneCross(double t);
 	void sceneStarFish(double t);
 	void sceneStarFish2(double t);
+	void sceneStarFish3(double t);
 	void sceneStarFishJump(double t);
 	void sceneTestReducedHD(double t);
 	void sceneTestMaximalHD(double t);

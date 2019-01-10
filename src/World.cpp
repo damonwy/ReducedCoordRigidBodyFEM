@@ -1100,7 +1100,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
-		double mesh_damping = 100.0;
+		double mesh_damping = 300.0;
 		double y_floor = -40.0;
 		nlegs = 5;
 		nsegments = 4;
@@ -1146,7 +1146,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 				}
 				addConstraintPrescJoint(joint);
 				//m_joints[i]->setStiffness(m_stiffness);
-				m_joints[i]->setDamping(4.0);
+				m_joints[i]->setDamping(2.0);
 			}
 		}
 		VectorXi dof(6);
@@ -1162,7 +1162,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		VectorXi dofxy(2);
 		dofxy << 3, 4;
-		addConstraintPrescBody(m_bodies[8], dof);
+		addConstraintPrescBody(m_bodies[8], dof3);
 		addConstraintPrescBody(m_bodies[16], dof_);
 		addConstraintPrescBody(m_bodies[0], dof);
 		addConstraintPrescBody(m_bodies[20], dof3);
@@ -2478,7 +2478,7 @@ void World::sceneStarFish2(double t) {
 		// mcon: 8
 		// rcon: null
 	}
-	else if (t < 46.0) {
+	else if (t < 100.0) {
 		// Starfish starts to wiggle and then stop wiggling
 
 		// Hold one point
@@ -2486,19 +2486,22 @@ void World::sceneStarFish2(double t) {
 		
 		double t0 = 26.0;
 		double t_ = t - t0; // t_ = [0, 20]
-		double t1 = 46.0;
+		double t1 = 100.0;
 
-		double alpha = 6 * M_PI / (t1 - t0);
+		//double alpha = 6 * M_PI / (t1 - t0);
+		double alpha = 1.0;
 		double sinTheta = M_PI * sin(alpha * t_);
 		double cosTheta = M_PI * cos(alpha * t_);
 		
 		computeTargetQ(t0, t1, t, 0, 0, q, dq);
 		setReducedPrescStates(m_joints[13], q, dq);
 
+		//setReducedPrescStates(m_joints[5], -d30 * sinTheta, -d30 * alpha * cosTheta);
+		//setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
+		//setReducedPrescStates(m_joints[17], d30 * sinTheta, d30 * alpha * cosTheta);
 		setReducedPrescStates(m_joints[5], -d30 * sinTheta, -d30 * alpha * cosTheta);
-		setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[9], d30 * sinTheta, d30 * alpha * cosTheta);
 		setReducedPrescStates(m_joints[17], d30 * sinTheta, d30 * alpha * cosTheta);
-
 		// Active:
 		// mcon: 8
 		// ncon: 5 9 13 17 
@@ -3325,5 +3328,177 @@ void World::setListOfReducedPrescStates(Eigen::VectorXi rcon, double q, double d
 void World::setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i) {
 	for (int i = 0; i < (int)mcon.size(); ++i) {
 		setMaximalPrescStates(m_bodies[mcon(i)], vt_w, vtdot_w, wt_i, wtdot_i);
+	}
+}
+
+void World::sceneStarFish3(double t) {
+	cout << t << endl;
+	double d30 = -1.0 / 6.0;
+	double d45 = -1.0 / 4.0;
+	double d15 = -1.0 / 12.0;
+	double d60 = -1.0 / 3.0;
+	double d90 = -1.0 / 2.0;
+	double d10 = -1.0 / 18.0;
+	double d12 = -1.0 / 15.0;
+	double d18 = -1.0 / 10.0;
+	double d20 = -1.0 / 9.0;
+	double d22 = -1.0 / 8.0;
+	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
+
+	vt_w.setZero();
+	vtdot_w.setZero();
+	wt_i.setZero();
+	wtdot_i.setZero();
+	Vector3d Zero = Vector3d::Zero();
+
+	double alpha = 1.0 / 7.9617 / 2.0;
+
+	double beta = 1.4;
+	double q, dq;
+
+	if (t < 6.0) {
+		// Hold one arm still and let the starfish falls down to floor and collides with floor
+		setMaximalPrescStates(m_bodies[8], Zero, Zero, Zero, Zero);
+
+		// Active:
+		// mcon: 8
+		// rcon: null
+	}
+	else if (t < 16.0) {
+		// Lift an arm of the starfish to make it off the floor, velocity increases
+
+		double t_ = t - 6.0;
+		vt_w << 0.0, beta * t_, 0.0;
+		vtdot_w << 0.0, beta, 0.0;
+
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, Zero, Zero);
+
+		// Active:
+		// mcon: 8
+		// rcon: null
+
+	}
+	else if (t < 26.0) {
+		// Still lifting, velocity decreases to zero
+
+		double t_ = t - 26.0; // t_ = [-10, 0]
+		vt_w << 0.0, -beta * t_, 0.0;
+		vtdot_w << 0.0, -beta, 0.0;
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, Zero, Zero);
+
+		// Active:
+		// mcon: 8
+		// rcon: null
+	}
+	else if (t < 100.0) {
+		// Starfish starts to wiggle and then stop wiggling
+
+		// Hold one point
+		setMaximalPrescStates(m_bodies[8], Zero, Zero, Zero, Zero);
+
+		double t0 = 26.0;
+		double t_ = t - t0; // t_ = [0, 20]
+		double t1 = 100.0;
+
+		double alpha = 1.0;
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+
+		computeTargetQ(t0, t1, t, 0, 0, q, dq);
+		setReducedPrescStates(m_joints[13], q, dq);
+		setReducedPrescStates(m_joints[5], -d20 * sinTheta, -d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
+		// Active:
+		// mcon: 8
+		// ncon: 5 9 13 17 
+	}
+	else if (t < 113.0) {
+		// Settle down on the floor again
+
+		double t_ = t - 100.0;
+		vt_w << 0.0, -beta * t_, 0.0;
+		vtdot_w << 0.0, -beta, 0.0;
+		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, Zero, Zero);
+
+		VectorXi mcon(1);
+		Vector4i ncon;
+		mcon << -2;
+		ncon << 5, 9, 13, 17;
+		deactivateListOfPrescConstraints(mcon, ncon);
+
+		//double t0 = 100.0;
+		//double t_ = t - t0; // t_ = [0, 20]
+		//double t1 = 120.0;
+		//double p = 0.01;
+	
+		//wt_i << 0.0, 0.0, p * t_;
+		//wtdot_i << 0.0, 0.0, p;
+		//setMaximalPrescStates(m_bodies[0], Zero, Zero, wt_i, wtdot_i);
+		//// wt_i  0 0 0.1
+		//// Active:
+		//// mcon: null
+		//// ncon: null
+	}
+	else if (t < 130) {
+		// Settle down on the floor again
+		m_bodies[8]->presc->setInactive();
+
+		
+
+		// Active: 
+		// mcon: 0
+		// ncon: 1 2 3 4 6 7
+	}
+	else if (t < 190.0) {
+		// Flip around
+
+		double t0 = 130.0;
+		double t_ = t - t0; // t_ = [0, 20]
+		double t1 = 190;
+
+		double alpha = 1.0;
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+
+		computeTargetQ(t0, t1, t, 0, 0, q, dq);
+		setReducedPrescStates(m_joints[13], q, dq);
+		setReducedPrescStates(m_joints[5], -d20 * sinTheta, -d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
+	
+	}
+	else if (t < 200.0)
+	{
+		double t0 = 120.0;
+		double t_ = t - t0;	// t_ = [0, 10]
+		double t1 = 130.0;
+
+		
+		// Active:
+		// mcon: 0 
+		// ncon: 4
+
+	}
+	else if (t < 220.0) {
+
+		double t0 = 130.0;
+		double t_ = t - t0;	// t_ = [0, 10]
+		double t1 = 135.0;
+
+
+		// Active:
+		// mcon: 12 20
+		// ncon: null
+
+	}
+	else if (t < 260.0) {
+
+		// Active:
+		// mcon: null
+		// ncon: null
+	}
+	else {
+
 	}
 }

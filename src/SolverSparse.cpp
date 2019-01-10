@@ -278,7 +278,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			m_world->sceneCross(t_i);
 			break;
 		case STARFISH:
-			m_world->sceneStarFish2(t_i);
+			m_world->sceneStarFish3(t_i);
+			//m_world->sceneStarFish2(t_i);
 			//m_world->sceneStarFishJump(t_i);
 			//m_world->sceneStarFish(t_i);
 			break;
