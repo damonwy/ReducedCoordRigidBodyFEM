@@ -1100,17 +1100,17 @@ void World::load(const std::string &RESOURCE_DIR) {
 		double possion = 0.35;
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e3;
-		double mesh_damping = 300.0;
+		double mesh_damping = 210.0;
 		double y_floor = -40.0;
 		nlegs = 5;
 		nsegments = 4;
 		double rotation = 360.0 / nlegs;
 		Vector3f starfish_color = Vector3f(255.0f, 99.0f, 71.0f);
 		starfish_color /= 255.0f;
-		//std::string coarse_file_name = "starfish_coarse3";//starfishco
-		//std::string dense_file_name = "starfish2";
-		std::string coarse_file_name = "starfish_coarse_new0";//starfishcostarfish_extrude_0
-		std::string dense_file_name = "SFdense";
+		std::string coarse_file_name = "thin_coarse";//starfishco  starfish_coarse3
+		std::string dense_file_name = "starfish2";
+		//std::string coarse_file_name = "starfish_coarse_new0";//starfishcostarfish_extrude_0
+		//std::string dense_file_name = "SFdense";
 
 		double len_segment = 20.0;
 		Vector3d root_sides;
@@ -1192,10 +1192,10 @@ void World::load(const std::string &RESOURCE_DIR) {
 		////m_joints[16]->m_qdot[0] = -0.7;
 		//m_joints[4]->m_qdot[0] = -7.0;
 			
-		Floor f0(float(y_floor), Vector2f(-80.0f, 80.0f), Vector2f(-80.0f, 80.0f));
+		Floor f0(float(y_floor), Vector2f(-150.0f, 150.0f), Vector2f(-150.0f, 150.0f));
 		m_floors.push_back(f0);
 
-		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziVY", "pq1.4a60.0z", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);
+		auto starfish = addMeshEmbedding(density, young, possion, CO_ROTATED, RESOURCE_DIR, "pqziV", "pq1.4a60.0z", coarse_file_name, dense_file_name, SOFT_INVERTIBLE);//pqz
 		starfish->precomputeWeights();
 		starfish->setDamping(mesh_damping);
 		//starfish->toggleDrawingDenseMesh(false);
@@ -3386,46 +3386,213 @@ void World::sceneStarFish3(double t) {
 		vtdot_w << 0.0, -beta, 0.0;
 		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, Zero, Zero);
 
+		if (t > 20.0 && t < 25.0) {
+			double t0 = 20.0;
+			double t_ = t - t0; // t_ = [0, 5]
+			double t1 = 25.0;
+
+			double alpha = 2 * M_PI / (t1 - t0);
+			double sinTheta = M_PI * sin(alpha * t_);
+			double cosTheta = M_PI * cos(alpha * t_);
+
+			setReducedPrescStates(m_joints[1], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[2], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[3], d45 * sinTheta, d45 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[4], d45 * sinTheta, d45 * alpha * cosTheta);
+
+		}
+		else if (t > 25.0) {
+			m_joints[1]->presc->setInactive();
+			m_joints[2]->presc->setInactive();
+			m_joints[3]->presc->setInactive();
+			m_joints[4]->presc->setInactive();
+
+		}
+
 		// Active:
 		// mcon: 8
 		// rcon: null
 	}
-	else if (t < 100.0) {
+	else if (t < 56.0) {
 		// Starfish starts to wiggle and then stop wiggling
 
 		// Hold one point
 		setMaximalPrescStates(m_bodies[8], Zero, Zero, Zero, Zero);
 
-		double t0 = 26.0;
-		double t_ = t - t0; // t_ = [0, 20]
-		double t1 = 100.0;
+		if (t > 26.0 && t < 36.0) {
+			double t0 = 26.0;
+			double t_ = t - t0; // t_ = [0, 20]
+			double t1 = 36.0;
 
-		double alpha = 1.0;
-		double sinTheta = M_PI * sin(alpha * t_);
-		double cosTheta = M_PI * cos(alpha * t_);
+			double alpha = 1.0;
+			double sinTheta = M_PI * sin(alpha * t_);
+			double cosTheta = M_PI * cos(alpha * t_);
 
-		computeTargetQ(t0, t1, t, 0, 0, q, dq);
-		setReducedPrescStates(m_joints[13], q, dq);
-		setReducedPrescStates(m_joints[5], -d20 * sinTheta, -d20 * alpha * cosTheta);
-		setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
-		setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[1], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[2], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[3], -d30 * sinTheta, -d30 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[4], -d30 * sinTheta, -d30 * alpha * cosTheta);
+
+		}
+		else if (t > 36.0) {
+			m_joints[1]->presc->setInactive();
+			m_joints[2]->presc->setInactive();
+			m_joints[3]->presc->setInactive();
+			m_joints[4]->presc->setInactive();
+
+		}
+
+		if (t > 38.0 && t < 45.0) {
+			double t0 = 38.0;
+			double t_ = t - t0; // t_ = [0, 20]
+
+			double alpha = 1.0;
+			double sinTheta = M_PI * sin(alpha * t_);
+			double cosTheta = M_PI * cos(alpha * t_);
+
+			setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[10], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[11], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[12], d20 * sinTheta, d20 * alpha * cosTheta);
+
+		}
+		else if (t > 45.0) {
+			m_joints[9]->presc->setInactive();
+			m_joints[10]->presc->setInactive();
+			m_joints[11]->presc->setInactive();
+			m_joints[12]->presc->setInactive();
+
+
+		}
+
+
+		if (t > 50.0 && t < 55.0) {
+			double t0 = 50.0;
+			double t_ = t - t0; // t_ = [0, 20]
+								//double sinTheta = M_PI * sin(alpha * t_);
+								//double cosTheta = M_PI * cos(alpha * t_);
+
+
+			double t1 = 55.0;
+
+			double alpha = M_PI / (t1 - t0);
+			double sinTheta = M_PI * sin(alpha * t_);
+			double cosTheta = M_PI * cos(alpha * t_);
+
+			setReducedPrescStates(m_joints[9], d45 * sinTheta, d45 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[10], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[11], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[12], -d20 * sinTheta, -d20 * alpha * cosTheta);
+
+			setReducedPrescStates(m_joints[17], -d10 * sinTheta, -d10 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[18], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[19], -d10 * sinTheta, -d10 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[20], -d10 * sinTheta, -d10 * alpha * cosTheta);
+
+		}
+		else if (t > 55.0) {
+			m_joints[9]->presc->setInactive();
+			m_joints[10]->presc->setInactive();
+			m_joints[11]->presc->setInactive();
+			m_joints[12]->presc->setInactive();
+
+			m_joints[17]->presc->setInactive();
+			m_joints[18]->presc->setInactive();
+			m_joints[19]->presc->setInactive();
+			m_joints[20]->presc->setInactive();
+
+		}
+
+
+		//if (t > 50.0 && t < 55.0) {
+		//	double t0 = 50.0;
+		//	double t_ = t - t0; // t_ = [0, 20]
+		//	//double sinTheta = M_PI * sin(alpha * t_);
+		//	//double cosTheta = M_PI * cos(alpha * t_);
+
+		//
+		//	double t1 = 55.0;
+
+		//	double alpha = 2.0;
+		//	double sinTheta = M_PI * sin(alpha * t_);
+		//	double cosTheta = M_PI * cos(alpha * t_);
+
+		//	computeTargetQ(t0, t1, t, 0, 0, q, dq);
+		//	setReducedPrescStates(m_joints[13], q, dq);
+		//	setReducedPrescStates(m_joints[5], -d10 * sinTheta, -d10 * alpha * cosTheta);
+		//	setReducedPrescStates(m_joints[9], d10 * sinTheta, d10 * alpha * cosTheta);
+		//	setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
+
+
+		//}
+		//else if (t > 55.0) {
+		//	m_joints[5]->presc->setInactive();
+		//	m_joints[13]->presc->setInactive();
+		//	m_joints[9]->presc->setInactive();
+		//	m_joints[17]->presc->setInactive();
+
+		//}
+		//setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
+		//setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
 		// Active:
 		// mcon: 8
 		// ncon: 5 9 13 17 
 	}
-	else if (t < 113.0) {
+	else if (t < 64.0) {
 		// Settle down on the floor again
 
-		double t_ = t - 100.0;
-		vt_w << 0.0, -beta * t_, 0.0;
-		vtdot_w << 0.0, -beta, 0.0;
+		double t_ = t - 56.0;
+		vt_w << 0.0, -0.5 *beta * t_, 0.0;
+		vtdot_w << 0.0, -0.5 *beta, 0.0;
 		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, Zero, Zero);
 
-		VectorXi mcon(1);
-		Vector4i ncon;
-		mcon << -2;
-		ncon << 5, 9, 13, 17;
-		deactivateListOfPrescConstraints(mcon, ncon);
+		if (t > 58.0 && t < 62.0) {
+			double t0 = 58.0;
+			double t_ = t - t0; // t_ = [0, 20]
+			double t1 = 62.0;
+
+			double alpha = 1.0;
+			double sinTheta = M_PI * sin(alpha * t_);
+			double cosTheta = M_PI * cos(alpha * t_);
+
+			setReducedPrescStates(m_joints[13], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[14], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[15], d45 * sinTheta, d45 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[16], d30 * sinTheta, d30 * alpha * cosTheta);
+
+		}
+		else if (t > 62.0) {
+			m_joints[13]->presc->setInactive();
+			m_joints[14]->presc->setInactive();
+			m_joints[15]->presc->setInactive();
+			m_joints[16]->presc->setInactive();
+		}
+
+		if (t > 62.0 && t < 64.0) {
+			double t0 = 62.0;
+			double t_ = t - t0; // t_ = [0, 20]
+			double t1 = 64.0;
+
+			double alpha = 1.0;
+			double sinTheta = M_PI * sin(alpha * t_);
+			double cosTheta = M_PI * cos(alpha * t_);
+
+			setReducedPrescStates(m_joints[17], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[18], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[19], -d45 * sinTheta, -d45 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[20], -d30 * sinTheta, -d30 * alpha * cosTheta);
+
+			setReducedPrescStates(m_joints[13], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[14], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[15], -d45 * sinTheta, -d45 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[16], -d30 * sinTheta, -d30 * alpha * cosTheta);
+		}
+
+		//VectorXi mcon(1);
+		//Vector4i ncon;
+		//mcon << -2;
+		//ncon << 5, 9, 13, 17;
+		//deactivateListOfPrescConstraints(mcon, ncon);
 
 		//double t0 = 100.0;
 		//double t_ = t - t0; // t_ = [0, 20]
@@ -3440,65 +3607,146 @@ void World::sceneStarFish3(double t) {
 		//// mcon: null
 		//// ncon: null
 	}
-	else if (t < 130) {
+	else if (t < 67) {
 		// Settle down on the floor again
 		m_bodies[8]->presc->setInactive();
+		m_joints[17]->presc->setInactive();
+		m_joints[18]->presc->setInactive();
+		m_joints[19]->presc->setInactive();
+		m_joints[20]->presc->setInactive();
 
-		
-
+		m_joints[13]->presc->setInactive();
+		m_joints[14]->presc->setInactive();
+		m_joints[15]->presc->setInactive();
+		m_joints[16]->presc->setInactive();
 		// Active: 
 		// mcon: 0
 		// ncon: 1 2 3 4 6 7
 	}
-	else if (t < 190.0) {
+	else if (t < 77.0) {
 		// Flip around
 
-		double t0 = 130.0;
-		double t_ = t - t0; // t_ = [0, 20]
-		double t1 = 190;
+		if (t > 70.0 && t < 75.0) {
+			double t0 = 70.0;
+			double t_ = t - t0; // t_ = [0, 20]
+			double t1 = 75.0;
 
-		double alpha = 1.0;
-		double sinTheta = M_PI * sin(alpha * t_);
-		double cosTheta = M_PI * cos(alpha * t_);
+			double alpha = 1.0;
+			double sinTheta = M_PI * sin(alpha * t_);
+			double cosTheta = M_PI * cos(alpha * t_);
 
-		computeTargetQ(t0, t1, t, 0, 0, q, dq);
-		setReducedPrescStates(m_joints[13], q, dq);
-		setReducedPrescStates(m_joints[5], -d20 * sinTheta, -d20 * alpha * cosTheta);
-		setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
-		setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[17], -d10 * sinTheta, -d10 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[18], -d20 * sinTheta, -d20 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[19], -d30 * sinTheta, -d30 * alpha * cosTheta);
+			setReducedPrescStates(m_joints[20], -d30 * sinTheta, -d30 * alpha * cosTheta);
+
+		}
+		else if (t > 75.0) {
+			m_joints[17]->presc->setInactive();
+			m_joints[18]->presc->setInactive();
+			m_joints[19]->presc->setInactive();
+			m_joints[20]->presc->setInactive();
+		}
+		//double t0 = 130.0;
+		//double t_ = t - t0; // t_ = [0, 20]
+		//double t1 = 190;
+
+		//double alpha = 1.0;
+		//double sinTheta = M_PI * sin(alpha * t_);
+		//double cosTheta = M_PI * cos(alpha * t_);
+
+		//computeTargetQ(t0, t1, t, 0, 0, q, dq);
+		//setReducedPrescStates(m_joints[13], q, dq);
+		//setReducedPrescStates(m_joints[5], -d20 * sinTheta, -d20 * alpha * cosTheta);
+		//setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
+		//setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
 	
 	}
-	else if (t < 200.0)
+	else if (t < 90.0)
 	{
-		double t0 = 120.0;
-		double t_ = t - t0;	// t_ = [0, 10]
-		double t1 = 130.0;
-
 		
 		// Active:
 		// mcon: 0 
 		// ncon: 4
 
 	}
-	else if (t < 220.0) {
+	else if (t < 95.0) {
 
-		double t0 = 130.0;
+		double t0 = 90.0;
 		double t_ = t - t0;	// t_ = [0, 10]
-		double t1 = 135.0;
+		double t1 = 95.0;
 
+		double alpha = 2 * M_PI / (t1 - t0);
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
 
+		setReducedPrescStates(m_joints[1], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[2], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[3], d45 * sinTheta, d45 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[4], d45 * sinTheta, d45 * alpha * cosTheta);
 		// Active:
 		// mcon: 12 20
 		// ncon: null
 
 	}
-	else if (t < 260.0) {
-
+	else if (t < 117.0) {
+		m_joints[1]->presc->setInactive();
+		m_joints[2]->presc->setInactive();
+		m_joints[3]->presc->setInactive();
+		m_joints[4]->presc->setInactive();
 		// Active:
 		// mcon: null
 		// ncon: null
 	}
-	else {
+	else if (t < 122.0) {
+		double t0 = 117.0;
+		double t_ = t - t0; // t_ = [0, 20]
+		double t1 = 122.0;
 
+		double alpha = 1.0;
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+
+		setReducedPrescStates(m_joints[5], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[6], d30 * sinTheta, d30 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[7], d30 * sinTheta,d30 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[8], d30 * sinTheta,d30 * alpha * cosTheta);
+
+
+	}
+	else if (t < 130.0) {
+		m_joints[5]->presc->setInactive();
+		m_joints[6]->presc->setInactive();
+		m_joints[7]->presc->setInactive();
+		m_joints[8]->presc->setInactive();
+
+		double t0 = 122.0;
+		double t_ = t - t0; // t_ = [0, 20]
+		double t1 = 133.0;
+
+		double alpha = 1.0;
+		double sinTheta = M_PI * sin(alpha * t_);
+		double cosTheta = M_PI * cos(alpha * t_);
+
+		setReducedPrescStates(m_joints[13], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[14], d30 * sinTheta, d30 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[15], d30 * sinTheta, d30 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[16], d30 * sinTheta, d30 * alpha * cosTheta);
+
+		setReducedPrescStates(m_joints[1], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[2], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[3], d20 * sinTheta, d20 * alpha * cosTheta);
+		setReducedPrescStates(m_joints[4], d30 * sinTheta, d30 * alpha * cosTheta);
+	}
+	else {
+		m_joints[13]->presc->setInactive();
+		m_joints[14]->presc->setInactive();
+		m_joints[15]->presc->setInactive();
+		m_joints[16]->presc->setInactive();
+
+		m_joints[1]->presc->setInactive();
+		m_joints[2]->presc->setInactive();
+		m_joints[3]->presc->setInactive();
+		m_joints[4]->presc->setInactive();
 	}
 }
