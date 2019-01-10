@@ -51,7 +51,7 @@ void JointRevolute::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> 
 		MV->pushMatrix();
 		MV->multMatrix(eigen_to_glm(E_wj));
 		double alpha = 1.0;
-		if (presc->activeER) {
+		if (presc != nullptr && presc->activeER) {
 			alpha = 2.0;
 		}
 

@@ -214,7 +214,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
 
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 10; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
 
 			// Inits joints
@@ -1946,6 +1946,7 @@ void World::init() {
 			m_bodies[i]->next = m_bodies[i + 1];
 		}
 	}
+	//cout << m_bodies[m_nbodies - 1]->idxM << endl;
 
 	nm = 0;
 	/*for (int i = 0; i < m_njoints; i++) {
@@ -3332,7 +3333,7 @@ void World::setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vec
 }
 
 void World::sceneStarFish3(double t) {
-	cout << t << endl;
+	//cout << t << endl;
 	double d30 = -1.0 / 6.0;
 	double d45 = -1.0 / 4.0;
 	double d15 = -1.0 / 12.0;
