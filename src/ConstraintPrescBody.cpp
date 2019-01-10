@@ -12,6 +12,8 @@ ConstraintPrescBody::ConstraintPrescBody(shared_ptr<Body> body, VectorXi prows, 
 	m_q.setZero();
 	m_qdot.setZero();
 	m_qddot.setZero();
+	activeEM = false;
+
 }
 void ConstraintPrescBody::init_() {
 	m_body->presc = getSelf();

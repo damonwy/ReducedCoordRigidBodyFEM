@@ -83,7 +83,8 @@ enum WorldType {
 	STARFISH_2,
 	TEST_MAXIMAL_HYBRID_DYNAMICS,
 	TEST_REDUCED_HYBRID_DYNAMICS,
-	FINGERS
+	FINGERS,
+	STARFISH3
 };
 
 typedef int BoneIndex_t;
@@ -318,12 +319,17 @@ public:
 	void sceneCross(double t);
 	void sceneStarFish(double t);
 	void sceneStarFish2(double t);
+	void sceneStarFish3(double t);
+	void sceneStarFishJump(double t);
 	void sceneTestReducedHD(double t);
 	void sceneTestMaximalHD(double t);
 	void sceneFingers(double t);
 	void setMaximalPrescStates(std::shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
+	void setReducedPrescStates(std::shared_ptr<Joint> j, double q, double dq);
+	void setListOfReducedPrescStates(Eigen::VectorXi rcon, double q, double dq);
+	void setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
 	void computeTargetQ(double t0, double t1, double t, double angle, double q0, double &q, double &dq);
-	
+	void deactivateListOfPrescConstraints(Eigen::VectorXi mcon, Eigen::VectorXi rcon);
 	Energy computeEnergy();
 
 	void load(const std::string &RESOURCE_DIR);

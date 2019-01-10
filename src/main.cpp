@@ -366,7 +366,6 @@ int main(int argc, char **argv)
 		glfwPollEvents();
 	}
 	// Quit program.
-
 	//stepperThread.detach();
 	glfwDestroyWindow(window);
 	glfwTerminate();

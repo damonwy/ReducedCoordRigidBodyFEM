@@ -41,8 +41,12 @@ public:
 
 	void init();
 	void countDofs(int &nem, int &ner, int &nim, int &nir);
+	virtual void setActive() {}
+	virtual void setInactive() {}
+
 	void getActiveList(std::vector<int> &listM, std::vector<int> &listR);
 
+	void getEqActiveList(std::vector<int> &listEqM, std::vector<int> &listEqR);
 	void scatterForceEqM(Eigen::MatrixXd Gmt, Eigen::VectorXd lm);
 	void scatterForceEqR(Eigen::MatrixXd Grt, Eigen::VectorXd lr);
 	void scatterForceIneqR(Eigen::MatrixXd Crt, Eigen::VectorXd lr);
@@ -64,6 +68,8 @@ public:
 
 	bool activeM;							// Whether the maximal inequality constraint is active
 	bool activeR;							// Whether the reduced inequality constraint is active
+	bool activeEM;							// Whether the maximal equality constraint is active
+	bool activeER;							// Whether the reduced equality constraint is active
 	Eigen::VectorXd fcon;					// Computed constraint force
 	std::shared_ptr<Constraint> next;		// Next constraint in traversal order
 	

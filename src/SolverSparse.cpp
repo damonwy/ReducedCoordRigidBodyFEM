@@ -91,11 +91,11 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	//Jdot_sp.data().squeeze();
 	Jdot_.clear();
 	
-	Gm_sp.resize(nem, nm);
+	//Gm_sp.resize(nem, nm);
 	//Gm_sp.data().squeeze();
 	Gm_.clear();
 
-	Gmdot_sp.resize(nem, nm);
+	//Gmdot_sp.resize(nem, nm);
 	//Gmdot_sp.data().squeeze();
 	Gmdot_.clear();
 
@@ -103,11 +103,11 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	gmdot.setZero();
 	gmddot.setZero();
 
-	Gr_sp.resize(ner, nr);
+	//Gr_sp.resize(ner, nr);
 	//Gr_sp.data().squeeze();
 	Gr_.clear();
 
-	Grdot_sp.resize(ner, nr);
+	//Grdot_sp.resize(ner, nr);
 	//Grdot_sp.data().squeeze();
 	Grdot_.clear();
 
@@ -153,9 +153,9 @@ void SolverSparse::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir
 	crddot.resize(nir);
 	crddot.setZero();
 
-	G_sp.resize(ne, nr);
+	//G_sp.resize(ne, nr);
 	//G_sp.data().squeeze();
-	G_sp_tp.resize(nr, ne);
+	//G_sp_tp.resize(nr, ne);
 	//G_sp_tp.data().squeeze();
 
 	Cm.resize(nim, nm);
@@ -222,6 +222,10 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			gm.resize(nem);
 			gmdot.resize(nem);
 			gmddot.resize(nem);
+			Grdot_sp.resize(ner, nr);
+			Gm_sp.resize(nem, nm);
+			Gmdot_sp.resize(nem, nm);
+			Gr_sp.resize(ner, nr);
 
 			body0 = m_world->getBody0();
 			joint0 = m_world->getJoint0();
@@ -268,14 +272,15 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		double t_i = m_world->getTime();
 		switch (m_world->m_type) {
 		case CROSS:
-			m_world->sceneCross(t_i);
+  			m_world->sceneCross(t_i);
 			break;
 		case SERIAL_CHAIN:
 			m_world->sceneCross(t_i);
 			break;
 		case STARFISH:
-			m_world->sceneStarFish2(t_i);
-
+			m_world->sceneStarFish3(t_i);
+			//m_world->sceneStarFish2(t_i);
+			//m_world->sceneStarFishJump(t_i);
 			//m_world->sceneStarFish(t_i);
 			break;
 		case STARFISH_2:		
@@ -286,6 +291,10 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			break;
 		case FINGERS:
 			m_world->sceneFingers(t_i);
+			break;
+		case STARFISH3:
+			//m_world->sceneStarFish2(t_i);
+			m_world->sceneStarFishJump(t_i);
 			break;
 		default:
 			break;
@@ -361,27 +370,64 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		
 
 		if (ne > 0) {
-			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);
-			
+			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);		
 			constraint0->computeJacEqRSparse(Gr_, Grdot_, gr, grdot, grddot);
-		
-			Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
-			Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
-			Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
-			Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
+			
+			rowsEM.clear();
+			rowsER.clear();
+			constraint0->getEqActiveList(rowsEM, rowsER);
+			nem = rowsEM.size();
+			ner = rowsER.size();
+			ne = nem + ner;
+
+			if (ne > 0) {
+				Eigen::VectorXi m_rowsEM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsEM.data(), rowsEM.size());
+				Eigen::VectorXi m_rowsER = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsER.data(), rowsER.size());
+				Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
+				Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
+				Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
+				Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
+
+				MatrixXd m_Gm = MatrixXd(Gm_sp)(m_rowsEM, Eigen::placeholders::all);
+				MatrixXd m_Gr = MatrixXd(Gr_sp)(m_rowsER, Eigen::placeholders::all);
+				VectorXd m_gm = gm(m_rowsEM);
+				VectorXd m_gr = gr(m_rowsER);
+				VectorXd m_gmdot = gmdot(m_rowsEM);
+				VectorXd m_grdot = grdot(m_rowsER);
+				VectorXd m_gmddot = gmddot(m_rowsEM);
+				VectorXd m_grddot = grddot(m_rowsER);
+				MatrixXd GmJ = m_Gm * MatrixXd(J_sp);
+				G.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
+				///G_sp.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
+				G << GmJ, m_Gr;
+				//G_sp = G.sparseView();
+				rhsG.resize(G.rows());
+				VectorXd g(G.rows());
+				g << m_gm, m_gr;
+				VectorXd gdot(G.rows());
+				gdot << m_gmdot, m_grdot;
+				rhsG = -gdot - 5.0 * g;
+
+
+			}
+
+			//Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
+			//Gmdot_sp.setFromTriplets(Gmdot_.begin(), Gmdot_.end());
+			//Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
+			//Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
 
 			//sparse_to_file_as_dense(Gm_sp * J_sp, "Gm_sp * J_sp");
-			G_sp.topRows(nem) = Gm_sp * J_sp;
-			G_sp.bottomRows(ner) = Gr_sp;
+			//G_sp.topRows(nem) = Gm_sp * J_sp;
+			//G_sp.bottomRows(ner) = Gr_sp;
 			
 			//sparse_to_file_as_dense(G_sp, "G_sp");
-			g.segment(0, nem) = gm;
+			/*g.segment(0, nem) = gm;
 			g.segment(nem, ner) = gr;
 			gdot.segment(0, nem) = gmdot;
 			gdot.segment(nem, ner) = grdot;
 			gddot.segment(0, nem) = gmddot;
 			gddot.segment(nem, ner) = grddot;
-			rhsG = - gdot - 5.0 * g ;
+			rhsG = - gdot - 5.0 * g ;*/
 		}
 
 		if (ni > 0) {
@@ -451,20 +497,32 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			LHS_sp = LHS.sparseView(1e-8);
 			
 			*/
+			int nre = nr + ne;
+			lhs_left_tp.resize(nr, nre);
+			lhs_right_tp.resize(ne, nre);
+			lhs_left.resize(nre, nr);
+			lhs_right.resize(nre, ne);
 
+			LHS_sp.resize(nre, nre);
 			guess.segment(0, nr) = qdot0;
-
+			SparseMatrix<double> Gtemp = G.sparseView();
+			SparseMatrix<double> Gtemp_tp = Gtemp.transpose();
 			// Assemble sparse matrices
 			MDKr_sp_tp = MDKr_sp.transpose();
-			G_sp_tp = G_sp.transpose();
+			//G_sp_tp = G_sp.transpose();
 
 			// Combine MDKr' and G' by column
 			lhs_left_tp.leftCols(nr) = MDKr_sp_tp;
-			lhs_left_tp.rightCols(ne) = G_sp_tp;
+			//lhs_left_tp.rightCols(ne) = G_sp_tp;
+			lhs_left_tp.rightCols(ne) = Gtemp_tp;
 
 			// Combine G and Z by column
-			lhs_right_tp.leftCols(nr) = G_sp;
+			//lhs_right_tp.leftCols(nr) = G_sp;
+			//lhs_right_tp.rightCols(ne) = zero;
+			lhs_right_tp.leftCols(nr) = Gtemp;
+			zero.resize(ne, ne);
 			lhs_right_tp.rightCols(ne) = zero;
+
 
 			lhs_left = lhs_left_tp.transpose();  // rows x nr
 			lhs_right = lhs_right_tp.transpose(); // rows x ne
@@ -472,6 +530,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			LHS_sp.leftCols(nr) = lhs_left;
 			LHS_sp.rightCols(ne) = lhs_right;
 			
+			rhs.resize(nre);
 			rhs.segment(0, nr) = fr_;
 			rhs.segment(nr, ne) = rhsG;
 

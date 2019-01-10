@@ -13,6 +13,7 @@ Constraint(0, joint->m_ndof, 0, 0), m_joint(joint), m_vel(vel)
 	m_q.setZero();
 	m_qdot.setZero();
 	m_qddot.setZero();
+	activeER = false;
 }
 
 void ConstraintPrescJoint::init_() {
