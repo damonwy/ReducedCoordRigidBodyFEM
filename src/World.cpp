@@ -1155,13 +1155,21 @@ void World::load(const std::string &RESOURCE_DIR) {
 		dof3 << 3, 4, 5;
 
 		VectorXi dof_(1);
-		dof_ <<4;
+		dof_ << 4;
+
+		VectorXi dofx(1);
+		dofx << 3;
+
+		VectorXi dofxy(2);
+		dofxy << 3, 4;
 		addConstraintPrescBody(m_bodies[8], dof);
 		addConstraintPrescBody(m_bodies[16], dof_);
 		addConstraintPrescBody(m_bodies[0], dof);
 		addConstraintPrescBody(m_bodies[20], dof3);
-		addConstraintPrescBody(m_bodies[4], dof_);
-		addConstraintPrescBody(m_bodies[12], dof_);
+		addConstraintPrescBody(m_bodies[4], dof3);
+		addConstraintPrescBody(m_bodies[12], dofxy);
+		addConstraintPrescBody(m_bodies[1], dofx);
+
 
 		double len_skeleton = nsegments * len_segment;
 		int nsamples = 4;
@@ -2496,10 +2504,10 @@ void World::sceneStarFish2(double t) {
 		// ncon: 5 9 13 17 
 	}
 	else if (t < 100.0) {
-		// Use two handles to put it down on the floor again
-		VectorXd mcon(1);	
-		Vector4d ncon;
-		mcon << 8.0;
+		// Settle down on the floor again
+		VectorXi mcon(1);	
+		Vector4i ncon;
+		mcon << 8;
 		ncon << 5, 9, 13, 17;
 		deactivateListOfPrescConstraints(mcon, ncon);
 
@@ -2507,6 +2515,9 @@ void World::sceneStarFish2(double t) {
 		// mcon: null
 		// ncon: null
 	}else if (t < 110) {
+
+		// Try to flip around 
+
 		double t0 = 100.0;
 		double t_ = t - t0;	// t_ = [0, 10]
 		double t1 = 110.0;
@@ -2535,28 +2546,117 @@ void World::sceneStarFish2(double t) {
 		// ncon: 1 2 3 4 6 7
 	}
 	else if (t < 120.0) {
+		// Flip around
+
 		VectorXi ncon(1);
 		VectorXi mcon(1);
 		ncon << -2;
 		mcon << 0;
 		deactivateListOfPrescConstraints(mcon, ncon);
 
-
 		double t0 = 110.0;
 		double t_ = t - t0;	// t_ = [0, 10]
 		double t1 = 120.0;
 
+
+		// Drag the highest body in x +
 		double p = 0.2;
-		vt_w << p * t_, 0.0, 0.0;
-		vtdot_w << p, 0.0, 0.0;
+		vt_w << p * t_, p * t_, 0.0;
+		vtdot_w << p, p, 0.0;
+
+		computeTargetQ(t0, t1, t, -d45 * M_PI, d45 * M_PI, q, dq);
+		setReducedPrescStates(m_joints[1], q, dq);
+		computeTargetQ(t0, t1, t, -d45 * M_PI, d45 * M_PI, q, dq);
+		setReducedPrescStates(m_joints[2], q, dq);
+		computeTargetQ(t0, t1, t, -d45 * M_PI, d45 * M_PI, q, dq);
+		setReducedPrescStates(m_joints[3], q, dq);
+		computeTargetQ(t0, t1, t, -d45 * M_PI, d45 * M_PI, q, dq);
+		setReducedPrescStates(m_joints[6], q, dq);
+		//computeTargetQ(t0, t1, t, -d45 * M_PI, d45 * M_PI, q, dq);
+		setReducedPrescStates(m_joints[7], q, dq);
+
 
 		setMaximalPrescStates(m_bodies[4], vt_w, vtdot_w, Zero, Zero);
 
-	
+		// Fix one end so it won't be dragged away
+
+		p = 0.3;
+		vt_w << -p * t_, 0.0, 0.0;
+		vtdot_w << -p, 0.0, 0.0;
+		setMaximalPrescStates(m_bodies[12], Zero, Zero, Zero, Zero);
+		//setMaximalPrescStates(m_bodies[1], vt_w, vtdot_w, Zero, Zero);
+
 
 		// Active: 
-		// mcon: 4
-		// ncon: 1 2 3 4 6 7
+		// mcon: 4 12
+		// ncon: 1 2 3 4 6 7 
+	}
+	else if(t < 130.0)
+	{
+		double t0 = 120.0;
+		double t_ = t - t0;	// t_ = [0, 10]
+		double t1 = 130.0;
+
+		VectorXi ncon(5);
+		VectorXi mcon(2);
+		ncon << 1, 2, 3, 6, 7;
+		mcon << 4, 12;
+		deactivateListOfPrescConstraints(mcon, ncon);
+
+		double p = 0.02;
+		wt_i << 0.0, 0.0, -p * t_;
+		wtdot_i << 0.0, 0.0, -p;
+
+		setMaximalPrescStates(m_bodies[0], Zero, Zero, wt_i, wtdot_i);
+
+
+		computeTargetQ(t0, t1, t, -d45 * M_PI, d45 * M_PI, q, dq);
+		setReducedPrescStates(m_joints[4], q, dq);
+		// Active:
+		// mcon: 0 
+		// ncon: 4
+
+	}
+	else if (t < 135.0) {
+		VectorXi ncon(1);
+		VectorXi mcon(1);
+		ncon << 4;
+		mcon << 0;
+		deactivateListOfPrescConstraints(mcon, ncon);
+
+		double t0 = 130.0;
+		double t_ = t - t0;	// t_ = [0, 10]
+		double t1 = 135.0;
+
+
+
+/*
+		setReducedPrescStates(m_joints[1], q, dq);
+		setReducedPrescStates(m_joints[9], q, dq);*/
+
+		//computeTargetQ(t0, t1, t, -d20 * M_PI, 0, q, dq);
+
+		//setReducedPrescStates(m_joints[5], q, dq);
+		//setReducedPrescStates(m_joints[13], q, dq);
+
+		setMaximalPrescStates(m_bodies[12], Zero, Zero, Zero, Zero);
+		setMaximalPrescStates(m_bodies[20], Zero, Zero, Zero, Zero);
+
+		// Active:
+		// mcon: 12 20
+		// ncon: null
+
+	}
+	else if (t < 150.0) {
+		VectorXi ncon(1);
+		VectorXi mcon(2);
+		ncon << -2;
+		mcon << 12, 20;
+		deactivateListOfPrescConstraints(mcon, ncon);
+
+		// Active:
+		// mcon: null
+		// ncon: null
 	}
 	else {
 
@@ -3209,7 +3309,7 @@ void World::deactivateListOfPrescConstraints(Eigen::VectorXi mcon, Eigen::Vector
 	}
 
 	for (int i = 0; i < (int)rcon.size(); ++i) {
-		if (mcon(i) > -1) {
+		if (rcon(i) > -1) {
 			m_joints[rcon(i)]->presc->setInactive();
 		}	
 	}

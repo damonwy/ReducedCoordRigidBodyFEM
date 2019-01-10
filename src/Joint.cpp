@@ -366,7 +366,11 @@ void Joint::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, co
 
 		MV->pushMatrix();
 		MV->multMatrix(eigen_to_glm(E_wj));
-		MV->scale(m_draw_radius);
+		double alpha = 1.0;
+		if (presc->activeER) {
+			alpha = 3.0;
+		}
+		MV->scale(alpha * m_draw_radius);
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		m_jointShape->draw(prog);
 		MV->popMatrix();
