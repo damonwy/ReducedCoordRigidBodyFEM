@@ -40,6 +40,13 @@ private:
 	std::vector<T> J_pre;
 	Eigen::SparseMatrix<double> Jdot_sp;
 	std::vector<T> Jdot_;
+	// Hyper Reduced Jacobian
+	Eigen::MatrixXd JmR;
+	Eigen::MatrixXd JmRdot;
+	Eigen::MatrixXd JrR;
+	Eigen::MatrixXd JrRdot;
+	Eigen::MatrixXd JrR_select;	// map nr to nR
+
 	Eigen::VectorXd q0;
 	Eigen::VectorXd q1;
 	Eigen::VectorXd qdot0;

@@ -22,7 +22,7 @@ void Surface::load(const string &RESOURCE_DIR, const string &MESH_NAME, const st
 	tetrahedralize((char *)TETGEN_FLAGS.c_str(), &input_mesh, &output_mesh);//"pqz"
 
 	double r = 0.01;
-
+	
 	// Create Nodes
 	for (int i = 0; i < output_mesh.numberofpoints; i++) {
 		auto node = make_shared<Node>();
@@ -39,7 +39,7 @@ void Surface::load(const string &RESOURCE_DIR, const string &MESH_NAME, const st
 		node->load(RESOURCE_DIR);
 		m_nodes.push_back(node);
 	}
-
+	
 	// Create Faces
 	for (int i = 0; i < output_mesh.numberoftrifaces; i++) {
 		auto triface = make_shared<FaceTriangle>();

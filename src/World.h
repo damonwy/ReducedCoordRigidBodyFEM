@@ -15,6 +15,7 @@
 
 class Joint;
 class JointRevolute;
+class JointRevoluteHyperReduced;
 class Body;
 class SoftBody;
 class SoftBodyInvertibleFEM;
@@ -84,7 +85,8 @@ enum WorldType {
 	TEST_MAXIMAL_HYBRID_DYNAMICS,
 	TEST_REDUCED_HYBRID_DYNAMICS,
 	FINGERS,
-	STARFISH3
+	STARFISH3,
+	TEST_HYPER_REDUCED_COORDS
 };
 
 typedef int BoneIndex_t;
@@ -161,6 +163,17 @@ public:
 		double q, 
 		const std::string &RESOURCE_DIR,
 		std::shared_ptr<Joint> parent=nullptr);
+
+	std::shared_ptr<JointRevoluteHyperReduced> addJointRevoluteHyperReduced(
+		std::shared_ptr<Body> body,
+		Vector3d axis,
+		std::shared_ptr<Joint> friend_joint,
+		double scalar,
+		Vector3d p,
+		Matrix3d R,
+		double q,
+		const std::string &RESOURCE_DIR,
+		std::shared_ptr<Joint> parent = nullptr);
 	
 	std::shared_ptr<JointFixed> addJointFixed(
 		std::shared_ptr<Body> body, 
@@ -377,6 +390,7 @@ public:
 
 	int nm;
 	int nr;
+	int nR;
 	int nem;
 	int ner;
 	int ne;

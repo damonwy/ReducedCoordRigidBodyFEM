@@ -51,7 +51,7 @@ void JointRevolute::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> 
 		MV->pushMatrix();
 		MV->multMatrix(eigen_to_glm(E_wj));
 		double alpha = 1.0;
-		if (presc->activeER) {
+		if (presc != nullptr && presc->activeER) {
 			alpha = 2.0;
 		}
 
@@ -61,5 +61,10 @@ void JointRevolute::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> 
 		MV->popMatrix();
 	}
 	prog->unbind();
+}
+
+void JointRevolute::computeHyperReducedJacobian_(MatrixXd &JrR, MatrixXd &JrR_select) {
+	JrR(idxR, idxHR) = 1.0;
+	JrR_select(idxR, idxHR) = 1.0;
 }
 

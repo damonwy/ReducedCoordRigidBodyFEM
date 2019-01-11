@@ -18,6 +18,7 @@ public:
 	virtual ~JointRevolute() {}
 	void update_();
 protected:
+	virtual void computeHyperReducedJacobian_(Eigen::MatrixXd &JrR, Eigen::MatrixXd &JrR_select);
 
 	void draw_(std::shared_ptr<MatrixStack> MV, 
 		const std::shared_ptr<Program> prog, 

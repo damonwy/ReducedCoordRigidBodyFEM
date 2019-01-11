@@ -180,6 +180,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			isCollided = false;
 			nr = m_world->nr;
 			nm = m_world->nm;
+			nR = m_world->nR;
+
 			nem = m_world->nem;
 			ner = m_world->ner;
 			ne = ner + nem;
@@ -209,6 +211,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 			J_dense.resize(m_dense_nm, m_dense_nr);
 			Jdot_dense.resize(m_dense_nm, m_dense_nr);
+			
 
 			gr.resize(ner);
 			grdot.resize(ner);
@@ -245,10 +248,24 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			softbody0->computeJacobianSparse(J_);
 			meshembedding0->computeJacobianSparse(J_);
 			J_vec_idx = J_.size();
+
+			// Hyper Reduced 
+			JmR.resize(nm, nR);
+			JmRdot.resize(nm, nR);
+			JrR.resize(nr, nR);
+			JrRdot.resize(nr, nR);
+			JrR.setZero();
+			JrRdot.setZero();
+			JrR_select.resize(nr, nR);
+			JrR_select.setZero();
+			joint0->computeHyperReducedJacobian(JrR, JrR_select);
+			cout << JrR << endl;
+			cout << JrR_select << endl;
 		}
 
 		nim = m_world->nim;
 		nir = m_world->nir;
+		
 		ni = nim + nir;	
 
 		q0 = y.segment(0, nr);
@@ -353,6 +370,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 		J_t_sp = J_sp.transpose();
 
+		/*MatrixXd JrR;
+		JrR.resize(2, 1);
+		JrR << 1.0, 2.0;*/
+
+		JmR = MatrixXd(J_sp * JrR);
+		JmRdot = MatrixXd(Jdot_sp * JrR);
 
 		Mr_sp = J_t_sp * (Mm_sp - hsquare * K_sp) * J_sp;
 		
@@ -368,6 +391,29 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		//cout << "fr_"<< (fr_) << endl << endl;
 		//cout <<"fm"<< fm << endl << endl;
 		
+		JmR = MatrixXd(J_sp * JrR);
+		JmRdot = MatrixXd(Jdot_sp * JrR);
+
+		Mr_sp = J_t_sp * (Mm_sp - hsquare * K_sp) * J_sp;
+		MatrixXd JmR_t = JmR.transpose();
+		MatrixXd MR = MatrixXd(JmR_t * (Mm_sp - hsquare * K_sp) * JmR);
+
+		VectorXd fR_ = MR * JrR_select.transpose() * qdot0 + h * (JmR_t * (fm - Mm_sp * Jdot_sp * qdot0) + JrR_select.transpose() * fr);
+		MatrixXd MDKR_ = MR + JmR_t * (h * Dm_sp - hsquare * Km_sp) * JmR;
+
+
+		//Mr_sp_temp = Mr_sp.transpose();
+		//Mr_sp += Mr_sp_temp;
+		//Mr_sp *= 0.5;
+
+		/*	MatrixXd Mrnew = MatrixXd(JmR.transpose() * (Mm_sp - hsquare * K_sp) * JmR);
+		VectorXd fnew = fr.segment<1>(0);
+		VectorXd qdot0new = qdot0.segment<1>(0);
+
+		VectorXd f_new = Mrnew * qdot0new + h * (JMR.transpose() * (fm - Mm_sp * Jdot_sp * qdot0) + fnew);
+		MatrixXd MDKr_new = Mrnew + JMR.transpose() * (h * Dm_sp - hsquare * Km_sp) * JMR;
+		qdot1 = JrR * (MDKr_new.ldlt().solve(f_new));
+		cout << qdot1 << endl;*/
 
 		if (ne > 0) {
 			constraint0->computeJacEqMSparse(Gm_, Gmdot_, gm, gmdot, gmddot);		
@@ -475,6 +521,10 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			cg.compute(MDKr_sp);
 			qdot1 = cg.solveWithGuess(fr_, qdot0);
 			
+			if (nR < nr) {
+				qdot1 = JrR * (MDKR_.ldlt().solve(fR_));
+			}
+
 			//cout << qdot1 << endl;
 		}
 		else if (ne > 0 && ni == 0) {  // Just equality
@@ -784,6 +834,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			qdot1 = sol.segment(0, nr);
 		}
 		//cout << qdot1 << endl << endl;
+
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		yk.segment(0, nr) = q1;
