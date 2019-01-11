@@ -259,8 +259,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			JrR_select.resize(nr, nR);
 			JrR_select.setZero();
 			joint0->computeHyperReducedJacobian(JrR, JrR_select);
-			cout << JrR << endl;
-			cout << JrR_select << endl;
+			//cout << JrR << endl;
+			//cout << JrR_select << endl;
 		}
 
 		nim = m_world->nim;
@@ -856,7 +856,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
 		}
-		//cout << qdot1 << endl << endl;
+		cout << qdot1 << endl << endl;
 
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;

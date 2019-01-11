@@ -1530,7 +1530,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		VectorXi dof(3);
 		dof << 3, 4, 5;
 		
-		//addConstraintPrescBody(thumb_3, dof);
+		addConstraintPrescBody(thumb_3, dof);
 		addConstraintPrescBody(index_finger_4, dof);
 		addConstraintPrescBody(middle_finger_4, dof);
 		addConstraintPrescBody(ring_finger_4, dof);
@@ -3258,7 +3258,7 @@ void World::sceneFingers(double t) {
 	wtdot_i.setZero();
 	double alpha = 1.0/7.9617/2.0;
 
-	double beta = 0.1;
+	double beta = 0.35;
 	if (t < 5.0) {
 		vt_w << beta * t, 0.0, 0.0;
 
@@ -3309,10 +3309,11 @@ void World::sceneFingers(double t) {
 	wt_i.setZero();
 	vtdot_w.setZero();
 	wtdot_i.setZero();*/
-	setMaximalPrescStates(m_bodies[eBone_IndexFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
-	setMaximalPrescStates(m_bodies[eBone_MiddleFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
-	setMaximalPrescStates(m_bodies[eBone_RingFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
-	setMaximalPrescStates(m_bodies[eBone_PinkyFinger4], vt_w, vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_Thumb3], - 1.2 * vt_w, - 1.2 * vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_IndexFinger4], vt_w, vtdot_w,  wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_MiddleFinger4], - 1.4 * vt_w, - 1.4 *vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_RingFinger4], - 1.2 * vt_w, - 1.2 * vtdot_w, wt_i, wtdot_i);
+	setMaximalPrescStates(m_bodies[eBone_PinkyFinger4], -vt_w, -vtdot_w, wt_i, wtdot_i);
 
 	double q, dq;
 
