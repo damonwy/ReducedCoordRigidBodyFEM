@@ -72,6 +72,9 @@ void Joint::init(int &nm, int &nr) {
 	if (m_parent != nullptr) {
 		m_parent->addChild(getJoint());
 	}
+
+	init_();
+
 	countDofs(nm, nr);
 }
 
@@ -125,6 +128,8 @@ void Joint::countHRDofs(int &nR) {
 	idxHR = countR(nR, m_ndof);
 }
 
+
+
 int Joint::countR(int &nr, int data) {
 	nr = nr + data;
 	return (nr - data);
@@ -162,6 +167,13 @@ void Joint::computeHyperReducedJacobian(MatrixXd &JrR, MatrixXd &JrR_select) {
 	computeHyperReducedJacobian_(JrR, JrR_select);
 	if (next != nullptr) {
 		next->computeHyperReducedJacobian(JrR, JrR_select);
+	}
+}
+
+void Joint::computeHyperReducedJacobian_(MatrixXd &JrR, MatrixXd &JrR_select) {
+	for (int i = 0; i < m_ndof; ++i) {
+		JrR(idxR + i, idxHR + i) = 1.0;
+		JrR_select(idxR + i, idxHR + i) = 1.0;
 	}
 }
 

@@ -103,13 +103,13 @@ protected:
 	std::shared_ptr<Body> m_body;						// Attached body
 	std::shared_ptr<Joint> m_parent;					// Parent joint
 	std::vector<std::shared_ptr<Joint>> m_children;		// Children joints
-
+	virtual void init_() {}
 private:
 	void scatterDofsNoUpdate(Eigen::VectorXd y, int nr);
 	std::string m_name;
 	Vector6d m_alpha;									// For J'*x product
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
-	virtual void computeHyperReducedJacobian_(Eigen::MatrixXd &JrR, Eigen::MatrixXd &JrR_select) {}
+	virtual void computeHyperReducedJacobian_(Eigen::MatrixXd &JrR, Eigen::MatrixXd &JrR_select);
 
 };
 

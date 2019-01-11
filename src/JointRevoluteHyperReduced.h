@@ -17,10 +17,13 @@ public:
 	}
 
 	void countHRDofs(int &nR) {
-		idxHR = m_friend_joint->idxHR;
 	}
 
 protected:
+	void init_() {
+		idxHR = m_friend_joint->idxHR;
+	}
+
 	std::shared_ptr<Joint> m_friend_joint;
 	double m_scalar;
 
