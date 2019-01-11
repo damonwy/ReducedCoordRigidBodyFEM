@@ -1648,7 +1648,11 @@ void World::load(const std::string &RESOURCE_DIR) {
 				addJointRevoluteHyperReduced(body, Vector3d::UnitZ(), m_joints[i-1], 0.8, Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 		}
-
+		VectorXi dof(1);
+		dof << 2;
+		addConstraintPrescJoint(m_joints[0]);
+		
+		addConstraintPrescBody(m_bodies[1], dof);
 	}
 	break;
 	case TEST_JOINT_UNIVERSAL: {
@@ -3809,4 +3813,23 @@ void World::sceneStarFish3(double t) {
 		m_joints[3]->presc->setInactive();
 		m_joints[4]->presc->setInactive();
 	}
+}
+
+void World::sceneTestHyperReduced(double t) {
+	double q, dq;
+	if (t < 2.0) {
+		
+		//computeTargetQ(0.0, 2.0, t, M_PI / 8.0, 0.0, q, dq);
+		//setReducedPrescStates(m_joints[0], q, dq);
+		Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
+		vt_w.setZero();
+		setMaximalPrescStates(m_bodies[1], vt_w, vt_w, vt_w, vt_w);
+	}
+	if (t < 4.0) {
+
+		//computeTargetQ(2.0, 4.0, t, -M_PI / 8.0, M_PI / 8.0, q, dq);
+		//setReducedPrescStates(m_joints[0], q, dq);
+
+	}
+
 }

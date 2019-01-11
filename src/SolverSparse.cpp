@@ -313,6 +313,9 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			//m_world->sceneStarFish2(t_i);
 			m_world->sceneStarFishJump(t_i);
 			break;
+		case TEST_HYPER_REDUCED_COORDS:
+			m_world->sceneTestHyperReduced(t_i);
+			break;
 		default:
 			break;
 		}
@@ -454,7 +457,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				gdot << m_gmdot, m_grdot;
 				rhsG = -gdot - 5.0 * g;
 
-
+				GR = G * JrR;
 			}
 
 			//Gm_sp.setFromTriplets(Gm_.begin(), Gm_.end());
@@ -583,6 +586,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			rhs.resize(nre);
 			rhs.segment(0, nr) = fr_;
 			rhs.segment(nr, ne) = rhsG;
+
 
 			//cout << MatrixXd(LHS_sp) << endl << endl;
 			//cout << rhs << endl << endl;
@@ -726,6 +730,25 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					PardisoLU<Eigen::SparseMatrix<double>> solver;
 					solver.compute(LHS_sp);
 					qdot1 = solver.solve(rhs).segment(0, nr);
+
+					if (nR < nr) {
+						MatrixXd LHS_hr(nR + ne, nR + ne);
+						LHS_hr.setZero();
+						LHS_hr.block(0, 0, nR, nR) = MDKR_;
+						LHS_hr.block(nR, 0, ne, nR) = GR;
+						LHS_hr.block(0, nR, nR, ne) = GR.transpose();
+
+						VectorXd rhs_hr(nR + ne);
+						rhs_hr.setZero();
+
+						rhs_hr.segment(0, nR) = fR_;
+						rhs_hr.segment(nR, ne) = rhsG;
+						PardisoLU<Eigen::SparseMatrix<double>> solver;
+						solver.compute(LHS_hr.sparseView());
+						qdot1 = JrR * solver.solve(rhs_hr).segment(0, nR);
+
+					}
+
 				}
 				break;
 			case PARDISO_LDLT:
