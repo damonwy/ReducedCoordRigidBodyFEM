@@ -87,6 +87,7 @@ protected:
 	Integrator m_integrator;
 	int nr;
 	int nm;
+	int nR;
 	int ne;
 	int ni;
 	int ner;

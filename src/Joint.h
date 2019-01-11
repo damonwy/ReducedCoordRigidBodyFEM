@@ -58,11 +58,13 @@ public:
 	std::shared_ptr<Joint> next;	// Forward recursive ordering
 	std::shared_ptr<Joint> prev;	// Reverse recursive ordering
 	int idxR;						// Reduced indices
+	int idxHR;						// HyperReduced indices
 	Vector3d m_axis;
 	Matrix4d m_Q;
 	double m_draw_radius;
 
 	void countDofs(int &nm, int &nr);
+	virtual void countHRDofs(int &nR);
 	int countR(int &nr, int data);
 	void setJointTransform(Matrix4d E);
 	void setStiffness(double K) { m_Kr = K; } // Sets this joint's linear stiffness
@@ -77,6 +79,7 @@ public:
 	std::string getName() const { return m_name; }
 
 	void computeJacobian(Eigen::MatrixXd &J, Eigen::MatrixXd &Jdot);
+	void computeHyperReducedJacobian(Eigen::MatrixXd &JrR, Eigen::MatrixXd &JrR_select);
 	Eigen::VectorXd computerJacTransProd(Eigen::VectorXd y, Eigen::VectorXd x, int nr);
 	void computeForceStiffness(Eigen::VectorXd &fr, Eigen::MatrixXd &Kr);
 	void computeForceStiffnessSparse(Eigen::VectorXd &fr, std::vector<T> &Kr_);
@@ -106,6 +109,7 @@ private:
 	std::string m_name;
 	Vector6d m_alpha;									// For J'*x product
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, const std::shared_ptr<Program> prog2, std::shared_ptr<MatrixStack> P) const;
+	virtual void computeHyperReducedJacobian_(Eigen::MatrixXd &JrR, Eigen::MatrixXd &JrR_select) {}
 
 };
 

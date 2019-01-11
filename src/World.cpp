@@ -8,6 +8,7 @@
 #include "JointNull.h"
 #include "JointFixed.h"
 #include "JointRevolute.h"
+#include "JointRevoluteHyperReduced.h"
 #include "JointSphericalExp.h"
 #include "JointFree.h"
 #include "JointTranslational.h"
@@ -68,7 +69,7 @@ using namespace Eigen;
 using json = nlohmann::json;
 
 World::World() :
-	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_constraints(0), m_countS(0), m_countCM(0),
+	nr(0), nm(0), nR(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_constraints(0), m_countS(0), m_countCM(0),
 	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0), m_nmeshembeddings(0)
 {
 	m_energy.K = 0.0;
@@ -77,7 +78,7 @@ World::World() :
 
 World::World(WorldType type) :
 	m_type(type),
-	nr(0), nm(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_nconstraints(0), m_countS(0), m_countCM(0),
+	nr(0), nm(0), nR(0),nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_nconstraints(0), m_countS(0), m_countCM(0),
 	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0), m_nmeshembeddings(0)
 {
 	m_energy.K = 0.0;
@@ -1619,8 +1620,37 @@ void World::load(const std::string &RESOURCE_DIR) {
 		starfish->setFloor(y_floor);
 
 	}
+
 	break;
 
+	case TEST_HYPER_REDUCED_COORDS:
+	{
+		m_h = 1.0e-2;
+		density = 1.0;
+		m_grav << 0.0, -9.8, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		//m_nbodies = 5;
+		//m_njoints = 5;
+		m_Hexpected = 10000; // todo
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		// Inits rigid bodies
+		for (int i = 0; i < 2; i++) {
+
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+
+			//// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
+			}
+			else {
+				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+				addJointRevoluteHyperReduced(body, Vector3d::UnitZ(), m_joints[i-1], 0.1, Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+			}
+		}
+
+	}
+	break;
 default:
 		break;
 	}
@@ -1682,6 +1712,25 @@ shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body,
 	const string &RESOURCE_DIR,
 	shared_ptr<Joint> parent) {
 	auto joint = make_shared<JointRevolute>(body, axis, parent);
+	Matrix4d E = SE3::RpToE(R, p);
+	joint->setJointTransform(E);
+	joint->m_q(0) = q;
+	joint->load(RESOURCE_DIR, "sphere2.obj");
+	m_joints.push_back(joint);
+	m_njoints++;
+	return joint;
+}
+
+shared_ptr<JointRevoluteHyperReduced> World::addJointRevoluteHyperReduced(shared_ptr<Body> body,
+	Vector3d axis,
+	shared_ptr<Joint> friend_joint,
+	double scalar,
+	Vector3d p,
+	Matrix3d R,
+	double q,
+	const string &RESOURCE_DIR,
+	shared_ptr<Joint> parent) {
+	auto joint = make_shared<JointRevoluteHyperReduced>(body, axis, friend_joint, scalar, parent);
 	Matrix4d E = SE3::RpToE(R, p);
 	joint->setJointTransform(E);
 	joint->m_q(0) = q;
@@ -1958,6 +2007,7 @@ void World::init() {
 
 	for (int i = m_njoints - 1; i > -1; i--) {
 		m_joints[i]->init(nm, nr);
+		m_joints[i]->countHRDofs(nR);
 	}
 
 	m_dense_nm = nm;

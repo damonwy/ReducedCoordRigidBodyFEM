@@ -121,6 +121,10 @@ void Joint::countDofs(int &nm, int &nr) {
 	m_body->countDofs(nm);
 }
 
+void Joint::countHRDofs(int &nR) {
+	idxHR = countR(nR, m_ndof);
+}
+
 int Joint::countR(int &nr, int data) {
 	nr = nr + data;
 	return (nr - data);
@@ -152,6 +156,15 @@ void Joint::computeJacobian(MatrixXd &J, MatrixXd &Jdot) {
 		next->computeJacobian(J, Jdot);
 	}
 }
+
+void Joint::computeHyperReducedJacobian(MatrixXd &JrR, MatrixXd &JrR_select) {
+	// Computes the chain Hyper Reduced Jacobian JmR
+	computeHyperReducedJacobian_(JrR, JrR_select);
+	if (next != nullptr) {
+		next->computeHyperReducedJacobian(JrR, JrR_select);
+	}
+}
+
 
 void Joint::computeInertia() {
 	double m = m_body->I_i(3);
@@ -368,7 +381,7 @@ void Joint::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, co
 		MV->multMatrix(eigen_to_glm(E_wj));
 		double alpha = 1.0;
 		if (presc->activeER) {
-			alpha = 3.0;
+			alpha = 2.0;
 		}
 		MV->scale(alpha * m_draw_radius);
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
