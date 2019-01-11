@@ -10,6 +10,7 @@
 #include "JointRevolute.h"
 #include "JointRevoluteHyperReduced.h"
 #include "JointSphericalExp.h"
+#include "JointUniversal.h"
 #include "JointFree.h"
 #include "JointTranslational.h"
 #include "JointSplineCurve.h"
@@ -1622,7 +1623,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 
 	break;
-
 	case TEST_HYPER_REDUCED_COORDS:
 	{
 		m_h = 1.0e-2;
@@ -1645,12 +1645,41 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 			else {
 				//addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
-				addJointRevoluteHyperReduced(body, Vector3d::UnitZ(), m_joints[i-1], 0.1, Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+				addJointRevoluteHyperReduced(body, Vector3d::UnitZ(), m_joints[i-1], 0.8, Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 		}
 
 	}
 	break;
+	case TEST_JOINT_UNIVERSAL: {
+
+		m_h = 1.0e-2;
+		density = 1.0;
+		m_grav << 0.0, -9.8, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		//m_nbodies = 5;
+		//m_njoints = 5;
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		for (int i = 0; i < 3; i++) {
+
+			auto body = addBody(density, sides, Vector3d(0.0, -5.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box1_10_1.obj");
+
+			//// Inits joints
+			if (i == 0) {
+				addJointUniversal(body, Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR);
+			}
+			else {
+				addJointUniversal(body, Vector3d(0.0, -10.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, m_joints[i-1]);
+
+			}
+		}
+		m_joints[0]->m_q(0) = M_PI / 8.0;
+		m_joints[1]->m_q(1) = M_PI / 8.0;
+		m_joints[2]->m_q(0) = M_PI / 8.0;
+
+	}
+		break;
 default:
 		break;
 	}
@@ -1715,6 +1744,20 @@ shared_ptr<JointRevolute> World::addJointRevolute(shared_ptr<Body> body,
 	Matrix4d E = SE3::RpToE(R, p);
 	joint->setJointTransform(E);
 	joint->m_q(0) = q;
+	joint->load(RESOURCE_DIR, "sphere2.obj");
+	m_joints.push_back(joint);
+	m_njoints++;
+	return joint;
+}
+
+shared_ptr<JointUniversal> World::addJointUniversal(shared_ptr<Body> body,
+	Vector3d p,
+	Matrix3d R,
+	const string &RESOURCE_DIR,
+	shared_ptr<Joint> parent) {
+	auto joint = make_shared<JointUniversal>(body, parent);
+	Matrix4d E = SE3::RpToE(R, p);
+	joint->setJointTransform(E);
 	joint->load(RESOURCE_DIR, "sphere2.obj");
 	m_joints.push_back(joint);
 	m_njoints++;
