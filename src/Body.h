@@ -39,6 +39,8 @@ public:
 	void setDrawingOption(bool drawing) { m_isDrawing = drawing; }
 	std::string getName() const { return m_name; };
 	std::shared_ptr<Joint> getJoint() const { return m_joint; };
+	Matrix4d getEndPoint() { return (E_wi * E_ie); }
+	Matrix4d getBodyByEndPoint(Matrix4d E_we) { return (E_we * E_ei); }
 
 	void computeInertia();
 	void countDofs(int &nm);
@@ -61,6 +63,8 @@ public:
 	Matrix6d M_i;						// Inertia Matrix at body center
 	Matrix4d E_ji;						// Where the body is wrt joint
 	Matrix4d E_ij;						// Where the joint is wrt body
+	Matrix4d E_ie;						// Where the end point is wrt body
+	Matrix4d E_ei;						// Where the body is wrt the end point
 	Matrix4d E_wi;						// Where the body is wrt world
 	Matrix4d E_iw;						// Where the world is wrt body
 	Matrix4d E_ip;						// Where the parent is wrt body

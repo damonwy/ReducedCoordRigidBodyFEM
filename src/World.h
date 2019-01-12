@@ -16,7 +16,9 @@
 class Joint;
 class JointRevolute;
 class JointRevoluteHyperReduced;
-class JointUniversal;
+class JointUniversalYZ;
+class JointUniversalXY;
+
 class Body;
 class SoftBody;
 class SoftBodyInvertibleFEM;
@@ -176,7 +178,14 @@ public:
 		const std::string &RESOURCE_DIR,
 		std::shared_ptr<Joint> parent = nullptr);
 	
-	std::shared_ptr<JointUniversal> addJointUniversal(
+	std::shared_ptr<JointUniversalYZ> addJointUniversalYZ(
+		std::shared_ptr<Body> body,
+		Vector3d p,
+		Matrix3d R,
+		const std::string &RESOURCE_DIR,
+		std::shared_ptr<Joint> parent = nullptr);
+
+	std::shared_ptr<JointUniversalXY> addJointUniversalXY(
 		std::shared_ptr<Body> body,
 		Vector3d p,
 		Matrix3d R,
@@ -347,10 +356,17 @@ public:
 	void sceneTestHyperReduced(double t);
 	void sceneFingers(double t);
 	void setMaximalPrescStates(std::shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
+	void setMaximalPrescStates(int index_body, Vector3d vt_w, Vector3d wt_i);
+
+	
+	void setReducedPrescStates(std::shared_ptr<Joint> j, Eigen::VectorXd q, Eigen::VectorXd dq);
 	void setReducedPrescStates(std::shared_ptr<Joint> j, double q, double dq);
-	void setListOfReducedPrescStates(Eigen::VectorXi rcon, double q, double dq);
+
+	void setListOfReducedPrescStates(Eigen::VectorXi rcon, Eigen::VectorXd q, Eigen::VectorXd dq);
 	void setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
 	void computeTargetQ(double t0, double t1, double t, double angle, double q0, double &q, double &dq);
+	//void computeMaximalTarget(double t0, double t1, double t, )
+	
 	void deactivateListOfPrescConstraints(Eigen::VectorXi mcon, Eigen::VectorXi rcon);
 	Energy computeEnergy();
 

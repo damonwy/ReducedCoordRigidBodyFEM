@@ -27,6 +27,7 @@ m_density(density)
 	I_i.setIdentity();
 	E_ji.setIdentity();
 	E_ij.setIdentity();
+	E_ie.setIdentity();
 	E_wi.setIdentity();
 	R_wi.setIdentity();
 	E_iw.setIdentity();
@@ -70,6 +71,9 @@ void Body::init(int &nm) {
 void Body::setTransform(Eigen::Matrix4d E) {
 	// Sets the transform of this body wrt parent joint
 	E_ji = E;
+	Vector3d p = E.block<3, 1>(0, 3);
+	E_ie = E;
+	E_ie.block<3, 1>(0, 3) = -p;
 	E_ij = SE3::inverse(E_ji);
 	Ad_ji = SE3::adjoint(E_ji);
 	Ad_ij = SE3::adjoint(E_ij);
