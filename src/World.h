@@ -16,6 +16,9 @@
 class Joint;
 class JointRevolute;
 class JointRevoluteHyperReduced;
+class JointUniversalYZ;
+class JointUniversalXY;
+
 class Body;
 class SoftBody;
 class SoftBodyInvertibleFEM;
@@ -86,7 +89,8 @@ enum WorldType {
 	TEST_REDUCED_HYBRID_DYNAMICS,
 	FINGERS,
 	STARFISH3,
-	TEST_HYPER_REDUCED_COORDS
+	TEST_HYPER_REDUCED_COORDS,
+	TEST_JOINT_UNIVERSAL
 };
 
 typedef int BoneIndex_t;
@@ -95,39 +99,29 @@ enum HandSkeletonBone : BoneIndex_t {
 	/*eBone_Root = 0,
 	
 	*/
-	eBone_Wrist= 0,
+	eBone_Elbow = 0,
+	eBone_Wrist,
 	eBone_Thumb0,
 	eBone_Thumb1,
 	eBone_Thumb2,
-	eBone_Thumb3,
 	eBone_IndexFinger0,
 	eBone_IndexFinger1,
 	eBone_IndexFinger2,
 	eBone_IndexFinger3,
-	eBone_IndexFinger4,
 	eBone_MiddleFinger0,
 	eBone_MiddleFinger1,
 	eBone_MiddleFinger2,
 	eBone_MiddleFinger3,
-	eBone_MiddleFinger4,
 	eBone_RingFinger0,
 	eBone_RingFinger1,
 	eBone_RingFinger2,
 	eBone_RingFinger3,
-	eBone_RingFinger4,
 	eBone_PinkyFinger0,
 	eBone_PinkyFinger1,
 	eBone_PinkyFinger2,
 	eBone_PinkyFinger3,
-	eBone_PinkyFinger4,
-	eBone_Aux_Thumb,
-	eBone_Aux_IndexFinger,
-	eBone_Aux_MiddleFinger,
-	eBone_Aux_RingFinger,
-	eBone_Aux_PinkyFinger,
 	eBone_Count
 };
-
 
 struct Floor {
 	float y;
@@ -175,6 +169,20 @@ public:
 		const std::string &RESOURCE_DIR,
 		std::shared_ptr<Joint> parent = nullptr);
 	
+	std::shared_ptr<JointUniversalYZ> addJointUniversalYZ(
+		std::shared_ptr<Body> body,
+		Vector3d p,
+		Matrix3d R,
+		const std::string &RESOURCE_DIR,
+		std::shared_ptr<Joint> parent = nullptr);
+
+	std::shared_ptr<JointUniversalXY> addJointUniversalXY(
+		std::shared_ptr<Body> body,
+		Vector3d p,
+		Matrix3d R,
+		const std::string &RESOURCE_DIR,
+		std::shared_ptr<Joint> parent = nullptr);
+
 	std::shared_ptr<JointFixed> addJointFixed(
 		std::shared_ptr<Body> body, 
 		Vector3d p, 
@@ -336,12 +344,20 @@ public:
 	void sceneStarFishJump(double t);
 	void sceneTestReducedHD(double t);
 	void sceneTestMaximalHD(double t);
+	void sceneTestHyperReduced(double t);
 	void sceneFingers(double t);
 	void setMaximalPrescStates(std::shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
+	void setMaximalPrescStates(int index_body, Vector3d vt_w, Vector3d wt_i);
+
+	
+	void setReducedPrescStates(std::shared_ptr<Joint> j, Eigen::VectorXd q, Eigen::VectorXd dq);
 	void setReducedPrescStates(std::shared_ptr<Joint> j, double q, double dq);
-	void setListOfReducedPrescStates(Eigen::VectorXi rcon, double q, double dq);
+
+	void setListOfReducedPrescStates(Eigen::VectorXi rcon, Eigen::VectorXd q, Eigen::VectorXd dq);
 	void setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
 	void computeTargetQ(double t0, double t1, double t, double angle, double q0, double &q, double &dq);
+	//void computeMaximalTarget(double t0, double t1, double t, )
+	
 	void deactivateListOfPrescConstraints(Eigen::VectorXi mcon, Eigen::VectorXi rcon);
 	Energy computeEnergy();
 

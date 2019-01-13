@@ -25,6 +25,8 @@
 
 //typedef Eigen::Triplet<double> T;
 
+
+
 typedef Eigen::Matrix<int, 6, 1> Vector6i;
 typedef Eigen::Matrix<float, 3, 1> Vector3f;
 typedef Eigen::Matrix<int, 3, 1> Vector3i;

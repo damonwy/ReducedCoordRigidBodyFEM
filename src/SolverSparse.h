@@ -124,6 +124,7 @@ private:
 	std::vector<int> rowsEM;
 	std::vector<int> rowsER;
 	Eigen::MatrixXd G;
+	Eigen::MatrixXd GR; // HR
 	Eigen::SparseMatrix<double, Eigen::RowMajor> G_sp;
 	Eigen::SparseMatrix<double> G_sp_tp;
 	Eigen::SparseMatrix<double> lhs_left_tp;

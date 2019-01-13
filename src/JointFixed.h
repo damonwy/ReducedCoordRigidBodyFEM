@@ -24,6 +24,8 @@ public:
 	virtual ~JointFixed() {}
 
 protected:
+
+
 	void update_(){
 		//E_pj = E_pj0;
 		m_Q = Matrix4d::Identity();

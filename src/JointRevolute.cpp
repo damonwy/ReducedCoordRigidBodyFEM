@@ -62,9 +62,9 @@ void JointRevolute::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> 
 	}
 	prog->unbind();
 }
-
-void JointRevolute::computeHyperReducedJacobian_(MatrixXd &JrR, MatrixXd &JrR_select) {
-	JrR(idxR, idxHR) = 1.0;
-	JrR_select(idxR, idxHR) = 1.0;
-}
+//
+//void JointRevolute::computeHyperReducedJacobian_(MatrixXd &JrR, MatrixXd &JrR_select) {
+//	JrR(idxR, idxHR) = 1.0;
+//	JrR_select(idxR, idxHR) = 1.0;
+//}
 
