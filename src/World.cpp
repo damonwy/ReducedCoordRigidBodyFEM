@@ -1517,9 +1517,9 @@ void World::load(const std::string &RESOURCE_DIR) {
 			m_joints[i]->setStiffness(1e3);
 			m_joints[i]->setDamping(1e1);
 		}
-		//m_joints[eBone_Thumb0]->setStiffness(1e4);
-		//m_joints[eBone_Thumb1]->setStiffness(1e4);
-		//m_joints[eBone_Thumb2]->setStiffness(1e4);
+		m_joints[eBone_Thumb0]->setStiffness(1e8);
+		m_joints[eBone_Thumb1]->setStiffness(1e8);
+		m_joints[eBone_Thumb2]->setStiffness(1e8);
 
 
 		VectorXi dof(3);
@@ -3267,12 +3267,8 @@ void World::sceneFingers(double t) {
 	cout << t << endl;
 	wt_i.setZero();
 	wtdot_i.setZero();
-	double alpha = 1.0/7.9617/2.0;
 
 	double beta = 0.3;
-	Matrix4d indexTarget;
-	indexTarget.setIdentity();
-	indexTarget.block<3, 1>(0, 3) = Vector3d(40.0, 40.0, 0.0);
 	
 	if (t < 5.0) {
 		vt_w << -3 * beta * t, 0.0, 0.0;
@@ -3289,8 +3285,6 @@ void World::sceneFingers(double t) {
 
 		vt_w << -3 * beta * t, 0.0, - 5 * beta * t;
 		setMaximalPrescStates(eBone_Thumb2, 0.5 * vt_w, zero);
-
-		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 	}
 	else if (t < 10.0) {
 		double t_ = t - 5.0;
@@ -3308,33 +3302,27 @@ void World::sceneFingers(double t) {
 
 		vt_w << 1 * beta * t, 0.0, 5 * beta * t;
 		setMaximalPrescStates(eBone_Thumb2, 0.2 * vt_w, zero);
-		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 
 	}
 	else if (t < 15.0) {
 		double t_ = t - 10.0;
 
-		vt_w << - 0.5 * beta * t, 0.0, 0.0;
+		vt_w << - 1.2 * beta * t, 0.0, 0.0;
 		setMaximalPrescStates(eBone_IndexFinger3, vt_w, zero);
 
-		vt_w << -0.5 * beta * t, 0.0, 1 * beta * t;
+		vt_w << -1.0* beta * t, 0.0, 1 * beta * t;
 		setMaximalPrescStates(eBone_MiddleFinger3, vt_w, zero);
 
-		vt_w << -0.4 * beta * t, 0.0, 1 * beta * t;
+		vt_w << -0.6 * beta * t, 0.0, 1 * beta * t;
 		setMaximalPrescStates(eBone_RingFinger3, vt_w, zero);
 
-		vt_w << - 0.4 * beta * t, 0.0, 1.5 * beta * t;
+		vt_w << - 0.6 * beta * t, 0.0, 1.5 * beta * t;
 		setMaximalPrescStates(eBone_PinkyFinger3, 0.5 * vt_w, zero);
 
-		vt_w << - 0.8 * beta * t, 0.0, - 0.8 * beta * t;
-		setMaximalPrescStates(eBone_Thumb2, 0.8 * vt_w, zero);
-		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
-
-
+		vt_w << - 0.9 * beta * t, 0.0, - 0.8 * beta * t;
+		setMaximalPrescStates(eBone_Thumb2, vt_w, zero);
 	}
 	else if (t < 20.0) {
-
-
 		// Scene 1:
 		//double t_ = t - 15.0;
 
@@ -3355,18 +3343,53 @@ void World::sceneFingers(double t) {
 		//wt_i << 0.0, 0.0, -1.0;
 		//setMaximalPrescStates(eBone_Thumb2, 0.8 * vt_w, wt_i);
 
+		// Scene 2:
 
 
-		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
+		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
+		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
+		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
+		setMaximalPrescStates(eBone_PinkyFinger3, zero, zero);
+		setMaximalPrescStates(eBone_Thumb2, zero, zero);
+
+	}
+	else if (t < 25.0) {
+
+		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
+		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
+		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
+		setMaximalPrescStates(eBone_PinkyFinger3, zero, zero);
+		setMaximalPrescStates(eBone_Thumb2, zero, zero);
+
+
+	}
+	else if (t < 30.0) {
+
+		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
+		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
+		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
+		setMaximalPrescStates(eBone_PinkyFinger3, zero, zero);
+		setMaximalPrescStates(eBone_Thumb2, zero, zero);
+
+	}
+	else if (t < 35.0) {
+
+		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
+		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
+		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
+		setMaximalPrescStates(eBone_PinkyFinger3, zero, zero);
+		setMaximalPrescStates(eBone_Thumb2, zero, zero);
+
+
 
 	}
 	else {
 		vt_w.setZero();
 		wt_i.setZero();
+
 		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
 		vt_w << 1.5 * beta * t, 0.0, -2 * beta * t;
 
-		//setMaximalPrescStates(eBone_IndexFinger3, vt_w, wt_i);
 		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
 
 		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
@@ -3376,19 +3399,7 @@ void World::sceneFingers(double t) {
 		setMaximalPrescStates(eBone_Thumb2, zero, zero);
 		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 
-		//setMaximalPrescStates(eBone_IndexFinger4, zero, zero);
-
-		//setMaximalPrescStates(eBone_Thumb3, -1.2 * vt_w, wt_i);
-		//setMaximalPrescStates(eBone_IndexFinger4, vt_w, wt_i);
-		/*setMaximalPrescStates(eBone_MiddleFinger4, zero, zero);
-		setMaximalPrescStates(eBone_RingFinger4, zero, zero);
-		setMaximalPrescStates(eBone_PinkyFinger4, zero, zero);*/
 	}
-
-
-	//setMaximalPrescStates(eBone_MiddleFinger4, - 1.4 * vt_w, wt_i);
-	//setMaximalPrescStates(eBone_RingFinger4, - 1.2 * vt_w, wt_i);
-	//setMaximalPrescStates(eBone_PinkyFinger4, -vt_w, wt_i);
 
 	double q, dq;
 
@@ -3401,17 +3412,7 @@ void World::sceneFingers(double t) {
 		dqvec.y() = dq;
 
 		setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
-
-		//setReducedPrescStates(m_joints[eBone_MiddleFinger3], q, dq);
-		//setReducedPrescStates(m_joints[eBone_RingFinger3], q, dq);
-		//setReducedPrescStates(m_joints[eBone_PinkyFinger3], q, dq);
-
-		//computeTargetQ(0.0, 10.0, t, -M_PI / 12.0, 0.0, q, dq);
-		//setReducedPrescStates(m_joints[eBone_Thumb1], q, dq);
-		//setReducedPrescStates(m_joints[eBone_Thumb2], q, dq);
-	
-		//computeTargetQ(0.0, 10.0, t, -M_PI / 2.0, 0.0, q, dq);
-		//setReducedPrescStates(m_joints[eBone_Thumb3], q, dq);
+		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 	}
 	else if (t < 10.0) {
 		computeTargetQ(5.0, 10.0, t, -D10, D10, q, dq);
@@ -3420,21 +3421,7 @@ void World::sceneFingers(double t) {
 		qvec.y() = q;
 		dqvec.y() = dq;
 		setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
-
-		//setReducedPrescStates(m_joints[eBone_Thumb1], qvec, dqvec);
-
-
-		//setReducedPrescStates(m_joints[eBone_IndexFinger3], q, dq);
-		//setReducedPrescStates(m_joints[eBone_MiddleFinger3], q, dq);
-		//setReducedPrescStates(m_joints[eBone_RingFinger3], q, dq);
-		//setReducedPrescStates(m_joints[eBone_PinkyFinger3], q, dq);
-
-		//computeTargetQ(10.0, 20.0, t, M_PI / 12.0, -M_PI / 12.0, q, dq);
-		//setReducedPrescStates(m_joints[eBone_Thumb1], q, dq);
-		//setReducedPrescStates(m_joints[eBone_Thumb2], q, dq);
-		
-		//computeTargetQ(10.0, 20.0, t, M_PI / 2.0, -M_PI / 2.0, q, dq);
-		//setReducedPrescStates(m_joints[eBone_Thumb3], q, dq);
+		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 
 	}
 	else if (t < 15.0) {
@@ -3444,15 +3431,47 @@ void World::sceneFingers(double t) {
 		qvec.y() = q;
 		dqvec.y() = dq;
 		setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
+		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 
 	}
 	else if (t < 20.0) {
-		computeTargetQ(15.0, 20.0, t, -D10, D10, q, dq);
+		computeTargetQ(15.0, 20.0, t, -D90, D10, q, dq);
 		Vector2d qvec = Vector2d::Zero();
 		Vector2d dqvec = Vector2d::Zero();
 		qvec.y() = q;
 		dqvec.y() = dq;
-		setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
+		//setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
+
+
+		//computeTargetQ(15.0, 20.0, t, D10, 0, q, dq);
+		//setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
+		computeTargetQ(15.0, 20.0, t, D10/2, 0, q, dq);
+		setReducedPrescStates(m_joints[eBone_Elbow], q, dq);
+
+		//m_joints[eBone_Elbow]->presc->setInactive();
+
+	}
+	else if (t < 25.0) {
+		computeTargetQ(20.0, 25.0, t, D90, D10 - D90, q, dq);
+		Vector2d qvec = Vector2d::Zero();
+		Vector2d dqvec = Vector2d::Zero();
+		qvec.y() = q;
+		dqvec.y() = dq;
+		//setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
+
+		computeTargetQ(20.0, 25.0, t, -D10/2, D10/2, q, dq);
+		setReducedPrescStates(m_joints[eBone_Elbow], q, dq);
+
+	}
+	else if (t < 30.0) {
+
+		computeTargetQ(25.0, 30.0, t, D10 / 2 , 0, q, dq);
+		setReducedPrescStates(m_joints[eBone_Elbow], q, dq);
+
+	}
+	else if (t < 35) {		
+		computeTargetQ(20.0, 25.0, t, -D10 / 2, D10 / 2, q, dq);
+		setReducedPrescStates(m_joints[eBone_Elbow], q, dq);
 
 	}
 	else {
@@ -3465,11 +3484,6 @@ void World::sceneFingers(double t) {
 		//setReducedPrescStates(m_joints[eBone_RingFinger3], 0.0, 0.0);
 		//setReducedPrescStates(m_joints[eBone_PinkyFinger3], 0.0, 0.0);
 	}
-
-	//setReducedPrescStates(m_joints[eBone_IndexFinger0], 0.0, 0.0);
-	//setReducedPrescStates(m_joints[eBone_MiddleFinger0], 0.0, 0.0);
-	//setReducedPrescStates(m_joints[eBone_RingFinger0], 0.0, 0.0);
-	//setReducedPrescStates(m_joints[eBone_PinkyFinger0], 0.0, 0.0);
 }
 
 void World::setMaximalPrescStates(shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i) {
