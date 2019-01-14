@@ -23,7 +23,9 @@ class MatrixStack;
 class ConstraintPrescBody;
 
 typedef Eigen::Triplet<double> T;
-
+#include <json\json.h>
+#include <json\writer.h>
+#include <json\value.h>
 
 class Body 
 {
@@ -41,7 +43,7 @@ public:
 	std::shared_ptr<Joint> getJoint() const { return m_joint; };
 	Matrix4d getEndPoint() { return (E_wi * E_ie); }
 	Matrix4d getBodyByEndPoint(Matrix4d E_we) { return (E_we * E_ei); }
-
+	Vector3d getBodyVelocityByEndPointVelocity(Vector3d v_e);
 	void computeInertia();
 	void countDofs(int &nm);
 	int countM(int &nm, int data);
@@ -57,6 +59,7 @@ public:
 	void init(int &nm);
 	void update();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
+	Json::Value exportJson();
 
 	double m_density;					// Mass/volume
 	Vector6d I_i;						// Inertia at body center

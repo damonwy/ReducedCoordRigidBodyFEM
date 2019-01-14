@@ -22,11 +22,15 @@
 #include "SoftBody.h"
 #include "MeshEmbedding.h"
 
+#include "BrenderManager.h"
+
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
 #include <unsupported/Eigen/MatrixFunctions> // TODO: avoid using this later, write a func instead
+
+BrenderManager *brender;
 
 Scene::Scene() :
 	t(0.0),
@@ -58,6 +62,11 @@ void Scene::load(const string &RESOURCE_DIR)
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
 	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, PARDISO_LU);
+
+	brender = BrenderManager::getInstance();
+	brender->add(m_world);
+	brender->exportBrender(t);
+	m_world->export_part = 1;
 }
 
 
@@ -128,6 +137,13 @@ void Scene::step()
 	//	// reset
 	//	tk = m_solution->t(0);
 	//}	
+
+	brender->exportBrender(t);
+	if (t > 1.0) {
+		m_world->export_part = 2;
+		brender->exportBrender(t);
+		exit(1);
+	}
 }
 
 void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, const shared_ptr<Program> progSoft, shared_ptr<MatrixStack> P) const

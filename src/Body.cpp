@@ -10,7 +10,9 @@
 #include "MatrixStack.h"
 #include "Program.h"
 #include "ConstraintPrescBody.h"
-
+#include <json\writer.h>
+#include <json\json.h>
+#include <json\value.h>
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
@@ -63,6 +65,33 @@ void Body::load(const string &RESOURCE_DIR, string box_shape) {
 	bodyShape->loadMesh(RESOURCE_DIR + box_shape);
 }
 
+Json::Value Body::exportJson() {
+	Eigen::Quaterniond quat(E_wi.block<3, 3>(0, 0));
+
+	Json::Value scale(Json::arrayValue);
+	scale[0] = 1;
+	scale[1] = 1;
+	scale[2] = 1;
+
+	Json::Value location(Json::arrayValue);
+	location[0] = E_wi(0, 3);
+	location[1] = E_wi(1, 3);
+	location[2] = E_wi(2, 3);
+
+	Json::Value q(Json::arrayValue);
+	q[0] = quat.w();
+	q[1] = quat.x();
+	q[2] = quat.y();
+	q[3] = quat.z();
+
+	Json::Value v;
+	v["scale"] = scale;
+	v["location"] = location;
+	v["quat"] = q;
+
+	return v;
+}
+
 void Body::init(int &nm) {
 	bodyShape->init();
 	countDofs(nm);
@@ -78,6 +107,15 @@ void Body::setTransform(Eigen::Matrix4d E) {
 	Ad_ji = SE3::adjoint(E_ji);
 	Ad_ij = SE3::adjoint(E_ij);
 }
+
+Vector3d Body::getBodyVelocityByEndPointVelocity(Vector3d v_we) {
+	Vector3d v_ew = - v_we;
+	Matrix6d Ad_ie = SE3::adjoint(E_ie);
+	Matrix3d R_ie = Ad_ie.block<3, 3>(0, 0);
+	Vector3d v_iw = R_ie * v_ew;
+	return(-v_iw);
+}
+
 
 void Body::update() {
 	computeInertia();
