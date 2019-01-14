@@ -64,7 +64,10 @@ void Scene::load(const string &RESOURCE_DIR)
 	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, PARDISO_LU);
 
 	brender = BrenderManager::getInstance();
-	brender->add(m_world);
+	brender->add(m_world);	
+	
+	m_world->export_part = 0;
+
 	brender->exportBrender(t);
 	m_world->export_part = 1;
 }
@@ -93,6 +96,7 @@ void Scene::init()
 	//tk = m_solution->t(0);
 	drawH = 1.0 / drawHz;
 	search_idx = 0;
+
 }
 
 void Scene::reset()
@@ -105,10 +109,11 @@ void Scene::solve() {
 
 }
 
+int torend = 0;
 void Scene::step()
 {	
 	//int n_steps = m_solution->getNsteps();
-
+	t += 0.01;
 	//int output_idx;
 	//double s;
 	VectorXd ys;
@@ -138,8 +143,11 @@ void Scene::step()
 	//	tk = m_solution->t(0);
 	//}	
 
-	brender->exportBrender(t);
-	if (t > 1.0) {
+	if (torend % 2 == 0) {
+		brender->exportBrender(t);
+	}
+	torend++;
+	if (t > 35.0) {
 		m_world->export_part = 2;
 		brender->exportBrender(t);
 		exit(1);

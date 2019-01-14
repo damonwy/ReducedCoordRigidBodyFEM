@@ -79,10 +79,10 @@ Json::Value Body::exportJson() {
 	location[2] = E_wi(2, 3);
 
 	Json::Value q(Json::arrayValue);
-	q[0] = quat.w();
-	q[1] = quat.x();
-	q[2] = quat.y();
-	q[3] = quat.z();
+	q[0] = quat.x();
+	q[1] = quat.y();
+	q[2] = quat.z();
+	q[3] = quat.w();
 
 	Json::Value v;
 	v["scale"] = scale;

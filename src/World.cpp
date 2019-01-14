@@ -4156,7 +4156,7 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 	mybodyname_vec.push_back(mybody);
 	mybody = "pinky_finger_3";
 	mybodyname_vec.push_back(mybody);
-	std::string resource_dir = "..\resources/";
+	std::string resource_dir = "D:/Research/Muscles/Projects/ReducedCoordRigidBodyFEM/resources/";
 	
 	if (export_part == 0)
 	{
@@ -4281,7 +4281,7 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 		//states.append(v0);
 
 		jsonworld["header"]["objs"] = objs;
-		jsonworld["header"]["states"] = states;
+		
 		for (int i = 0; i < m_bodies.size(); ++i)
 		{
 			Json::Value vi(Json::objectValue);
@@ -4289,6 +4289,7 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 			vi["name"] = mybodyname_vec[i];
 			states.append(vi);
 		}
+		jsonworld["header"]["states"] = states;
 
 		Json::Value v(Json::objectValue);
 		v["frame"] = frame;
