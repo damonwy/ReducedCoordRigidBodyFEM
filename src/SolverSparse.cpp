@@ -857,7 +857,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			qdot1 = sol.segment(0, nr);
 		}
 		//cout << qdot1 << endl << endl;
-
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		yk.segment(0, nr) = q1;

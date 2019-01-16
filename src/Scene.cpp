@@ -65,6 +65,7 @@ void Scene::load(const string &RESOURCE_DIR)
 
 	brender = BrenderManager::getInstance();
 	brender->add(m_world);	
+	brender->setExportDir("D:/Research/Muscles/Projects/ReducedCoordRigidBodyFEM/resources/hand/");
 	
 	m_world->export_part = 0;
 
@@ -142,12 +143,18 @@ void Scene::step()
 	//	// reset
 	//	tk = m_solution->t(0);
 	//}	
+	//if (t > 130.0 && t < 150.0) 
+	//{
+	//	if (torend % 1 == 0) {
+	//		//brender->exportBrender(t);
+	//	}
 
-	if (torend % 2 == 0) {
+	// }
+	if (torend % 5 == 0) {
 		brender->exportBrender(t);
 	}
 	torend++;
-	if (t > 35.0) {
+	if (t > 50.0) {
 		m_world->export_part = 2;
 		brender->exportBrender(t);
 		exit(1);

@@ -37,6 +37,8 @@ public:
 	inline void setFloor(double floor_y) { m_floor_y = floor_y; m_isCollisionWithFloor = true; }
 	bool m_isCollisionWithFloor;
 	double m_floor_y;
+
+	void exportObj(std::ofstream& outfile);
 protected:
 	Vector3f m_color;
 

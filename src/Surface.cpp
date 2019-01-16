@@ -11,6 +11,7 @@
 #include "Node.h"
 #include "FaceTriangle.h"
 #include <omp.h>
+#include <fstream>
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
@@ -200,5 +201,20 @@ void Surface::transform(Matrix4d E) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
 		node->update(E);
+	}
+}
+
+void Surface::exportObj(std::ofstream& outfile)
+{
+	for (int i = 0; i < posBuf.size(); i += 3) {
+		outfile << "v " << posBuf[i] << " " << posBuf[i + 1] << " " << posBuf[i + 2] << endl;
+	}
+
+	for (int i = 0; i < norBuf.size(); i += 3) {
+		outfile << "vt " << norBuf[i] << " " << norBuf[i + 1] << " " << norBuf[i + 2] << endl;
+	}
+
+	for (int i = 0; i < eleBuf.size(); i+=3) {
+		outfile << "f " << eleBuf[i]+1 << "//" << eleBuf[i] + 1 << " " << eleBuf[i+1] + 1 << "//" << eleBuf[i+1] + 1 << " " << eleBuf[i+2] + 1 << "//" << eleBuf[i+2] + 1 << endl;
 	}
 }

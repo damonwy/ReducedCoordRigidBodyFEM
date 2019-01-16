@@ -1520,12 +1520,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		for (int i = 0; i < (int)m_joints.size(); ++i) {
 			m_joints[i]->setDrawRadius(2.0);
-			m_joints[i]->setStiffness(7e8);
+			m_joints[i]->setStiffness(3e8);
 			m_joints[i]->setDamping(1e1);
 		}
-		m_joints[eBone_Thumb0]->setStiffness(1e8);
-		m_joints[eBone_Thumb1]->setStiffness(1e8);
-		m_joints[eBone_Thumb2]->setStiffness(1e8);
+		m_joints[eBone_Thumb0]->setStiffness(3e8);
+		m_joints[eBone_Thumb1]->setStiffness(3e8);
+		m_joints[eBone_Thumb2]->setStiffness(3e8);
 
 
 		VectorXi dof(3);
@@ -3283,23 +3283,24 @@ void World::sceneFingers(double t) {
 	}
 	else if (t < 10.0) {
 		double t_ = t - 5.0;
-		vt_w << 3 * beta * t_, 0.0, 0.0;
+		double alpha = 2.0;
+		vt_w << 2.53 * 3 * beta * t_, 0.0, 0.0;//3
 		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, zero);
 
-		vt_w << 1.2 * beta * t, 0.0, -1.4 * beta * t;
+		vt_w << 1.65 * 1.2 * beta * t, 0.0, -1.55 *1.4 * beta * t;
 		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
 
-		vt_w << 1 * beta * t, 0.0, -1* beta * t;
+		vt_w << 1.6 * 1 * beta * t, 0.0, -1.6 * 1* beta * t;
 		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
 
-		vt_w << 1 * 0.5 * beta * t, 0.0, - 1.5 * beta * t;
+		vt_w <<  0.67 * beta * t, 0.0, -1.5 * beta * t;
 		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_PinkyFinger3, vt_wb, zero);
 
-		vt_w << 1 * beta * t, 0.0, 5 * beta * t;
+		vt_w << 1.6 * beta * t, 0.0, 5.5 * beta * t;
 		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_Thumb2, 0.2 * vt_wb, zero);
 
@@ -3308,15 +3309,15 @@ void World::sceneFingers(double t) {
 		double t_ = t - 10.0;
 		double alpha = 1.7;
 
-		vt_w << - 0.3 *alpha * beta * t, 0.0, 0.0;
+		vt_w << - 0.5 *alpha * beta * t, 0.0, 0.0;
 		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, zero);
 
-		vt_w << -0.3* alpha *beta * t, 0.0, 1 * beta * t;
+		vt_w << -0.5 * alpha *beta * t, 0.0, 1 * beta * t;
 		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
 
-		vt_w << -0.2 * alpha  * beta * t, 0.0, 1 * beta * t;
+		vt_w << -0.5 * alpha  * beta * t, 0.0, 1 * beta * t;
 		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
 
@@ -3324,7 +3325,7 @@ void World::sceneFingers(double t) {
 		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_PinkyFinger3, 0.5 * vt_wb , zero);
 
-		vt_w << - 0.3 * alpha * beta * t, 0.0, - 0.6 * beta * t;
+		vt_w << - 0.55 * alpha * beta * t, 0.0, - 0.4 * beta * t;
 		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(vt_w);
 		setMaximalPrescStates(eBone_Thumb2, vt_wb, zero);
 	}
@@ -4090,8 +4091,8 @@ vector<string> World::getBrenderNames() const
 vector<string> World::getBrenderExtensions() const
 {
 	vector<string> extensions;
-	string json = "json";
-	extensions.push_back(json);
+	string obj = "json";
+	extensions.push_back(obj);
 
 	return extensions;
 }
@@ -4216,69 +4217,69 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 		objs[19] = resource_dir + "3.obj";
 		objs[20] = resource_dir + "2_8.obj";
 
-		//v0["obj"] = 0;
-		//v0["name"] = "elbow";
-		//states.append(v0);
-		//v0["obj"] = 1;
-		//v0["name"] = "wrist";
-		//states.append(v0);
-		//v0["obj"] = 2;
-		//v0["name"] = "thumb_0";
-		//states.append(v0);
-		//v0["obj"] = 3;
-		//v0["name"] = "thumb_1";
-		//states.append(v0);
-		//v0["obj"] = 4;
-		//v0["name"] = "thumb_2";
-		//states.append(v0);
-		//v0["obj"] = 5;
-		//v0["name"] = "index_finger_0";
-		//states.append(v0);
-		//v0["obj"] = 6;
-		//v0["name"] = "index_finger_1";
-		//states.append(v0);
-		//v0["obj"] = 7;
-		//v0["name"] = "index_finger_2";
-		//states.append(v0);
-		//v0["obj"] = 8;
-		//v0["name"] = "index_finger_3";
-		//states.append(v0);
-		//v0["obj"] = 9;
-		//v0["name"] = "middle_finger_0";
-		//states.append(v0);
-		//v0["obj"] = 10;
-		//v0["name"] = "middle_finger_1";
-		//states.append(v0);
-		//v0["obj"] = 11;
-		//v0["name"] = "middle_finger_2";
-		//states.append(v0);
-		//v0["obj"] = 12;
-		//v0["name"] = "middle_finger_3";
-		//states.append(v0);
-		//v0["obj"] = 13;
-		//v0["name"] = "ring_finger_0";
-		//states.append(v0);
-		//v0["obj"] = 14;
-		//v0["name"] = "ring_finger_1";
-		//states.append(v0);
-		//v0["obj"] = 15;
-		//v0["name"] = "ring_finger_2";
-		//states.append(v0);
-		//v0["obj"] = 16;
-		//v0["name"] = "ring_finger_3";
-		//states.append(v0);
-		//v0["obj"] = 17;
-		//v0["name"] = "pinky_finger_0";
-		//states.append(v0);
-		//v0["obj"] = 18;
-		//v0["name"] = "pinky_finger_1";
-		//states.append(v0);
-		//v0["obj"] = 19;
-		//v0["name"] = "pinky_finger_2";
-		//states.append(v0);
-		//v0["obj"] = 20;
-		//v0["name"] = "pinky_finger_3";
-		//states.append(v0);
+		/*v0["obj"] = 0;
+		v0["name"] = "elbow";
+		states.append(v0);
+		v0["obj"] = 1;
+		v0["name"] = "wrist";
+		states.append(v0);
+		v0["obj"] = 2;
+		v0["name"] = "thumb_0";
+		states.append(v0);
+		v0["obj"] = 3;
+		v0["name"] = "thumb_1";
+		states.append(v0);
+		v0["obj"] = 4;
+		v0["name"] = "thumb_2";
+		states.append(v0);
+		v0["obj"] = 5;
+		v0["name"] = "index_finger_0";
+		states.append(v0);
+		v0["obj"] = 6;
+		v0["name"] = "index_finger_1";
+		states.append(v0);
+		v0["obj"] = 7;
+		v0["name"] = "index_finger_2";
+		states.append(v0);
+		v0["obj"] = 8;
+		v0["name"] = "index_finger_3";
+		states.append(v0);
+		v0["obj"] = 9;
+		v0["name"] = "middle_finger_0";
+		states.append(v0);
+		v0["obj"] = 10;
+		v0["name"] = "middle_finger_1";
+		states.append(v0);
+		v0["obj"] = 11;
+		v0["name"] = "middle_finger_2";
+		states.append(v0);
+		v0["obj"] = 12;
+		v0["name"] = "middle_finger_3";
+		states.append(v0);
+		v0["obj"] = 13;
+		v0["name"] = "ring_finger_0";
+		states.append(v0);
+		v0["obj"] = 14;
+		v0["name"] = "ring_finger_1";
+		states.append(v0);
+		v0["obj"] = 15;
+		v0["name"] = "ring_finger_2";
+		states.append(v0);
+		v0["obj"] = 16;
+		v0["name"] = "ring_finger_3";
+		states.append(v0);
+		v0["obj"] = 17;
+		v0["name"] = "pinky_finger_0";
+		states.append(v0);
+		v0["obj"] = 18;
+		v0["name"] = "pinky_finger_1";
+		states.append(v0);
+		v0["obj"] = 19;
+		v0["name"] = "pinky_finger_2";
+		states.append(v0);
+		v0["obj"] = 20;
+		v0["name"] = "pinky_finger_3";
+		states.append(v0);*/
 
 		jsonworld["header"]["objs"] = objs;
 		
@@ -4319,5 +4320,8 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 		jsonworld["body"] = frames;
 		*(outfiles[0]) << jsonworld;
 	}
+
+	
+	//m_meshembeddings[0]->getDenseMesh()->exportObj(outfile);
 }
 
