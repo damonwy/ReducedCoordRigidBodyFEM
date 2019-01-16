@@ -21,6 +21,7 @@ class Joint;
 class Program;
 class MatrixStack;
 class ConstraintPrescBody;
+class ConstraintPrescBodyAttachPoint;
 
 typedef Eigen::Triplet<double> T;
 #include <json\json.h>
@@ -95,12 +96,14 @@ public:
 
 	std::shared_ptr<Body> m_parent;
 	std::shared_ptr<ConstraintPrescBody> presc;						// Presribed motion constraint
+	std::vector<std::shared_ptr<ConstraintPrescBodyAttachPoint> > m_presc_attach_points;
 
 	Vector3f m_attached_color;
 	Vector3f m_sliding_color;
 
 	Vector3f m_body_color;
 	void toggleDrawing(bool isDrawing) { m_isDrawing = isDrawing; }
+
 protected:
 	std::shared_ptr<Shape> bodyShape;
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;

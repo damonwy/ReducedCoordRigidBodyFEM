@@ -10,6 +10,7 @@
 #include "MatrixStack.h"
 #include "Program.h"
 #include "ConstraintPrescBody.h"
+#include "ConstraintPrescBodyAttachPoint.h"
 #include <json\writer.h>
 #include <json\json.h>
 #include <json\value.h>

@@ -94,7 +94,8 @@ enum WorldType {
 	FINGERS,
 	STARFISH3,
 	TEST_HYPER_REDUCED_COORDS,
-	TEST_JOINT_UNIVERSAL
+	TEST_JOINT_UNIVERSAL,
+	TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT
 };
 
 typedef int BoneIndex_t;
@@ -350,9 +351,12 @@ public:
 	void sceneTestMaximalHD(double t);
 	void sceneTestHyperReduced(double t);
 	void sceneFingers(double t);
+	void sceneAttachPoint(double t);
+
+
 	void setMaximalPrescStates(std::shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
 	void setMaximalPrescStates(int index_body, Vector3d vt_w, Vector3d wt_i);
-
+	void setMaximalPrescAttachPointStates(int index_body, int index_point, Vector3d vt_w);
 	
 	void setReducedPrescStates(std::shared_ptr<Joint> j, Eigen::VectorXd q, Eigen::VectorXd dq);
 	void setReducedPrescStates(std::shared_ptr<Joint> j, double q, double dq);

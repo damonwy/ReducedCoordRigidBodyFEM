@@ -57,20 +57,20 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(FINGERS);//_INVERTIBLE
+	m_world = make_shared<World>(TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
 	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, PARDISO_LU);
 
-	brender = BrenderManager::getInstance();
-	brender->add(m_world);	
-	brender->setExportDir("D:/Research/Muscles/Projects/ReducedCoordRigidBodyFEM/resources/hand/");
+	//brender = BrenderManager::getInstance();
+	//brender->add(m_world);	
+	//brender->setExportDir("D:/Research/Muscles/Projects/ReducedCoordRigidBodyFEM/resources/hand/");
 	
-	m_world->export_part = 0;
+	//m_world->export_part = 0;
 
-	brender->exportBrender(t);
-	m_world->export_part = 1;
+	//brender->exportBrender(t);
+	///m_world->export_part = 1;
 }
 
 
@@ -151,13 +151,13 @@ void Scene::step()
 
 	// }
 	if (torend % 5 == 0) {
-		brender->exportBrender(t);
+		//brender->exportBrender(t);
 	}
 	torend++;
 	if (t > 50.0) {
-		m_world->export_part = 2;
-		brender->exportBrender(t);
-		exit(1);
+		//m_world->export_part = 2;
+		//brender->exportBrender(t);
+		//exit(1);
 	}
 }
 

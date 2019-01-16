@@ -316,6 +316,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		case TEST_HYPER_REDUCED_COORDS:
 			m_world->sceneTestHyperReduced(t_i);
 			break;
+		case TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT:
+			m_world->sceneAttachPoint(t_i);
 		default:
 			break;
 		}

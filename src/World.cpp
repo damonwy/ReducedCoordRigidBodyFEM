@@ -43,6 +43,7 @@
 #include "ConstraintAttachSoftBody.h"
 #include "ConstraintPrescBody.h"
 #include "ConstraintPrescJoint.h"
+#include "ConstraintPrescBodyAttachPoint.h"
 
 #include "Deformable.h"
 #include "DeformableSpring.h"
@@ -1700,6 +1701,44 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 		break;
+	case TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT:
+	{
+		m_h = 5.0e-2;
+		density = 1.0;
+		m_grav << 0.0, -980, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		//m_nbodies = 5;
+		//m_njoints = 5;
+		m_Hexpected = 10000; // todo
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		// Inits rigid bodies
+		for (int i = 0; i < 4; i++) {
+
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 2.0), 0.0, RESOURCE_DIR);
+			}
+			else if (i == 1) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+			else if (i == 2) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+			}
+		}
+		Vector3i dof;
+		dof << 0, 1, 2;
+		auto con0 = make_shared<ConstraintPrescBodyAttachPoint>(m_bodies[3], Vector3d(5.0, 0.0, 0.0), dof, REDMAX_EULER);
+		m_nconstraints++;
+		m_constraints.push_back(con0);
+		break;
+	}
 default:
 		break;
 	}
@@ -3573,6 +3612,16 @@ void World::setMaximalPrescStates(int index_body, Vector3d vt_w, Vector3d wt_i) 
 	b->presc->m_qdot.segment<3>(3) = vt_i;
 }
 
+void World::setMaximalPrescAttachPointStates(int index_body, int index_point, Vector3d vt_w) {
+	auto b = m_bodies[index_body];
+	auto con = b->m_presc_attach_points[index_point];
+	con->setActive();
+
+	con->m_qdot = vt_w;
+
+}
+
+
 void World::setReducedPrescStates(shared_ptr<Joint> j, VectorXd q, VectorXd dq) {
 	j->presc->setActive();
 	j->presc->m_q = q;
@@ -4071,6 +4120,21 @@ void World::sceneTestHyperReduced(double t) {
 
 }
 
+void World::sceneAttachPoint(double t) {
+
+	Vector3d vt_w, wt_i;
+	Vector3d zero = Vector3d::Zero();
+	vt_w.setZero();
+	cout << t << endl;
+
+	double beta = 0.3;
+
+	if (t < 5.0) {
+		vt_w << 0, 0.0, 0.0;
+		setMaximalPrescAttachPointStates(3, 0, vt_w);
+	}
+}
+
 // Export
 Json::Value jsonworld;
 Json::Value frames(Json::arrayValue);
@@ -4108,6 +4172,8 @@ vector<int> World::getBrenderTypes() const
 
 	return types;
 }
+
+
 
 void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, double time) const
 {
@@ -4161,37 +4227,6 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 	
 	if (export_part == 0)
 	{
-
-		//auto elbow = addBody(density, Vector3d(len_elbow, short_side, short_side), Vector3d(len_elbow / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "36.obj");
-		//auto j_elbow = addJointRevolute(elbow, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d::UnitZ(), 0.0), 0.0, RESOURCE_DIR);
-
-		//auto wrist = addBody(density, Vector3d(short_side, short_side, short_side), Vector3d(0.0, 0.0, 0.0), preXY, RESOURCE_DIR, "wrist.obj");
-		//auto j_wrist = addJointUniversalXY(wrist, Vector3d(len_elbow, 0.0, 0.0), SE3::aaToMat(Vector3d::UnitZ(), D30) * changeXY, RESOURCE_DIR, j_elbow);
-		////
-		//auto thumb_0 = addBody(density, Vector3d(len_thumb0, short_side, short_side), Vector3d(0.0, 0.0, len_thumb0 / 2.0), preXY, RESOURCE_DIR, "11_5.obj");
-		//auto thumb_1 = addBody(density, Vector3d(len_thumb1, short_side, short_side), Vector3d(len_thumb1 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "6.obj");
-		//auto thumb_2 = addBody(density, Vector3d(len_thumb2, short_side, short_side), Vector3d(len_thumb2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "4.obj");
-
-		//auto index_finger_0 = addBody(density, Vector3d(len_index_0, short_side, short_side), Vector3d(len_index_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "12.obj");
-		//auto index_finger_1 = addBody(density, Vector3d(len_index_1, short_side, short_side), Vector3d(0.0, 0.0, len_index_1 / 2.0), preXY, RESOURCE_DIR, "7.obj");
-		//auto index_finger_2 = addBody(density, Vector3d(len_index_2, short_side, short_side), Vector3d(len_index_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "4.obj");
-		//auto index_finger_3 = addBody(density, Vector3d(len_index_3, short_side, short_side), Vector3d(len_index_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "3_5.obj");
-
-		//auto middle_finger_0 = addBody(density, Vector3d(len_middle_0, short_side, short_side), Vector3d(len_middle_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "11.obj");
-		//auto middle_finger_1 = addBody(density, Vector3d(len_middle_1, short_side, short_side), Vector3d(0.0, 0.0, len_middle_1 / 2.0), preXY, RESOURCE_DIR, "7.obj");
-		//auto middle_finger_2 = addBody(density, Vector3d(len_middle_2, short_side, short_side), Vector3d(len_middle_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "4_5.obj");
-		//auto middle_finger_3 = addBody(density, Vector3d(len_middle_3, short_side, short_side), Vector3d(len_middle_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "3_5.obj");
-
-		//auto ring_finger_0 = addBody(density, Vector3d(len_ring_0, short_side, short_side), Vector3d(len_ring_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "10.obj");
-		//auto ring_finger_1 = addBody(density, Vector3d(len_ring_1, short_side, short_side), Vector3d(0.0, 0.0, len_ring_1 / 2.0), preXY, RESOURCE_DIR, "6_5.obj");
-		//auto ring_finger_2 = addBody(density, Vector3d(len_ring_2, short_side, short_side), Vector3d(len_ring_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "4_2.obj");
-		//auto ring_finger_3 = addBody(density, Vector3d(len_ring_3, short_side, short_side), Vector3d(len_ring_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "3_3.obj");
-
-		//auto pinky_finger_0 = addBody(density, Vector3d(len_pinky_0, short_side, short_side), Vector3d(len_pinky_0 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "9.obj");
-		//auto pinky_finger_1 = addBody(density, Vector3d(len_pinky_1, short_side, short_side), Vector3d(0.0, 0.0, len_pinky_1 / 2.0), preXY, RESOURCE_DIR, "4.obj");
-		//auto pinky_finger_2 = addBody(density, Vector3d(len_pinky_2, short_side, short_side), Vector3d(len_pinky_2 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "3.obj");
-		//auto pinky_finger_3 = addBody(density, Vector3d(len_pinky_3, short_side, short_side), Vector3d(len_pinky_3 / 2.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "2_8.obj");
-		//
 		Json::Value objs(Json::arrayValue);
 		objs[0] = resource_dir + "36.obj";
 		objs[1] = resource_dir + "wrist.obj";
@@ -4216,70 +4251,6 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 		objs[18] = resource_dir + "4.obj";
 		objs[19] = resource_dir + "3.obj";
 		objs[20] = resource_dir + "2_8.obj";
-
-		/*v0["obj"] = 0;
-		v0["name"] = "elbow";
-		states.append(v0);
-		v0["obj"] = 1;
-		v0["name"] = "wrist";
-		states.append(v0);
-		v0["obj"] = 2;
-		v0["name"] = "thumb_0";
-		states.append(v0);
-		v0["obj"] = 3;
-		v0["name"] = "thumb_1";
-		states.append(v0);
-		v0["obj"] = 4;
-		v0["name"] = "thumb_2";
-		states.append(v0);
-		v0["obj"] = 5;
-		v0["name"] = "index_finger_0";
-		states.append(v0);
-		v0["obj"] = 6;
-		v0["name"] = "index_finger_1";
-		states.append(v0);
-		v0["obj"] = 7;
-		v0["name"] = "index_finger_2";
-		states.append(v0);
-		v0["obj"] = 8;
-		v0["name"] = "index_finger_3";
-		states.append(v0);
-		v0["obj"] = 9;
-		v0["name"] = "middle_finger_0";
-		states.append(v0);
-		v0["obj"] = 10;
-		v0["name"] = "middle_finger_1";
-		states.append(v0);
-		v0["obj"] = 11;
-		v0["name"] = "middle_finger_2";
-		states.append(v0);
-		v0["obj"] = 12;
-		v0["name"] = "middle_finger_3";
-		states.append(v0);
-		v0["obj"] = 13;
-		v0["name"] = "ring_finger_0";
-		states.append(v0);
-		v0["obj"] = 14;
-		v0["name"] = "ring_finger_1";
-		states.append(v0);
-		v0["obj"] = 15;
-		v0["name"] = "ring_finger_2";
-		states.append(v0);
-		v0["obj"] = 16;
-		v0["name"] = "ring_finger_3";
-		states.append(v0);
-		v0["obj"] = 17;
-		v0["name"] = "pinky_finger_0";
-		states.append(v0);
-		v0["obj"] = 18;
-		v0["name"] = "pinky_finger_1";
-		states.append(v0);
-		v0["obj"] = 19;
-		v0["name"] = "pinky_finger_2";
-		states.append(v0);
-		v0["obj"] = 20;
-		v0["name"] = "pinky_finger_3";
-		states.append(v0);*/
 
 		jsonworld["header"]["objs"] = objs;
 		
@@ -4324,4 +4295,6 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 	
 	//m_meshembeddings[0]->getDenseMesh()->exportObj(outfile);
 }
+
+
 
