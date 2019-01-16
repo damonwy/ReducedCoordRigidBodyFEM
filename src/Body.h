@@ -21,9 +21,12 @@ class Joint;
 class Program;
 class MatrixStack;
 class ConstraintPrescBody;
+class ConstraintPrescBodyAttachPoint;
 
 typedef Eigen::Triplet<double> T;
-
+#include <json\json.h>
+#include <json\writer.h>
+#include <json\value.h>
 
 class Body 
 {
@@ -41,7 +44,7 @@ public:
 	std::shared_ptr<Joint> getJoint() const { return m_joint; };
 	Matrix4d getEndPoint() { return (E_wi * E_ie); }
 	Matrix4d getBodyByEndPoint(Matrix4d E_we) { return (E_we * E_ei); }
-
+	Vector3d getBodyVelocityByEndPointVelocity(Vector3d v_e);
 	void computeInertia();
 	void countDofs(int &nm);
 	int countM(int &nm, int data);
@@ -57,6 +60,7 @@ public:
 	void init(int &nm);
 	void update();
 	void draw(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
+	Json::Value exportJson();
 
 	double m_density;					// Mass/volume
 	Vector6d I_i;						// Inertia at body center
@@ -92,12 +96,14 @@ public:
 
 	std::shared_ptr<Body> m_parent;
 	std::shared_ptr<ConstraintPrescBody> presc;						// Presribed motion constraint
+	std::vector<std::shared_ptr<ConstraintPrescBodyAttachPoint> > m_presc_attach_points;
 
 	Vector3f m_attached_color;
 	Vector3f m_sliding_color;
 
 	Vector3f m_body_color;
 	void toggleDrawing(bool isDrawing) { m_isDrawing = isDrawing; }
+
 protected:
 	std::shared_ptr<Shape> bodyShape;
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;

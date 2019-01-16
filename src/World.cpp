@@ -43,6 +43,7 @@
 #include "ConstraintAttachSoftBody.h"
 #include "ConstraintPrescBody.h"
 #include "ConstraintPrescJoint.h"
+#include "ConstraintPrescBodyAttachPoint.h"
 
 #include "Deformable.h"
 #include "DeformableSpring.h"
@@ -68,6 +69,10 @@
 #include "Line.h"
 #include "Surface.h"
 
+#include <json\writer.h>
+#include <json\json.h>
+#include <json\value.h>
+
 #define D90 M_PI/2.0
 #define D180 M_PI
 #define D30 M_PI/6.0
@@ -87,6 +92,8 @@ World::World() :
 {
 	m_energy.K = 0.0;
 	m_energy.V = 0.0;
+
+	export_part = 0;
 }
 
 World::World(WorldType type) :
@@ -1514,12 +1521,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		for (int i = 0; i < (int)m_joints.size(); ++i) {
 			m_joints[i]->setDrawRadius(2.0);
-			m_joints[i]->setStiffness(1e3);
+			m_joints[i]->setStiffness(3e8);
 			m_joints[i]->setDamping(1e1);
 		}
-		m_joints[eBone_Thumb0]->setStiffness(1e8);
-		m_joints[eBone_Thumb1]->setStiffness(1e8);
-		m_joints[eBone_Thumb2]->setStiffness(1e8);
+		m_joints[eBone_Thumb0]->setStiffness(3e8);
+		m_joints[eBone_Thumb1]->setStiffness(3e8);
+		m_joints[eBone_Thumb2]->setStiffness(3e8);
 
 
 		VectorXi dof(3);
@@ -1533,23 +1540,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 		addConstraintPrescJoint(j_elbow); // fixed
 		addConstraintPrescJoint(j_wrist); // control z angle
-
-		//addConstraintPrescJoint(j_index_finger_3);
-		//addConstraintPrescJoint(j_index_finger_0);
-
-		//addConstraintPrescJoint(j_thumb_0);
-		//addConstraintPrescJoint(j_thumb_1);
-		//addConstraintPrescJoint(j_thumb_2);
-		//addConstraintPrescJoint(j_thumb_3);
-
-		//addConstraintPrescJoint(j_middle_finger_3);
-		//addConstraintPrescJoint(j_middle_finger_0);
-
-		//addConstraintPrescJoint(j_ring_finger_3);
-		//addConstraintPrescJoint(j_ring_finger_0);
-
-		//addConstraintPrescJoint(j_pinky_finger_3);
-		//addConstraintPrescJoint(j_pinky_finger_0);
 
 		break;
 	}
@@ -1711,6 +1701,44 @@ void World::load(const std::string &RESOURCE_DIR) {
 
 	}
 		break;
+	case TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT:
+	{
+		m_h = 5.0e-2;
+		density = 1.0;
+		m_grav << 0.0, -980, 0.0;
+		Eigen::from_json(js["sides"], sides);
+		//m_nbodies = 5;
+		//m_njoints = 5;
+		m_Hexpected = 10000; // todo
+		m_tspan << 0.0, 5.0;
+		m_t = 0.0;
+		// Inits rigid bodies
+		for (int i = 0; i < 4; i++) {
+
+			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
+			// Inits joints
+			if (i == 0) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 2.0), 0.0, RESOURCE_DIR);
+			}
+			else if (i == 1) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+			else if (i == 2) {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+
+			}
+			else {
+				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
+			}
+		}
+		Vector3i dof;
+		dof << 0, 1, 2;
+		auto con0 = make_shared<ConstraintPrescBodyAttachPoint>(m_bodies[3], Vector3d(5.0, 0.0, 0.0), dof, REDMAX_EULER);
+		m_nconstraints++;
+		m_constraints.push_back(con0);
+		break;
+	}
 default:
 		break;
 	}
@@ -3261,6 +3289,7 @@ void World::sceneTestMaximalHD(double t) {
 
 void World::sceneFingers(double t) {
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
+	Vector3d vt_wb, wt_ib;
 	Vector3d zero = Vector3d::Zero();
 	vt_w.setZero();
 	vtdot_w.setZero();
@@ -3272,55 +3301,72 @@ void World::sceneFingers(double t) {
 	
 	if (t < 5.0) {
 		vt_w << -3 * beta * t, 0.0, 0.0;
-		setMaximalPrescStates(eBone_IndexFinger3, vt_w, wt_i);
+		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, wt_i);
 
-		vt_w << -3 * beta * t, 0.0, 3 * beta * t;
-		setMaximalPrescStates(eBone_MiddleFinger3, vt_w, zero);
+		vt_w << -3 * beta * t, 0.0, 3 * beta * t;		
+		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
 
 		vt_w << -3 * beta * t, 0.0, 4 * beta * t;
-		setMaximalPrescStates(eBone_RingFinger3, vt_w, zero);
+		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
 
 		vt_w << -3 *0.5 * beta * t, 0.0, 4 * beta * t;
-		setMaximalPrescStates(eBone_PinkyFinger3,  vt_w, zero);
+		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_PinkyFinger3, vt_wb, zero);
 
 		vt_w << -3 * beta * t, 0.0, - 5 * beta * t;
-		setMaximalPrescStates(eBone_Thumb2, 0.5 * vt_w, zero);
+		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_Thumb2, 0.5 * vt_wb, zero);
 	}
 	else if (t < 10.0) {
 		double t_ = t - 5.0;
-		vt_w << 3 * beta * t_, 0.0, 0.0;
-		setMaximalPrescStates(eBone_IndexFinger3, vt_w, zero);
+		double alpha = 2.0;
+		vt_w << 2.53 * 3 * beta * t_, 0.0, 0.0;//3
+		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, zero);
 
-		vt_w << 1.2 * beta * t, 0.0, -1.4 * beta * t;
-		setMaximalPrescStates(eBone_MiddleFinger3, vt_w, zero);
+		vt_w << 1.65 * 1.2 * beta * t, 0.0, -1.55 *1.4 * beta * t;
+		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
 
-		vt_w << 1 * beta * t, 0.0, -1* beta * t;
-		setMaximalPrescStates(eBone_RingFinger3, vt_w, zero);
+		vt_w << 1.6 * 1 * beta * t, 0.0, -1.6 * 1* beta * t;
+		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
 
-		vt_w << 1 * 0.5 * beta * t, 0.0, - 1.5 * beta * t;
-		setMaximalPrescStates(eBone_PinkyFinger3, vt_w, zero);
+		vt_w <<  0.67 * beta * t, 0.0, -1.5 * beta * t;
+		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_PinkyFinger3, vt_wb, zero);
 
-		vt_w << 1 * beta * t, 0.0, 5 * beta * t;
-		setMaximalPrescStates(eBone_Thumb2, 0.2 * vt_w, zero);
+		vt_w << 1.6 * beta * t, 0.0, 5.5 * beta * t;
+		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_Thumb2, 0.2 * vt_wb, zero);
 
 	}
 	else if (t < 15.0) {
 		double t_ = t - 10.0;
+		double alpha = 1.7;
 
-		vt_w << - 1.2 * beta * t, 0.0, 0.0;
-		setMaximalPrescStates(eBone_IndexFinger3, vt_w, zero);
+		vt_w << - 0.5 *alpha * beta * t, 0.0, 0.0;
+		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, zero);
 
-		vt_w << -1.0* beta * t, 0.0, 1 * beta * t;
-		setMaximalPrescStates(eBone_MiddleFinger3, vt_w, zero);
+		vt_w << -0.5 * alpha *beta * t, 0.0, 1 * beta * t;
+		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
 
-		vt_w << -0.6 * beta * t, 0.0, 1 * beta * t;
-		setMaximalPrescStates(eBone_RingFinger3, vt_w, zero);
+		vt_w << -0.5 * alpha  * beta * t, 0.0, 1 * beta * t;
+		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
 
-		vt_w << - 0.6 * beta * t, 0.0, 1.5 * beta * t;
-		setMaximalPrescStates(eBone_PinkyFinger3, 0.5 * vt_w, zero);
+		vt_w << - 0.6 * alpha * beta * t, 0.0, 1.9 * beta * t;
+		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_PinkyFinger3, 0.5 * vt_wb , zero);
 
-		vt_w << - 0.9 * beta * t, 0.0, - 0.8 * beta * t;
-		setMaximalPrescStates(eBone_Thumb2, vt_w, zero);
+		vt_w << - 0.55 * alpha * beta * t, 0.0, - 0.4 * beta * t;
+		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(vt_w);
+		setMaximalPrescStates(eBone_Thumb2, vt_wb, zero);
 	}
 	else if (t < 20.0) {
 		// Scene 1:
@@ -3345,40 +3391,89 @@ void World::sceneFingers(double t) {
 
 		// Scene 2:
 
+		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		//cout << vt_wb << endl;
+		wtdot_i << 0.0, 0.0, 1.0;
+		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, zero);
 
-		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
-		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
-		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
-		setMaximalPrescStates(eBone_PinkyFinger3, zero, zero);
-		setMaximalPrescStates(eBone_Thumb2, zero, zero);
+		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_PinkyFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_Thumb2, vt_wb, zero);
 
 	}
 	else if (t < 25.0) {
+		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, zero);
 
-		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
-		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
-		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
-		setMaximalPrescStates(eBone_PinkyFinger3, zero, zero);
-		setMaximalPrescStates(eBone_Thumb2, zero, zero);
+		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_PinkyFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_Thumb2, vt_wb, zero);
 
 
 	}
 	else if (t < 30.0) {
+		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, zero);
 
-		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
-		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
-		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
-		setMaximalPrescStates(eBone_PinkyFinger3, zero, zero);
-		setMaximalPrescStates(eBone_Thumb2, zero, zero);
+		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_PinkyFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_Thumb2, vt_wb, zero);
 
 	}
 	else if (t < 35.0) {
+		vt_wb = m_bodies[eBone_IndexFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_IndexFinger3, vt_wb, zero);
 
-		setMaximalPrescStates(eBone_IndexFinger3, zero, zero);
-		setMaximalPrescStates(eBone_MiddleFinger3, zero, zero);
-		setMaximalPrescStates(eBone_RingFinger3, zero, zero);
-		setMaximalPrescStates(eBone_PinkyFinger3, zero, zero);
-		setMaximalPrescStates(eBone_Thumb2, zero, zero);
+		vt_wb = m_bodies[eBone_MiddleFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_MiddleFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_RingFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_RingFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_PinkyFinger3]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_PinkyFinger3, vt_wb, zero);
+
+		vt_wb = m_bodies[eBone_Thumb2]->getBodyVelocityByEndPointVelocity(zero);
+		setMaximalPrescStates(eBone_Thumb2, vt_wb, zero);
+
+
+
+	}
+	else if (t < 40.0) {
+		double t_ = t - 35.0;
+
+		vt_w << 0.0, 3 * beta * t_, 0.0;
+
+		//setMaximalPrescStates(eBone_IndexFinger3, vt_w, zero);
+
+
+
+	}
+	else if (t < 45.0) {
 
 
 
@@ -3411,7 +3506,7 @@ void World::sceneFingers(double t) {
 		qvec.y() = q;
 		dqvec.y() = dq;
 
-		setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
+		//setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
 		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 	}
 	else if (t < 10.0) {
@@ -3420,7 +3515,7 @@ void World::sceneFingers(double t) {
 		Vector2d dqvec = Vector2d::Zero();
 		qvec.y() = q;
 		dqvec.y() = dq;
-		setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
+		//setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
 		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 
 	}
@@ -3430,7 +3525,7 @@ void World::sceneFingers(double t) {
 		Vector2d dqvec = Vector2d::Zero();
 		qvec.y() = q;
 		dqvec.y() = dq;
-		setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
+		//setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
 		setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
 
 	}
@@ -3445,7 +3540,7 @@ void World::sceneFingers(double t) {
 
 		//computeTargetQ(15.0, 20.0, t, D10, 0, q, dq);
 		//setReducedPrescStates(m_joints[eBone_Elbow], 0.0, 0.0);
-		computeTargetQ(15.0, 20.0, t, D10/2, 0, q, dq);
+		computeTargetQ(15.0, 20.0, t, D10*1.5, 0, q, dq);
 		setReducedPrescStates(m_joints[eBone_Elbow], q, dq);
 
 		//m_joints[eBone_Elbow]->presc->setInactive();
@@ -3459,19 +3554,25 @@ void World::sceneFingers(double t) {
 		dqvec.y() = dq;
 		//setReducedPrescStates(m_joints[eBone_Wrist], qvec, dqvec);
 
-		computeTargetQ(20.0, 25.0, t, -D10/2, D10/2, q, dq);
+		computeTargetQ(20.0, 25.0, t, -D10*1.5, D10*1.5, q, dq);
 		setReducedPrescStates(m_joints[eBone_Elbow], q, dq);
 
 	}
 	else if (t < 30.0) {
-
-		computeTargetQ(25.0, 30.0, t, D10 / 2 , 0, q, dq);
+		computeTargetQ(25.0, 30.0, t, D10*1.5, 0, q, dq);
 		setReducedPrescStates(m_joints[eBone_Elbow], q, dq);
 
 	}
-	else if (t < 35) {		
-		computeTargetQ(20.0, 25.0, t, -D10 / 2, D10 / 2, q, dq);
+	else if (t < 35.0) {		
+		computeTargetQ(30.0, 35.0, t, -D10*1.5, D10*1.5, q, dq);
 		setReducedPrescStates(m_joints[eBone_Elbow], q, dq);
+
+	}
+	else if (t < 40.0) {
+
+		setReducedPrescStates(m_joints[eBone_Elbow], 0, 0);
+	//	setReducedPrescStates(m_joints[eBone_Wrist], 0, 0);
+
 
 	}
 	else {
@@ -3510,6 +3611,16 @@ void World::setMaximalPrescStates(int index_body, Vector3d vt_w, Vector3d wt_i) 
 	b->presc->m_qdot.segment<3>(0) = wt_i;
 	b->presc->m_qdot.segment<3>(3) = vt_i;
 }
+
+void World::setMaximalPrescAttachPointStates(int index_body, int index_point, Vector3d vt_w) {
+	auto b = m_bodies[index_body];
+	auto con = b->m_presc_attach_points[index_point];
+	con->setActive();
+
+	con->m_qdot = vt_w;
+
+}
+
 
 void World::setReducedPrescStates(shared_ptr<Joint> j, VectorXd q, VectorXd dq) {
 	j->presc->setActive();
@@ -4008,3 +4119,182 @@ void World::sceneTestHyperReduced(double t) {
 	}
 
 }
+
+void World::sceneAttachPoint(double t) {
+
+	Vector3d vt_w, wt_i;
+	Vector3d zero = Vector3d::Zero();
+	vt_w.setZero();
+	cout << t << endl;
+
+	double beta = 0.3;
+
+	if (t < 5.0) {
+		vt_w << 0, 0.0, 0.0;
+		setMaximalPrescAttachPointStates(3, 0, vt_w);
+	}
+}
+
+// Export
+Json::Value jsonworld;
+Json::Value frames(Json::arrayValue);
+
+int World::getBrenderCount() const
+{
+	return 1;
+}
+
+vector<string> World::getBrenderNames() const
+{
+	vector<string> names;
+	names.push_back("World");
+
+	return names;
+}
+
+vector<string> World::getBrenderExtensions() const
+{
+	vector<string> extensions;
+	string obj = "json";
+	extensions.push_back(obj);
+
+	return extensions;
+}
+
+vector<int> World::getBrenderTypes() const
+{
+	vector<int> types;
+	int mytype;
+	mytype = Brenderable::ResetAppend;
+	types.push_back(mytype);
+
+	//types.push_back(Brenderable::Truncate);
+
+	return types;
+}
+
+
+
+void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, double time) const
+{
+	ofstream &outfile = *outfiles[0];
+
+	Json::Value states(Json::arrayValue);
+	vector<string> mybodyname_vec;
+	string mybody = "elbow";
+	mybodyname_vec.push_back(mybody);
+	mybody = "wrist";
+	mybodyname_vec.push_back(mybody);
+	mybody = "thumb_0";
+	mybodyname_vec.push_back(mybody);
+	mybody = "thumb_1";
+	mybodyname_vec.push_back(mybody);
+	mybody = "thumb_2";
+	mybodyname_vec.push_back(mybody);
+	mybody = "index_finger_0";
+	mybodyname_vec.push_back(mybody);
+	mybody = "index_finger_1";
+	mybodyname_vec.push_back(mybody);
+	mybody = "index_finger_2";
+	mybodyname_vec.push_back(mybody);
+	mybody = "index_finger_3";
+	mybodyname_vec.push_back(mybody);
+	mybody = "middle_finger_0";
+	mybodyname_vec.push_back(mybody);
+	mybody = "middle_finger_1";
+	mybodyname_vec.push_back(mybody);
+	mybody = "middle_finger_2";
+	mybodyname_vec.push_back(mybody);
+	mybody = "middle_finger_3";
+	mybodyname_vec.push_back(mybody);
+	mybody = "ring_finger_0";
+	mybodyname_vec.push_back(mybody);
+	mybody = "ring_finger_1";
+	mybodyname_vec.push_back(mybody);
+	mybody = "ring_finger_2";
+	mybodyname_vec.push_back(mybody);
+	mybody = "ring_finger_3";
+	mybodyname_vec.push_back(mybody);
+	mybody = "pinky_finger_0";
+	mybodyname_vec.push_back(mybody);
+	mybody = "pinky_finger_1";
+	mybodyname_vec.push_back(mybody);
+	mybody = "pinky_finger_2";
+	mybodyname_vec.push_back(mybody);
+	mybody = "pinky_finger_3";
+	mybodyname_vec.push_back(mybody);
+	std::string resource_dir = "D:/Research/Muscles/Projects/ReducedCoordRigidBodyFEM/resources/";
+	
+	if (export_part == 0)
+	{
+		Json::Value objs(Json::arrayValue);
+		objs[0] = resource_dir + "36.obj";
+		objs[1] = resource_dir + "wrist.obj";
+		objs[2] = resource_dir + "11_5.obj";
+		objs[3] = resource_dir + "6.obj";
+		objs[4] = resource_dir + "4.obj";
+		objs[5] = resource_dir + "12.obj";
+		objs[6] = resource_dir + "7.obj";
+		objs[7] = resource_dir + "4.obj";
+
+		objs[8] = resource_dir + "3_5.obj";
+		objs[9] = resource_dir + "11.obj";
+		objs[10] = resource_dir + "7.obj";
+		objs[11] = resource_dir + "4_5.obj";
+		objs[12] = resource_dir + "3_5.obj";
+
+		objs[13] = resource_dir + "10.obj";
+		objs[14] = resource_dir + "6_5.obj";
+		objs[15] = resource_dir + "4_2.obj";
+		objs[16] = resource_dir + "3_3.obj";
+		objs[17] = resource_dir + "9.obj";
+		objs[18] = resource_dir + "4.obj";
+		objs[19] = resource_dir + "3.obj";
+		objs[20] = resource_dir + "2_8.obj";
+
+		jsonworld["header"]["objs"] = objs;
+		
+		for (int i = 0; i < m_bodies.size(); ++i)
+		{
+			Json::Value vi(Json::objectValue);
+			vi["obj"] = i;
+			vi["name"] = mybodyname_vec[i];
+			states.append(vi);
+		}
+		jsonworld["header"]["states"] = states;
+
+		Json::Value v(Json::objectValue);
+		v["frame"] = frame;
+
+		for (int i = 0; i < m_bodies.size(); ++i)
+		{
+			v[mybodyname_vec[i]] = m_bodies[i]->exportJson();
+		}
+
+		frames.append(v);
+
+	}
+	// print frame
+	else if (export_part == 1)
+	{
+		Json::Value v(Json::objectValue);
+		v["frame"] = frame;
+
+		for (int i = 0; i < m_bodies.size(); ++i)
+		{
+			v[mybodyname_vec[i]] = m_bodies[i]->exportJson();
+		}
+
+		frames.append(v);
+	}
+	else {
+		jsonworld["body"] = frames;
+		*(outfiles[0]) << jsonworld;
+	}
+
+	
+	//m_meshembeddings[0]->getDenseMesh()->exportObj(outfile);
+}
+
+
+

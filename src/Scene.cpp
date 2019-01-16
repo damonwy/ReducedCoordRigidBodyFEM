@@ -22,11 +22,15 @@
 #include "SoftBody.h"
 #include "MeshEmbedding.h"
 
+#include "BrenderManager.h"
+
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
 #include <unsupported/Eigen/MatrixFunctions> // TODO: avoid using this later, write a func instead
+
+BrenderManager *brender;
 
 Scene::Scene() :
 	t(0.0),
@@ -53,11 +57,20 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(FINGERS);//_INVERTIBLE
+	m_world = make_shared<World>(TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
 	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, PARDISO_LU);
+
+	//brender = BrenderManager::getInstance();
+	//brender->add(m_world);	
+	//brender->setExportDir("D:/Research/Muscles/Projects/ReducedCoordRigidBodyFEM/resources/hand/");
+	
+	//m_world->export_part = 0;
+
+	//brender->exportBrender(t);
+	///m_world->export_part = 1;
 }
 
 
@@ -84,6 +97,7 @@ void Scene::init()
 	//tk = m_solution->t(0);
 	drawH = 1.0 / drawHz;
 	search_idx = 0;
+
 }
 
 void Scene::reset()
@@ -96,10 +110,11 @@ void Scene::solve() {
 
 }
 
+int torend = 0;
 void Scene::step()
 {	
 	//int n_steps = m_solution->getNsteps();
-
+	t += 0.01;
 	//int output_idx;
 	//double s;
 	VectorXd ys;
@@ -128,6 +143,22 @@ void Scene::step()
 	//	// reset
 	//	tk = m_solution->t(0);
 	//}	
+	//if (t > 130.0 && t < 150.0) 
+	//{
+	//	if (torend % 1 == 0) {
+	//		//brender->exportBrender(t);
+	//	}
+
+	// }
+	if (torend % 5 == 0) {
+		//brender->exportBrender(t);
+	}
+	torend++;
+	if (t > 50.0) {
+		//m_world->export_part = 2;
+		//brender->exportBrender(t);
+		//exit(1);
+	}
 }
 
 void Scene::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, const shared_ptr<Program> progSoft, shared_ptr<MatrixStack> P) const

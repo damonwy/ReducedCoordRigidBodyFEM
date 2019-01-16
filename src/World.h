@@ -10,8 +10,12 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
-#include <json.hpp>
+#include <json\json.h>
+#include <json\writer.h>
+#include <json\value.h>
 #include "MLCommon.h"
+
+#include "Brenderable.h"
 
 class Joint;
 class JointRevolute;
@@ -90,7 +94,8 @@ enum WorldType {
 	FINGERS,
 	STARFISH3,
 	TEST_HYPER_REDUCED_COORDS,
-	TEST_JOINT_UNIVERSAL
+	TEST_JOINT_UNIVERSAL,
+	TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT
 };
 
 typedef int BoneIndex_t;
@@ -134,7 +139,7 @@ struct Floor {
 	}
 };
 
-class World
+class World : public Brenderable
 {
 public:
 	World();
@@ -346,9 +351,12 @@ public:
 	void sceneTestMaximalHD(double t);
 	void sceneTestHyperReduced(double t);
 	void sceneFingers(double t);
+	void sceneAttachPoint(double t);
+
+
 	void setMaximalPrescStates(std::shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
 	void setMaximalPrescStates(int index_body, Vector3d vt_w, Vector3d wt_i);
-
+	void setMaximalPrescAttachPointStates(int index_body, int index_point, Vector3d vt_w);
 	
 	void setReducedPrescStates(std::shared_ptr<Joint> j, Eigen::VectorXd q, Eigen::VectorXd dq);
 	void setReducedPrescStates(std::shared_ptr<Joint> j, double q, double dq);
@@ -378,6 +386,13 @@ public:
 		const std::shared_ptr<Program> progSimple, 
 		std::shared_ptr<MatrixStack> P);
 
+	int export_part;
+	int getBrenderCount() const;
+	std::vector<std::string> getBrenderNames() const;
+	std::vector<std::string> getBrenderExtensions() const;
+	std::vector<int> getBrenderTypes() const;
+	void exportBrender(std::vector< std::shared_ptr< std::ofstream > > outfiles, int frame, double time) const;
+
 	void setTime(double t) { m_t = t; }
 	double getTime() const { return m_t; }
 	double getH() const { return m_h; }
@@ -399,7 +414,6 @@ public:
 	std::shared_ptr<Constraint> getConstraint0() const { return m_constraints[0]; }
 	std::shared_ptr<Spring> getSpring0() const { return m_springs[0]; }
 	std::shared_ptr<MeshEmbedding> getMeshEmbedding0() const { return m_meshembeddings[0]; }
-
 
 	Vector2d getTspan() const { return m_tspan; }
 	int getNsteps();

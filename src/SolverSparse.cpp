@@ -316,6 +316,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		case TEST_HYPER_REDUCED_COORDS:
 			m_world->sceneTestHyperReduced(t_i);
 			break;
+		case TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT:
+			m_world->sceneAttachPoint(t_i);
 		default:
 			break;
 		}
@@ -857,7 +859,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			qdot1 = sol.segment(0, nr);
 		}
 		//cout << qdot1 << endl << endl;
-
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		yk.segment(0, nr) = q1;
