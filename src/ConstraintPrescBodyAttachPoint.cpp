@@ -47,8 +47,10 @@ void ConstraintPrescBodyAttachPoint::computeJacEqMSparse_(vector<T> &Gm, vector<
 	int col = m_body->idxM;
 	Matrix3d R = m_body->E_wi.topLeftCorner(3, 3);
 	Matrix3x6d Cons = -R * m_gamma;
+	cout << Cons * m_body->phi << endl;
 	for (int i = 0; i < nconEM; ++i) {
 		Vector6d con = Cons.row(m_prows(i));
+
 		for (int j = 0; j < 6; ++j) {
 			Gm.push_back(T(row + i, col + j, con(j)));
 		}

@@ -1381,7 +1381,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	}
 	case TEST_MAXIMAL_HYBRID_DYNAMICS:
 	{
-		m_h = 5.0e-2;
+		m_h = 1.0e-2;
 		density = 1.0;
 		m_grav << 0.0, -980, 0.0;
 		Eigen::from_json(js["sides"], sides);
@@ -1703,7 +1703,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 		break;
 	case TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT:
 	{
-		m_h = 5.0e-2;
+		m_h = 1.0e-2;
 		density = 1.0;
 		m_grav << 0.0, -980, 0.0;
 		Eigen::from_json(js["sides"], sides);
@@ -1732,8 +1732,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), SE3::aaToMat(Vector3d(0.0, 0.0, 1.0), -M_PI / 2.0), 0.0, RESOURCE_DIR, m_joints[i - 1]);
 			}
 		}
-		Vector3i dof;
-		dof << 0, 1, 2;
+		VectorXi dof(2);
+		dof << 0, 1;
 		auto con0 = make_shared<ConstraintPrescBodyAttachPoint>(m_bodies[3], Vector3d(5.0, 0.0, 0.0), dof, REDMAX_EULER);
 		m_nconstraints++;
 		m_constraints.push_back(con0);
@@ -4129,7 +4129,7 @@ void World::sceneAttachPoint(double t) {
 
 	double beta = 0.3;
 
-	if (t < 5.0) {
+	if (t < 105.0) {
 		vt_w << 0, 0.0, 0.0;
 		setMaximalPrescAttachPointStates(3, 0, vt_w);
 	}
