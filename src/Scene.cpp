@@ -61,7 +61,7 @@ void Scene::load(const string &RESOURCE_DIR)
 	m_world->load(RESOURCE_DIR);
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
-	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, SUPER_LU);
+	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, LU);
 
 	//brender = BrenderManager::getInstance();
 	//brender->add(m_world);	

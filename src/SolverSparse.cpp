@@ -454,6 +454,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				VectorXd m_gmddot = gmddot(m_rowsEM);
 				VectorXd m_grddot = grddot(m_rowsER);
 				MatrixXd GmJ = m_Gm * MatrixXd(J_sp);
+				cout << "J" << endl << MatrixXd(J_sp) << endl;
+
 				G.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
 				///G_sp.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
 				G << GmJ, m_Gr;
@@ -463,7 +465,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				g << m_gm, m_gr;
 				VectorXd gdot(G.rows());
 				gdot << m_gmdot, m_grdot;
-				rhsG = - gdot - 5.0 * g;
+				rhsG = -  gdot - 5.0 * g;
 
 				GR = G * JrR;
 			}
@@ -596,8 +598,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			rhs.segment(nr, ne) = rhsG;
 
 
-			//cout << MatrixXd(LHS_sp) << endl << endl;
-			//cout << rhs << endl << endl;
+			cout << MatrixXd(LHS_sp) << endl << endl;
+			cout << rhs << endl << endl;
 
 			//VectorXd sol = LHS.ldlt().solve(rhs);
 			//qdot1 = sol.segment(0, nr);
@@ -880,7 +882,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
 		}
-		//cout << qdot1 << endl << endl;
+		cout << qdot1 << endl << endl;
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		yk.segment(0, nr) = q1;

@@ -1705,7 +1705,7 @@ void World::load(const std::string &RESOURCE_DIR) {
 	{
 		m_h = 1.0e-2;
 		density = 1.0;
-		m_grav << 0.0, -980, 0.0;
+		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
 		//m_nbodies = 5;
 		//m_njoints = 5;
