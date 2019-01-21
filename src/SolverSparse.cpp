@@ -1,6 +1,8 @@
 #include "SolverSparse.h"
 
 #include <Eigen/PardisoSupport>
+#include <Eigen/SuperLUSupport>
+
 #include <functional>
 #include <iostream>
 #include <fstream>
@@ -778,6 +780,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					SparseQR< SparseMatrix<double>, COLAMDOrdering<int>> sqr(LHS_sp);
 					assert(sqr.info() == Success);
 					qdot1 = sqr.solve(rhs).segment(0, nr);
+					break;
+				}
+			case SUPER_LU:
+				{
+					SuperLU< SparseMatrix<double>> slu(LHS_sp);
+					assert(slu.info() == Success);
+					qdot1 = slu.solve(rhs).segment(0, nr);
 					break;
 				}
 			default:

@@ -1,7 +1,6 @@
 #include "Tetrahedron.h"
 #include "Node.h"
 #include <iostream>
-#include "svd3.h"
 #include <cmath>
 
 #include "MatrixStack.h"
