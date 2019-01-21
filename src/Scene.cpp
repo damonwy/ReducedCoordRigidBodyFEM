@@ -57,11 +57,11 @@ void Scene::load(const string &RESOURCE_DIR)
 	Eigen::from_json(js["grav"], grav);
 	drawHz = js["drawHz"];
 
-	m_world = make_shared<World>(TEST_CONSTRAINT_PRESC_BODY_ATTACH_POINT);//_INVERTIBLE
+	m_world = make_shared<World>(FINGERS);//_INVERTIBLE
 	m_world->load(RESOURCE_DIR);
 
 	//m_solver = make_shared<SolverDense>(m_world, REDMAX_EULER);
-	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, PARDISO_LU);
+	m_solver = make_shared<SolverSparse>(m_world, REDMAX_EULER, LU);
 
 	//brender = BrenderManager::getInstance();
 	//brender->add(m_world);	

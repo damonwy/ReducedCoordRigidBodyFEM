@@ -1,6 +1,8 @@
 #include "SolverSparse.h"
 
 #include <Eigen/PardisoSupport>
+#include <Eigen/SuperLUSupport>
+
 #include <functional>
 #include <iostream>
 #include <fstream>
@@ -440,14 +442,21 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
 
 				MatrixXd m_Gm = MatrixXd(Gm_sp)(m_rowsEM, Eigen::placeholders::all);
+				//cout << m_Gm << endl << endl;
+				
+
 				MatrixXd m_Gr = MatrixXd(Gr_sp)(m_rowsER, Eigen::placeholders::all);
 				VectorXd m_gm = gm(m_rowsEM);
+				//cout << m_gm << endl << endl;
+
 				VectorXd m_gr = gr(m_rowsER);
 				VectorXd m_gmdot = gmdot(m_rowsEM);
 				VectorXd m_grdot = grdot(m_rowsER);
 				VectorXd m_gmddot = gmddot(m_rowsEM);
 				VectorXd m_grddot = grddot(m_rowsER);
 				MatrixXd GmJ = m_Gm * MatrixXd(J_sp);
+				//cout << "J" << endl << MatrixXd(J_sp) << endl;
+
 				G.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
 				///G_sp.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
 				G << GmJ, m_Gr;
@@ -457,7 +466,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				g << m_gm, m_gr;
 				VectorXd gdot(G.rows());
 				gdot << m_gmdot, m_grdot;
-				rhsG = -gdot - 5.0 * g;
+				rhsG = -  gdot - 5.0 * g;
 
 				GR = G * JrR;
 			}
@@ -722,9 +731,17 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					if (step == 0) {
 						solver.analyzePattern(LHS_sp);
 					}
+					solver.compute(LHS_sp);
+					if (solver.info() != Success) {
+						// decomposition failed
+
+						cout << "decomposition failed" << endl << endl;
+						exit(1);
+					}
 
 					solver.factorize(LHS_sp);
 					qdot1 = solver.solve(rhs).segment(0, nr);
+					//cout << qdot1 << endl;
 					break;
 				}		
 			case PARDISO_LU:
@@ -732,7 +749,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					PardisoLU<Eigen::SparseMatrix<double>> solver;
 					solver.compute(LHS_sp);
 					qdot1 = solver.solve(rhs).segment(0, nr);
-
+					cout << MatrixXd(LHS_sp) << endl << endl;
+					cout << rhs << endl << endl;
 					if (nR < nr) {
 						MatrixXd LHS_hr(nR + ne, nR + ne);
 						LHS_hr.setZero();
@@ -765,6 +783,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					SparseQR< SparseMatrix<double>, COLAMDOrdering<int>> sqr(LHS_sp);
 					assert(sqr.info() == Success);
 					qdot1 = sqr.solve(rhs).segment(0, nr);
+					break;
+				}
+			case SUPER_LU:
+				{
+					SuperLU< SparseMatrix<double>> slu(LHS_sp);
+					assert(slu.info() == Success);
+					qdot1 = slu.solve(rhs).segment(0, nr);
 					break;
 				}
 			default:
@@ -858,7 +883,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
 		}
-		//cout << qdot1 << endl << endl;
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		yk.segment(0, nr) = q1;

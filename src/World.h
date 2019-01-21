@@ -33,6 +33,7 @@ class Constraint;
 class ConstraintJointLimit;
 class ConstraintPrescJoint;
 class ConstraintPrescBody;
+class ConstraintPrescBodyAttachPoint;
 class ConstraintNull;
 class Spring;
 class SpringNull;
@@ -331,6 +332,12 @@ public:
 
 	std::shared_ptr<ConstraintPrescBody> addConstraintPrescBody(
 		std::shared_ptr<Body> b,
+		Eigen::VectorXi dof
+	);
+
+	std::shared_ptr<ConstraintPrescBodyAttachPoint> addConstraintPrescBodyAttachPoint(
+		std::shared_ptr<Body> b,
+		Eigen::Vector3d r,
 		Eigen::VectorXi dof
 	);
 

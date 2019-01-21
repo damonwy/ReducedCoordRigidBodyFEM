@@ -29,8 +29,6 @@ void ConstraintPrescBodyAttachPoint::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdo
 	Matrix3d R = m_body->E_wi.topLeftCorner(3, 3);
 	Matrix3x6d Cons = -R * m_gamma;
 
-	//Matrix6d I6 = -Matrix6d::Identity();
-
 	Gm.block(row, col, nconEM, 6) = Cons(m_prows, Eigen::placeholders::all);
 
 	if (m_vel == REDMAX_EULER) {
@@ -46,16 +44,22 @@ void ConstraintPrescBodyAttachPoint::computeJacEqMSparse_(vector<T> &Gm, vector<
 	int row = idxEM;
 	int col = m_body->idxM;
 	Matrix3d R = m_body->E_wi.topLeftCorner(3, 3);
-	Matrix3x6d Cons = -R * m_gamma;
+	Matrix3x6d Cons = R * m_gamma;
+	//cout << "vel now : " << Cons * m_body->phi << endl;
+	//Vector3d qdot1 = -Cons * m_body->phi; // drift?
+	//Vector3d diff = m_qdot - qdot1;
+	//cout << "diff " << diff << endl;
+
 	for (int i = 0; i < nconEM; ++i) {
 		Vector6d con = Cons.row(m_prows(i));
+
 		for (int j = 0; j < 6; ++j) {
 			Gm.push_back(T(row + i, col + j, con(j)));
 		}
 	}
 
 	if (m_vel == REDMAX_EULER) {
-		gmdot.segment(row, nconEM) = m_qdot(m_prows);
+		gmdot.segment(row, nconEM) = m_qdot(m_prows) ;
 	}
 	else {
 		gmdot.segment(row, nconEM) = m_body->phi(m_prows);

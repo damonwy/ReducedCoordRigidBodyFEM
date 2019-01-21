@@ -1,7 +1,27 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 # Name of the project
-PROJECT(ReducedCoordSE3BodyFEM)
+PROJECT(RedMax)
+
+# FOR LAB MACHINE
+SET(DEF_DIR_GLM "D:\\Libraries\\glm-0.9.8.5\\glm")
+SET(DEF_DIR_GLFW "D:\\Libraries\\glfw-3.2.1")
+SET(DEF_DIR_GLEW "D:\\Libraries\\glew-2.1.0")
+SET(DEF_DIR_EIGEN "D:\\Libraries\\eigen-eigen-6c3592226be0")
+SET(DEF_DIR_TETGEN "D:\\Libraries\\tetgen1.5.1-beta1")
+SET(DEF_DIR_MOSEK "D:\\Libraries\\mosek_8.1_x64\\8\\tools\\platform\\win64x86")
+SET(DEF_DIR_LIBIGL_INCLUDE "D:\\Libraries\\libigl-master\\libigl\\include")
+SET(DEF_DIR_PARDISO "D:\\Libraries\\PARDISO")
+SET(DEF_DIR_MKL "C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018\\windows\\mkl")
+SET(DEF_DIR_JSONCPP "D:\\Libraries\\jsoncpp\\jsoncpp_x64-windows")
+SET(DEF_DIR_STB_INCLUDE "D:\\Libraries\\stb-master")
+#SET(DEF_DIR_CMAES "D:\\Libraries\\CMA-ESpp-master")
+#SET(DEF_DIR_LIBLBFGS "D:\\Libraries\\liblbfgs-master")
+#SET(DEF_DIR_GUROBI "D:\\Libraries\\gurobi\\win64")
+#SET(DEF_DIR_YIXUAN "D:\\Libraries\\yixuan-LBFGSpp-ad499fe")
+#SET(DEF_DIR_DLIB "D:\\Libraries\\dlib-19.13")
+#SET(DEF_DIR_QUADPROGPP "D:\\Libraries\\quadprogpp")
+#SET(DEF_DIR_NLOPT "D:\\Libraries\\nlopt")
 
 # Is this the solution?
 # Override with `cmake -DSOL=ON ..`
@@ -103,7 +123,7 @@ ENDIF()
 INCLUDE_DIRECTORIES(${GLEW_DIR}/include)
 IF(WIN32)
   # With prebuilt binaries
-  TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${GLEW_DIR}/lib/Release/Win32/glew32s.lib)
+  TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${GLEW_DIR}/lib/Release/x64/glew32s.lib)
 ELSE()
   TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${GLEW_DIR}/lib/libGLEW.a)
 ENDIF()
@@ -138,7 +158,15 @@ IF(NOT TETGEN_DIR)
 ENDIF()
 INCLUDE_DIRECTORIES(${TETGEN_DIR})
 IF(WIN32)
-  TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${TETGEN_DIR}/tetgen.lib)
+  # On Windows, try the default location
+  MESSAGE(STATUS "Looking for TETGEN in ${DEF_DIR_TETGEN}")
+  IF(IS_DIRECTORY ${DEF_DIR_TETGEN})
+    MESSAGE(STATUS "Found!")
+    SET(TETGEN_DIR ${DEF_DIR_TETGEN})
+  ELSE()
+    MESSAGE(FATAL_ERROR ${ERR_MSG})
+  ENDIF()
+  TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${TETGEN_DIR}/x64/Release/tet.lib)
 ENDIF()
 
 # Get the MOSEK environment variable.
@@ -148,19 +176,92 @@ IF(NOT MOSEK_DIR)
   SET(ERR_MSG "Please point the environment variable MOSEK_DIR to the root directory of your MOSEK installation")
   MESSAGE(FATAL_ERROR ${ERR_MSG})
 ENDIF()
-INCLUDE_DIRECTORIES(${MOSEK_DIR}/8/tools/platform/win32x86/h)
+INCLUDE_DIRECTORIES(${MOSEK_DIR}/8/tools/platform/win64x86/h)
 IF(WIN32)
-  TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${MOSEK_DIR}/8/tools/platform/win32x86/bin/mosek8_1.lib)
+  TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${MOSEK_DIR}/8/tools/platform/win64x86/bin/mosek64_8_1.lib)
+ENDIF()
+
+# Get the MKL environment variable.
+SET(MKL_DIR "$ENV{MKL_DIR}")
+IF(NOT MKL_DIR)
+  # The environment variable was not set
+  SET(ERR_MSG "Please point the environment variable MKL_DIR to the root directory of your MKL installation")
+  IF(WIN32)
+    # On Windows, try the default location
+    MESSAGE(STATUS "Looking for MKL in ${DEF_DIR_MKL}")
+    IF(IS_DIRECTORY ${DEF_DIR_MKL})
+      MESSAGE(STATUS "Found!")
+      SET(MKL_DIR ${DEF_DIR_MKL})
+    ELSE()
+      MESSAGE(FATAL_ERROR ${ERR_MSG})
+    ENDIF()
+    INCLUDE_DIRECTORIES(${MKL_DIR}/include)
+    TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${MKL_DIR}/lib/intel64_win/mkl_core.lib ${MKL_DIR}/lib/intel64_win/mkl_intel_lp64.lib ${MKL_DIR}/lib/intel64_win/mkl_sequential.lib)
+  ELSE()
+    MESSAGE(FATAL_ERROR ${ERR_MSG})
+  ENDIF()
 ENDIF()
 
 # Get the STB environment variable
 SET(STB_DIR "$ENV{STB_INCLUDE_DIR}")
 IF(NOT STB_DIR)
   SET(ERR_MSG "Please point the environment variable STB_INCLUDE_DIR to the root directory of your STB installation")
-  MESSAGE(FATAL_ERROR ${ERR_MSG})
+  IF(WIN32)
+    # On Windows, try the default location
+    MESSAGE(STATUS "Looking for STB in ${DEF_DIR_STB_INCLUDE}")
+    IF(IS_DIRECTORY ${DEF_DIR_STB_INCLUDE})
+      MESSAGE(STATUS "Found!")
+      SET(STB_DIR ${DEF_DIR_STB_INCLUDE})
+    ELSE()
+      MESSAGE(FATAL_ERROR ${ERR_MSG})
+    ENDIF()
+  ELSE()
+    MESSAGE(FATAL_ERROR ${ERR_MSG})
+  ENDIF()
 ENDIF()
 INCLUDE_DIRECTORIES(${STB_DIR})
 
+# Get the PARDISO environment variable
+SET(PARDISO_INCLUDE_DIR "$ENV{PARDISO_INCLUDE_DIR}")
+IF(NOT PARDISO_INCLUDE_DIR)
+ # The environment variable was not set
+ SET(ERR_MSG "Please point the environment variable PARDISO_INCLUDE_DIR to the root directory of your PARDISO installation.")
+  IF(WIN32)
+    # On Windows, try the default location
+    MESSAGE(STATUS "Looking for PARDISO in ${DEF_DIR_PARDISO}")
+    IF(IS_DIRECTORY ${DEF_DIR_PARDISO})
+      MESSAGE(STATUS "Found!")
+      SET(PARDISO_INCLUDE_DIR ${DEF_DIR_PARDISO})
+    ELSE()
+      MESSAGE(FATAL_ERROR ${ERR_MSG})
+    ENDIF()
+  ELSE()
+    MESSAGE(FATAL_ERROR ${ERR_MSG})
+  ENDIF()
+ENDIF()
+TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${PARDISO_INCLUDE_DIR}/libpardiso600-WIN-X86-64.lib)
+
+
+# Get the JSONCPP environment variable
+SET(JSONCPP_INCLUDE_DIR "$ENV{JSONCPP_DIR}")
+IF(NOT JSONCPP_DIR)
+ # The environment variable was not set
+ SET(ERR_MSG "Please point the environment variable JSONCPP_DIR to the root directory of your JSONCPP installation.")
+  IF(WIN32)
+    # On Windows, try the default location
+    MESSAGE(STATUS "Looking for JSONCPP in ${DEF_DIR_JSONCPP}")
+    IF(IS_DIRECTORY ${DEF_DIR_JSONCPP})
+      MESSAGE(STATUS "Found!")
+      SET(JSONCPP_INCLUDE_DIR ${DEF_DIR_JSONCPP})
+    ELSE()
+      MESSAGE(FATAL_ERROR ${ERR_MSG})
+    ENDIF()
+  ELSE()
+    MESSAGE(FATAL_ERROR ${ERR_MSG})
+  ENDIF()
+ENDIF()
+INCLUDE_DIRECTORIES(${JSONCPP_INCLUDE_DIR}/include)
+TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${JSONCPP_INCLUDE_DIR}/lib/jsoncpp.lib)
 
 # OS specific options and libraries
 IF(WIN32)
