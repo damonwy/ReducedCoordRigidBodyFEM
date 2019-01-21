@@ -442,11 +442,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
 
 				MatrixXd m_Gm = MatrixXd(Gm_sp)(m_rowsEM, Eigen::placeholders::all);
-				cout << m_Gm << endl << endl;
+				//cout << m_Gm << endl << endl;
 				
 
 				MatrixXd m_Gr = MatrixXd(Gr_sp)(m_rowsER, Eigen::placeholders::all);
-				VectorXd m_gm = gm(m_rowsEM);cout << m_gm << endl << endl;
+				VectorXd m_gm = gm(m_rowsEM);
+				//cout << m_gm << endl << endl;
 
 				VectorXd m_gr = gr(m_rowsER);
 				VectorXd m_gmdot = gmdot(m_rowsEM);
@@ -454,7 +455,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				VectorXd m_gmddot = gmddot(m_rowsEM);
 				VectorXd m_grddot = grddot(m_rowsER);
 				MatrixXd GmJ = m_Gm * MatrixXd(J_sp);
-				cout << "J" << endl << MatrixXd(J_sp) << endl;
+				//cout << "J" << endl << MatrixXd(J_sp) << endl;
 
 				G.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
 				///G_sp.resize(GmJ.rows() + m_Gr.rows(), m_Gr.cols());
@@ -598,8 +599,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			rhs.segment(nr, ne) = rhsG;
 
 
-			cout << MatrixXd(LHS_sp) << endl << endl;
-			cout << rhs << endl << endl;
+			//cout << MatrixXd(LHS_sp) << endl << endl;
+			//cout << rhs << endl << endl;
 
 			//VectorXd sol = LHS.ldlt().solve(rhs);
 			//qdot1 = sol.segment(0, nr);
@@ -740,7 +741,7 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 
 					solver.factorize(LHS_sp);
 					qdot1 = solver.solve(rhs).segment(0, nr);
-					cout << qdot1 << endl;
+					//cout << qdot1 << endl;
 					break;
 				}		
 			case PARDISO_LU:
@@ -882,7 +883,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			VectorXd sol = program_->getPrimalSolution();
 			qdot1 = sol.segment(0, nr);
 		}
-		cout << qdot1 << endl << endl;
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
 		yk.segment(0, nr) = q1;

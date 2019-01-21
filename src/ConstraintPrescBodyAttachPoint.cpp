@@ -29,8 +29,6 @@ void ConstraintPrescBodyAttachPoint::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdo
 	Matrix3d R = m_body->E_wi.topLeftCorner(3, 3);
 	Matrix3x6d Cons = -R * m_gamma;
 
-	//Matrix6d I6 = -Matrix6d::Identity();
-
 	Gm.block(row, col, nconEM, 6) = Cons(m_prows, Eigen::placeholders::all);
 
 	if (m_vel == REDMAX_EULER) {
