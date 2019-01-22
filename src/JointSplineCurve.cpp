@@ -1,14 +1,8 @@
+
+#include "rmpch.h"
 #include "JointSplineCurve.h"
 
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
-
 #include "Body.h"
-#include "MatrixStack.h"
-#include "Program.h"
-#include "SE3.h"
-#include "Shape.h"
 
 using namespace std;
 using namespace Eigen;

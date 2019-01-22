@@ -1,19 +1,11 @@
+
+#include "rmpch.h"
 #include "Body.h"
 
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
-
 #include "Joint.h"
-#include "SE3.h"
-#include "Shape.h"
-#include "MatrixStack.h"
-#include "Program.h"
 #include "ConstraintPrescBody.h"
 #include "ConstraintPrescBodyAttachPoint.h"
-#include <json\writer.h>
-#include <json\json.h>
-#include <json\value.h>
+
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;

@@ -1,9 +1,6 @@
+#include "rmpch.h"
 #include "WrapDoubleCylinder.h"
 
-#include <iostream>
-
-#include "Program.h"
-#include "MatrixStack.h"
 #include "Body.h"
 #include "Node.h"
 #include "Vector.h"

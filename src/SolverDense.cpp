@@ -1,4 +1,6 @@
+#include "rmpch.h"
 #include "SolverDense.h"
+
 #include "World.h"
 #include "Body.h"
 #include "SoftBody.h"
@@ -12,10 +14,6 @@
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
 #include "ChronoTimer.h"
-#include "MatlabDebug.h"
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
 
 using namespace std;
 using namespace Eigen;

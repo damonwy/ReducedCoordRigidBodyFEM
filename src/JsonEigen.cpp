@@ -1,5 +1,6 @@
+#include "rmpch.h"
 #include "JsonEigen.h"
-#include <string>
+
 
 namespace Eigen {
 	void to_json(json &j, const Vector3d &v) {

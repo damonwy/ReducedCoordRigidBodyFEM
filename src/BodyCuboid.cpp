@@ -1,6 +1,5 @@
+#include "rmpch.h"
 #include "BodyCuboid.h"
-#include "SE3.h"
-
 using namespace std;
 using namespace Eigen;
 

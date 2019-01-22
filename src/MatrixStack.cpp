@@ -1,8 +1,6 @@
-#include "MatrixStack.h"
 
-#include <stdio.h>
-#include <cassert>
-#include <vector>
+#include "rmpch.h"
+#include "MatrixStack.h"
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>

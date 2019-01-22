@@ -1,13 +1,9 @@
+#include "rmpch.h"
 #include "WrapCylinder.h"
 
-#include <iostream>
-
-#include "Program.h"
-#include "MatrixStack.h"
 #include "Body.h"
 #include "Node.h"
 #include "Vector.h"
-
 #include "CompCylinder.h"
 
 using namespace std;

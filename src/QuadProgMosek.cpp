@@ -1,3 +1,4 @@
+#include "rmpch.h"
 #include "QuadProgMosek.h"
 
 #ifdef _MEX_

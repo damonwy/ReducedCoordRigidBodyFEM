@@ -1,8 +1,7 @@
+
+#include "rmpch.h"
 #include "Constraint.h"
 
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
 
 using namespace std;
 using namespace Eigen;

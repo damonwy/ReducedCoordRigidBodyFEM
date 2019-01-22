@@ -1,20 +1,13 @@
+
+#include "rmpch.h"
 #define TETLIBRARY
 #include <tetgen.h>
-
 #include "SoftBody.h"
 
-#include <iostream>
-#include <fstream>
 #include <cmath>        // std::abs
-
-#include <json.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#include "GLSL.h"
-#include "MatrixStack.h"
-#include "Program.h"
 
 #include "Node.h"
 #include "FaceTriangle.h"

@@ -1,14 +1,11 @@
+
+#include "rmpch.h"
 #include "ConstraintAttachSoftBody.h"
 
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
 #include "SoftBody.h"
 #include "Node.h"
 #include "Body.h"
-#include "SE3.h"
 #include "Vector.h"
-#include "MatlabDebug.h"
 
 using namespace std;
 using namespace Eigen;

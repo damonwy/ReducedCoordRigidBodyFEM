@@ -3,6 +3,7 @@
 *
 * @version: 1.0
 */
+#include "rmpch.h"
 
 #include "BrenderManager.h"
 #include "Brenderable.h"

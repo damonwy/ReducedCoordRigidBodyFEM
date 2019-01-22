@@ -1,14 +1,9 @@
+#include "rmpch.h"
 #include "SoftBodyCorotationalLinear.h"
 
-#include <iostream>
-
 #include "Node.h"
-#include "Shape.h"
-#include "Program.h"
 #include "Body.h"
-#include "MatrixStack.h"
 #include "Tetrahedron.h"
-#include "MatlabDebug.h"
 
 using namespace std;
 using namespace Eigen;

@@ -1,6 +1,7 @@
+#include "rmpch.h"
 #include "TetrahedronCorotational.h"
+
 #include "Node.h"
-#include "SE3.h"
 #include "Body.h"
 
 using namespace std;

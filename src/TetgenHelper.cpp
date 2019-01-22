@@ -1,8 +1,7 @@
+#include "rmpch.h"
 #include "TetgenHelper.h"
 
 #include "Node.h"
-#include <fstream>
-#include <iostream>
 
 using namespace Eigen;
 using namespace std;

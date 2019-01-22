@@ -1,4 +1,4 @@
-#include <iostream>
+#include "rmpch.h"
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -9,10 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Node.h"
-#include "Shape.h"
-#include "Program.h"
 #include "Body.h"
-#include "MatrixStack.h"
 
 using namespace std;
 using namespace Eigen;

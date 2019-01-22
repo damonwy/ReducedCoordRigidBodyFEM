@@ -1,11 +1,8 @@
+#include "rmpch.h"
 #include "Tetrahedron.h"
-#include "Node.h"
-#include <iostream>
-#include <cmath>
 
-#include "MatrixStack.h"
-#include "Program.h"
-#include "SE3.h"
+#include "Node.h"
+#include <cmath>
 #include "Body.h"
 
 using namespace Eigen;
@@ -14,7 +11,6 @@ using namespace std;
 #define Fthreshold 0.1
 // 0.45 corotated
 // 0.65 neo
-
 
 Tetrahedron::Tetrahedron()
 {

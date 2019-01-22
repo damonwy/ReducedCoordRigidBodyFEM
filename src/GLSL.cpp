@@ -4,11 +4,8 @@
 //    Modified by sueda 10/15/15.
 //
 
+#include "rmpch.h"
 #include "GLSL.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <cassert>
-#include <cstring>
 
 using namespace std;
 

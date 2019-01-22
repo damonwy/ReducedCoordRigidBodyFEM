@@ -1,12 +1,7 @@
+#include "rmpch.h"
 #include "FaceTriangle.h"
 
-#include <iostream>
-#include <fstream>
-#include "MatrixStack.h"
-#include "Program.h"
 #include "Node.h"
-
-
 
 using namespace std;
 using namespace Eigen;

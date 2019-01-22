@@ -1,8 +1,7 @@
+
+#include "rmpch.h"
 #include "World.h"
 
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
 
 #include "Joint.h"
 #include "JointNull.h"
@@ -30,10 +29,6 @@
 
 #include "SoftBody.h"
 #include "FaceTriangle.h"
-
-#include "MatrixStack.h"
-#include "Program.h"
-#include "SE3.h"
 #include "JsonEigen.h"
 
 #include "ConstraintJointLimit.h"
@@ -69,9 +64,7 @@
 #include "Line.h"
 #include "Surface.h"
 
-#include <json\writer.h>
-#include <json\json.h>
-#include <json\value.h>
+
 
 #define D90 M_PI/2.0
 #define D180 M_PI

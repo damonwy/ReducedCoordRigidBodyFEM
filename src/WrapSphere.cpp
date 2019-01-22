@@ -1,6 +1,7 @@
+
+#include "rmpch.h"
 #include "WrapSphere.h"
 #include "CompSphere.h"
-
 WrapSphere::WrapSphere()
 {
 	m_type = sphere;

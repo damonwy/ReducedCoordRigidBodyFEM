@@ -1,10 +1,7 @@
+#include "rmpch.h"
 #include "CompDoubleCylinder.h"
 
 #include "Body.h"
-#include "Shape.h"
-#include "SE3.h"
-#include "MatrixStack.h"
-#include "Program.h"
 
 using namespace std;
 using namespace Eigen;

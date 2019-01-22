@@ -1,8 +1,5 @@
+#include "rmpch.h"
 #include "Shape.h"
-#include <iostream>
-
-#include "GLSL.h"
-#include "Program.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"

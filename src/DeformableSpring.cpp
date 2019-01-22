@@ -1,10 +1,8 @@
+#include "rmpch.h"
 #include "DeformableSpring.h"
 
-#include <iostream>
 #include "Body.h"
 #include "Node.h"
-#include "MatrixStack.h"
-#include "Program.h"
 
 using namespace std;
 using namespace Eigen;

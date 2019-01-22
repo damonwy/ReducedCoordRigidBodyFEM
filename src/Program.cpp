@@ -1,9 +1,5 @@
+#include "rmpch.h"
 #include "Program.h"
-
-#include <iostream>
-#include <cassert>
-
-#include "GLSL.h"
 
 using namespace std;
 

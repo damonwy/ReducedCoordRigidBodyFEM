@@ -1,13 +1,10 @@
+#include "rmpch.h"
 #include "Joint.h"
-#include <iostream>
 
 #include "Body.h"
-#include "SE3.h"
-#include "MatrixStack.h"
-#include "Program.h"
-#include "Shape.h"
 #include "Constraint.h"
 #include "ConstraintPrescJoint.h"
+
 using namespace std;
 using namespace Eigen;
 

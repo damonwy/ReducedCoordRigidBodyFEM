@@ -1,14 +1,9 @@
+
+#include "rmpch.h"
 #include "Scene.h"
 
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
-
 #include "Node.h"
-#include "Shape.h"
-#include "Program.h"
 #include "Joint.h"
-#include "MatlabDebug.h"
 #include "Vector.h"
 #include "JsonEigen.h"
 #include "World.h"
@@ -22,7 +17,6 @@
 #include "SoftBody.h"
 #include "MeshEmbedding.h"
 
-#include "BrenderManager.h"
 
 using namespace std;
 using namespace Eigen;

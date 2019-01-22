@@ -1,12 +1,8 @@
-#include <cassert>
-#include <cstring>
+#pragma once
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include <cstdlib>
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <vector>
+
+#include "rmpch.h"
 
 #define EIGEN_USE_MKL_ALL
 
@@ -26,12 +22,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-
-#include "GLSL.h"
-#include "Program.h"
-#include "Camera.h"
-#include "MatrixStack.h"
-#include "Shape.h"
 #include "Scene.h"
 #include <omp.h>
 #include <Eigen/Core>

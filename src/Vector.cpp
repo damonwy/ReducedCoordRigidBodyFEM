@@ -1,4 +1,4 @@
-#include <iostream>
+#include "rmpch.h"
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -9,8 +9,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Vector.h"
-#include "Program.h"
-#include "MatrixStack.h"
 #include "Node.h"
 #include "Body.h"
 

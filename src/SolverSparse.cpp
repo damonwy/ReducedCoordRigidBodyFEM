@@ -1,12 +1,9 @@
+#include "rmpch.h"
 #include "SolverSparse.h"
 
 #include <Eigen/PardisoSupport>
 #include <Eigen/SuperLUSupport>
 
-#include <functional>
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
 #include <omp.h>
 
 #include "World.h"
@@ -21,7 +18,6 @@
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
-#include "MatlabDebug.h"
 #include "MeshEmbedding.h"
 //#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
 #include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
