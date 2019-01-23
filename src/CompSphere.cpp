@@ -1,14 +1,6 @@
 #include "rmpch.h"
 #include "CompSphere.h"
 
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include "Body.h"
 #include "Node.h"
 

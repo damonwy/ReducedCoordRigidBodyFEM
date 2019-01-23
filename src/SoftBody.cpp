@@ -1,14 +1,8 @@
-
 #include "rmpch.h"
 #define TETLIBRARY
 #include <tetgen.h>
+
 #include "SoftBody.h"
-
-#include <cmath>        // std::abs
-
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include "Node.h"
 #include "FaceTriangle.h"
 #include "Tetrahedron.h"
@@ -17,7 +11,6 @@
 #include "TetrahedronCorotational.h"
 #include "TetrahedronInvertible.h"
 #include "Line.h"
-#include <omp.h>
 
 using namespace std;
 using namespace Eigen;

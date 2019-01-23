@@ -1,8 +1,6 @@
 #include "rmpch.h"
 #include "JointRevolute.h"
-
 #include "Body.h"
-
 #include "ConstraintPrescJoint.h"
 
 using namespace std;

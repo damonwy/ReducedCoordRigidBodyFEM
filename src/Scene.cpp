@@ -1,7 +1,5 @@
-
 #include "rmpch.h"
 #include "Scene.h"
-
 #include "Node.h"
 #include "Joint.h"
 #include "Vector.h"
@@ -13,10 +11,8 @@
 //#include "Spring.h"
 #include "Deformable.h"
 #include "DeformableSpring.h"
-
 #include "SoftBody.h"
 #include "MeshEmbedding.h"
-
 
 using namespace std;
 using namespace Eigen;

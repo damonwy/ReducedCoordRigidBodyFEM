@@ -1,6 +1,5 @@
 #include "rmpch.h"
 #include "TetrahedronCorotational.h"
-
 #include "Node.h"
 #include "Body.h"
 

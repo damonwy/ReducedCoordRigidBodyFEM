@@ -1,7 +1,5 @@
-
 #include "rmpch.h"
 #include "Constraint.h"
-
 
 using namespace std;
 using namespace Eigen;

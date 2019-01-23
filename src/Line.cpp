@@ -1,7 +1,7 @@
 #include "rmpch.h"
 #include "Line.h"
-
 #include "Node.h"
+
 using namespace std;
 using namespace Eigen;
 
@@ -10,7 +10,6 @@ m_n0(n0), m_n1(n1)
 {
 	m_x0 = n0->x;
 	m_x1 = n1->x;
-
 }
 
 Line::Line(Vector3d x0, Vector3d x1):
@@ -20,8 +19,6 @@ m_x0(x0), m_x1(x1)
 }
 
 void Line::draw() {
-
-
 }
 
 void Line::addSampleNodes(int n, std::vector<std::shared_ptr<Node>> &nodes) {

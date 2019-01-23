@@ -1,8 +1,6 @@
 #include "rmpch.h"
 #include "Tetrahedron.h"
-
 #include "Node.h"
-#include <cmath>
 #include "Body.h"
 
 using namespace Eigen;

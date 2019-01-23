@@ -1,6 +1,5 @@
 #include "rmpch.h"
 #include "JointSplineSurface.h"
-
 #include "Body.h"
 
 using namespace std;

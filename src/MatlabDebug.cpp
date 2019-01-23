@@ -1,7 +1,6 @@
 #include "rmpch.h"
 #include "MatlabDebug.h"
 
-
 using namespace std;
 using namespace Eigen;
 

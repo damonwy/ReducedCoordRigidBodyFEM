@@ -1,7 +1,6 @@
 #include "rmpch.h"
 #include "JsonEigen.h"
 
-
 namespace Eigen {
 	void to_json(json &j, const Vector3d &v) {
 		std::vector<double> data{ v(0), v(1), v(2) };

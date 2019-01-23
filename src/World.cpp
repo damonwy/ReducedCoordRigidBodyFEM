@@ -1,7 +1,5 @@
-
 #include "rmpch.h"
 #include "World.h"
-
 
 #include "Joint.h"
 #include "JointNull.h"
@@ -63,8 +61,6 @@
 #include "TetgenHelper.h"
 #include "Line.h"
 #include "Surface.h"
-
-
 
 #define D90 M_PI/2.0
 #define D180 M_PI
@@ -129,8 +125,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 		for (int i = 0; i < 3; i++) {
 
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "box10_1_1.obj");
-
-
 			// Inits joints
 			if (i == 0) {
 				addJointRevolute(body, Vector3d::UnitZ(), Vector3d(0.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR);
@@ -322,7 +316,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 		for (int i = 0; i < (int)m_deformables.size(); i++) {
 			m_deformables[i]->load(RESOURCE_DIR);
 		}
-
 	}
 	break;
 	case SOFT_BODIES:
@@ -3929,13 +3922,11 @@ void World::setListOfReducedPrescStates(Eigen::VectorXi rcon, VectorXd q, Vector
 	}
 }
 
-
 void World::setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i) {
 	for (int i = 0; i < (int)mcon.size(); ++i) {
 		setMaximalPrescStates(m_bodies[mcon(i)], vt_w, vtdot_w, wt_i, wtdot_i);
 	}
 }
-
 
 // Final Version of Starfish
 void World::sceneStarFish3(double t) {
@@ -4550,6 +4541,3 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 	
 	//m_meshembeddings[0]->getDenseMesh()->exportObj(outfile);
 }
-
-
-

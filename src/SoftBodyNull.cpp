@@ -1,13 +1,10 @@
 #include "rmpch.h"
 #include "SoftBodyNull.h"
 
-
 using namespace std;
 using namespace Eigen;
 
 SoftBodyNull::SoftBodyNull():SoftBody() {
-
-
 
 }
 

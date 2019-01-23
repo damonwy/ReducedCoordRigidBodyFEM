@@ -1,5 +1,3 @@
-#define _USE_MATH_DEFINES
-#include <cmath> 
 #include "rmpch.h"
 
 #include <glm/gtc/matrix_transform.hpp>

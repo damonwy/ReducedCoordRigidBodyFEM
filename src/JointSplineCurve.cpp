@@ -1,7 +1,5 @@
-
 #include "rmpch.h"
 #include "JointSplineCurve.h"
-
 #include "Body.h"
 
 using namespace std;

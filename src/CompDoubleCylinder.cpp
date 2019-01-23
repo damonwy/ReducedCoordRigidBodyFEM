@@ -1,6 +1,5 @@
 #include "rmpch.h"
 #include "CompDoubleCylinder.h"
-
 #include "Body.h"
 
 using namespace std;

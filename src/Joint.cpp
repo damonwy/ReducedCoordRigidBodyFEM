@@ -1,6 +1,5 @@
 #include "rmpch.h"
 #include "Joint.h"
-
 #include "Body.h"
 #include "Constraint.h"
 #include "ConstraintPrescJoint.h"

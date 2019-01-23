@@ -1,6 +1,5 @@
 #include "rmpch.h"
 #include "TetgenHelper.h"
-
 #include "Node.h"
 
 using namespace Eigen;

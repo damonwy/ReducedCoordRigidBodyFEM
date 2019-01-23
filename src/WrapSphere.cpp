@@ -1,7 +1,7 @@
-
 #include "rmpch.h"
 #include "WrapSphere.h"
 #include "CompSphere.h"
+
 WrapSphere::WrapSphere()
 {
 	m_type = sphere;
@@ -22,14 +22,12 @@ void WrapSphere::load(const std::string &RESOURCE_DIR) {
 	m_point_O->load(RESOURCE_DIR);
 	m_point_P->load(RESOURCE_DIR);
 	m_point_S->load(RESOURCE_DIR);
-
 }
 
 void WrapSphere::init() {
 	m_point_O->init();
 	m_point_P->init();
 	m_point_S->init();
-
 }
 
 void WrapSphere::compute()
@@ -60,7 +58,6 @@ void WrapSphere::compute()
 	if ((denom_q - R*R < 0.0) || (denom_t - R*R < 0.0))
 	{
 		this->m_status = inside_radius;
-
 	}
 
 	double root_q = sqrt(denom_q - R*R);
@@ -77,7 +74,6 @@ void WrapSphere::compute()
 	{
 		this->m_status = no_wrap;
 	}
-
 
 	m_point_q->x = q;
 	m_point_t->x = t;

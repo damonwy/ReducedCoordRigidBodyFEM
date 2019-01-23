@@ -1,6 +1,5 @@
 #include "rmpch.h"
 #include "ConstraintPrescBodyAttachPoint.h"
-
 #include "Body.h"
 
 using namespace std;

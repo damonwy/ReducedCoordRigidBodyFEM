@@ -87,7 +87,7 @@ public:
 	Vector6d fgrav;
 	Matrix3d R_wi;
 	Matrix3d R_iw;
-	bool  m_isDrawing;
+	bool   m_isDrawing;
 	double m_damping;					// Viscous damping
 	std::shared_ptr<Joint> m_joint;		// Joint to parent
 	int idxM;							// Maximal indices

@@ -1,28 +1,18 @@
 #include "rmpch.h"
 #include "FaceTriangle.h"
-
 #include "Node.h"
 
 using namespace std;
 using namespace Eigen;
 
 FaceTriangle::FaceTriangle():Face(),isFlat(false) {
-
-
-
 }
 
 
 FaceTriangle::FaceTriangle(vector<shared_ptr<Node>> nodes):Face(nodes),isFlat(false) {
-
-
-
 }
 
 void FaceTriangle::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, shared_ptr<MatrixStack> P) const {
-
-
-
 }
 
 void FaceTriangle::update() {
@@ -46,7 +36,5 @@ Eigen::Vector3d FaceTriangle::computeNormal() {
 
 
 double FaceTriangle::computeArea() {
-
 	return m_area;
-
 }

@@ -1,7 +1,6 @@
 #include "rmpch.h"
 
 #include "MeshEmbedding.h"
-
 #include "SoftBodyInvertibleFEM.h"
 #include "SoftBodyCorotationalLinear.h"
 #include "Node.h"

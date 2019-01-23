@@ -1,8 +1,6 @@
 #define EIGEN_USE_MKL_ALL
-
 #include "rmpch.h"
 #include "TetrahedronInvertible.h"
-
 #include "Node.h"
 
 using namespace std;

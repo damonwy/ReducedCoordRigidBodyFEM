@@ -3,7 +3,6 @@
 //    Created by zwood on 2/21/10.
 //    Modified by sueda 10/15/15.
 //
-
 #include "rmpch.h"
 #include "GLSL.h"
 

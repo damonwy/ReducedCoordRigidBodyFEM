@@ -1,14 +1,9 @@
-
 #include "rmpch.h"
 #define TETLIBRARY
 #include <tetgen.h>
 #include "Surface.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include "Node.h"
 #include "FaceTriangle.h"
-#include <omp.h>
 
 using namespace std;
 using namespace Eigen;

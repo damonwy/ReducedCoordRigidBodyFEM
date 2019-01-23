@@ -1,6 +1,5 @@
 #include "rmpch.h"
 #include "Face.h"
-
 #include "Node.h"
 
 using namespace std;

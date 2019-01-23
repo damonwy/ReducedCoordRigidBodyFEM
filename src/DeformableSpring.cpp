@@ -1,6 +1,5 @@
 #include "rmpch.h"
 #include "DeformableSpring.h"
-
 #include "Body.h"
 #include "Node.h"
 
