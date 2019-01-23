@@ -20,6 +20,7 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 
 #define MAX(a, b) ((a)>(b)?(a):(b))
+#define ToRadian(x) (double)(((x) * M_PI / 180.0))
 
 #include <omp.h>
 
