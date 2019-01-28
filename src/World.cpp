@@ -68,6 +68,12 @@ using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
 
+#define EXPORT_COARSE_MESH
+//#define EXPORT_RIGIDS
+//#define EXPORT_STARFISH_BONES
+#define EXPORT_SOFT
+//#define EXPORT_FINGERS
+
 World::World() :
 	nr(0), nm(0), nR(0), nem(0), ner(0), ne(0), nim(0), nir(0), m_nbodies(0), m_njoints(0), m_ndeformables(0), m_constraints(0), m_countS(0), m_countCM(0),
 	m_nsoftbodies(0), m_ncomps(0), m_nwraps(0), m_nsprings(0), m_nmeshembeddings(0)
@@ -4295,7 +4301,14 @@ vector<string> World::getBrenderNames() const
 vector<string> World::getBrenderExtensions() const
 {
 	vector<string> extensions;
+	
+#ifdef EXPORT_RIGIDS
 	string obj = "json";
+#endif
+
+#ifdef EXPORT_SOFT
+	string obj = "obj";
+#endif
 	extensions.push_back(obj);
 
 	return extensions;
@@ -4305,18 +4318,20 @@ vector<int> World::getBrenderTypes() const
 {
 	vector<int> types;
 	int mytype;
+#ifdef EXPORT_RIGIDS
 	mytype = Brenderable::ResetAppend;
 	types.push_back(mytype);
-
-	//types.push_back(Brenderable::Truncate);
-
+#endif
+#ifdef EXPORT_SOFT
+	types.push_back(Brenderable::Truncate);
+#endif // EXPORT_SOFT
 	return types;
 }
 
 void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, double time) const
 {
 	ofstream &outfile = *outfiles[0];
-
+#ifdef EXPORT_FINGERS
 	Json::Value states(Json::arrayValue);
 	vector<string> mybodyname_vec;
 	string mybody = "elbow";
@@ -4429,7 +4444,78 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 		jsonworld["body"] = frames;
 		*(outfiles[0]) << jsonworld;
 	}
+#endif // EXPORT_FINGERS
+
+#ifdef EXPORT_STARFISH_BONES
+	Json::Value states(Json::arrayValue);
+	vector<string> mybodyname_vec;
+	string mybody;
+
+	for (int i = 0; i < m_bodies.size(); ++i) {
+		mybody = to_string(i);
+		mybodyname_vec.push_back(mybody);
+	}
+
+	std::string resource_dir = "D:/Research/Muscles/Projects/ReducedCoordRigidBodyFEM/resources/";
+
+	if (export_part == 0)
+	{
+		Json::Value objs(Json::arrayValue);
+		for (int i = 0; i < m_bodies.size(); ++i) {
+			objs[i] = resource_dir + "starfish_bone.obj";
+		}
+
+		jsonworld["header"]["objs"] = objs;
+
+		for (int i = 0; i < m_bodies.size(); ++i)
+		{
+			Json::Value vi(Json::objectValue);
+			vi["obj"] = i;
+			vi["name"] = mybodyname_vec[i];
+			states.append(vi);
+		}
+		jsonworld["header"]["states"] = states;
+
+		Json::Value v(Json::objectValue);
+		v["frame"] = frame;
+
+		for (int i = 0; i < m_bodies.size(); ++i)
+		{
+			v[mybodyname_vec[i]] = m_bodies[i]->exportJson();
+		}
+
+		frames.append(v);
+
+	}
+	// print frame
+	else if (export_part == 1)
+	{
+		Json::Value v(Json::objectValue);
+		v["frame"] = frame;
+
+		for (int i = 0; i < m_bodies.size(); ++i)
+		{
+			v[mybodyname_vec[i]] = m_bodies[i]->exportJson();
+		}
+
+		frames.append(v);
+	}
+	else {
+		jsonworld["body"] = frames;
+		*(outfiles[0]) << jsonworld;
+	}
+#endif // EXPORT_STARFISH_BONES
+
+
+#ifdef EXPORT_COARSE_MESH
+
+	m_meshembeddings[0]->getCoarseMesh()->exportObj(outfile);
+
+#endif // EXPORT_COARSE_MESH
+#ifdef EXPORT_DENSE_MESH
+	m_meshembeddings[0]->getDenseMesh()->exportObj(outfile);
+
+#endif // EXPORT_DENSE_MESH
 
 	
-	//m_meshembeddings[0]->getDenseMesh()->exportObj(outfile);
 }
