@@ -1,19 +1,9 @@
+#include "rmpch.h"
 #include "Body.h"
-
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
-
 #include "Joint.h"
-#include "SE3.h"
-#include "Shape.h"
-#include "MatrixStack.h"
-#include "Program.h"
 #include "ConstraintPrescBody.h"
 #include "ConstraintPrescBodyAttachPoint.h"
-#include <json\writer.h>
-#include <json\json.h>
-#include <json\value.h>
+
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;
@@ -48,8 +38,8 @@ m_density(density)
 	fgrav.setZero();
 	fcor.setZero();
 	m_body_color << 0.8f, 0.7f, 0.7f;
-	m_attached_color << (float)(rand() % 255)/255.0f,(float)(rand() % 255)/255.0f,(float)(rand() % 255)/255.0f;
-	m_sliding_color << (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f;
+	m_attached_color << static_cast<float>((rand() % 255)/255.0), static_cast<float>((rand() % 255)/255.0), static_cast<float>((rand() % 255)/255.0);
+	m_sliding_color << static_cast<float>((rand() % 255) / 255.0), static_cast<float>((rand() % 255) / 255.0), static_cast<float>((rand() % 255) / 255.0);
 	presc = nullptr;
 }
 
@@ -89,7 +79,6 @@ Json::Value Body::exportJson() {
 	v["scale"] = scale;
 	v["location"] = location;
 	v["quat"] = q;
-
 	return v;
 }
 
@@ -117,10 +106,8 @@ Vector3d Body::getBodyVelocityByEndPointVelocity(Vector3d v_we) {
 	return(-v_iw);
 }
 
-
 void Body::update() {
 	computeInertia();
-
 	// Updates this body's transforms and velocities
 	E_wi = m_joint->E_wj * E_ji;
 	E_iw = SE3::inverse(E_wi);
@@ -132,7 +119,6 @@ void Body::update() {
 		m_parent = m_joint->getParent()->getBody();
 		E_ip = E_iw * m_parent->E_wi;
 	}
-
 	Ad_ip = SE3::adjoint(E_ip);
 
 	// Body velocity
@@ -183,14 +169,12 @@ void Body::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, sha
 		glUniform3f(prog->getUniform("ka"), 0.2f, 0.2f, 0.2f);
 		glUniform3fv(prog->getUniform("kd"), 1, this->m_body_color.data());
 		glUniform3f(prog->getUniform("ks"), 1.0f, 0.9f, 0.8f);
-
 		MV->pushMatrix();
 		MV->multMatrix(eigen_to_glm(E_wi));
 
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		bodyShape->draw(prog);
 		MV->popMatrix();
-
 	}
 	prog->unbind();
 }
@@ -260,16 +244,12 @@ void Body::computeGrav(Vector3d grav, Eigen::VectorXd &f) {
 	fcor = SE3::ad(phi).transpose() * M_i * phi;
 	R_wi = E_wi.block<3, 3>(0, 0);
 	R_iw = R_wi.transpose();
-
 	fgrav.setZero();
 	fgrav.segment<3>(3) = M_i(3, 3) * R_iw * grav; // wrench in body space
-
 	f.segment<6>(idxM) = fcor + fgrav;
-
 	this->wext_i.setZero();
 	this->Kmdiag.setZero();
 	this->Dmdiag.setZero();
-
 	if (next != nullptr) {
 		next->computeGrav(grav, f);
 	}

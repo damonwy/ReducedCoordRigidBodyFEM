@@ -1,21 +1,8 @@
+#include "rmpch.h"
 #define TETLIBRARY
 #include <tetgen.h>
 
 #include "SoftBody.h"
-
-#include <iostream>
-#include <fstream>
-#include <cmath>        // std::abs
-
-#include <json.hpp>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include "GLSL.h"
-#include "MatrixStack.h"
-#include "Program.h"
-
 #include "Node.h"
 #include "FaceTriangle.h"
 #include "Tetrahedron.h"
@@ -24,7 +11,6 @@
 #include "TetrahedronCorotational.h"
 #include "TetrahedronInvertible.h"
 #include "Line.h"
-#include <omp.h>
 
 using namespace std;
 using namespace Eigen;
@@ -885,4 +871,19 @@ Energy SoftBody::computeEnergies(Eigen::Vector3d grav, Energy ener) {
 	}
 
 	return ener;
+}
+
+void SoftBody::exportObj(std::ofstream& outfile)
+{
+	for (int i = 0; i < posBuf.size(); i += 3) {
+		outfile << "v " << posBuf[i] << " " << posBuf[i + 1] << " " << posBuf[i + 2] << endl;
+	}
+
+	for (int i = 0; i < norBuf.size(); i += 3) {
+		outfile << "vt " << norBuf[i] << " " << norBuf[i + 1] << " " << norBuf[i + 2] << endl;
+	}
+
+	for (int i = 0; i < eleBuf.size(); i += 3) {
+		outfile << "f " << eleBuf[i] + 1 << "//" << eleBuf[i] + 1 << " " << eleBuf[i + 1] + 1 << "//" << eleBuf[i + 1] + 1 << " " << eleBuf[i + 2] + 1 << "//" << eleBuf[i + 2] + 1 << endl;
+	}
 }

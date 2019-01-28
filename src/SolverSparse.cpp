@@ -1,14 +1,11 @@
-#include "SolverSparse.h"
-
+#include "rmpch.h"
 #include <Eigen/PardisoSupport>
 #include <Eigen/SuperLUSupport>
+//#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
+#include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
+#include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
 
-#include <functional>
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
-#include <omp.h>
-
+#include "SolverSparse.h"
 #include "World.h"
 #include "Body.h"
 #include "SoftBody.h"
@@ -21,11 +18,7 @@
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
-#include "MatlabDebug.h"
 #include "MeshEmbedding.h"
-//#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
-#include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
-#include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
 
 using namespace std;
 using namespace Eigen;

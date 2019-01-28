@@ -6,7 +6,6 @@
 
 #define EIGEN_USE_MKL_ALL
 
-
 #include <vector>
 #include <memory>
 
@@ -37,6 +36,7 @@ public:
 
 	void setDamping(double damping) { m_damping = damping; }
 	void setTransform(Matrix4d E);	
+	void setSides(Vector3d sides) { m_sides = sides; }
 	void setJoint(std::shared_ptr<Joint> joint) { m_joint = joint; };
 	void setAttachedColor(Vector3f color) { m_attached_color = color; }
 	void setDrawingOption(bool drawing) { m_isDrawing = drawing; }
@@ -88,7 +88,7 @@ public:
 	Vector6d fgrav;
 	Matrix3d R_wi;
 	Matrix3d R_iw;
-	bool  m_isDrawing;
+	bool   m_isDrawing;
 	double m_damping;					// Viscous damping
 	std::shared_ptr<Joint> m_joint;		// Joint to parent
 	int idxM;							// Maximal indices
@@ -102,6 +102,7 @@ public:
 	Vector3f m_sliding_color;
 
 	Vector3f m_body_color;
+	Vector3d m_sides;
 	void toggleDrawing(bool isDrawing) { m_isDrawing = isDrawing; }
 
 protected:
@@ -109,6 +110,8 @@ protected:
 	virtual void draw_(std::shared_ptr<MatrixStack> MV, const std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack> P)const;
 	virtual void computeInertia_() {}
 	std::string m_name;
+	int m_UID;
+
 	
 };
 

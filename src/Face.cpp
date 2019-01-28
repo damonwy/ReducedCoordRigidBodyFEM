@@ -1,11 +1,5 @@
+#include "rmpch.h"
 #include "Face.h"
-
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
-
-#include "Program.h"
-#include "MatrixStack.h"
 #include "Node.h"
 
 using namespace std;

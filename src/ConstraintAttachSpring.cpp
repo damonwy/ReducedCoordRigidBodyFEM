@@ -1,13 +1,10 @@
+#include "rmpch.h"
 #include "ConstraintAttachSpring.h"
 
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
 #include "Deformable.h"
 #include "DeformableSpring.h"
 #include "Node.h"
 #include "Body.h"
-#include "SE3.h"
 
 using namespace std;
 using namespace Eigen;

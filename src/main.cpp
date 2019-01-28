@@ -1,13 +1,4 @@
-#include <cassert>
-#include <cstring>
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <cstdlib>
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <vector>
-
+#include "rmpch.h"
 #define EIGEN_USE_MKL_ALL
 
 #ifndef _GLIBCXX_USE_NANOSLEEP
@@ -15,25 +6,9 @@
 #endif
 #include <thread>
 
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
-
-
-#include "GLSL.h"
-#include "Program.h"
-#include "Camera.h"
-#include "MatrixStack.h"
-#include "Shape.h"
 #include "Scene.h"
-#include <omp.h>
 #include <Eigen/Core>
 
 #define RECORD_VIDEO 0
@@ -54,7 +29,6 @@ shared_ptr<Scene> scene;
 
 char pixels[4 * 1920 * 1080];
 int steps = 0;
-
 
 static void error_callback(int error, const char *description)
 {

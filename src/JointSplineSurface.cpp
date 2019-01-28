@@ -1,13 +1,6 @@
+#include "rmpch.h"
 #include "JointSplineSurface.h"
-
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
-
 #include "Body.h"
-#include "MatrixStack.h"
-#include "Program.h"
-#include "SE3.h"
 
 using namespace std;
 using namespace Eigen;

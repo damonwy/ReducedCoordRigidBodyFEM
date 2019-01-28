@@ -1,4 +1,6 @@
+#include "rmpch.h"
 #include "SolverDense.h"
+
 #include "World.h"
 #include "Body.h"
 #include "SoftBody.h"
@@ -12,10 +14,6 @@
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
 #include "ChronoTimer.h"
-#include "MatlabDebug.h"
-#include <iostream>
-#include <fstream>
-#include <json.hpp>
 
 using namespace std;
 using namespace Eigen;
@@ -25,7 +23,6 @@ SolverDense::SolverDense(std::shared_ptr<World> world, Integrator integrator) : 
 
 void SolverDense::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir) {
 	ni = nim + nir;
-	
 	
 	Mr.setZero();
 	MDKr_.setZero();
