@@ -1,24 +1,8 @@
+#include "rmpch.h"
 #include "CompSphere.h"
 
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <iostream>
-#include <fstream>
-
 #include "Body.h"
-#include "Shape.h"
-#include "SE3.h"
-#include "MatrixStack.h"
-#include "Program.h"
 #include "Node.h"
-
-#include <nlohmann/json.hpp>
 
 using namespace std;
 using namespace Eigen;

@@ -1,10 +1,7 @@
+#include "rmpch.h"
 #include "CompCylinder.h"
 
 #include "Body.h"
-#include "Shape.h"
-#include "SE3.h"
-#include "MatrixStack.h"
-#include "Program.h"
 #include "Vector.h"
 #include "Node.h"
 

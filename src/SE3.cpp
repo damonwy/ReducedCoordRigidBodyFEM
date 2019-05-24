@@ -1,8 +1,5 @@
+#include "rmpch.h"
 #include "SE3.h"
-
-#include <iostream>
-#include <fstream>
-#include <nlohmann/json.hpp>
 
 using namespace std;
 using namespace Eigen;

@@ -1,11 +1,8 @@
+#include "rmpch.h"
 #include "SpringDamper.h"
 
-#include <iostream>
 #include "Body.h"
 #include "Node.h"
-#include "MatrixStack.h"
-#include "Program.h"
-#include "SE3.h"
 
 using namespace std;
 using namespace Eigen;

@@ -1,16 +1,5 @@
-#include <iostream>
-
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
+#include "rmpch.h"
 #include "Vector.h"
-#include "Program.h"
-#include "MatrixStack.h"
 #include "Node.h"
 #include "Body.h"
 
@@ -22,7 +11,6 @@ Vector::Vector() :
 	dir0(0.0, 0.0, 0.0),
 	fixed(false)
 {
-
 }
 
 Vector::Vector(shared_ptr<Node> p, shared_ptr<Body> body, Vector3d dir):

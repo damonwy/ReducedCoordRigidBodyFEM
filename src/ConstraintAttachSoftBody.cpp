@@ -1,21 +1,14 @@
+#include "rmpch.h"
 #include "ConstraintAttachSoftBody.h"
-
-#include <iostream>
-#include <fstream>
-#include <nlohmann/json.hpp>
 #include "SoftBody.h"
 #include "Node.h"
 #include "Body.h"
-#include "SE3.h"
 #include "Vector.h"
-#include "MatlabDebug.h"
 
 using namespace std;
 using namespace Eigen;
 
 ConstraintAttachSoftBody::ConstraintAttachSoftBody() {
-
-
 }
 
 ConstraintAttachSoftBody::ConstraintAttachSoftBody(shared_ptr<SoftBody> softbody) :
@@ -24,7 +17,6 @@ ConstraintAttachSoftBody::ConstraintAttachSoftBody(shared_ptr<SoftBody> softbody
 	n_sliding_nodes(softbody->m_sliding_nodes.size()),
 	Constraint(3 * softbody->m_attach_bodies.size()+ softbody->m_sliding_nodes.size(), 0, 0, 0)
 {
-	
 }
 
 

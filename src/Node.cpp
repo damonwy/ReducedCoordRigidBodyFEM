@@ -1,18 +1,6 @@
-#include <iostream>
-
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
+#include "rmpch.h"
 #include "Node.h"
-#include "Shape.h"
-#include "Program.h"
 #include "Body.h"
-#include "MatrixStack.h"
 
 using namespace std;
 using namespace Eigen;

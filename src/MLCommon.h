@@ -20,6 +20,8 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 
 #define MAX(a, b) ((a)>(b)?(a):(b))
+#define ToRadian(x) (double)(((x) * M_PI / 180.0))
+
 #ifdef _WIN32
 #include <omp.h>
 #endif
@@ -89,8 +91,6 @@ inline Eigen::Map<const MatrixType<Scalar>> Tensor_to_Matrix(const Eigen::Tensor
 //    constexpr int rank = sizeof... (Dims);
 //    return Eigen::TensorMap<Eigen::Tensor<const Scalar, rank>>(matrix.data(), { dims... });
 //}
-
-
 
 inline Eigen::Vector3d findOrthonormalVector(Eigen::Vector3d input) {
 	// Find a unit vector that is orthogonal to an input vector v

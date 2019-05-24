@@ -1,8 +1,5 @@
+#include "rmpch.h"
 #include "QuadProgMosek.h"
-
-#ifdef _MEX_
-#include "mex.h"
-#endif
 
 struct MosekVarBoundData {
 	MSKint32t variableIndex;

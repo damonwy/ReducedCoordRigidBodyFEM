@@ -350,7 +350,6 @@ public:
 	std::vector<std::shared_ptr<Node>> &nodes);
 
 	void sceneCross(double t);
-	void sceneStarFish(double t);
 	void sceneStarFish2(double t);
 	void sceneStarFish3(double t);
 	void sceneStarFishJump(double t);
@@ -409,9 +408,8 @@ public:
 
 	std::shared_ptr<Body> getBody(int uid);
 	std::shared_ptr<Body> getBody(const std::string &name);
-	std::shared_ptr<Joint> getJoint(int uid);
-	std::shared_ptr<Joint> getJoint(const std::string &name);
-
+	std::shared_ptr<Constraint> getConstraint(int uid);
+	std::shared_ptr<Constraint> getConstraint(const std::string &name);
 
 	std::shared_ptr<Body> getBody0() const { return m_bodies[0]; }
 	std::shared_ptr<Joint> getJoint0() const { return m_joints[0]; }
@@ -468,6 +466,7 @@ private:
 
 	double m_Hexpected;		// used to check correctness
 	
+	// These are the actual objects that are created
 	std::vector<std::shared_ptr<Body>> m_bodies;
 	std::vector<std::shared_ptr<Comp>> m_comps;
 	std::vector<std::shared_ptr<WrapObst>> m_wraps;
@@ -478,18 +477,18 @@ private:
 	std::vector<std::shared_ptr<Spring>> m_springs;
 	std::vector<std::shared_ptr<Constraint>> m_constraints;
 	std::vector<std::shared_ptr<Line> > m_lines;
-
 	std::vector<Floor> m_floors;
-	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;
-	typedef std::map<int, std::shared_ptr<Body>> MapBodyUID;
 
-	typedef std::map<std::string, std::shared_ptr<Joint>> MapJointName;
-	typedef std::map<int, std::shared_ptr<Joint>> MapJointUID;
+	// These are extra data structures that point to the objects
+	typedef std::map<std::string, std::shared_ptr<Body>> MapBodyName;
+	typedef std::map<std::string, std::shared_ptr<Constraint>> MapConstraintName;
+	typedef std::map<int, std::shared_ptr<Body>> MapBodyUID;
+	typedef std::map<int, std::shared_ptr<Constraint>> MapConstraintUID;
 
 	MapBodyName m_bodyName;
 	MapBodyUID m_bodyUID;
-	MapJointName m_jointName;
-	MapJointUID m_jointUID;
+	MapConstraintName m_constraintName;
+	MapConstraintUID m_constraintUID;
 };
 
 #endif // MUSCLEMASS_SRC_WORLD_H_

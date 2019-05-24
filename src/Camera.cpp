@@ -1,9 +1,7 @@
-#define _USE_MATH_DEFINES
-#include <cmath> 
-#include <iostream>
+#include "rmpch.h"
+
 #include <glm/gtc/matrix_transform.hpp>
 #include "Camera.h"
-#include "MatrixStack.h"
 
 Camera::Camera() :
 	aspect(1.0f),

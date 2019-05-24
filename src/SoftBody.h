@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
@@ -104,6 +105,8 @@ public:
 	
 	int m_npotentialcols;		// how many nodes need to check
 	bool m_isCollided;
+
+	void exportObj(std::ofstream& outfile);
 
 protected:
 	int m_type;

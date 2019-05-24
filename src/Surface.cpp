@@ -1,19 +1,10 @@
+#include "rmpch.h"
 #define TETLIBRARY
 #include <tetgen.h>
-
 #include "Surface.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include "GLSL.h"
-#include "MatrixStack.h"
-#include "Program.h"
 #include "Node.h"
 #include "FaceTriangle.h"
-#ifdef _WIN32
-#include <omp.h>
-#endif
-#include <fstream>
+
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;

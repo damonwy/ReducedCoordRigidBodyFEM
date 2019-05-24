@@ -1,16 +1,9 @@
-#include "SolverSparse.h"
-
+#include "rmpch.h"
 #include <Eigen/PardisoSupport>
 #ifdef REDMAX_SUPERLU
 #include <Eigen/SuperLUSupport>
 #endif
-#include <functional>
-#include <iostream>
-#include <fstream>
-#include <nlohmann/json.hpp>
-#ifdef _WIN32
-#include <omp.h>
-#endif
+#include "SolverSparse.h"
 #include "World.h"
 #include "Body.h"
 #include "SoftBody.h"
@@ -23,8 +16,8 @@
 #include "ConstraintLoop.h"
 #include "ConstraintAttachSpring.h"
 #include "QuadProgMosek.h"
-#include "MatlabDebug.h"
 #include "MeshEmbedding.h"
+
 //#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
 #include <unsupported/Eigen/src/IterativeSolvers/Scaling.h>
 #include <unsupported/Eigen/src/IterativeSolvers/GMRES.h>
