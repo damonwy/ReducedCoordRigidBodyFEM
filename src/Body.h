@@ -6,7 +6,6 @@
 
 #define EIGEN_USE_MKL_ALL
 
-
 #include <vector>
 #include <memory>
 
@@ -14,6 +13,9 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "MLCommon.h"
+#include <json/json.h>
+#include <json/writer.h>
+#include <json/value.h>
 
 class Shape;
 class Wrench;
@@ -24,9 +26,6 @@ class ConstraintPrescBody;
 class ConstraintPrescBodyAttachPoint;
 
 typedef Eigen::Triplet<double> T;
-#include <json\json.h>
-#include <json\writer.h>
-#include <json\value.h>
 
 class Body 
 {
@@ -111,7 +110,5 @@ protected:
 	std::string m_name;
 	
 };
-
-
 
 #endif // REDUCEDCOORD_SRC_BODY_H_

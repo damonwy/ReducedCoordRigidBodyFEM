@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "MatrixStack.h"
 #include "Program.h"

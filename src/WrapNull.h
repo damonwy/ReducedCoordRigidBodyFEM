@@ -14,7 +14,6 @@ public:
 
 	}
 	virtual ~WrapNull() {}
-
 };
 
 #endif // MUSCLEMASS_SRC_WRAPNULL_H_

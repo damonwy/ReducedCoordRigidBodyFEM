@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include "SoftBody.h"
 #include "Node.h"
 #include "Body.h"
@@ -124,7 +124,7 @@ void ConstraintAttachSoftBody::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, Vec
 		}
 
 		R = E.block<3, 3>(0, 0);
-		Vector3d xi = m_softbody->m_sliding_nodes[i]->x - body->E_iw.block<3, 1>(0, 3);
+		//Vector3d xi = m_softbody->m_sliding_nodes[i]->x - body->E_iw.block<3, 1>(0, 3);
 		//G = SE3::gamma(xi);
 		G = SE3::gamma(m_softbody->m_r_sliding[i]);
 		auto normal = m_softbody->m_normals_sliding[i];
@@ -225,7 +225,7 @@ void ConstraintAttachSoftBody::computeJacEqMSparse_(vector<T> &Gm, vector<T> &Gm
 		}
 
 		R = E.block<3, 3>(0, 0);
-		Vector3d xi = m_softbody->m_sliding_nodes[i]->x - body->E_iw.block<3, 1>(0, 3);
+		//Vector3d xi = m_softbody->m_sliding_nodes[i]->x - body->E_iw.block<3, 1>(0, 3);
 		G = SE3::gamma(m_softbody->m_r_sliding[i]);
 		auto normal = m_softbody->m_normals_sliding[i];
 		Vector3d nor = normal->dir;

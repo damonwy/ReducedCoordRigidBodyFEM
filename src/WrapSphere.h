@@ -25,6 +25,7 @@ public:
 	void init();
 	void compute();
 	Eigen::MatrixXd getPoints(int num_points);
+    virtual ~WrapSphere() {}
 
 private:
 	std::shared_ptr<CompSphere> m_compSphere;

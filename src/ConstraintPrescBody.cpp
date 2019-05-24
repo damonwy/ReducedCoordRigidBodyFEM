@@ -25,7 +25,7 @@ void ConstraintPrescBody::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdot, VectorXd
 	
 	Matrix6d I6 = - Matrix6d::Identity();
 
-	Gm.block(row, col, nconEM, 6) = I6(m_prows, Eigen::placeholders::all);
+	Gm.block(row, col, nconEM, 6) = I6(m_prows, Eigen::all);
 
 	if (m_vel == REDMAX_EULER) {
 		gmdot.segment(row, nconEM) = m_qdot(m_prows);

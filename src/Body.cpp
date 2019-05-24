@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "Joint.h"
 #include "SE3.h"
@@ -11,9 +11,9 @@
 #include "Program.h"
 #include "ConstraintPrescBody.h"
 #include "ConstraintPrescBodyAttachPoint.h"
-#include <json\writer.h>
-#include <json\json.h>
-#include <json\value.h>
+#include <json/writer.h>
+#include <json/json.h>
+#include <json/value.h>
 using namespace std;
 using namespace Eigen;
 using json = nlohmann::json;

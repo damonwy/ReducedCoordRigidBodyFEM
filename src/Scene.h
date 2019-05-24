@@ -1,7 +1,6 @@
 #pragma once
 #ifndef MUSCLEMASS_SRC_SCENE_H_
 #define MUSCLEMASS_SRC_SCENE_H_
-#define EIGEN_USE_MKL_ALL
 
 #include <vector>
 #include <memory>
@@ -9,7 +8,7 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include "MLCommon.h"
 
 class Node;
@@ -44,11 +43,11 @@ private:
 	int count;
 	double t;
 	double h;
-	int time_step;
+	//int time_step;
 	int search_idx;
 	int drawHz;
 	double drawH;
-	double tk;
+	//double tk;
 
 	Eigen::Vector3d grav;
 
@@ -56,7 +55,6 @@ private:
 	std::shared_ptr<World> m_world;
 	std::shared_ptr<Solver> m_solver;
 	std::shared_ptr<Solution> m_solution;
-
 };
 
 #endif // MUSCLEMASS_SRC_SCENE_H_

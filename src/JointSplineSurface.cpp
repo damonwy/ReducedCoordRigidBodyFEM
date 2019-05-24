@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "Body.h"
 #include "MatrixStack.h"

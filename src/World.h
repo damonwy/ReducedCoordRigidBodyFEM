@@ -10,9 +10,9 @@
 
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Dense>
-#include <json\json.h>
-#include <json\writer.h>
-#include <json\value.h>
+#include <json/json.h>
+#include <json/writer.h>
+#include <json/value.h>
 #include "MLCommon.h"
 
 #include "Brenderable.h"
@@ -359,7 +359,6 @@ public:
 	void sceneTestHyperReduced(double t);
 	void sceneFingers(double t);
 	void sceneAttachPoint(double t);
-
 
 	void setMaximalPrescStates(std::shared_ptr<Body> b, Vector3d vt_w, Vector3d vtdot_w, Vector3d wt_i, Vector3d wtdot_i);
 	void setMaximalPrescStates(int index_body, Vector3d vt_w, Vector3d wt_i);

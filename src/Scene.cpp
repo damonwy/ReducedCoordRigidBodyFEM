@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "Node.h"
 #include "Shape.h"
@@ -35,9 +35,8 @@ BrenderManager *brender;
 Scene::Scene() :
 	t(0.0),
 	h(1e-2),
-	grav(0.0, 0.0, 0.0),
-	time_step(0),
-	drawHz(10)
+	drawHz(10),
+    grav(0.0, 0.0, 0.0)
 {
 }
 
@@ -171,5 +170,4 @@ void Scene::toggleCoarseMesh() {
 	bool isOn = m_world->getMeshEmbedding0()->m_isCoarseMesh;
 	
 	m_world->getMeshEmbedding0()->toggleDrawingCoarseMesh(!isOn);
-
 }

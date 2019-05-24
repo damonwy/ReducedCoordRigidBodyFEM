@@ -16,7 +16,7 @@ public:
 	void update_() {
 		double q0 = m_q(0);
 		double q1 = m_q(1);
-		double dq0 = m_qdot(0);
+		//double dq0 = m_qdot(0);
 		double dq1 = m_qdot(1);
 
 		double c0 = cos(q0);

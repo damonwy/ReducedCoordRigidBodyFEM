@@ -97,9 +97,8 @@ void WrapCylinder::compute()
 	m_point_q->x = q;
 	m_point_t->x = t;
 
-	Vector3d Q = this->M.transpose() * q + m_point_O->x;
-	Vector3d T = this->M.transpose() * t + m_point_O->x;
-
+	//Vector3d Q = this->M.transpose() * q + m_point_O->x;
+	//Vector3d T = this->M.transpose() * t + m_point_O->x;
 	// std::cout << Q.transpose() << std::endl << T.transpose() << std::endl;
 }
 

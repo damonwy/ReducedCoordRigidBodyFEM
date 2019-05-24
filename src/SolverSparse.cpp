@@ -1,14 +1,16 @@
 #include "SolverSparse.h"
 
 #include <Eigen/PardisoSupport>
+#ifdef REDMAX_SUPERLU
 #include <Eigen/SuperLUSupport>
-
+#endif
 #include <functional>
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
+#ifdef _WIN32
 #include <omp.h>
-
+#endif
 #include "World.h"
 #include "Body.h"
 #include "SoftBody.h"
@@ -24,8 +26,8 @@
 #include "MatlabDebug.h"
 #include "MeshEmbedding.h"
 //#include <unsupported/Eigen/src/IterativeSolvers/MINRES.h>
-#include <unsupported\Eigen\src\IterativeSolvers\Scaling.h>
-#include <unsupported\Eigen\src\IterativeSolvers\GMRES.h>
+#include <unsupported/Eigen/src/IterativeSolvers/Scaling.h>
+#include <unsupported/Eigen/src/IterativeSolvers/GMRES.h>
 
 using namespace std;
 using namespace Eigen;
@@ -441,11 +443,11 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				Gr_sp.setFromTriplets(Gr_.begin(), Gr_.end());
 				Grdot_sp.setFromTriplets(Grdot_.begin(), Grdot_.end());
 
-				MatrixXd m_Gm = MatrixXd(Gm_sp)(m_rowsEM, Eigen::placeholders::all);
+				MatrixXd m_Gm = MatrixXd(Gm_sp)(m_rowsEM, Eigen::all);
 				//cout << m_Gm << endl << endl;
 				
 
-				MatrixXd m_Gr = MatrixXd(Gr_sp)(m_rowsER, Eigen::placeholders::all);
+				MatrixXd m_Gr = MatrixXd(Gr_sp)(m_rowsER, Eigen::all);
 				VectorXd m_gm = gm(m_rowsEM);
 				//cout << m_gm << endl << endl;
 
@@ -509,8 +511,8 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				Eigen::VectorXi m_rowsM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsM.data(), rowsM.size());
 				Eigen::VectorXi m_rowsR = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsR.data(), rowsR.size());
 
-				MatrixXd m_Cm = Cm(m_rowsM, Eigen::placeholders::all);
-				MatrixXd m_Cr = Cr(m_rowsR, Eigen::placeholders::all);
+				MatrixXd m_Cm = Cm(m_rowsM, Eigen::all);
+				MatrixXd m_Cr = Cr(m_rowsR, Eigen::all);
 				VectorXd m_cm = cm(m_rowsM);
 				VectorXd m_cr = cr(m_rowsR);
 				VectorXd m_cmdot = cmdot(m_rowsM);
@@ -787,10 +789,13 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 				}
 			case SUPER_LU:
 				{
-					SuperLU< SparseMatrix<double>> slu(LHS_sp);
-					assert(slu.info() == Success);
-					qdot1 = slu.solve(rhs).segment(0, nr);
-					break;
+#ifdef REDMAX_SUPERLU
+
+                    SuperLU< SparseMatrix<double>> slu(LHS_sp);
+                    assert(slu.info() == Success);
+                    qdot1 = slu.solve(rhs).segment(0, nr);
+                    break;
+#endif
 				}
 			default:
 				{
@@ -815,15 +820,18 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 					program_->setEqualityVector(rhsG);
 
 					bool success = program_->solve();
-					VectorXd sol = program_->getPrimalSolution();
-					qdot1 = sol.segment(0, nr);	
-					VectorXd l = program_->getDualEquality();
-					constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
-					constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
+                    if(success){
+                        VectorXd sol = program_->getPrimalSolution();
+                        qdot1 = sol.segment(0, nr);
+                        VectorXd l = program_->getDualEquality();
+                        constraint0->scatterForceEqM(MatrixXd(Gm_sp.transpose()), l.segment(0, nem) / h);
+                        constraint0->scatterForceEqR(MatrixXd(Gr_sp.transpose()), l.segment(nem, l.rows() - nem) / h);
+                    }else{
+                        cout << "Solve failed!" << endl;
+                    }
 				}
 				break;
 			}
-
 		}
 		else if (ne == 0 && ni > 0) {  // Just inequality
 			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
@@ -848,8 +856,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			program_->setInequalityVector(cvec);
 
 			bool success = program_->solve();
-			VectorXd sol = program_->getPrimalSolution();
-			qdot1 = sol.segment(0, nr);
+            if(success){
+                VectorXd sol = program_->getPrimalSolution();
+                qdot1 = sol.segment(0, nr);
+            }else{
+                cout << "Solve failed!" << endl;
+            }
 		}
 		else {  // Both equality and inequality
 			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
@@ -880,8 +892,12 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 			program_->setEqualityVector(rhsG);
 
 			bool success = program_->solve();
-			VectorXd sol = program_->getPrimalSolution();
-			qdot1 = sol.segment(0, nr);
+            if(success){
+                VectorXd sol = program_->getPrimalSolution();
+                qdot1 = sol.segment(0, nr);
+            }else{
+                cout << "Solve failed!" << endl;
+            }
 		}
 		qddot = (qdot1 - qdot0) / h;
 		q1 = q0 + h * qdot1;
@@ -895,7 +911,6 @@ VectorXd SolverSparse::dynamics(VectorXd y)
 		joint0->scatterDDofs(ydotk, nr);
 		joint0->reparam();
 		joint0->gatherDofs(yk, nr);
-
 
 		deformable0->scatterDofs(yk, nr);
 		deformable0->scatterDDofs(ydotk, nr);

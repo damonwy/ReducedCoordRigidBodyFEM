@@ -360,7 +360,7 @@ bool QuadProgMosek::solve() {
 	const MSKint32t kNumVars = static_cast<MSKint32t>(numVars);
 	const MSKint32t kNumCons = static_cast<MSKint32t>(numCons);
 
-	MSKrescodee   r = __setupMosekEnvIfNeeded();
+	//MSKrescodee   r = __setupMosekEnvIfNeeded();
 	MSKenv_t      env = __getMosekEnv();
 	MSKtask_t     task = __getMosekTask();
 
@@ -424,9 +424,9 @@ bool QuadProgMosek::solve() {
 	}).doNext([&]() {
 		// Set lower/upper bound
 		MSKrescodee result = MSK_RES_OK;
-		const double infinity = std::numeric_limits<double>::infinity();
+		//const double infinity = std::numeric_limits<double>::infinity();
 		//                           [ (l, u),   (-inf, u),  (l, inf), (-inf, inf) ]
-		const MSKboundkeye keys[4] = { MSK_BK_FX, MSK_BK_UP, MSK_BK_LO, MSK_BK_FR };
+		//const MSKboundkeye keys[4] = { MSK_BK_FX, MSK_BK_UP, MSK_BK_LO, MSK_BK_FR };
 
 		if ((lowerVariableBound == 0) != (upperVariableBound == 0)) {
 			printf("Both lower and upper bounds must be set.\n");

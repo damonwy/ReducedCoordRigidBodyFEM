@@ -418,8 +418,8 @@ Vector4d Tetrahedron::computeBarycentricWeightAndSave(const shared_ptr<Node>& p)
 	Vector4d weight;
 	Vector3d vap = p->x - m_nodes[0]->x;
 	Vector3d vbp = p->x - m_nodes[1]->x;
-	Vector3d vcp = p->x - m_nodes[2]->x;
-	Vector3d vdp = p->x - m_nodes[3]->x;
+	//Vector3d vcp = p->x - m_nodes[2]->x;
+	//Vector3d vdp = p->x - m_nodes[3]->x;
 
 	Vector3d vab = m_nodes[1]->x - m_nodes[0]->x;
 	Vector3d vac = m_nodes[2]->x - m_nodes[0]->x;

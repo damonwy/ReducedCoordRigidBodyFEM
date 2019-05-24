@@ -1,6 +1,6 @@
 #pragma once
 
-#ifndef MUSCLEMASS_SRC_JOINTFIXED_H_
+//#ifndef MUSCLEMASS_SRC_JOINTFIXED_H_
 #define MUSCLEMASS_SRC_JOINTFIXED_H_
 #define EIGEN_USE_MKL_ALL
 
@@ -31,7 +31,4 @@ protected:
 		m_Q = Matrix4d::Identity();
 	}
 };
-
-
-
-#endif MUSCLEMASS_SRC_JOINTFIXED_H_
+//#endif MUSCLEMASS_SRC_JOINTFIXED_H_

@@ -19,7 +19,6 @@ WrapDoubleCylinder::WrapDoubleCylinder()
 	m_point_g->x0.setZero();
 	m_point_h = make_shared<Node>();
 	m_point_h->x0.setZero();
-
 }
 
 WrapDoubleCylinder::WrapDoubleCylinder(const shared_ptr<Node> &P,
@@ -447,7 +446,6 @@ void WrapDoubleCylinder::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Prog
 	glUniform3f(prog->getUniform("kd"), 0.0f, 0.0f, 1.0f);
 	glUniform3f(prog->getUniform("ks"), 0.0f, 1.0f, 0.0f);
 
-
 	// Draw P, S, U, V points
 	this->m_point_P->draw(MV, prog);
 	this->m_point_S->draw(MV, prog);
@@ -484,4 +482,3 @@ void WrapDoubleCylinder::draw_(shared_ptr<MatrixStack> MV, const shared_ptr<Prog
 	MV->popMatrix();
 	prog2->unbind();
 }
-

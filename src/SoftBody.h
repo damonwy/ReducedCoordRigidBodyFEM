@@ -43,14 +43,14 @@ public:
 	virtual void computeMassSparse(std::vector<T> &M_);
 	virtual Energy computeEnergies(Vector3d grav, Energy ener);
 
-	void computeForce(Vector3d grav, Eigen::VectorXd &f);
-	void computeStiffness(Eigen::MatrixXd &K);
-	void computeStiffnessSparse(std::vector<T> &K_);
+	virtual void computeForce(Vector3d grav, Eigen::VectorXd &f);
+	virtual void computeStiffness(Eigen::MatrixXd &K);
+	virtual void computeStiffnessSparse(std::vector<T> &K_);
 	void computeForceDamping(Eigen::VectorXd &f, Eigen::MatrixXd &D);
 	void computeForceDampingSparse(Eigen::VectorXd &f, std::vector<T> &D_);
 
 	virtual void gatherDofs(Eigen::VectorXd &y, int nr);
-	virtual Eigen::VectorXd gatherDDofs(Eigen::VectorXd &ydot, int nr);
+	virtual void gatherDDofs(Eigen::VectorXd &ydot, int nr);
 	virtual void scatterDofs(Eigen::VectorXd &y, int nr);
 	virtual void scatterDDofs(Eigen::VectorXd &ydot, int nr);
 
@@ -105,7 +105,6 @@ public:
 	int m_npotentialcols;		// how many nodes need to check
 	bool m_isCollided;
 
-
 protected:
 	int m_type;
 	bool m_isInvertible;
@@ -141,8 +140,6 @@ protected:
 	virtual void computeStiffnessSparse_(std::vector<T> &K_);
 	virtual void computeStiffness_(Eigen::MatrixXd &K);
 	virtual void computeForce_(Vector3d grav, Eigen::VectorXd &f);
-	
 };
-
 
 #endif // MUSCLEMASS_SRC_SOFTBODY_H_

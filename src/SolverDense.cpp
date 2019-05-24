@@ -15,7 +15,7 @@
 #include "MatlabDebug.h"
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 using namespace std;
 using namespace Eigen;
@@ -25,7 +25,6 @@ SolverDense::SolverDense(std::shared_ptr<World> world, Integrator integrator) : 
 
 void SolverDense::initMatrix(int nm, int nr, int nem, int ner, int nim, int nir) {
 	ni = nim + nir;
-	
 	
 	Mr.setZero();
 	MDKr_.setZero();
@@ -237,8 +236,8 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 				Eigen::VectorXi m_rowsM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsM.data(), rowsM.size());
 				Eigen::VectorXi m_rowsR = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsR.data(), rowsR.size());
 
-				MatrixXd m_Cm = Cm(m_rowsM, Eigen::placeholders::all);
-				MatrixXd m_Cr = Cr(m_rowsR, Eigen::placeholders::all);
+				MatrixXd m_Cm = Cm(m_rowsM, Eigen::all);
+				MatrixXd m_Cr = Cr(m_rowsR, Eigen::all);
 				VectorXd m_cm = cm(m_rowsM);
 				VectorXd m_cr = cr(m_rowsR);
 				VectorXd m_cmdot = cmdot(m_rowsM);
@@ -308,8 +307,12 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 			program_->setInequalityVector(cvec);
 
 			bool success = program_->solve();
-			VectorXd sol = program_->getPrimalSolution();
-			qdot1 = sol.segment(0, nr);
+            if(success){
+                VectorXd sol = program_->getPrimalSolution();
+                qdot1 = sol.segment(0, nr);
+            }else{
+                cout << "Solve failed!" << endl;
+            }
 		}
 		else {  // Both equality and inequality
 			shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
@@ -340,8 +343,12 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 			program_->setEqualityVector(rhsG);
 
 			bool success = program_->solve();
-			VectorXd sol = program_->getPrimalSolution();
-			qdot1 = sol.segment(0, nr);
+            if(success){
+                VectorXd sol = program_->getPrimalSolution();
+                qdot1 = sol.segment(0, nr);
+            }else{
+                cout << "Solve failed!" << endl;
+            }
 		}
 
 		qddot = (qdot1 - qdot0) / h;
@@ -364,8 +371,8 @@ Eigen::VectorXd SolverDense::dynamics(Eigen::VectorXd y)
 		softbody0->scatterDofs(yk, nr);
 		softbody0->scatterDDofs(ydotk, nr);
 
-		Energy ener = m_world->computeEnergy();
-		/*cout << "V" << ener.V << endl;
+		/*Energy ener = m_world->computeEnergy();
+		cout << "V" << ener.V << endl;
 		cout << "K" << ener.K << endl;
 		cout << " sum " << ener.V + ener.K << endl;*/
 		return yk;
@@ -476,8 +483,8 @@ shared_ptr<Solution> SolverDense::solve() {
 				if (ni > 0) {
 					Eigen::VectorXi m_rowsM = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsM.data(), rowsM.size());
 					Eigen::VectorXi m_rowsR = Eigen::Map<Eigen::VectorXi, Eigen::Unaligned>(rowsR.data(), rowsR.size());
-					MatrixXd m_Cm = Cm(m_rowsM, Eigen::placeholders::all);
-					MatrixXd m_Cr = Cr(m_rowsR, Eigen::placeholders::all);
+					MatrixXd m_Cm = Cm(m_rowsM, Eigen::all);
+					MatrixXd m_Cr = Cr(m_rowsR, Eigen::all);
 					MatrixXd CmJ = m_Cm * J;
 					C.resize(CmJ.rows() + m_Cr.rows(), m_Cr.cols());
 					C << CmJ, m_Cr;
@@ -537,9 +544,12 @@ shared_ptr<Solution> SolverDense::solve() {
 				program_->setInequalityVector(cvec);
 
 				bool success = program_->solve();
-				VectorXd sol = program_->getPrimalSolution();
-				qdot1 = sol.segment(0, nr);
-
+                if(success){
+                    VectorXd sol = program_->getPrimalSolution();
+                    qdot1 = sol.segment(0, nr);
+                }else{
+                    cout << "Solve failed!" << endl;
+                }				
 			}
 			else {  // Both equality and inequality
 				shared_ptr<QuadProgMosek> program_ = make_shared <QuadProgMosek>();
@@ -571,9 +581,12 @@ shared_ptr<Solution> SolverDense::solve() {
 				program_->setEqualityVector(gvec);
 
 				bool success = program_->solve();
-				VectorXd sol = program_->getPrimalSolution();
-				qdot1 = sol.segment(0, nr);
-
+                if(success){
+                    VectorXd sol = program_->getPrimalSolution();
+                    qdot1 = sol.segment(0, nr);
+                }else{
+                    cout << "Solve failed!" << endl;
+                }
 			}
 			qddot = (qdot1 - qdot0) / h;
 			//cout << "ddot" << qddot << endl;

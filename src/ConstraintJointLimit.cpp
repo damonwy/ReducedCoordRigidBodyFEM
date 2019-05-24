@@ -1,7 +1,7 @@
 #include "ConstraintJointLimit.h"
 
 #include "Joint.h"
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 using namespace std;
 using namespace Eigen;

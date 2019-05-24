@@ -1,7 +1,6 @@
 #pragma once
 #ifndef MUSCLEMASS_SRC_WRAPDOUBLECYLINDER_H_
 #define MUSCLEMASS_SRC_WRAPDOUBLECYLINDER_H_
-#define EIGEN_USE_MKL_ALL
 
 /*
 * WrapDoubleCylinder.hpp
@@ -61,6 +60,7 @@ public:
 		const std::shared_ptr<CompDoubleCylinder> compDoubleCylinder,
 		const int num_points);
 
+    virtual ~WrapDoubleCylinder() {}
 	void compute();
 	Eigen::MatrixXd getPoints(int num_points) const;
 

@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 
-#define EIGEN_USE_MKL_ALL
+//#define EIGEN_USE_MKL_ALL
 
 #ifndef _GLIBCXX_USE_NANOSLEEP
 #define _GLIBCXX_USE_NANOSLEEP
@@ -33,7 +33,9 @@
 #include "MatrixStack.h"
 #include "Shape.h"
 #include "Scene.h"
+#ifdef _WIN32
 #include <omp.h>
+#endif
 #include <Eigen/Core>
 
 #define RECORD_VIDEO 0
@@ -288,7 +290,7 @@ void stepWorld() {
 		sprintf(str0, "%d", steps);
 		strcat(str0, str1);
 
-		glReadPixels(0, 0, (GLsizei)1920, (GLsizei)1080, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		glReadPixels(0, 0, (GLsizei)2560, (GLsizei)1060, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		stbi_write_jpg(str0, 1920, 1080, 4, pixels, 100);
 		steps += 1;
 	}
@@ -298,10 +300,11 @@ void stepWorld() {
 
 int main(int argc, char **argv)
 {
+#ifdef _WIN32
 	Eigen::initParallel();
 	omp_set_num_threads(1);
 	Eigen::setNbThreads(1);
-
+#endif
 
 	if(argc < 2) {
 		cout << "Please specify the resource directory." << endl;
@@ -316,7 +319,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	// Create a windowed mode window and its OpenGL context.
-	window = glfwCreateWindow(1920, 1080, "Reduced Coordinate Rigid Body FEM Simulation", NULL, NULL);
+	window = glfwCreateWindow(2560, 1600, "Reduced Coordinate Rigid Body FEM Simulation", NULL, NULL);
 	if(!window) {
 		glfwTerminate();
 		return -1;

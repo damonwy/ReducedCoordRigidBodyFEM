@@ -3,7 +3,7 @@
 #include "Joint.h"
 #include "Body.h"
 #include "SE3.h"
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 using namespace std;
 using namespace Eigen;

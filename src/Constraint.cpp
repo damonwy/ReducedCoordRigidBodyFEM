@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 using namespace std;
 using namespace Eigen;

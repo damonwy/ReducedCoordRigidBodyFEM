@@ -154,8 +154,6 @@ bool TetrahedronInvertible::checkNecessityForSVD(double deltaL, double deltaU, M
 }
 
 void TetrahedronInvertible::computeElasticForces() {
-	bool print = false;
-
 	this->F = computeDeformationGradient();
 	this->FTF.noalias() = F.transpose() * F;
 

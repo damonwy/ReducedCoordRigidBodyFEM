@@ -7,7 +7,7 @@
 #include <fstream>
 #include <cmath>        // std::abs
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -24,7 +24,9 @@
 #include "TetrahedronCorotational.h"
 #include "TetrahedronInvertible.h"
 #include "Line.h"
+#ifdef _WIN32
 #include <omp.h>
+#endif
 
 using namespace std;
 using namespace Eigen;
@@ -462,7 +464,6 @@ void SoftBody::setAttachmentsByLine(std::shared_ptr<Line> l) {
 	}
 }
 
-
 void SoftBody::setAttachmentsByXYSurface(double z, double range, Vector2d xrange, Vector2d yrange, shared_ptr<Body> body) {
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
@@ -582,8 +583,6 @@ void SoftBody::setSlidingNodesByXZSurface(double y, Eigen::Vector2d xrange, Eige
 	Vector3d y_axis;
 	y_axis << 0.0, 1.0, 0.0;
 	y_axis *= dir;
-	
-
 
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		auto node = m_nodes[i];
@@ -610,7 +609,7 @@ void SoftBody::gatherDofs(VectorXd &y, int nr) {
 	}
 }
 
-VectorXd SoftBody::gatherDDofs(VectorXd &ydot, int nr) {
+void SoftBody::gatherDDofs(VectorXd &ydot, int nr) {
 	// Gathers qdot and qddot into ydot
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxR = m_nodes[i]->idxR;
@@ -621,15 +620,12 @@ VectorXd SoftBody::gatherDDofs(VectorXd &ydot, int nr) {
 	}
 
 	if (next != nullptr) {
-		ydot = next->gatherDDofs(ydot, nr);
+		next->gatherDDofs(ydot, nr);
 	}
-	return ydot;
 }
 
 void SoftBody::scatterDofs(VectorXd &y, int nr) {
 	m_isCollided = false;
-
-
 	// Scatters q and qdot from y
 
 	// Update points
@@ -709,7 +705,6 @@ void SoftBody::computeMass(MatrixXd &M) {
 }
 
 void SoftBody::computeMassSparse(vector<T> &M_) {
-	Matrix3d I3 = Matrix3d::Identity();
 	for (int i = 0; i < (int)m_nodes.size(); i++) {
 		int idxM = m_nodes[i]->idxM;
 		double m = m_nodes[i]->m;		 

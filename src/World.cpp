@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "Joint.h"
 #include "JointNull.h"
@@ -69,9 +69,9 @@
 #include "Line.h"
 #include "Surface.h"
 
-#include <json\writer.h>
-#include <json\json.h>
-#include <json\value.h>
+#include <json/writer.h>
+#include <json/json.h>
+#include <json/value.h>
 
 #define D90 M_PI/2.0
 #define D180 M_PI
@@ -733,8 +733,8 @@ void World::load(const std::string &RESOURCE_DIR) {
 		density = 1.0;
 		m_grav << 0.0, -98, 0.0;
 		Eigen::from_json(js["sides"], sides);
-		double young = 1e2;
-		double possion = 0.40;
+//        double young = 1e2;
+//        double possion = 0.40;
 
 		for (int i = 0; i < 3; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
@@ -786,14 +786,12 @@ void World::load(const std::string &RESOURCE_DIR) {
 			}
 			else {
 				auto joint = addJointRevolute(body, Vector3d::UnitZ(), Vector3d(10.0, 0.0, 0.0), Matrix3d::Identity(), 0.0, RESOURCE_DIR, m_joints[i - 1]);
-
 			}
 
 			// Init constraints
 			if (i > 0) {
 				//addConstraintJointLimit(m_joints[i], -M_PI / 2.0, M_PI / 2.0);
 			}
-
 			//m_joints[i]->setStiffness(m_stiffness);
 			m_joints[i]->setDamping(m_damping);
 
@@ -805,7 +803,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 		mesh_embedding->transformDenseMesh(E);
 		mesh_embedding->transformCoarseMesh(E);
 		mesh_embedding->precomputeWeights();
-
 	}
 	break;
 	case HUMAN_BODY:
@@ -822,8 +819,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_damping = 1.0e3;
 		isleftleg = false;
 		isrightleg = false;
-
-		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
 
 		for (int i = 0; i < 2; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
@@ -960,8 +955,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 		m_stiffness = 1.0e4;
 		m_damping = 1.0e2;
 
-		Matrix4d E = SE3::RpToE(SE3::aaToMat(Vector3d(1.0, 0.0, 0.0), 0.0), Vector3d(10.0, 0.0, 0.0));
-
 		for (int i = 0; i < 8; i++) {
 			auto body = addBody(density, sides, Vector3d(5.0, 0.0, 0.0), Matrix3d::Identity(), RESOURCE_DIR, "cylinder_9.obj");
 
@@ -976,8 +969,6 @@ void World::load(const std::string &RESOURCE_DIR) {
 			m_joints[i]->setDamping(m_damping);
 		}
 
-		Vector3d start_pt = Vector3d::Zero();
-		Vector3d end_pt = Vector3d(80.0, 0.0, 0.0);
 		int nsegments = 8;
 		int nsamples = 5;
 
@@ -2457,15 +2448,15 @@ void World::drawFloor(Floor f, shared_ptr<MatrixStack> MV, const shared_ptr<Prog
 void World::draw(shared_ptr<MatrixStack> MV, const shared_ptr<Program> prog, const shared_ptr<Program> progSimple, const shared_ptr<Program> progSoft, shared_ptr<MatrixStack> P) {
 	m_bodies[0]->draw(MV, prog, P);
 	m_joints[0]->draw(MV, prog, progSimple, P);
-	m_deformables[0]->draw(MV, prog, progSimple, P);
-	m_comps[0]->draw(MV, prog, P);
-	m_wraps[0]->draw(MV, prog, progSimple, P);
-	m_springs[0]->draw(MV, prog, progSimple, P);
-	m_softbodies[0]->draw(MV, prog, progSimple, P);
-	m_meshembeddings[0]->draw(MV, prog, progSimple, P);
-	for (int i = 0; i < (int)m_floors.size(); ++i) {
-		drawFloor(m_floors[i], MV, progSimple, P);
-	}
+    m_deformables[0]->draw(MV, prog, progSimple, P);
+    m_comps[0]->draw(MV, prog, P);
+    m_wraps[0]->draw(MV, prog, progSimple, P);
+    m_springs[0]->draw(MV, prog, progSimple, P);
+    m_softbodies[0]->draw(MV, prog, progSimple, P);
+    m_meshembeddings[0]->draw(MV, prog, progSimple, P);
+    for (int i = 0; i < (int)m_floors.size(); ++i) {
+        drawFloor(m_floors[i], MV, progSimple, P);
+    }
 }
 
 Energy World::computeEnergy() {
@@ -2514,19 +2505,19 @@ void World::sceneCross(double t) {
 
 void World::sceneStarFish(double t) {
 
-	double sinTheta =  M_PI * sin( t);
-	double cosTheta = M_PI * cos( t);
-	double d30 = 1.0 / 6.0;
-	double d45 = 1.0 / 4.0;
-	double d15 = 1.0 / 12.0;
-	double d60 = 1.0 / 3.0;
-	double d90 = 1.0 / 2.0;
-	double d10 = 1.0 / 18.0;
-	double d12 = 1.0 / 15.0;
-	double d18 = 1.0 / 10.0;
-	double d20 = 1.0 / 9.0;
-	double d22 = 1.0 / 8.0;
-	//
+//	  double sinTheta = M_PI * sin( t);
+//    double cosTheta = M_PI * cos( t);
+//    double d30 = 1.0 / 6.0;
+//    double d45 = 1.0 / 4.0;
+//    double d15 = 1.0 / 12.0;
+//    double d60 = 1.0 / 3.0;
+//    double d90 = 1.0 / 2.0;
+//    double d10 = 1.0 / 18.0;
+//    double d12 = 1.0 / 15.0;
+//    double d18 = 1.0 / 10.0;
+//    double d20 = 1.0 / 9.0;
+//    double d22 = 1.0 / 8.0;
+
 	//for (int i = 0; i < nlegs; i++) {
 	//	if (i > -1) {
 	//		//m_joints[0 + nsegments * i]->presc->m_q[0] = d60 * sinTheta;
@@ -2598,7 +2589,6 @@ void World::sceneStarFish(double t) {
 	//		m_joints[7 + 8 * i]->presc->m_q[0] = 1.0 / 18.0 * sinTheta;
 	//		m_joints[7 + 8 * i]->presc->m_qdot[0] = 1.0 / 18.0 * cosTheta;
 	//		m_joints[7 + 8 * i]->presc->m_qddot[0] =-1.0 / 18.0 * sinTheta;
-
 	//	}	
 	//}
 }
@@ -2607,14 +2597,6 @@ void World::sceneStarFish2(double t) {
 	cout << t << endl;
 	double d30 = -1.0 / 6.0;
 	double d45 = -1.0 / 4.0;
-	double d15 = -1.0 / 12.0;
-	double d60 = -1.0 / 3.0;
-	double d90 = -1.0 / 2.0;
-	double d10 = -1.0 / 18.0;
-	double d12 = -1.0 / 15.0;
-	double d18 = -1.0 / 10.0;
-	double d20 = -1.0 / 9.0;
-	double d22 = -1.0 / 8.0;
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
 	
 	vt_w.setZero();
@@ -2622,8 +2604,7 @@ void World::sceneStarFish2(double t) {
 	wt_i.setZero();
 	wtdot_i.setZero();
 	Vector3d Zero = Vector3d::Zero();
-
-	double alpha = 1.0 / 7.9617 / 2.0;
+	//double alpha = 1.0 / 7.9617 / 2.0;
 
 	double beta = 1.4;
 	double q, dq;
@@ -2642,13 +2623,11 @@ void World::sceneStarFish2(double t) {
 		double t_ = t - 6.0;
 		vt_w << 0.0, beta * t_, 0.0;
 		vtdot_w << 0.0, beta, 0.0;
-
 		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, Zero, Zero);
 
 		// Active:
 		// mcon: 8
 		// rcon: null
-
 	}
 	else if (t < 26.0) {
 		// Still lifting, velocity decreases to zero
@@ -2811,11 +2790,8 @@ void World::sceneStarFish2(double t) {
 		mcon << 0;
 		deactivateListOfPrescConstraints(mcon, ncon);
 
-		double t0 = 130.0;
-		double t_ = t - t0;	// t_ = [0, 10]
-		double t1 = 135.0;
-
-/*
+        /*double t0 = 130.0; // t_ = [0, 10]
+         double t1 = 135.0;
 		setReducedPrescStates(m_joints[1], q, dq);
 		setReducedPrescStates(m_joints[9], q, dq);*/
 
@@ -2830,7 +2806,6 @@ void World::sceneStarFish2(double t) {
 		// Active:
 		// mcon: 12 20
 		// ncon: null
-
 	}
 	else if (t < 150.0) {
 		VectorXi ncon(1);
@@ -2849,20 +2824,8 @@ void World::sceneStarFish2(double t) {
 }
 
 void World::sceneStarFishJump(double t) {
-	cout << t << endl;
-	double d30 = -1.0 / 6.0;
-	double d45 = -1.0 / 4.0;
-	double d15 = -1.0 / 12.0;
-	double d60 = -1.0 / 3.0;
-	double d50 = -5.0 / 18.0;
-	double d90 = -1.0 / 2.0;
-	double d10 = -1.0 / 18.0;
-	double d12 = -1.0 / 15.0;
-	double d18 = -1.0 / 10.0;
-	double d20 = -1.0 / 9.0;
-	double d22 = -1.0 / 8.0;
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
-	double q, dq;
+	//double q, dq;
 
 	vt_w.setZero();
 	vtdot_w.setZero();
@@ -2945,8 +2908,6 @@ void World::sceneStarFishJump(double t) {
 
 		////computeTargetQ(t0, t1, t, d30 * M_PI, 0.0, q, dq);
 
-
-
 		//m_joints[2]->presc->m_q[0] = q;
 		//m_joints[2]->presc->m_qdot[0] = dq;
 		//m_joints[6]->presc->m_q[0] = q;
@@ -2955,10 +2916,8 @@ void World::sceneStarFishJump(double t) {
 		//m_joints[10]->presc->m_q[0] = d20 * sinTheta;
 		//m_joints[10]->presc->m_qdot[0] = d20 * alpha * cosTheta;
 
-
 		//m_joints[14]->presc->m_q[0] = q;
 		//m_joints[14]->presc->m_qdot[0] = dq;
-
 
 		//m_joints[18]->presc->m_q[0] = q;
 		//m_joints[18]->presc->m_qdot[0] = dq;
@@ -3001,17 +2960,13 @@ void World::sceneStarFishJump(double t) {
 		//m_joints[20]->presc->m_q[0] = q;
 		//m_joints[20]->presc->m_qdot[0] = dq;
 
-
-
 	}
 	else if (t < 10.0) {
-
 		m_bodies[4]->presc->setInactive();
 		m_bodies[8]->presc->setInactive();
 		m_bodies[16]->presc->setInactive();
 		m_bodies[20]->presc->setInactive();
 		m_bodies[12]->presc->setInactive();
-
 
 		double t0 = 5.0;
 		double t1 = 10.0;
@@ -3030,7 +2985,6 @@ void World::sceneStarFishJump(double t) {
 				//m_joints[13 + i]->presc->setInactive();
 				//m_joints[17 + i]->presc->setInactive();
 			}
-
 		}
 
 		vt_w << -gamma * sinTheta, - 1.3* beta * sinTheta, 0.0;
@@ -3039,7 +2993,6 @@ void World::sceneStarFishJump(double t) {
 		wtdot_i << 0.0, sigma * alpha *cosTheta, 0.0;
 		//m_bodies[0]->presc->setInactive();
 		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);
-
 
 		/*vt_w << 0.0, beta * sinTheta, 0.0;
 		vtdot_w << 0.0, beta * cosTheta, 0.0;
@@ -3086,7 +3039,6 @@ void World::sceneStarFishJump(double t) {
 	}
 	else if (t < 15.0) {
 		double t0 = 10.0;
-		double t1 = 15.0;
 		double t_ = t - t0;
 		/*vt_w << 0.0, 0.0, 0.0;
 		vtdot_w << 0.0, 0.0, 0.0;
@@ -3094,7 +3046,6 @@ void World::sceneStarFishJump(double t) {
 		wtdot_i << 0.0, 0.0, 0.0;
 		setMaximalPrescStates(m_bodies[0], vt_w, vtdot_w, wt_i, wtdot_i);*/
 		m_bodies[0]->presc->setInactive();
-
 
 		//m_bodies[4]->presc->setActive();
 		//m_bodies[8]->presc->setActive();
@@ -3131,17 +3082,16 @@ void World::sceneStarFishJump(double t) {
 		// Starfish starts to wiggle and then stop wiggling
 		double t0 = 15.0;
 		double t_ = t - t0; // t_ = [0, 20]
+		//double t1 = 20.0;
 
-		double t1 = 20.0;
-
-		double alpha = 6 * M_PI / (t1 - t0);
-		double sinTheta = M_PI * sin(alpha * t_);
-		double cosTheta = M_PI * cos(alpha * t_);
+		//double alpha = 6 * M_PI / (t1 - t0);
+		
 		vt_w << 0.0, beta * t_, 0.0;
 		vtdot_w << 0.0, beta, 0.0;
 		wt_i << 0.0, 0.0, 0.0;
 		wtdot_i << 0.0, 0.0, 0.0;
-
+        //double sinTheta = M_PI * sin(alpha * t_);
+        //double cosTheta = M_PI * cos(alpha * t_);
 		setMaximalPrescStates(m_bodies[8], vt_w, vtdot_w, wt_i, wtdot_i);
 
 		/*m_joints[1]->presc->setActive();
@@ -3330,7 +3280,6 @@ void World::sceneFingers(double t) {
 	}
 	else if (t < 10.0) {
 		double t_ = t - 5.0;
-		double alpha = 2.0;
 		vt_w << 2.53 * 3 * beta * t_, 0.0, 0.0;//3
 		setMaximalPrescAttachPointStates(eBone_IndexFinger3, 0, vt_w);
 
@@ -3345,11 +3294,9 @@ void World::sceneFingers(double t) {
 
 		vt_w << 1.6 * beta * t, 0.0, 5.5 * beta * t;
 		setMaximalPrescAttachPointStates(eBone_Thumb2, 0, 0.2 * vt_w);
-
-
 	}
 	else if (t < 15.0) {
-		double t_ = t - 10.0;
+		//double t_ = t - 10.0;
 		double alpha = 1.7;
 
 		vt_w << - alpha * beta * t, 0.0, 0.0;
@@ -3946,17 +3893,10 @@ void World::setListOfMaximalPrescStates(Eigen::VectorXi mcon, Vector3d vt_w, Vec
 
 // Final Version of Starfish
 void World::sceneStarFish3(double t) {
-	//cout << t << endl;
 	double d30 = -1.0 / 6.0;
 	double d45 = -1.0 / 4.0;
-	double d15 = -1.0 / 12.0;
-	double d60 = -1.0 / 3.0;
-	double d90 = -1.0 / 2.0;
 	double d10 = -1.0 / 18.0;
-	double d12 = -1.0 / 15.0;
-	double d18 = -1.0 / 10.0;
 	double d20 = -1.0 / 9.0;
-	double d22 = -1.0 / 8.0;
 	Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
 
 	vt_w.setZero();
@@ -3965,10 +3905,8 @@ void World::sceneStarFish3(double t) {
 	wtdot_i.setZero();
 	Vector3d Zero = Vector3d::Zero();
 
-	double alpha = 1.0 / 7.9617 / 2.0;
-
 	double beta = 1.4;
-	double q, dq;
+	//double q, dq;
 
 	if (t < 6.0) {
 		// Hold one arm still and let the starfish falls down to floor and collides with floor
@@ -4013,30 +3951,25 @@ void World::sceneStarFish3(double t) {
 			setReducedPrescStates(m_joints[2], d20 * sinTheta, d20 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[3], d45 * sinTheta, d45 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[4], d45 * sinTheta, d45 * alpha * cosTheta);
-
 		}
 		else if (t > 25.0) {
 			m_joints[1]->presc->setInactive();
 			m_joints[2]->presc->setInactive();
 			m_joints[3]->presc->setInactive();
 			m_joints[4]->presc->setInactive();
-
 		}
-
 		// Active:
 		// mcon: 8
 		// rcon: null
 	}
 	else if (t < 56.0) {
 		// Starfish starts to wiggle and then stop wiggling
-
 		// Hold one point
 		setMaximalPrescStates(m_bodies[8], Zero, Zero, Zero, Zero);
 
 		if (t > 26.0 && t < 36.0) {
 			double t0 = 26.0;
 			double t_ = t - t0; // t_ = [0, 20]
-			double t1 = 36.0;
 
 			double alpha = 1.0;
 			double sinTheta = M_PI * sin(alpha * t_);
@@ -4046,14 +3979,12 @@ void World::sceneStarFish3(double t) {
 			setReducedPrescStates(m_joints[2], -d20 * sinTheta, -d20 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[3], -d30 * sinTheta, -d30 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[4], -d30 * sinTheta, -d30 * alpha * cosTheta);
-
 		}
 		else if (t > 36.0) {
 			m_joints[1]->presc->setInactive();
 			m_joints[2]->presc->setInactive();
 			m_joints[3]->presc->setInactive();
 			m_joints[4]->presc->setInactive();
-
 		}
 
 		if (t > 38.0 && t < 45.0) {
@@ -4068,25 +3999,19 @@ void World::sceneStarFish3(double t) {
 			setReducedPrescStates(m_joints[10], d20 * sinTheta, d20 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[11], d20 * sinTheta, d20 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[12], d20 * sinTheta, d20 * alpha * cosTheta);
-
 		}
 		else if (t > 45.0) {
 			m_joints[9]->presc->setInactive();
 			m_joints[10]->presc->setInactive();
 			m_joints[11]->presc->setInactive();
 			m_joints[12]->presc->setInactive();
-
-
 		}
-
 
 		if (t > 50.0 && t < 55.0) {
 			double t0 = 50.0;
 			double t_ = t - t0; // t_ = [0, 20]
-								//double sinTheta = M_PI * sin(alpha * t_);
-								//double cosTheta = M_PI * cos(alpha * t_);
-
-
+			//double sinTheta = M_PI * sin(alpha * t_);
+			//double cosTheta = M_PI * cos(alpha * t_);
 			double t1 = 55.0;
 
 			double alpha = M_PI / (t1 - t0);
@@ -4102,7 +4027,6 @@ void World::sceneStarFish3(double t) {
 			setReducedPrescStates(m_joints[18], -d20 * sinTheta, -d20 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[19], -d10 * sinTheta, -d10 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[20], -d10 * sinTheta, -d10 * alpha * cosTheta);
-
 		}
 		else if (t > 55.0) {
 			m_joints[9]->presc->setInactive();
@@ -4114,10 +4038,7 @@ void World::sceneStarFish3(double t) {
 			m_joints[18]->presc->setInactive();
 			m_joints[19]->presc->setInactive();
 			m_joints[20]->presc->setInactive();
-
 		}
-
-
 		//if (t > 50.0 && t < 55.0) {
 		//	double t0 = 50.0;
 		//	double t_ = t - t0; // t_ = [0, 20]
@@ -4136,7 +4057,6 @@ void World::sceneStarFish3(double t) {
 		//	setReducedPrescStates(m_joints[5], -d10 * sinTheta, -d10 * alpha * cosTheta);
 		//	setReducedPrescStates(m_joints[9], d10 * sinTheta, d10 * alpha * cosTheta);
 		//	setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
-
 
 		//}
 		//else if (t > 55.0) {
@@ -4163,7 +4083,6 @@ void World::sceneStarFish3(double t) {
 		if (t > 58.0 && t < 62.0) {
 			double t0 = 58.0;
 			double t_ = t - t0; // t_ = [0, 20]
-			double t1 = 62.0;
 
 			double alpha = 1.0;
 			double sinTheta = M_PI * sin(alpha * t_);
@@ -4173,7 +4092,6 @@ void World::sceneStarFish3(double t) {
 			setReducedPrescStates(m_joints[14], d20 * sinTheta, d20 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[15], d45 * sinTheta, d45 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[16], d30 * sinTheta, d30 * alpha * cosTheta);
-
 		}
 		else if (t > 62.0) {
 			m_joints[13]->presc->setInactive();
@@ -4185,7 +4103,6 @@ void World::sceneStarFish3(double t) {
 		if (t > 62.0 && t < 64.0) {
 			double t0 = 62.0;
 			double t_ = t - t0; // t_ = [0, 20]
-			double t1 = 64.0;
 
 			double alpha = 1.0;
 			double sinTheta = M_PI * sin(alpha * t_);
@@ -4201,7 +4118,6 @@ void World::sceneStarFish3(double t) {
 			setReducedPrescStates(m_joints[15], -d45 * sinTheta, -d45 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[16], -d30 * sinTheta, -d30 * alpha * cosTheta);
 		}
-
 		//VectorXi mcon(1);
 		//Vector4i ncon;
 		//mcon << -2;
@@ -4243,7 +4159,6 @@ void World::sceneStarFish3(double t) {
 		if (t > 70.0 && t < 75.0) {
 			double t0 = 70.0;
 			double t_ = t - t0; // t_ = [0, 20]
-			double t1 = 75.0;
 
 			double alpha = 1.0;
 			double sinTheta = M_PI * sin(alpha * t_);
@@ -4253,7 +4168,6 @@ void World::sceneStarFish3(double t) {
 			setReducedPrescStates(m_joints[18], -d20 * sinTheta, -d20 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[19], -d30 * sinTheta, -d30 * alpha * cosTheta);
 			setReducedPrescStates(m_joints[20], -d30 * sinTheta, -d30 * alpha * cosTheta);
-
 		}
 		else if (t > 75.0) {
 			m_joints[17]->presc->setInactive();
@@ -4274,8 +4188,7 @@ void World::sceneStarFish3(double t) {
 		//setReducedPrescStates(m_joints[5], -d20 * sinTheta, -d20 * alpha * cosTheta);
 		//setReducedPrescStates(m_joints[9], d20 * sinTheta, d20 * alpha * cosTheta);
 		//setReducedPrescStates(m_joints[17], d20 * sinTheta, d20 * alpha * cosTheta);
-	
-	}
+    }
 	else if (t < 90.0)
 	{
 		
@@ -4315,7 +4228,6 @@ void World::sceneStarFish3(double t) {
 	else if (t < 122.0) {
 		double t0 = 117.0;
 		double t_ = t - t0; // t_ = [0, 20]
-		double t1 = 122.0;
 
 		double alpha = 1.0;
 		double sinTheta = M_PI * sin(alpha * t_);
@@ -4325,8 +4237,6 @@ void World::sceneStarFish3(double t) {
 		setReducedPrescStates(m_joints[6], d30 * sinTheta, d30 * alpha * cosTheta);
 		setReducedPrescStates(m_joints[7], d30 * sinTheta,d30 * alpha * cosTheta);
 		setReducedPrescStates(m_joints[8], d30 * sinTheta,d30 * alpha * cosTheta);
-
-
 	}
 	else if (t < 130.0) {
 		m_joints[5]->presc->setInactive();
@@ -4336,7 +4246,6 @@ void World::sceneStarFish3(double t) {
 
 		double t0 = 122.0;
 		double t_ = t - t0; // t_ = [0, 20]
-		double t1 = 133.0;
 
 		double alpha = 1.0;
 		double sinTheta = M_PI * sin(alpha * t_);
@@ -4366,9 +4275,8 @@ void World::sceneStarFish3(double t) {
 }
 
 void World::sceneTestHyperReduced(double t) {
-	double q, dq;
+	//double q, dq;
 	if (t < 2.0) {
-		
 		//computeTargetQ(0.0, 2.0, t, M_PI / 8.0, 0.0, q, dq);
 		//setReducedPrescStates(m_joints[0], q, dq);
 		Vector3d vt_w, wt_i, vtdot_w, wtdot_i;
@@ -4376,22 +4284,13 @@ void World::sceneTestHyperReduced(double t) {
 		setMaximalPrescStates(m_bodies[1], vt_w, vt_w, vt_w, vt_w);
 	}
 	if (t < 4.0) {
-
 		//computeTargetQ(2.0, 4.0, t, -M_PI / 8.0, M_PI / 8.0, q, dq);
 		//setReducedPrescStates(m_joints[0], q, dq);
-
 	}
-
 }
 
 void World::sceneAttachPoint(double t) {
-
 	Vector3d vt_w, wt_i;
-	Vector3d zero = Vector3d::Zero();
-	vt_w.setZero();
-	cout << t << endl;
-
-	double beta = 0.3;
 
 	if (t < 105.0) {
 		vt_w << 0, 0.0, 0.0;
@@ -4439,7 +4338,7 @@ vector<int> World::getBrenderTypes() const
 
 void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, double time) const
 {
-	ofstream &outfile = *outfiles[0];
+	//ofstream &outfile = *outfiles[0];
 
 	Json::Value states(Json::arrayValue);
 	vector<string> mybodyname_vec;
@@ -4554,7 +4453,6 @@ void World::exportBrender(vector< shared_ptr< ofstream > > outfiles, int frame, 
 		*(outfiles[0]) << jsonworld;
 	}
 
-	
 	//m_meshembeddings[0]->getDenseMesh()->exportObj(outfile);
 }
 

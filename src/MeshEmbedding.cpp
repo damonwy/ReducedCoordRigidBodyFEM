@@ -240,7 +240,6 @@ void MeshEmbedding::precomputeWeights() {
 					// the point is inside the tet
 					tet->addEnclosedPoint(node);
 					Vector4d weight = tet->computeBarycentricWeightAndSave(node);
-
 					node->isEnclosedByTet = true;
 				}
 			}			

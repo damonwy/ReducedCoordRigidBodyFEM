@@ -10,7 +10,9 @@
 #include "Program.h"
 #include "Node.h"
 #include "FaceTriangle.h"
+#ifdef _WIN32
 #include <omp.h>
+#endif
 #include <fstream>
 using namespace std;
 using namespace Eigen;

@@ -29,7 +29,7 @@ void ConstraintPrescBodyAttachPoint::computeJacEqM_(MatrixXd &Gm, MatrixXd &Gmdo
 	Matrix3d R = m_body->E_wi.topLeftCorner(3, 3);
 	Matrix3x6d Cons = -R * m_gamma;
 
-	Gm.block(row, col, nconEM, 6) = Cons(m_prows, Eigen::placeholders::all);
+	Gm.block(row, col, nconEM, 6) = Cons(m_prows, Eigen::all);
 
 	if (m_vel == REDMAX_EULER) {
 		gmdot.segment(row, nconEM) = m_qdot(m_prows);

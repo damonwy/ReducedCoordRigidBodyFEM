@@ -4,8 +4,7 @@
 #define EIGEN_USE_MKL_ALL
 
 #include <Eigen/Core>
-#include <json.hpp>
-
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 

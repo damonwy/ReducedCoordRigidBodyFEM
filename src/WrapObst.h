@@ -98,6 +98,7 @@ public:
 	virtual void compute() {}
 	virtual void init() {}
 	virtual void load(const std::string &RESOURCE_DIR) {}
+    virtual ~WrapObst() {}
 
 	void update() {
 		update_();
@@ -117,9 +118,6 @@ public:
 			next->draw(MV, prog, progSimple, P);
 		}
 	}
-
-
 };
-
 
 #endif // MUSCLEMASS_SRC_WRAPOBST_H_
